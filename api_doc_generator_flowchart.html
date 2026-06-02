@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>API Documentation Generator</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 48px 24px;
+  }
+
+  .page-title {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .page-title h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #f8fafc;
+  }
+  .page-title p {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #64748b;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .chart {
+    max-width: 820px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Nodes ── */
+  .node {
+    width: 100%;
+    border-radius: 12px;
+    padding: 20px 28px;
+  }
+  .node-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.75;
+  }
+  .node-label {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 6px;
+  }
+  .node-desc {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.65;
+  }
+  .node-desc code {
+    background: rgba(255,255,255,0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-family: 'SF Mono','Fira Mono',monospace;
+    color: #e2e8f0;
+  }
+
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .tag {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.07);
+    color: #cbd5e1;
+  }
+
+  /* colour themes */
+  .node-input  { background: #1e293b; border: 1px solid #334155; }
+  .node-detect { background: #1c1e2e; border: 1px solid #4f46e5; box-shadow: 0 0 20px rgba(79,70,229,0.12); }
+  .node-extract{ background: #1a1f2e; border: 1px solid #0ea5e9; box-shadow: 0 0 20px rgba(14,165,233,0.10); }
+  .node-docs   { background: #1a2118; border: 1px solid #16a34a; box-shadow: 0 0 20px rgba(22,163,74,0.10); }
+  .node-openapi{ background: #1e1a1e; border: 1px solid #a855f7; box-shadow: 0 0 20px rgba(168,85,247,0.10); }
+  .node-review { background: #1e1a14; border: 1px solid #f59e0b; box-shadow: 0 0 20px rgba(245,158,11,0.10); }
+  .node-output { background: #101a14; border: 2px solid #22c55e; }
+
+  .c-indigo  { color: #818cf8; }
+  .c-sky     { color: #38bdf8; }
+  .c-green   { color: #4ade80; }
+  .c-purple  { color: #c084fc; }
+  .c-amber   { color: #fbbf24; }
+  .c-slate   { color: #94a3b8; }
+  .c-emerald { color: #34d399; }
+
+  /* ── Pipeline wrapper ── */
+  .pipeline-wrap {
+    width: 100%;
+    border: 1px solid #1e3a5f;
+    border-radius: 16px;
+    padding: 6px;
+    background: rgba(14,165,233,0.03);
+    position: relative;
+  }
+  .pipeline-label {
+    position: absolute;
+    top: -11px;
+    left: 24px;
+    background: #0f1117;
+    padding: 0 10px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #0ea5e9;
+  }
+  .pipeline-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 14px 10px;
+    gap: 0;
+  }
+
+  /* ── Arrows ── */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 2px 0;
+  }
+  .arrow-line {
+    width: 2px;
+    height: 28px;
+    background: #334155;
+  }
+  .arrow-head {
+    width: 0; height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 10px solid #334155;
+  }
+  .arrow-label {
+    font-size: 0.68rem;
+    color: #475569;
+    margin: 2px 0;
+    font-style: italic;
+  }
+  .line-indigo { background: #4f46e5; }
+  .head-indigo { border-top-color: #4f46e5; }
+  .line-sky    { background: #0ea5e9; }
+  .head-sky    { border-top-color: #0ea5e9; }
+  .line-green  { background: #16a34a; }
+  .head-green  { border-top-color: #16a34a; }
+  .line-purple { background: #a855f7; }
+  .head-purple { border-top-color: #a855f7; }
+  .line-amber  { background: #f59e0b; }
+  .head-amber  { border-top-color: #f59e0b; }
+  .line-emerald{ background: #22c55e; }
+  .head-emerald{ border-top-color: #22c55e; }
+
+  /* ── Property list ── */
+  .prop-list {
+    list-style: none;
+    margin-top: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 20px;
+  }
+  .prop-list li {
+    font-size: 0.79rem;
+    color: #94a3b8;
+    padding-left: 14px;
+    position: relative;
+  }
+  .prop-list li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #475569;
+  }
+
+  /* ── Input split ── */
+  .input-split {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 0;
+  }
+  .input-box {
+    border: 1px solid #334155;
+    background: #1e293b;
+    border-radius: 10px;
+    padding: 14px 18px;
+  }
+  .input-box .input-icon {
+    font-size: 1.2rem;
+    margin-bottom: 6px;
+  }
+  .input-box strong {
+    display: block;
+    font-size: 0.88rem;
+    color: #e2e8f0;
+    margin-bottom: 4px;
+  }
+  .input-box span {
+    font-size: 0.76rem;
+    color: #64748b;
+    line-height: 1.5;
+  }
+
+  /* ── Framework chips ── */
+  .fw-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .fw-chip {
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    border: 1px solid;
+  }
+  .fw-py { background: rgba(79,70,229,0.12); border-color: #4f46e5; color: #818cf8; }
+  .fw-js { background: rgba(234,179,8,0.10); border-color: #ca8a04; color: #facc15; }
+  .fw-go { background: rgba(14,165,233,0.10); border-color: #0ea5e9; color: #38bdf8; }
+  .fw-jv { background: rgba(249,115,22,0.10); border-color: #ea580c; color: #fb923c; }
+
+  /* ── Output tabs mockup ── */
+  .output-tabs {
+    display: flex;
+    gap: 0;
+    margin-top: 14px;
+    border-bottom: 1px solid #1e3a1e;
+  }
+  .out-tab {
+    padding: 6px 14px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid transparent;
+    cursor: default;
+  }
+  .out-tab.active {
+    color: #4ade80;
+    border-bottom-color: #4ade80;
+  }
+  .output-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .out-card {
+    background: rgba(22,163,74,0.07);
+    border: 1px solid rgba(22,163,74,0.2);
+    border-radius: 8px;
+    padding: 10px 14px;
+  }
+  .out-card strong {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #16a34a;
+    margin-bottom: 4px;
+  }
+  .out-card span {
+    font-size: 0.78rem;
+    color: #4ade80;
+    line-height: 1.5;
+  }
+
+  /* ── Fallback badge ── */
+  .fallback {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 3px 10px;
+    background: rgba(245,158,11,0.10);
+    border: 1px solid rgba(245,158,11,0.3);
+    border-radius: 5px;
+    font-size: 0.72rem;
+    color: #fbbf24;
+  }
+
+  /* Legend */
+  .legend {
+    max-width: 820px;
+    margin: 40px auto 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: center;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>API Documentation Generator</h1>
+  <p>LangGraph &nbsp;·&nbsp; Ollama &nbsp;·&nbsp; Streamlit &nbsp;·&nbsp; Local Inference</p>
+</div>
+
+<div class="chart">
+
+  <!-- INPUT -->
+  <div class="node node-input" style="padding-bottom:16px;">
+    <div class="node-title c-slate">Input</div>
+    <div class="node-label">API Source Code</div>
+    <div class="input-split" style="margin-top:12px;">
+      <div class="input-box">
+        <div class="input-icon">[ ]</div>
+        <strong>Paste Code</strong>
+        <span>Type or paste directly into the editor. Load a sample FastAPI app instantly.</span>
+      </div>
+      <div class="input-box">
+        <div class="input-icon">[^]</div>
+        <strong>Upload Files</strong>
+        <span>Drag &amp; drop source files. Supports .py .js .ts .go .java .cs .rb .php</span>
+      </div>
+    </div>
+    <div class="node-desc" style="margin-top:12px;">
+      Also configure: API Title &nbsp;·&nbsp; Version &nbsp;·&nbsp; Base URL &nbsp;·&nbsp; Ollama model selection
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line line-indigo"></div>
+    <div class="arrow-label">source files + metadata</div>
+    <div class="arrow-head head-indigo"></div>
+  </div>
+
+  <!-- PIPELINE -->
+  <div class="pipeline-wrap" style="width:100%;">
+    <div class="pipeline-label">LangGraph Pipeline &nbsp;·&nbsp; 5-node state machine</div>
+    <div class="pipeline-inner">
+
+      <!-- NODE 1 -->
+      <div class="node node-detect" style="width:100%;">
+        <div class="node-title c-indigo">Node 1</div>
+        <div class="node-label">Detect Framework</div>
+        <div class="node-desc">
+          The LLM reads a snippet from each file and identifies the web framework and programming language. Returns a structured JSON response.
+        </div>
+        <div class="fw-grid">
+          <span class="fw-chip fw-py">FastAPI</span>
+          <span class="fw-chip fw-py">Flask</span>
+          <span class="fw-chip fw-py">Django REST</span>
+          <span class="fw-chip fw-js">Express</span>
+          <span class="fw-chip fw-js">Koa</span>
+          <span class="fw-chip fw-go">Go-gin</span>
+          <span class="fw-chip fw-go">Go-fiber</span>
+          <span class="fw-chip fw-jv">Spring Boot</span>
+        </div>
+        <span class="fallback">Fallback: keyword-based detection if LLM output is unparseable</span>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line line-sky"></div>
+        <div class="arrow-label">framework + language</div>
+        <div class="arrow-head head-sky"></div>
+      </div>
+
+      <!-- NODE 2 -->
+      <div class="node node-extract" style="width:100%;">
+        <div class="node-title c-sky">Node 2</div>
+        <div class="node-label">Extract Endpoints</div>
+        <div class="node-desc">
+          Each file is processed in 4 000-character chunks. The LLM extracts every route it finds and returns a structured JSON array. Duplicates are removed by <code>METHOD:PATH</code> key.
+        </div>
+        <ul class="prop-list">
+          <li>HTTP method (GET / POST / PUT / DELETE / PATCH)</li>
+          <li>URL path with path parameters</li>
+          <li>Query parameters — name, type, required</li>
+          <li>Request body schema description</li>
+          <li>Response schema description</li>
+          <li>Authentication required flag</li>
+          <li>Tags for grouping</li>
+          <li>Function name + one-line summary</li>
+        </ul>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line line-green"></div>
+        <div class="arrow-label">structured endpoint list</div>
+        <div class="arrow-head head-green"></div>
+      </div>
+
+      <!-- NODE 3 -->
+      <div class="node node-docs" style="width:100%;">
+        <div class="node-title c-green">Node 3</div>
+        <div class="node-label">Generate Markdown Documentation</div>
+        <div class="node-desc">
+          Endpoints are grouped by tag. The LLM writes a full documentation block for each route following a strict Markdown template.
+        </div>
+        <div class="tag-row" style="margin-top:12px;">
+          <span class="tag">Endpoint heading + summary</span>
+          <span class="tag">2–3 sentence description</span>
+          <span class="tag">Parameters table</span>
+          <span class="tag">Request body</span>
+          <span class="tag">Response codes table</span>
+          <span class="tag">HTTP example with auth header</span>
+        </div>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line line-purple"></div>
+        <div class="arrow-label">markdown document</div>
+        <div class="arrow-head head-purple"></div>
+      </div>
+
+      <!-- NODE 4 -->
+      <div class="node node-openapi" style="width:100%;">
+        <div class="node-title c-purple">Node 4</div>
+        <div class="node-label">Generate OpenAPI 3.0 YAML</div>
+        <div class="node-desc">
+          The LLM produces a complete OpenAPI 3.0.0 specification from the extracted endpoint list.
+        </div>
+        <ul class="prop-list" style="margin-top:10px;">
+          <li><code>info</code> block — title, version, servers</li>
+          <li>All paths with operations</li>
+          <li><code>requestBody</code> for POST / PUT / PATCH</li>
+          <li>200 / 400 / 401 / 404 / 500 responses</li>
+          <li><code>components/schemas</code> section</li>
+          <li>Tags array per operation</li>
+        </ul>
+        <span class="fallback">Fallback: minimal YAML builder if LLM output fails validation</span>
+      </div>
+
+      <div class="arrow">
+        <div class="arrow-line line-amber"></div>
+        <div class="arrow-label">OpenAPI YAML spec</div>
+        <div class="arrow-head head-amber"></div>
+      </div>
+
+      <!-- NODE 5 -->
+      <div class="node node-review" style="width:100%;">
+        <div class="node-title c-amber">Node 5</div>
+        <div class="node-label">AI Quality Review</div>
+        <div class="node-desc">
+          A final LLM pass audits the generated documentation and returns structured feedback.
+        </div>
+        <div class="tag-row" style="margin-top:10px;">
+          <span class="tag">Vague or missing descriptions</span>
+          <span class="tag">Parameters missing type or requirement</span>
+          <span class="tag">Missing authentication notes</span>
+          <span class="tag">Undocumented error scenarios</span>
+          <span class="tag">Naming inconsistencies</span>
+        </div>
+        <div class="node-desc" style="margin-top:10px;">
+          Returns: <strong style="color:#fbbf24;">Review Summary</strong> &nbsp;·&nbsp;
+          <strong style="color:#fbbf24;">Issues Found</strong> &nbsp;·&nbsp;
+          <strong style="color:#fbbf24;">Concrete Suggestions</strong>
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /pipeline -->
+
+  <div class="arrow">
+    <div class="arrow-line line-emerald"></div>
+    <div class="arrow-label">results</div>
+    <div class="arrow-head head-emerald"></div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="node node-output">
+    <div class="node-title c-emerald">Output</div>
+    <div class="node-label">Documentation Suite</div>
+    <div class="node-desc">Metrics bar shows framework, language, endpoint count, and total doc size.</div>
+
+    <div class="output-tabs">
+      <div class="out-tab active">Markdown Docs</div>
+      <div class="out-tab">OpenAPI YAML</div>
+      <div class="out-tab">Review Notes</div>
+      <div class="out-tab">Endpoint Table</div>
+    </div>
+
+    <div class="output-cards">
+      <div class="out-card">
+        <strong>Markdown</strong>
+        <span>Full API reference with descriptions, tables, and HTTP examples — ready to publish.</span>
+      </div>
+      <div class="out-card">
+        <strong>OpenAPI YAML</strong>
+        <span>Import into Postman, Swagger UI, or any API gateway. Downloadable with one click.</span>
+      </div>
+      <div class="out-card">
+        <strong>Review Notes</strong>
+        <span>AI-generated quality assessment with specific issues and improvement suggestions.</span>
+      </div>
+      <div class="out-card">
+        <strong>Endpoint Table</strong>
+        <span>Raw extracted endpoints — method, path, summary, auth, tags, and source file.</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /chart -->
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#4f46e5;"></div>Framework detection</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#0ea5e9;"></div>Endpoint extraction</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#16a34a;"></div>Doc generation</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#a855f7;"></div>OpenAPI spec</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f59e0b;"></div>AI review</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#22c55e;"></div>Output</div>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atlas — Knowledge Graph Builder</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background: #0f1117;
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 48px 24px;
+  }
+
+  .page-title {
+    text-align: center;
+    margin-bottom: 48px;
+  }
+  .page-title h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    color: #f8fafc;
+  }
+  .page-title p {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    color: #64748b;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .chart {
+    max-width: 820px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+
+  /* ── Boxes ── */
+  .node {
+    width: 100%;
+    border-radius: 12px;
+    padding: 20px 28px;
+    position: relative;
+  }
+  .node-title {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    opacity: 0.7;
+  }
+  .node-label {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #f1f5f9;
+    margin-bottom: 6px;
+  }
+  .node-desc {
+    font-size: 0.82rem;
+    color: #94a3b8;
+    line-height: 1.6;
+  }
+  .node-desc code {
+    background: rgba(255,255,255,0.08);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-family: 'SF Mono', 'Fira Mono', monospace;
+    color: #e2e8f0;
+  }
+  .tag-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .tag {
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.07);
+    color: #cbd5e1;
+  }
+
+  /* colour themes */
+  .node-input    { background: #1e293b; border: 1px solid #334155; }
+  .node-llm      { background: #1a1f2e; border: 1px solid #3b4fd8; box-shadow: 0 0 24px rgba(99,102,241,0.15); }
+  .node-store    { background: #1a2520; border: 1px solid #2d6a4f; }
+  .node-canvas   { background: #1e1a2e; border: 1px solid #6d28d9; }
+  .node-query    { background: #1e1e1e; border: 1px solid #475569; }
+  .node-agent    { background: #1a1f2e; border: 2px solid #3b82f6; }
+  .node-output   { background: #0f2318; border: 1px solid #16a34a; }
+
+  .node-title.blue  { color: #818cf8; }
+  .node-title.green { color: #4ade80; }
+  .node-title.purple{ color: #c084fc; }
+  .node-title.slate { color: #94a3b8; }
+  .node-title.teal  { color: #34d399; }
+
+  /* ── Split row ── */
+  .split-row {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .split-row .node { width: 100%; }
+
+  /* ── Agent subgraph ── */
+  .agent-wrap {
+    width: 100%;
+    background: #1a1f2e;
+    border: 2px solid #3b82f6;
+    border-radius: 14px;
+    padding: 20px 24px 16px;
+  }
+  .agent-header {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #60a5fa;
+    margin-bottom: 16px;
+  }
+  .agent-nodes {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .agent-node {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid #2d3748;
+    border-radius: 9px;
+    padding: 12px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+  }
+  .agent-num {
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #3b82f6;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .agent-node-text strong {
+    font-size: 0.88rem;
+    color: #e2e8f0;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .agent-node-text span {
+    font-size: 0.78rem;
+    color: #64748b;
+  }
+
+  /* ── Arrows ── */
+  .arrow {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0;
+    gap: 0;
+  }
+  .arrow-line {
+    width: 2px;
+    height: 28px;
+    background: #334155;
+  }
+  .arrow-head {
+    width: 0;
+    height: 0;
+    border-left: 7px solid transparent;
+    border-right: 7px solid transparent;
+    border-top: 10px solid #334155;
+  }
+  .arrow-label {
+    font-size: 0.7rem;
+    color: #475569;
+    margin: 2px 0;
+    font-style: italic;
+  }
+  .arrow-line.blue  { background: #3b4fd8; }
+  .arrow-head.blue  { border-top-color: #3b4fd8; }
+  .arrow-line.green { background: #2d6a4f; }
+  .arrow-head.green { border-top-color: #2d6a4f; }
+
+  /* ── Split arrow ── */
+  .split-arrow {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 0;
+  }
+  .split-arrow-top {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .split-arrow-bar {
+    width: 60%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: relative;
+  }
+  .split-arrow-bar::before {
+    content: '';
+    position: absolute;
+    left: 15%;
+    right: 15%;
+    top: 0;
+    height: 2px;
+    background: #334155;
+  }
+  .split-down {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* ── Output chips ── */
+  .output-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 12px;
+  }
+  .output-chip {
+    background: rgba(22,163,74,0.1);
+    border: 1px solid rgba(22,163,74,0.3);
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.78rem;
+    color: #4ade80;
+  }
+  .output-chip strong {
+    display: block;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 2px;
+    color: #16a34a;
+  }
+
+  /* ── Legend ── */
+  .legend {
+    max-width: 820px;
+    margin: 40px auto 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    justify-content: center;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+  .legend-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-title">
+  <h1>Atlas</h1>
+  <p>Knowledge Graph Builder &nbsp;·&nbsp; LangGraph &nbsp;·&nbsp; Ollama &nbsp;·&nbsp; FastAPI &nbsp;·&nbsp; Chroma</p>
+</div>
+
+<div class="chart">
+
+  <!-- INPUT -->
+  <div class="node node-input">
+    <div class="node-title slate">Input</div>
+    <div class="node-label">Text Ingestion</div>
+    <div class="node-desc">Paste any raw text — articles, research papers, meeting notes, or domain documents. Multi-file input supported.</div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line blue"></div>
+    <div class="arrow-label">raw text</div>
+    <div class="arrow-head blue"></div>
+  </div>
+
+  <!-- LLM -->
+  <div class="node node-llm">
+    <div class="node-title blue">Node 1 &nbsp;·&nbsp; Local LLM</div>
+    <div class="node-label">Triple Extraction via Ollama</div>
+    <div class="node-desc">
+      The LLM reads the text and extracts structured semantic triples — fully offline, no API keys required.<br><br>
+      Output format: &nbsp;<code>(Entity) ──[relation]──&gt; (Entity)</code><br><br>
+      Examples:<br>
+      <code>"Elon Musk" ──[founded]──&gt; "Tesla"</code><br>
+      <code>"Tesla" &nbsp;&nbsp;&nbsp;&nbsp;──[produces]─&gt; "Model S"</code><br>
+      <code>"SpaceX" &nbsp;&nbsp;──[launched]──&gt; "Falcon 9"</code>
+    </div>
+    <div class="tag-row">
+      <span class="tag">llama3.2:3b</span>
+      <span class="tag">JSON structured output</span>
+      <span class="tag">100% local</span>
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line blue"></div>
+    <div class="arrow-label">entity-relation triples</div>
+    <div class="arrow-head blue"></div>
+  </div>
+
+  <!-- STORE -->
+  <div class="node node-store">
+    <div class="node-title teal">Node 2 &nbsp;·&nbsp; Graph Store</div>
+    <div class="node-label">Entity Normaliser + Custom Graph</div>
+    <div class="node-desc">
+      Incoming triples are deduplicated and merged in real-time. Similar entity names are resolved to a canonical form. The graph is persisted using a dependency-free custom store — no external graph database required. Custom BFS traversal is implemented directly.
+    </div>
+    <div class="tag-row">
+      <span class="tag">deduplication</span>
+      <span class="tag">entity merging</span>
+      <span class="tag">BFS traversal</span>
+      <span class="tag">file persistence</span>
+    </div>
+  </div>
+
+  <!-- SPLIT -->
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <div class="split-row">
+
+    <div class="node node-store" style="border-color:#0d9488;">
+      <div class="node-title" style="color:#2dd4bf;">Semantic Layer</div>
+      <div class="node-label">Chroma Vector Store</div>
+      <div class="node-desc">
+        Entity names and descriptions are embedded using <code>nomic-embed-text</code> via Ollama and stored in Chroma. Enables fuzzy entity resolution and semantic search when the user types a query.
+      </div>
+      <div class="tag-row">
+        <span class="tag">nomic-embed-text</span>
+        <span class="tag">Chroma DB</span>
+      </div>
+    </div>
+
+    <div class="node node-canvas">
+      <div class="node-title purple">Visual Layer</div>
+      <div class="node-label">Force-Directed Canvas UI</div>
+      <div class="node-desc">
+        Nodes rendered on a custom HTML5 canvas with physics simulation. Supports drag, zoom, and pan. Node colour indicates entity type.
+      </div>
+      <div class="tag-row">
+        <span class="tag" style="color:#a78bfa;background:rgba(139,92,246,0.12);">Person</span>
+        <span class="tag" style="color:#fb923c;background:rgba(251,146,60,0.12);">Org</span>
+        <span class="tag" style="color:#4ade80;background:rgba(74,222,128,0.12);">Place</span>
+        <span class="tag" style="color:#c084fc;background:rgba(192,132,252,0.12);">Concept</span>
+        <span class="tag" style="color:#f472b6;background:rgba(244,114,182,0.12);">Event</span>
+        <span class="tag" style="color:#facc15;background:rgba(250,204,21,0.12);">Product</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line"></div>
+    <div class="arrow-head"></div>
+  </div>
+
+  <!-- QUERY -->
+  <div class="node node-query">
+    <div class="node-title slate">User Input</div>
+    <div class="node-label">Natural Language Query</div>
+    <div class="node-desc">
+      User types a question such as <code>"How is X connected to Y?"</code>. The query is passed to a LangGraph agent that resolves entities and finds the relationship path in the graph.
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line blue"></div>
+    <div class="arrow-label">query string</div>
+    <div class="arrow-head blue"></div>
+  </div>
+
+  <!-- LANGGRAPH AGENT -->
+  <div class="agent-wrap">
+    <div class="agent-header">LangGraph Agent &nbsp;·&nbsp; 4-node state machine</div>
+    <div class="agent-nodes">
+
+      <div class="agent-node">
+        <div class="agent-num">1</div>
+        <div class="agent-node-text">
+          <strong>Detect Intent</strong>
+          <span>Classifies the query — path lookup, factual question, or open exploration — to route to the correct strategy.</span>
+        </div>
+      </div>
+
+      <div class="arrow" style="padding:3px 0;">
+        <div class="arrow-line" style="height:16px;background:#2d3748;"></div>
+        <div class="arrow-head" style="border-top-color:#2d3748;"></div>
+      </div>
+
+      <div class="agent-node">
+        <div class="agent-num">2</div>
+        <div class="agent-node-text">
+          <strong>Resolve Entities</strong>
+          <span>Semantic search via Chroma finds the closest matching nodes in the graph for both the source and target concept.</span>
+        </div>
+      </div>
+
+      <div class="arrow" style="padding:3px 0;">
+        <div class="arrow-line" style="height:16px;background:#2d3748;"></div>
+        <div class="arrow-head" style="border-top-color:#2d3748;"></div>
+      </div>
+
+      <div class="agent-node">
+        <div class="agent-num">3</div>
+        <div class="agent-node-text">
+          <strong>BFS Shortest Path</strong>
+          <span>Breadth-first traversal through the knowledge graph to find the shortest chain of relationships connecting the two resolved entities.</span>
+        </div>
+      </div>
+
+      <div class="arrow" style="padding:3px 0;">
+        <div class="arrow-line" style="height:16px;background:#2d3748;"></div>
+        <div class="arrow-head" style="border-top-color:#2d3748;"></div>
+      </div>
+
+      <div class="agent-node">
+        <div class="agent-num">4</div>
+        <div class="agent-node-text">
+          <strong>Stream Explanation</strong>
+          <span>LLM narrates the discovered path in natural language. The canvas simultaneously animates the relationship chain with highlighted edges.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="arrow">
+    <div class="arrow-line green"></div>
+    <div class="arrow-label">results</div>
+    <div class="arrow-head green"></div>
+  </div>
+
+  <!-- OUTPUT -->
+  <div class="node node-output">
+    <div class="node-title teal">Output</div>
+    <div class="node-label">Graph Result + Explanation</div>
+    <div class="output-grid">
+      <div class="output-chip"><strong>Canvas</strong>Animated path highlighted on the interactive graph</div>
+      <div class="output-chip"><strong>Explanation</strong>Streamed natural-language narration of the connection chain</div>
+      <div class="output-chip"><strong>Cited Path</strong>Each relationship step explicitly listed with source triple</div>
+      <div class="output-chip"><strong>Real-time</strong>Graph updates live as new text is ingested</div>
+    </div>
+  </div>
+
+</div><!-- /chart -->
+
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#3b4fd8;"></div>LLM / AI node</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#2d6a4f;"></div>Data storage</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#6d28d9;"></div>UI / visualisation</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#3b82f6;"></div>LangGraph agent</div>
+  <div class="legend-item"><div class="legend-dot" style="background:#16a34a;"></div>Output</div>
+</div>
+
+</body>
+</html>
