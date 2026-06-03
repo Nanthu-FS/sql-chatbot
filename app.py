@@ -23,6 +23,154 @@ st.set_page_config(
 )
 
 # ──────────────────────────────────────────────
+# Age Gate
+# ──────────────────────────────────────────────
+if "age_verified" not in st.session_state:
+    st.session_state.age_verified = False
+
+if not st.session_state.age_verified:
+    st.markdown("""
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap');
+    *, *::before, *::after { box-sizing: border-box; }
+    html, body, [data-testid="stAppViewContainer"] {
+        background: #0f0f0f !important;
+        font-family: 'Inter', sans-serif !important;
+    }
+    #MainMenu, footer, [data-testid="stToolbar"], [data-testid="stDecoration"],
+    [data-testid="stSidebar"], [data-testid="stHeader"] { display: none !important; }
+    .main .block-container { padding: 0 !important; max-width: 100% !important; }
+    [data-testid="stBottom"] { display: none !important; }
+    .age-gate-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+    }
+    .age-gate-card {
+        background: #1a1a1a;
+        border: 1px solid #2e2e2e;
+        border-radius: 20px;
+        padding: 3rem 2.5rem;
+        max-width: 420px;
+        width: 100%;
+        text-align: center;
+        box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+        animation: gateIn 0.45s cubic-bezier(0.22,1,0.36,1) both;
+    }
+    @keyframes gateIn {
+        from { opacity: 0; transform: translateY(24px) scale(0.97); }
+        to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .age-gate-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 72px; height: 72px;
+        background: #ff3b3b;
+        border-radius: 50%;
+        font-size: 1.9rem;
+        font-weight: 800;
+        color: #ffffff;
+        margin-bottom: 1.5rem;
+        letter-spacing: -1px;
+        box-shadow: 0 0 0 12px rgba(255,59,59,0.12);
+    }
+    .age-gate-title {
+        font-size: 1.45rem;
+        font-weight: 700;
+        color: #f5f5f5;
+        letter-spacing: -0.5px;
+        margin-bottom: 0.6rem;
+    }
+    .age-gate-subtitle {
+        font-size: 0.85rem;
+        color: #888;
+        line-height: 1.6;
+        margin-bottom: 2rem;
+    }
+    .age-gate-divider {
+        height: 1px;
+        background: #2e2e2e;
+        margin: 1.8rem 0;
+    }
+    .age-gate-warning {
+        font-size: 0.72rem;
+        color: #555;
+        line-height: 1.6;
+        margin-top: 1.5rem;
+    }
+    div[data-testid="stButton"] > button {
+        width: 100% !important;
+        padding: 0.85rem 0 !important;
+        font-size: 0.95rem !important;
+        font-weight: 600 !important;
+        border-radius: 12px !important;
+        border: none !important;
+        cursor: pointer !important;
+        transition: transform 0.15s, box-shadow 0.15s, background 0.15s !important;
+        letter-spacing: -0.2px !important;
+    }
+    div[data-testid="stButton"]:first-of-type > button {
+        background: #ff3b3b !important;
+        color: #ffffff !important;
+        box-shadow: 0 4px 20px rgba(255,59,59,0.35) !important;
+    }
+    div[data-testid="stButton"]:first-of-type > button:hover {
+        background: #ff2020 !important;
+        transform: translateY(-2px) !important;
+        box-shadow: 0 6px 24px rgba(255,59,59,0.45) !important;
+    }
+    div[data-testid="stButton"]:last-of-type > button {
+        background: #2e2e2e !important;
+        color: #888 !important;
+    }
+    div[data-testid="stButton"]:last-of-type > button:hover {
+        background: #383838 !important;
+        color: #aaa !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+    st.markdown('<div class="age-gate-wrapper"><div class="age-gate-card">', unsafe_allow_html=True)
+    st.markdown("""
+    <div class="age-gate-badge">18+</div>
+    <div class="age-gate-title">Age Verification Required</div>
+    <div class="age-gate-subtitle">
+        This application may contain data and content<br>
+        restricted to adults aged 18 and over.
+    </div>
+    <div class="age-gate-divider"></div>
+    <div style="font-size:0.82rem;color:#aaa;margin-bottom:1.2rem;font-weight:500;">
+        Do you confirm you are 18 years of age or older?
+    </div>
+    """, unsafe_allow_html=True)
+
+    col_yes, col_no = st.columns(2, gap="small")
+    with col_yes:
+        if st.button("Yes, I am 18+", key="age_yes"):
+            st.session_state.age_verified = True
+            st.rerun()
+    with col_no:
+        if st.button("No, exit", key="age_no"):
+            st.markdown("""
+            <div style="text-align:center;color:#555;font-size:0.85rem;margin-top:1.2rem;">
+                Access denied. Please close this tab.
+            </div>
+            """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div class="age-gate-warning">
+        By clicking "Yes, I am 18+" you confirm that you meet the minimum age
+        requirement. Providing false information to access this service may
+        violate applicable laws.
+    </div>
+    """, unsafe_allow_html=True)
+    st.markdown('</div></div>', unsafe_allow_html=True)
+    st.stop()
+
+# ──────────────────────────────────────────────
 # CSS
 # ──────────────────────────────────────────────
 st.markdown("""
