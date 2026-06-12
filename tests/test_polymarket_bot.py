@@ -107,47 +107,11 @@ BACKTEST_JSON = json.dumps({
 })
 
 
-def _text_block(text: str):
-    b = MagicMock()
-    b.type = "text"
-    b.text = text
-    return b
-
-
-def _thinking_block(text: str):
-    b = MagicMock()
-    b.type = "thinking"
-    b.text = text
-    return b
-
-
-def _tool_block(name: str, query: str, tool_id: str = "tu_001"):
-    b = MagicMock()
-    b.type = "tool_use"
-    b.id = tool_id
-    b.name = name
-    b.input = {"query": query}
-    return b
-
-
-def _end_turn(text: str):
+def _ollama_response(text: str):
+    """Fake ollama.chat() response."""
     r = MagicMock()
-    r.stop_reason = "end_turn"
-    r.content = [_text_block(text)]
-    return r
-
-
-def _tool_use_response(query: str):
-    r = MagicMock()
-    r.stop_reason = "tool_use"
-    r.content = [_tool_block("search_news", query)]
-    return r
-
-
-def _refusal():
-    r = MagicMock()
-    r.stop_reason = "refusal"
-    r.content = []
+    r.message = MagicMock()
+    r.message.content = text
     return r
 
 
@@ -356,88 +320,73 @@ class TestGammaClient:
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 3. Analyst — recommendation parsing
+# 3. Analyst — recommendation parsing (_parse_text)
 # ══════════════════════════════════════════════════════════════════════════════
 
 class TestAnalystParsing:
     def test_filters_buy_yes_only(self):
-        from polymarket.analyst import _parse_recommendations
-        recs = _parse_recommendations([_text_block(REC_JSON)])
+        from polymarket.analyst import _parse_text
+        recs = _parse_text(REC_JSON)
         assert len(recs) == 1
         assert recs[0]["action"] == "BUY_YES"
 
     def test_strips_markdown_fences(self):
-        from polymarket.analyst import _parse_recommendations
+        from polymarket.analyst import _parse_text
         fenced = "```json\n" + REC_JSON + "\n```"
-        recs = _parse_recommendations([_text_block(fenced)])
+        recs = _parse_text(fenced)
         assert len(recs) == 1
 
     def test_empty_on_bad_json(self):
-        from polymarket.analyst import _parse_recommendations
-        recs = _parse_recommendations([_text_block("This is not JSON.")])
-        assert recs == []
+        from polymarket.analyst import _parse_text
+        assert _parse_text("This is not JSON.") == []
 
-    def test_ignores_thinking_blocks(self):
-        """Fable 5 thinking blocks must not be mistaken for text output."""
-        from polymarket.analyst import _parse_recommendations
-        blocks = [_thinking_block("Let me think..."), _text_block(REC_JSON)]
-        recs = _parse_recommendations(blocks)
-        assert len(recs) == 1
+    def test_empty_on_blank_string(self):
+        from polymarket.analyst import _parse_text
+        assert _parse_text("") == []
 
     def test_empty_recommendations_array(self):
-        from polymarket.analyst import _parse_recommendations
-        recs = _parse_recommendations([_text_block('{"recommendations": []}')])
-        assert recs == []
+        from polymarket.analyst import _parse_text
+        assert _parse_text('{"recommendations": []}') == []
 
     def test_confidence_value_preserved(self):
-        from polymarket.analyst import _parse_recommendations
-        recs = _parse_recommendations([_text_block(REC_JSON)])
+        from polymarket.analyst import _parse_text
+        recs = _parse_text(REC_JSON)
         assert recs[0]["confidence"] == pytest.approx(0.93)
 
     def test_news_sources_preserved(self):
-        from polymarket.analyst import _parse_recommendations
-        recs = _parse_recommendations([_text_block(REC_JSON)])
+        from polymarket.analyst import _parse_text
+        recs = _parse_text(REC_JSON)
         assert "https://example.com/article1" in recs[0]["news_sources"]
 
 
 # ══════════════════════════════════════════════════════════════════════════════
-# 4. Analyst — full flow (mocked Anthropic)
+# 4. Analyst — full flow (mocked Ollama)
 # ══════════════════════════════════════════════════════════════════════════════
 
 class TestAnalystFlow:
-    def test_end_turn_returns_recommendations(self):
+    def test_returns_recommendations(self):
         from polymarket.analyst import analyze_markets
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(REC_JSON)
-            recs = analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(REC_JSON)
+            recs = analyze_markets(FAKE_MARKETS, balance=300.0)
         assert len(recs) == 1
         assert recs[0]["action"] == "BUY_YES"
 
-    def test_refusal_returns_empty(self):
-        from polymarket.analyst import analyze_markets
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _refusal()
-            recs = analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
-        assert recs == []
-
     def test_empty_markets_skips_api_call(self):
         from polymarket.analyst import analyze_markets
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            recs = analyze_markets([], balance=300.0, api_key="fake-key")
-        MockA.return_value.messages.create.assert_not_called()
+        with patch("polymarket.analyst.ollama.Client") as MockClient:
+            recs = analyze_markets([], balance=300.0)
+        MockClient.return_value.chat.assert_not_called()
         assert recs == []
 
-    def test_tool_use_loop_calls_api_twice(self):
+    def test_bad_json_returns_empty(self):
         from polymarket.analyst import analyze_markets
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA, \
-             patch("polymarket.analyst._ddg_search", return_value=[]):
-            MockA.return_value.messages.create.side_effect = [
-                _tool_use_response("US House budget vote"),
-                _end_turn(REC_JSON),
-            ]
-            recs = analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
-        assert MockA.return_value.messages.create.call_count == 2
-        assert len(recs) == 1
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response("not json at all")
+            recs = analyze_markets(FAKE_MARKETS, balance=300.0)
+        assert recs == []
 
     def test_enriches_yes_token_id_from_markets(self):
         from polymarket.analyst import analyze_markets
@@ -450,9 +399,10 @@ class TestAnalystFlow:
                 "reasoning": "Strong evidence.", "news_sources": [],
             }]
         })
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(json_no_token)
-            recs = analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(json_no_token)
+            recs = analyze_markets(FAKE_MARKETS, balance=300.0)
         assert recs[0]["yes_token_id"] == "tok_yes_abc"
 
     def test_enriches_question_from_markets_if_missing(self):
@@ -465,37 +415,54 @@ class TestAnalystFlow:
                 "reasoning": "Strong.", "news_sources": [],
             }]
         })
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(json_no_q)
-            recs = analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(json_no_q)
+            recs = analyze_markets(FAKE_MARKETS, balance=300.0)
         assert "House" in recs[0]["market_question"]
 
-    def test_uses_fable5_model(self):
-        from polymarket.analyst import analyze_markets, MODEL
-        assert MODEL == "claude-fable-5"
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(REC_JSON)
-            analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
-        call_kwargs = MockA.return_value.messages.create.call_args
-        assert call_kwargs.kwargs.get("model") == "claude-fable-5"
+    def test_default_model_is_qwen(self):
+        from polymarket.analyst import MODEL_DEFAULT
+        assert "qwen" in MODEL_DEFAULT.lower()
 
-    def test_no_thinking_param_in_api_call(self):
-        """Fable 5 must not receive an explicit thinking parameter."""
+    def test_news_injected_from_prefetch(self):
+        """Sources from pre-fetched news are attached when model returns empty sources."""
         from polymarket.analyst import analyze_markets
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(REC_JSON)
-            analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
-        call_kwargs = MockA.return_value.messages.create.call_args.kwargs
-        assert "thinking" not in call_kwargs
+        fake_news = [{"title": "Test", "url": "https://news.com/test", "body": "..."}]
+        json_empty_sources = json.dumps({
+            "recommendations": [{
+                "market_id": "cond_abc",
+                "market_question": "Will the US House pass a budget by Jan 2026?",
+                "action": "BUY_YES", "confidence": 0.93,
+                "current_yes_price": 0.72, "fair_value_estimate": 0.88,
+                "reasoning": "Strong.", "news_sources": [],
+            }]
+        })
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=fake_news):
+            MockClient.return_value.chat.return_value = _ollama_response(json_empty_sources)
+            recs = analyze_markets(FAKE_MARKETS, balance=300.0)
+        assert "https://news.com/test" in recs[0]["news_sources"]
 
-    def test_no_temperature_param_in_api_call(self):
-        """Fable 5 rejects temperature — must not be sent."""
+    def test_format_json_sent_to_ollama(self):
+        """Must request JSON format from Ollama for reliable structured output."""
         from polymarket.analyst import analyze_markets
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(REC_JSON)
-            analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
-        call_kwargs = MockA.return_value.messages.create.call_args.kwargs
-        assert "temperature" not in call_kwargs
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(REC_JSON)
+            analyze_markets(FAKE_MARKETS, balance=300.0)
+        call_kwargs = MockClient.return_value.chat.call_args.kwargs
+        assert call_kwargs.get("format") == "json"
+
+    def test_low_temperature_in_options(self):
+        """Low temperature keeps JSON output consistent."""
+        from polymarket.analyst import analyze_markets
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(REC_JSON)
+            analyze_markets(FAKE_MARKETS, balance=300.0)
+        call_kwargs = MockClient.return_value.chat.call_args.kwargs
+        assert call_kwargs.get("options", {}).get("temperature", 1.0) <= 0.2
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -505,40 +472,44 @@ class TestAnalystFlow:
 class TestBacktest:
     def test_win_scored_correctly(self):
         from polymarket.analyst import run_backtest
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(BACKTEST_JSON)
-            results = run_backtest(RESOLVED_MARKETS, api_key="fake-key")
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(BACKTEST_JSON)
+            results = run_backtest(RESOLVED_MARKETS)
         win = next(r for r in results if r["market_id"] == "res_001")
         assert win["would_win"] is True
         assert win["actual_outcome"] == "YES"
 
     def test_loss_scored_correctly(self):
         from polymarket.analyst import run_backtest
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(BACKTEST_JSON)
-            results = run_backtest(RESOLVED_MARKETS, api_key="fake-key")
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(BACKTEST_JSON)
+            results = run_backtest(RESOLVED_MARKETS)
         loss = next(r for r in results if r["market_id"] == "res_002")
         assert loss["would_win"] is False
         assert loss["actual_outcome"] == "NO"
 
     def test_accuracy_calculation(self):
         from polymarket.analyst import run_backtest
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(BACKTEST_JSON)
-            results = run_backtest(RESOLVED_MARKETS, api_key="fake-key")
-        correct = sum(1 for r in results if r["would_win"])
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(BACKTEST_JSON)
+            results = run_backtest(RESOLVED_MARKETS)
+        correct  = sum(1 for r in results if r["would_win"])
         accuracy = correct / len(results) * 100
         assert accuracy == pytest.approx(50.0)
 
     def test_empty_markets_returns_empty(self):
         from polymarket.analyst import run_backtest
-        assert run_backtest([], api_key="fake-key") == []
+        assert run_backtest([]) == []
 
     def test_enriches_question_from_resolved_markets(self):
         from polymarket.analyst import run_backtest
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(BACKTEST_JSON)
-            results = run_backtest(RESOLVED_MARKETS, api_key="fake-key")
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(BACKTEST_JSON)
+            results = run_backtest(RESOLVED_MARKETS)
         assert results[0]["market_question"] != ""
 
 
@@ -616,10 +587,11 @@ class TestEndToEnd:
         close at profit → daily stats updated.
         """
         # Step 1: scan produces a recommendation
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(REC_JSON)
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(REC_JSON)
             from polymarket.analyst import analyze_markets
-            recs = analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
+            recs = analyze_markets(FAKE_MARKETS, balance=300.0)
 
         assert len(recs) == 1
         rec = recs[0]
@@ -683,10 +655,11 @@ class TestEndToEnd:
 
     def test_analysis_saved_with_sources(self, db):
         """Analysis from a scan should be persisted with its source URLs."""
-        with patch("polymarket.analyst.anthropic.Anthropic") as MockA:
-            MockA.return_value.messages.create.return_value = _end_turn(REC_JSON)
+        with patch("polymarket.analyst.ollama.Client") as MockClient, \
+             patch("polymarket.analyst._fetch_news", return_value=[]):
+            MockClient.return_value.chat.return_value = _ollama_response(REC_JSON)
             from polymarket.analyst import analyze_markets
-            recs = analyze_markets(FAKE_MARKETS, balance=300.0, api_key="fake-key")
+            recs = analyze_markets(FAKE_MARKETS, balance=300.0)
 
         for r in recs:
             db.save_analysis({

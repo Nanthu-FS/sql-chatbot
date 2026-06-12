@@ -18,7 +18,6 @@ st.set_page_config(
 from polymarket.analyst import analyze_markets, run_backtest
 from polymarket.client import ClobClient, GammaClient
 from polymarket.config import (
-    ANTHROPIC_API_KEY,
     CATEGORIES,
     DAILY_LOSS_LIMIT,
     EMAIL_PASSWORD,
@@ -29,10 +28,12 @@ from polymarket.config import (
     MAX_OPEN_POSITIONS,
     MAX_RISK_PER_TRADE,
     MIN_VOLUME_USD,
+    OLLAMA_HOST,
     POLY_API_KEY,
     POLY_API_PASSPHRASE,
     POLY_API_SECRET,
     POLY_PRIVATE_KEY,
+    POLYMARKET_MODEL,
 )
 from polymarket.database import (
     close_trade,
@@ -66,7 +67,7 @@ for k, v in _DEFAULTS.items():
 # ── Helpers ─────────────────────────────────────────────────────────────────────
 
 def _creds_ok() -> bool:
-    return bool(ANTHROPIC_API_KEY and POLY_PRIVATE_KEY and POLY_API_KEY)
+    return bool(POLY_PRIVATE_KEY and POLY_API_KEY)
 
 
 def _get_clob() -> ClobClient:
@@ -357,7 +358,7 @@ if st.session_state.scan_pending:
                     markets = st.session_state.markets_cache
                     st.write(f"Analysing {len(markets)} markets with Claude Fable 5…")
 
-                    recs = analyze_markets(markets, balance, ANTHROPIC_API_KEY)
+                    recs = analyze_markets(markets, balance, POLYMARKET_MODEL, OLLAMA_HOST)
                     recs = [r for r in recs if r.get("confidence", 0) >= sb_confidence / 100]
 
                     for r in recs:
@@ -598,52 +599,49 @@ with tab_backtest:
     n_markets = st.slider("Number of resolved markets to analyse", 5, 50, 20)
 
     if st.button("▶ Run Backtest", type="primary"):
-        if not ANTHROPIC_API_KEY:
-            st.error("ANTHROPIC_API_KEY required.")
-        else:
-            with st.status("Running backtest with Claude Fable 5…", expanded=True) as status:
-                try:
-                    st.write("Fetching resolved markets…")
-                    gamma    = GammaClient()
-                    resolved = gamma.get_resolved_markets(limit=n_markets)
+        with st.status(f"Running backtest with {POLYMARKET_MODEL}…", expanded=True) as status:
+            try:
+                st.write("Fetching resolved markets…")
+                gamma    = GammaClient()
+                resolved = gamma.get_resolved_markets(limit=n_markets)
 
-                    if not resolved:
-                        status.update(label="No resolved markets found.", state="error")
+                if not resolved:
+                    status.update(label="No resolved markets found.", state="error")
+                else:
+                    st.write(f"Analysing {len(resolved)} resolved markets with {POLYMARKET_MODEL}…")
+                    results = run_backtest(resolved, POLYMARKET_MODEL, OLLAMA_HOST)
+                    status.update(label="Backtest complete", state="complete")
+
+                    if not results:
+                        st.info("Model found no trades meeting the 90% threshold in the backtest set.")
                     else:
-                        st.write(f"Analysing {len(resolved)} resolved markets…")
-                        results = run_backtest(resolved, ANTHROPIC_API_KEY)
-                        status.update(label="Backtest complete", state="complete")
+                        correct   = sum(1 for r in results if r.get("would_win"))
+                        accuracy  = correct / len(results) * 100
+                        hypo_pnl  = sum(
+                            (1 - r.get("current_yes_price", 0.5)) * 10 if r.get("would_win")
+                            else -r.get("current_yes_price", 0.5) * 10
+                            for r in results
+                        )
 
-                        if not results:
-                            st.info("Claude found no trades meeting the 90% threshold in the backtest set.")
-                        else:
-                            correct   = sum(1 for r in results if r.get("would_win"))
-                            accuracy  = correct / len(results) * 100
-                            hypo_pnl  = sum(
-                                (1 - r.get("current_yes_price", 0.5)) * 10 if r.get("would_win")
-                                else -r.get("current_yes_price", 0.5) * 10
-                                for r in results
-                            )
+                        c1, c2, c3, c4 = st.columns(4)
+                        c1.metric("Markets Analysed",    len(resolved))
+                        c2.metric("Trades Recommended",  len(results))
+                        c3.metric("Would-Win Rate",      f"{accuracy:.1f}%")
+                        c4.metric("Hypothetical P&L*",   f"${hypo_pnl:+.1f}", help="Assumes $10/trade flat sizing")
 
-                            c1, c2, c3, c4 = st.columns(4)
-                            c1.metric("Markets Analysed",    len(resolved))
-                            c2.metric("Trades Recommended",  len(results))
-                            c3.metric("Would-Win Rate",      f"{accuracy:.1f}%")
-                            c4.metric("Hypothetical P&L*",   f"${hypo_pnl:+.1f}", help="Assumes $10/trade flat sizing")
+                        st.divider()
+                        for r in results:
+                            icon  = "✅" if r.get("would_win") else "❌"
+                            label = f"{icon} {r.get('market_question','')[:70]}  ({r.get('confidence',0)*100:.0f}% conf)"
+                            with st.expander(label):
+                                st.write(f"**Actual outcome:** {r.get('actual_outcome','Unknown')}")
+                                st.write(f"**Reasoning:** {r.get('reasoning','')}")
+                                if r.get("news_sources"):
+                                    st.markdown("**Sources:** " + "  ·  ".join(f"[link]({u})" for u in r["news_sources"]))
 
-                            st.divider()
-                            for r in results:
-                                icon  = "✅" if r.get("would_win") else "❌"
-                                label = f"{icon} {r.get('market_question','')[:70]}  ({r.get('confidence',0)*100:.0f}% conf)"
-                                with st.expander(label):
-                                    st.write(f"**Actual outcome:** {r.get('actual_outcome','Unknown')}")
-                                    st.write(f"**Claude's reasoning:** {r.get('reasoning','')}")
-                                    if r.get("news_sources"):
-                                        st.markdown("**Sources:** " + "  ·  ".join(f"[link]({u})" for u in r["news_sources"]))
-
-                except Exception as e:
-                    status.update(label="Backtest failed", state="error")
-                    st.error(f"Error: {e}")
+            except Exception as e:
+                status.update(label="Backtest failed", state="error")
+                st.error(f"Error: {e}")
 
 
 # ── Setup ─────────────────────────────────────────────────────────────────────────
@@ -651,28 +649,51 @@ with tab_backtest:
 with tab_setup:
     st.header("Setup & Credentials")
 
-    st.subheader("Credential Status")
-    checks = {
-        "ANTHROPIC_API_KEY":   bool(ANTHROPIC_API_KEY),
-        "POLY_PRIVATE_KEY":    bool(POLY_PRIVATE_KEY),
-        "POLY_API_KEY":        bool(POLY_API_KEY),
-        "POLY_API_SECRET":     bool(POLY_API_SECRET),
-        "POLY_API_PASSPHRASE": bool(POLY_API_PASSPHRASE),
-    }
-    for k, ok in checks.items():
-        (st.success if ok else st.error)(f"{'✅' if ok else '❌'}  {k}")
+    st.subheader("Status")
+    col_m, col_p = st.columns(2)
+    with col_m:
+        st.info(f"**AI Model:** `{POLYMARKET_MODEL}`")
+        st.caption(f"Ollama host: {OLLAMA_HOST}")
+    with col_p:
+        checks = {
+            "POLY_PRIVATE_KEY":    bool(POLY_PRIVATE_KEY),
+            "POLY_API_KEY":        bool(POLY_API_KEY),
+            "POLY_API_SECRET":     bool(POLY_API_SECRET),
+            "POLY_API_PASSPHRASE": bool(POLY_API_PASSPHRASE),
+        }
+        for k, ok in checks.items():
+            (st.success if ok else st.error)(f"{'✅' if ok else '❌'}  {k}")
 
     st.divider()
 
-    with st.expander("1 — Get your Anthropic API Key (Claude Fable 5)"):
-        st.markdown("""
-1. Go to **[console.anthropic.com](https://console.anthropic.com)**
-2. Navigate to **API Keys** → **Create API Key**
-3. Copy the key and add it to your `.env` file:
+    with st.expander("1 — Install Ollama and pull a model"):
+        st.markdown(f"""
+**Install Ollama** (runs models locally, no API key needed):
+```bash
+# macOS / Linux
+curl -fsSL https://ollama.com/install.sh | sh
+
+# Windows: download from https://ollama.com
 ```
-ANTHROPIC_API_KEY=sk-ant-api03-...
+
+**Pull a capable model** — choose based on your RAM:
+
+| Model | RAM needed | Best for |
+|---|---|---|
+| `qwen2.5:14b` *(current default)* | ~10 GB | Great reasoning, fast |
+| `qwen2.5:32b` | ~20 GB | Excellent accuracy |
+| `deepseek-r1:14b` | ~10 GB | Strong reasoning |
+| `llama3.3:70b` | ~40 GB | Best open model |
+
+```bash
+ollama pull {POLYMARKET_MODEL}
 ```
-> Claude Fable 5 requires 30-day data retention. Ensure your org's settings allow this.
+
+Set a different model in `.env`:
+```
+POLYMARKET_MODEL=qwen2.5:32b
+OLLAMA_HOST=http://localhost:11434
+```
         """)
 
     with st.expander("2 — Create a Polygon wallet and fund with USDC"):
