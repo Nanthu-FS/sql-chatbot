@@ -3,7 +3,18 @@ import json
 from datetime import date, datetime
 from pathlib import Path
 
-DB_PATH = Path(__file__).parent.parent / "polymarket_trades.db"
+# Store DB in user home directory to avoid TOCTOU races on project files (VULN-14)
+_DB_DIR = Path.home() / ".polymarket_bot"
+_DB_DIR.mkdir(parents=True, exist_ok=True)
+DB_PATH = _DB_DIR / "trades.db"
+
+_LIMIT_MAX = 10_000
+_LIMIT_MIN = 1
+
+
+def _clamp(n: int) -> int:
+    """Bound a LIMIT value to prevent unbounded queries (VULN-19)."""
+    return min(max(_LIMIT_MIN, int(n)), _LIMIT_MAX)
 
 
 def _conn():
@@ -133,7 +144,7 @@ def save_analysis(analysis: dict):
 def get_analysis_history(limit: int = 100) -> list[dict]:
     with _conn() as conn:
         rows = conn.execute(
-            "SELECT * FROM analyses ORDER BY created_at DESC LIMIT ?", (limit,)
+            "SELECT * FROM analyses ORDER BY created_at DESC LIMIT ?", (_clamp(limit),)
         ).fetchall()
     result = []
     for r in rows:
@@ -158,7 +169,7 @@ def get_daily_pnl_today() -> float:
 def get_trade_history(limit: int = 200) -> list[dict]:
     with _conn() as conn:
         rows = conn.execute(
-            "SELECT * FROM trades ORDER BY created_at DESC LIMIT ?", (limit,)
+            "SELECT * FROM trades ORDER BY created_at DESC LIMIT ?", (_clamp(limit),)
         ).fetchall()
     return [dict(r) for r in rows]
 
@@ -166,6 +177,6 @@ def get_trade_history(limit: int = 200) -> list[dict]:
 def get_daily_stats(limit: int = 30) -> list[dict]:
     with _conn() as conn:
         rows = conn.execute(
-            "SELECT * FROM daily_stats ORDER BY date DESC LIMIT ?", (limit,)
+            "SELECT * FROM daily_stats ORDER BY date DESC LIMIT ?", (_clamp(limit),)
         ).fetchall()
     return [dict(r) for r in rows]

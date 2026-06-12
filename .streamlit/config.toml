@@ -1,0 +1,4 @@
+[server]
+# Bind to localhost by default — prevents accidental exposure on public interfaces (VULN-02)
+address = "localhost"
+headless = true

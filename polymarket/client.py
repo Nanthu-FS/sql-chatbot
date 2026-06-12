@@ -1,8 +1,34 @@
+import logging
 import requests
 from typing import Optional
 
+logger = logging.getLogger(__name__)
+
 GAMMA_BASE = "https://gamma-api.polymarket.com"
 CLOB_BASE  = "https://clob.polymarket.com"
+
+# Hard caps for API response field lengths (VULN-07)
+_MAX_ID       = 128
+_MAX_QUESTION = 500
+_MAX_DESC     = 500
+_MAX_TOKEN_ID = 128
+_MAX_CATEGORY = 100
+_MAX_DATE     = 64
+_MAX_LABEL    = 100
+
+
+def _s(val, max_len: int) -> str:
+    """Coerce to string and truncate — sanitizes external API data (VULN-07)."""
+    return str(val or "")[:max_len]
+
+
+def _f(val, default: float = 0.0) -> float:
+    """Safe float conversion with fallback."""
+    try:
+        return float(val)
+    except (TypeError, ValueError):
+        return default
+
 
 # Rough keyword mapping used to filter by category via tags
 _CATEGORY_KEYWORDS = {
@@ -41,9 +67,9 @@ class GammaClient:
         try:
             data = self._get("/markets", params)
         except Exception as e:
-            raise RuntimeError(f"Failed to fetch markets: {e}")
+            logger.error("get_markets failed: %s", e, exc_info=True)
+            raise RuntimeError("Failed to fetch markets — check logs for details.")
 
-        # Build keyword set for category filtering
         keywords: set[str] = set()
         if categories:
             for cat in categories:
@@ -52,34 +78,35 @@ class GammaClient:
         markets = []
         for m in data:
             try:
-                vol = float(m.get("volume") or 0)
+                vol = _f(m.get("volume"))
                 if vol < min_volume:
                     continue
 
-                # Category filter: check question + tag labels
                 if keywords:
-                    question_lower = (m.get("question") or "").lower()
-                    tag_labels = " ".join(t.get("label", "") for t in (m.get("tags") or [])).lower()
+                    question_lower = _s(m.get("question"), _MAX_QUESTION).lower()
+                    tag_labels = " ".join(
+                        _s(t.get("label"), _MAX_LABEL) for t in (m.get("tags") or [])
+                    ).lower()
                     combined = question_lower + " " + tag_labels
                     if not any(kw in combined for kw in keywords):
                         continue
 
-                tokens     = m.get("tokens") or []
-                yes_token  = next((t for t in tokens if (t.get("outcome") or "").upper() == "YES"), None)
-                no_token   = next((t for t in tokens if (t.get("outcome") or "").upper() == "NO"), None)
+                tokens    = m.get("tokens") or []
+                yes_token = next((t for t in tokens if _s(t.get("outcome"), 8).upper() == "YES"), None)
+                no_token  = next((t for t in tokens if _s(t.get("outcome"), 8).upper() == "NO"),  None)
 
                 markets.append({
-                    "market_id":    m.get("conditionId") or m.get("id") or "",
-                    "question":     m.get("question") or "",
-                    "category":     m.get("category") or "",
-                    "description":  (m.get("description") or "")[:500],
+                    "market_id":    _s(m.get("conditionId") or m.get("id"), _MAX_ID),
+                    "question":     _s(m.get("question"), _MAX_QUESTION),
+                    "category":     _s(m.get("category"), _MAX_CATEGORY),
+                    "description":  _s(m.get("description"), _MAX_DESC),
                     "volume_usd":   vol,
-                    "end_date":     m.get("endDate") or "",
-                    "tags":         [t.get("label", "") for t in (m.get("tags") or [])],
-                    "yes_token_id": (yes_token or {}).get("token_id") or "",
-                    "no_token_id":  (no_token  or {}).get("token_id") or "",
-                    "yes_price":    float((yes_token or {}).get("price") or 0.5),
-                    "no_price":     float((no_token  or {}).get("price") or 0.5),
+                    "end_date":     _s(m.get("endDate"), _MAX_DATE),
+                    "tags":         [_s(t.get("label"), _MAX_LABEL) for t in (m.get("tags") or [])],
+                    "yes_token_id": _s((yes_token or {}).get("token_id"), _MAX_TOKEN_ID),
+                    "no_token_id":  _s((no_token  or {}).get("token_id"), _MAX_TOKEN_ID),
+                    "yes_price":    _f((yes_token or {}).get("price"), 0.5),
+                    "no_price":     _f((no_token  or {}).get("price"), 0.5),
                 })
             except (ValueError, TypeError):
                 continue
@@ -95,30 +122,33 @@ class GammaClient:
                 timeout=10,
             )
             resp.raise_for_status()
-            return float(resp.json().get("price", 0.5))
+            return _f(resp.json().get("price"), 0.5)
         except Exception:
             return None
 
     def get_resolved_markets(self, limit: int = 50) -> list[dict]:
         """Resolved markets for backtesting."""
         try:
-            data = self._get("/markets", {"closed": "true", "limit": limit, "order": "volume", "ascending": "false"})
+            data = self._get("/markets", {
+                "closed": "true", "limit": limit, "order": "volume", "ascending": "false"
+            })
         except Exception as e:
-            raise RuntimeError(f"Failed to fetch resolved markets: {e}")
+            logger.error("get_resolved_markets failed: %s", e, exc_info=True)
+            raise RuntimeError("Failed to fetch resolved markets — check logs for details.")
 
         markets = []
         for m in data:
             try:
                 tokens    = m.get("tokens") or []
-                yes_token = next((t for t in tokens if (t.get("outcome") or "").upper() == "YES"), None)
+                yes_token = next((t for t in tokens if _s(t.get("outcome"), 8).upper() == "YES"), None)
                 markets.append({
-                    "market_id":          m.get("conditionId") or m.get("id") or "",
-                    "question":           m.get("question") or "",
-                    "category":           m.get("category") or "",
-                    "volume_usd":         float(m.get("volume") or 0),
-                    "yes_price_at_open":  float((yes_token or {}).get("price") or 0.5),
-                    "resolved_outcome":   m.get("resolvedOutcome") or "",
-                    "end_date":           m.get("endDate") or "",
+                    "market_id":         _s(m.get("conditionId") or m.get("id"), _MAX_ID),
+                    "question":          _s(m.get("question"), _MAX_QUESTION),
+                    "category":          _s(m.get("category"), _MAX_CATEGORY),
+                    "volume_usd":        _f(m.get("volume")),
+                    "yes_price_at_open": _f((yes_token or {}).get("price"), 0.5),
+                    "resolved_outcome":  _s(m.get("resolvedOutcome"), 8),
+                    "end_date":          _s(m.get("endDate"), _MAX_DATE),
                 })
             except (ValueError, TypeError):
                 continue
@@ -148,7 +178,9 @@ class ClobClient:
         except ImportError:
             raise RuntimeError("py-clob-client not installed. Run: pip install py-clob-client")
         except Exception as e:
-            raise RuntimeError(f"Polymarket client init failed: {e}")
+            # Log full detail but never surface key material to the caller (VULN-03)
+            logger.error("ClobClient init failed: %s", e, exc_info=True)
+            raise RuntimeError("Polymarket client init failed — check logs for details.")
 
     def get_balance(self) -> float:
         try:
@@ -157,7 +189,8 @@ class ClobClient:
                 return float(result.get("balance", 0))
             return float(result)
         except Exception as e:
-            raise RuntimeError(f"get_balance failed: {e}")
+            logger.error("get_balance failed: %s", e, exc_info=True)
+            raise RuntimeError("Balance lookup failed — check logs for details.")
 
     def get_open_orders(self) -> list[dict]:
         try:
@@ -180,7 +213,9 @@ class ClobClient:
             signed = self._clob.create_order(args)
             return self._clob.post_order(signed) or {}
         except Exception as e:
-            raise RuntimeError(f"Order placement failed: {e}")
+            # Full exception (potentially containing signing details) goes only to logs (VULN-03)
+            logger.error("place_order failed: %s", e, exc_info=True)
+            raise RuntimeError("Order placement failed — check logs for details.")
 
     def cancel_order(self, order_id: str) -> bool:
         try:

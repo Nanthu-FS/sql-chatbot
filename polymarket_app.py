@@ -1,5 +1,8 @@
 import io
+import logging
+import os
 import smtplib
+import ssl
 from datetime import date, datetime
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -19,6 +22,7 @@ from polymarket.analyst import analyze_markets, run_backtest
 from polymarket.client import ClobClient, GammaClient
 from polymarket.config import (
     CATEGORIES,
+    CONFIDENCE_THRESHOLD,
     DAILY_LOSS_LIMIT,
     EMAIL_PASSWORD,
     EMAIL_RECIPIENT,
@@ -47,8 +51,31 @@ from polymarket.database import (
     save_trade,
     update_trade_price,
 )
+from polymarket.security import escape_for_markdown, safe_url, sanitize_email_field
+
+logger = logging.getLogger(__name__)
+
+# Minimum seconds between scans to prevent abuse (VULN-20)
+MIN_SCAN_INTERVAL_S = 300
 
 init_db()
+
+# ── Password gate (VULN-02) ──────────────────────────────────────────────────────
+_APP_PASSWORD = os.getenv("APP_PASSWORD", "")
+if _APP_PASSWORD:
+    if "authenticated" not in st.session_state:
+        st.session_state.authenticated = False
+    if not st.session_state.authenticated:
+        st.title("🔒 Polymarket Bot")
+        with st.form("login_form"):
+            pw = st.text_input("Password", type="password")
+            if st.form_submit_button("Login"):
+                if pw == _APP_PASSWORD:
+                    st.session_state.authenticated = True
+                    st.rerun()
+                else:
+                    st.error("Incorrect password.")
+        st.stop()
 
 # ── Session state defaults ──────────────────────────────────────────────────────
 _DEFAULTS = {
@@ -99,14 +126,16 @@ def _send_email(subject: str, body: str):
         msg = MIMEMultipart()
         msg["From"]    = EMAIL_USER
         msg["To"]      = EMAIL_RECIPIENT
-        msg["Subject"] = subject
-        msg.attach(MIMEText(body, "plain"))
+        msg["Subject"] = sanitize_email_field(subject, max_len=200)
+        msg.attach(MIMEText(sanitize_email_field(body, max_len=4000), "plain"))
+        # Explicit TLS context prevents downgrade attacks (VULN-15)
+        ctx = ssl.create_default_context()
         with smtplib.SMTP(EMAIL_SMTP_HOST, EMAIL_SMTP_PORT) as srv:
-            srv.starttls()
+            srv.starttls(context=ctx)
             srv.login(EMAIL_USER, EMAIL_PASSWORD)
             srv.send_message(msg)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.error("Email send failed: %s", exc, exc_info=True)
 
 
 def _refresh_open_positions(gamma: GammaClient):
@@ -118,7 +147,9 @@ def _refresh_open_positions(gamma: GammaClient):
         price = gamma.get_market_price(token_id)
         if price is None:
             continue
-        pnl = (price - trade["entry_price"]) / trade["entry_price"] * trade["size_usdc"]
+        entry = trade["entry_price"]
+        # Guard against zero entry_price to avoid division by zero (VULN-09)
+        pnl = (price - entry) / entry * trade["size_usdc"] if entry > 0 else 0.0
         update_trade_price(trade["id"], price, pnl)
 
 
@@ -126,7 +157,7 @@ def _refresh_open_positions(gamma: GammaClient):
 
 with st.sidebar:
     st.title("📈 Polymarket Bot")
-    st.caption("Powered by Claude Fable 5")
+    st.caption(f"Model: {POLYMARKET_MODEL}")
 
     if _creds_ok():
         st.success("✅ Credentials configured")
@@ -136,10 +167,11 @@ with st.sidebar:
     st.divider()
 
     st.subheader("Bot Settings")
-    sb_min_volume      = st.number_input("Min market volume ($)", value=int(MIN_VOLUME_USD), step=10_000, min_value=10_000)
-    sb_confidence      = st.slider("Min confidence (%)", 70, 99, int(CONFIDENCE_THRESHOLD * 100))
-    sb_daily_loss      = st.slider("Daily loss limit (%)", 1, 10, int(DAILY_LOSS_LIMIT * 100))
-    sb_max_positions   = st.number_input("Max open positions", value=MAX_OPEN_POSITIONS, min_value=1, max_value=20)
+    sb_min_volume    = st.number_input("Min market volume ($)", value=int(MIN_VOLUME_USD), step=10_000, min_value=10_000)
+    # Minimum confidence is 90% — lower values violate risk policy (VULN-13)
+    sb_confidence    = st.slider("Min confidence (%)", 90, 99, max(90, int(CONFIDENCE_THRESHOLD * 100)))
+    sb_daily_loss    = st.slider("Daily loss limit (%)", 1, 10, int(DAILY_LOSS_LIMIT * 100))
+    sb_max_positions = st.number_input("Max open positions", value=MAX_OPEN_POSITIONS, min_value=1, max_value=20)
 
     st.divider()
     st.subheader("Auto-Scan")
@@ -166,10 +198,10 @@ if st.session_state.auto_run:
     except ImportError:
         pass
 
-# Trigger auto-scan if interval elapsed
+# Trigger auto-scan only if enough time has elapsed (VULN-20)
 if st.session_state.auto_run and st.session_state.last_scan_time:
     elapsed_s = (datetime.now() - st.session_state.last_scan_time).total_seconds()
-    if elapsed_s >= sb_interval * 60:
+    if elapsed_s >= max(sb_interval * 60, MIN_SCAN_INTERVAL_S):
         st.session_state.scan_pending = True
 
 
@@ -196,10 +228,10 @@ with tab_dashboard:
     daily_stats   = get_daily_stats()
     today_pnl     = get_daily_pnl_today()
 
-    closed = [t for t in trade_history if t["status"] == "closed"]
-    wins   = sum(1 for t in closed if (t.get("pnl") or 0) > 0)
-    total_pnl  = sum((t.get("pnl") or 0) for t in closed)
-    win_rate   = (wins / len(closed) * 100) if closed else 0.0
+    closed    = [t for t in trade_history if t["status"] == "closed"]
+    wins      = sum(1 for t in closed if (t.get("pnl") or 0) > 0)
+    total_pnl = sum((t.get("pnl") or 0) for t in closed)
+    win_rate  = (wins / len(closed) * 100) if closed else 0.0
 
     c1, c2, c3, c4 = st.columns(4)
     c1.metric("Balance (USDC)", f"${balance:,.2f}")
@@ -207,7 +239,6 @@ with tab_dashboard:
     c3.metric("Open Positions", f"{len(open_trades)} / {sb_max_positions}")
     c4.metric("Win Rate", f"{win_rate:.1f}%", f"{len(closed)} closed trades")
 
-    # Daily loss limit alert
     loss_limit_usdc = balance * (sb_daily_loss / 100)
     if today_pnl < -loss_limit_usdc:
         st.error(
@@ -236,14 +267,14 @@ with tab_dashboard:
             st.info("No trade history yet — run a scan to get started.")
 
     with col_scan:
-        st.subheader("Last Claude Scan")
+        st.subheader("Last Scan")
         if st.session_state.last_scan_time:
             st.caption(st.session_state.last_scan_time.strftime("Ran at %H:%M on %b %d"))
             recs = st.session_state.recommendations
             if recs:
                 st.success(f"**{len(recs)} opportunity{'s' if len(recs)>1 else ''} found**")
                 for r in recs[:4]:
-                    q  = r.get("market_question", "")[:55]
+                    q  = escape_for_markdown(r.get("market_question", ""))[:55]
                     cf = r.get("confidence", 0) * 100
                     st.write(f"• {q}… — **{cf:.0f}%**")
             else:
@@ -272,7 +303,6 @@ with tab_dashboard:
     else:
         st.info("No open positions.")
 
-    # Win/loss bar chart
     if daily_stats:
         st.subheader("Daily Trade Activity")
         df_d = pd.DataFrame(daily_stats).sort_values("date")
@@ -305,8 +335,9 @@ with tab_scanner:
                     )
                     _refresh_open_positions(gamma)
                     st.success(f"Found {len(st.session_state.markets_cache)} markets")
-                except Exception as e:
-                    st.error(f"Failed: {e}")
+                except Exception:
+                    logger.exception("Market fetch failed")
+                    st.error("Failed to fetch markets — check logs for details.")
 
     with col_info:
         if st.session_state.markets_cache:
@@ -339,14 +370,14 @@ if st.session_state.scan_pending:
     if not _creds_ok():
         st.warning("Configure credentials in the **Setup** tab before scanning.")
     else:
-        balance = _get_balance()
+        balance   = _get_balance()
         today_pnl = get_daily_pnl_today()
         loss_limit = balance * (sb_daily_loss / 100)
 
         if today_pnl < -loss_limit:
             st.warning("Daily loss limit reached. Scan skipped.")
         else:
-            with st.status("Claude Fable 5 is analysing markets…", expanded=True) as status:
+            with st.status("Analysing markets…", expanded=True) as status:
                 st.write("Fetching high-volume markets…")
                 try:
                     gamma = GammaClient()
@@ -356,10 +387,13 @@ if st.session_state.scan_pending:
                         )
 
                     markets = st.session_state.markets_cache
-                    st.write(f"Analysing {len(markets)} markets with Claude Fable 5…")
+                    st.write(f"Analysing {len(markets)} markets with {POLYMARKET_MODEL}…")
 
                     recs = analyze_markets(markets, balance, POLYMARKET_MODEL, OLLAMA_HOST)
-                    recs = [r for r in recs if r.get("confidence", 0) >= sb_confidence / 100]
+
+                    # Enforce both UI slider and env-configured threshold (VULN-21)
+                    effective_threshold = max(sb_confidence / 100, CONFIDENCE_THRESHOLD)
+                    recs = [r for r in recs if r.get("confidence", 0) >= effective_threshold]
 
                     for r in recs:
                         save_analysis({
@@ -376,26 +410,30 @@ if st.session_state.scan_pending:
                     st.session_state.recommendations = recs
                     st.session_state.last_scan_time  = datetime.now()
 
-                    status.update(label=f"Scan complete — {len(recs)} opportunity{'s' if len(recs)!=1 else ''} found", state="complete")
+                    status.update(
+                        label=f"Scan complete — {len(recs)} opportunity{'s' if len(recs)!=1 else ''} found",
+                        state="complete",
+                    )
 
                     if recs:
                         st.toast(f"🎯 {len(recs)} trade{'s' if len(recs)>1 else ''} found!", icon="🎯")
                         _send_email(
                             f"Polymarket Bot: {len(recs)} opportunities",
                             "\n\n".join(
-                                f"Market: {r.get('market_question','')}\n"
+                                f"Market: {sanitize_email_field(r.get('market_question',''))}\n"
                                 f"Confidence: {r.get('confidence',0)*100:.0f}%\n"
                                 f"Edge: {r.get('fair_value_estimate',0)-r.get('current_yes_price',0):.3f}\n"
-                                f"Reasoning: {r.get('reasoning','')}"
+                                f"Reasoning: {sanitize_email_field(r.get('reasoning',''))}"
                                 for r in recs
                             ),
                         )
                     else:
                         st.toast("Scan complete — no high-confidence trades found.")
 
-                except Exception as e:
+                except Exception:
+                    logger.exception("Market scan failed")
                     status.update(label="Scan failed", state="error")
-                    st.error(f"Scan error: {e}")
+                    st.error("Scan failed — check logs for details.")
 
 
 # ── Recommendations ───────────────────────────────────────────────────────────────
@@ -410,7 +448,7 @@ with tab_recs:
         balance       = _get_balance()
         open_trades   = get_open_trades()
         open_count    = len(open_trades)
-        max_per_trade = balance * (MAX_RISK_PER_TRADE)
+        max_per_trade = balance * MAX_RISK_PER_TRADE
 
         st.caption(
             f"{len(recs)} recommendation{'s' if len(recs)!=1 else ''} · "
@@ -429,18 +467,24 @@ with tab_recs:
                 left, right = st.columns([5, 2])
 
                 with left:
-                    st.markdown(f"#### {rec.get('market_question', 'Unknown market')}")
+                    # Escape user-facing text before rendering as markdown (VULN-16)
+                    safe_q = escape_for_markdown(rec.get("market_question", "Unknown market"))
+                    st.markdown(f"#### {safe_q}")
                     m1, m2, m3, m4 = st.columns(4)
-                    m1.metric("Confidence",   f"{confidence*100:.0f}%")
-                    m2.metric("Current YES",  f"{current_price:.3f}")
-                    m3.metric("Fair Value",   f"{fair_value:.3f}")
-                    m4.metric("Edge",         f"{edge*100:+.1f}%")
+                    m1.metric("Confidence",  f"{confidence*100:.0f}%")
+                    m2.metric("Current YES", f"{current_price:.3f}")
+                    m3.metric("Fair Value",  f"{fair_value:.3f}")
+                    m4.metric("Edge",        f"{edge*100:+.1f}%")
 
-                    with st.expander("Claude's Reasoning"):
+                    with st.expander("Reasoning"):
                         st.write(rec.get("reasoning", "No reasoning provided."))
                         sources = rec.get("news_sources", [])
                         if sources:
-                            st.markdown("**Sources:** " + "  ·  ".join(f"[link]({u})" for u in sources))
+                            # Only allow http/https URLs in rendered links (VULN-04)
+                            links = "  ·  ".join(
+                                f"[link]({safe_url(u)})" for u in sources
+                            )
+                            st.markdown(f"**Sources:** {links}")
 
                 with right:
                     if open_count >= sb_max_positions:
@@ -459,11 +503,25 @@ with tab_recs:
 
                         if st.button("✅ Buy YES", key=f"buy_{i}", type="primary", use_container_width=True):
                             try:
+                                # Re-query live count right before placing (VULN-05/VULN-10)
+                                live_open = get_open_trades()
+                                if len(live_open) >= sb_max_positions:
+                                    st.error("Max positions reached — order not placed.")
+                                    st.rerun()
+
+                                # Look up token_id from canonical cache only — never trust LLM output (VULN-06)
                                 market = next(
                                     (m for m in st.session_state.markets_cache
-                                     if m["market_id"] == rec.get("market_id")), {}
+                                     if m["market_id"] == rec.get("market_id")), None
                                 )
-                                token_id = market.get("yes_token_id") or rec.get("yes_token_id", "")
+                                if not market:
+                                    st.error("Market not found in cache — refresh the scanner first.")
+                                    st.rerun()
+
+                                token_id = market.get("yes_token_id", "")
+                                if not token_id:
+                                    st.error("YES token ID missing for this market — order rejected.")
+                                    st.rerun()
 
                                 clob     = _get_clob()
                                 resp     = clob.place_order(token_id, size, current_price)
@@ -485,17 +543,18 @@ with tab_recs:
                                 st.toast(f"Trade #{trade_id} placed!", icon="✅")
                                 _send_email(
                                     "Polymarket Bot — Trade Executed",
-                                    f"Market:     {rec.get('market_question','')}\n"
+                                    f"Market:     {sanitize_email_field(rec.get('market_question',''))}\n"
                                     f"Size:       ${size:.2f}\n"
                                     f"Price:      {current_price:.3f}\n"
                                     f"Confidence: {confidence*100:.0f}%\n"
-                                    f"Order ID:   {order_id}",
+                                    f"Order ID:   {sanitize_email_field(order_id)}",
                                 )
                                 st.session_state.recommendations.pop(i)
                                 st.rerun()
 
-                            except Exception as e:
-                                st.error(f"Order failed: {e}")
+                            except Exception:
+                                logger.exception("Order placement failed")
+                                st.error("Order failed — check logs for details.")
 
                         if st.button("⏭ Skip", key=f"skip_{i}", use_container_width=True):
                             st.session_state.recommendations.pop(i)
@@ -513,12 +572,12 @@ with tab_history:
         trades = get_trade_history()
         if trades:
             df_t = pd.DataFrame(trades)
-            show = [c for c in ["id","market_question","side","size_usdc","entry_price","current_price","pnl","confidence","status","created_at","closed_at"] if c in df_t.columns]
+            show = [c for c in ["id", "market_question", "side", "size_usdc", "entry_price", "current_price", "pnl", "confidence", "status", "created_at", "closed_at"] if c in df_t.columns]
             df_t = df_t[show].copy()
             df_t.columns = [
-                {"id":"ID","market_question":"Market","side":"Side","size_usdc":"Size ($)",
-                 "entry_price":"Entry","current_price":"Current","pnl":"P&L ($)",
-                 "confidence":"Conf","status":"Status","created_at":"Opened","closed_at":"Closed"}.get(c,c)
+                {"id": "ID", "market_question": "Market", "side": "Side", "size_usdc": "Size ($)",
+                 "entry_price": "Entry", "current_price": "Current", "pnl": "P&L ($)",
+                 "confidence": "Conf", "status": "Status", "created_at": "Opened", "closed_at": "Closed"}.get(c, c)
                 for c in show
             ]
             st.dataframe(df_t, use_container_width=True, hide_index=True)
@@ -538,18 +597,27 @@ with tab_history:
         analyses = get_analysis_history()
         if analyses:
             for a in analyses:
-                label = f"{a['created_at'][:16]}  ·  {a['market_question'][:60]}  ·  {a['confidence']*100:.0f}% conf"
+                label = (
+                    f"{a['created_at'][:16]}  ·  "
+                    f"{escape_for_markdown(a['market_question'][:60])}  ·  "
+                    f"{a['confidence']*100:.0f}% conf"
+                )
                 with st.expander(label):
                     st.write(a["reasoning"])
                     if a.get("sources"):
-                        st.markdown("**Sources:** " + "  ·  ".join(f"[link]({u})" for u in a["sources"]))
+                        links = "  ·  ".join(f"[link]({safe_url(u)})" for u in a["sources"])
+                        st.markdown(f"**Sources:** {links}")
         else:
             st.info("No analysis history yet.")
 
     with sub_exit:
         st.subheader("Positions to Consider Exiting")
         open_trades = get_open_trades()
-        flagged = [t for t in open_trades if t.get("current_price") and t["current_price"] < t["entry_price"] * 0.70]
+        flagged = [
+            t for t in open_trades
+            if t.get("current_price") and t["entry_price"] > 0
+            and t["current_price"] < t["entry_price"] * 0.70
+        ]
 
         if not flagged:
             st.success("No positions have moved more than 30% against you.")
@@ -559,9 +627,10 @@ with tab_history:
                 with st.container(border=True):
                     entry   = t["entry_price"]
                     current = t.get("current_price", entry)
-                    pnl     = (current - entry) / entry * t["size_usdc"]
+                    # Guard against zero entry_price (VULN-09)
+                    pnl = (current - entry) / entry * t["size_usdc"] if entry > 0 else 0.0
 
-                    st.markdown(f"**{t['market_question'][:80]}**")
+                    st.markdown(f"**{escape_for_markdown(t['market_question'][:80])}**")
                     c1, c2, c3 = st.columns(3)
                     c1.metric("Entry",   f"{entry:.3f}")
                     c2.metric("Current", f"{current:.3f}")
@@ -579,7 +648,9 @@ with tab_history:
                         st.toast(f"Position #{t['id']} closed.", icon="🔴")
                         _send_email(
                             "Polymarket Bot — Position Closed",
-                            f"Market: {t['market_question']}\nP&L: ${pnl:+.2f}\nEntry: {entry:.3f} → Exit: {current:.3f}",
+                            f"Market: {sanitize_email_field(t['market_question'])}\n"
+                            f"P&L: ${pnl:+.2f}\n"
+                            f"Entry: {entry:.3f} → Exit: {current:.3f}",
                         )
                         st.rerun()
 
@@ -590,7 +661,7 @@ with tab_backtest:
     st.header("Backtest")
 
     st.info(
-        "**How it works:** Claude Fable 5 analyses recently resolved Polymarket markets "
+        "**How it works:** The model analyses recently resolved Polymarket markets "
         "as if they were still open (instructed to ignore outcome knowledge). "
         "Results show how the strategy's recommendations would have performed. "
         "Note: LLMs have training-data knowledge, so treat these as directional only."
@@ -615,33 +686,40 @@ with tab_backtest:
                     if not results:
                         st.info("Model found no trades meeting the 90% threshold in the backtest set.")
                     else:
-                        correct   = sum(1 for r in results if r.get("would_win"))
-                        accuracy  = correct / len(results) * 100
-                        hypo_pnl  = sum(
+                        correct  = sum(1 for r in results if r.get("would_win"))
+                        accuracy = correct / len(results) * 100
+                        hypo_pnl = sum(
                             (1 - r.get("current_yes_price", 0.5)) * 10 if r.get("would_win")
                             else -r.get("current_yes_price", 0.5) * 10
                             for r in results
                         )
 
                         c1, c2, c3, c4 = st.columns(4)
-                        c1.metric("Markets Analysed",    len(resolved))
-                        c2.metric("Trades Recommended",  len(results))
-                        c3.metric("Would-Win Rate",      f"{accuracy:.1f}%")
-                        c4.metric("Hypothetical P&L*",   f"${hypo_pnl:+.1f}", help="Assumes $10/trade flat sizing")
+                        c1.metric("Markets Analysed",   len(resolved))
+                        c2.metric("Trades Recommended", len(results))
+                        c3.metric("Would-Win Rate",     f"{accuracy:.1f}%")
+                        c4.metric("Hypothetical P&L*",  f"${hypo_pnl:+.1f}", help="Assumes $10/trade flat sizing")
 
                         st.divider()
                         for r in results:
                             icon  = "✅" if r.get("would_win") else "❌"
-                            label = f"{icon} {r.get('market_question','')[:70]}  ({r.get('confidence',0)*100:.0f}% conf)"
+                            label = (
+                                f"{icon} {escape_for_markdown(r.get('market_question','')[:70])}  "
+                                f"({r.get('confidence',0)*100:.0f}% conf)"
+                            )
                             with st.expander(label):
                                 st.write(f"**Actual outcome:** {r.get('actual_outcome','Unknown')}")
                                 st.write(f"**Reasoning:** {r.get('reasoning','')}")
                                 if r.get("news_sources"):
-                                    st.markdown("**Sources:** " + "  ·  ".join(f"[link]({u})" for u in r["news_sources"]))
+                                    links = "  ·  ".join(
+                                        f"[link]({safe_url(u)})" for u in r["news_sources"]
+                                    )
+                                    st.markdown(f"**Sources:** {links}")
 
-            except Exception as e:
+            except Exception:
+                logger.exception("Backtest failed")
                 status.update(label="Backtest failed", state="error")
-                st.error(f"Error: {e}")
+                st.error("Backtest failed — check logs for details.")
 
 
 # ── Setup ─────────────────────────────────────────────────────────────────────────
@@ -733,7 +811,15 @@ POLY_API_PASSPHRASE=...
 ```
         """)
 
-    with st.expander("4 — Email notifications (optional)"):
+    with st.expander("4 — Optional: password-protect the UI"):
+        st.markdown("""
+Add to `.env` to require a password at startup:
+```
+APP_PASSWORD=your_secure_password
+```
+        """)
+
+    with st.expander("5 — Email notifications (optional)"):
         st.markdown("""
 Add to `.env`:
 ```
@@ -746,7 +832,7 @@ EMAIL_RECIPIENT=you@youremail.com
 For Gmail, create an **App Password** at [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords).
         """)
 
-    with st.expander("5 — Running the bot"):
+    with st.expander("6 — Running the bot"):
         st.markdown("""
 ```bash
 # Install all dependencies
