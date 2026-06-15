@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PillID Mobile — Screen Mockups</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+    background: #0F0F0F;
+    min-height: 100vh;
+    padding: 40px 24px;
+    color: #1C2321;
+  }
+  h1 {
+    color: #FFF;
+    font-size: 22px;
+    font-weight: 700;
+    text-align: center;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+  }
+  .page-sub {
+    color: #888;
+    font-size: 13px;
+    text-align: center;
+    margin-bottom: 40px;
+  }
+
+  .screens-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 32px;
+    justify-content: center;
+    align-items: flex-start;
+  }
+
+  .screen-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .screen-label {
+    color: #AAA;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+
+  /* iPhone shell */
+  .phone {
+    width: 320px;
+    background: #1A1A1A;
+    border-radius: 48px;
+    padding: 14px;
+    box-shadow:
+      0 0 0 1px rgba(255,255,255,0.08),
+      0 30px 80px rgba(0,0,0,0.8),
+      inset 0 0 0 1px rgba(255,255,255,0.04);
+    position: relative;
+  }
+
+  .phone-inner {
+    background: #FBF9F3;
+    border-radius: 36px;
+    overflow: hidden;
+    height: 640px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  /* Notch */
+  .notch {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 28px;
+    background: #1A1A1A;
+    border-radius: 0 0 20px 20px;
+    z-index: 10;
+  }
+
+  /* Status bar */
+  .status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 20px 4px;
+    font-size: 11px;
+    font-weight: 600;
+    color: #1C2321;
+    flex-shrink: 0;
+  }
+  .status-icons { display: flex; gap: 5px; align-items: center; font-size: 10px; }
+
+  /* Screen content */
+  .screen-content {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Tab bar */
+  .tab-bar {
+    display: flex;
+    background: #FFFFFF;
+    border-top: 1px solid #E3ECE4;
+    padding: 6px 0 14px;
+    flex-shrink: 0;
+  }
+  .tab {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    font-size: 10px;
+    font-weight: 600;
+    color: #8A9490;
+    cursor: pointer;
+  }
+  .tab.active { color: #5B8266; }
+  .tab-icon { font-size: 20px; line-height: 1; }
+
+  /* ── Shared primitives ─────────────────────────────────── */
+  .scroll-area {
+    flex: 1;
+    overflow: hidden;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .eyebrow {
+    font-size: 10px;
+    font-weight: 700;
+    color: #5B8266;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+  }
+  .screen-title {
+    font-size: 22px;
+    font-weight: 700;
+    color: #1C2321;
+    letter-spacing: -0.4px;
+    line-height: 1.1;
+  }
+  .screen-sub {
+    font-size: 12px;
+    color: #4B5553;
+    line-height: 1.5;
+  }
+
+  .card {
+    background: #FFFFFF;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(44,58,46,0.08), 0 1px 0 rgba(255,255,255,0.9) inset;
+    overflow: hidden;
+  }
+  .card-pad { padding: 14px; }
+
+  .disclaimer {
+    background: #FFFBEB;
+    border: 1px solid #FCD34D;
+    border-radius: 10px;
+    padding: 10px 12px;
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+    font-size: 11px;
+    color: #78350F;
+    line-height: 1.4;
+  }
+
+  .btn-primary {
+    background: linear-gradient(180deg, #6B9476 0%, #5B8266 55%, #4A6B54 100%);
+    color: #FFF;
+    border: none;
+    border-radius: 12px;
+    padding: 13px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    text-align: center;
+    display: block;
+    width: 100%;
+    box-shadow: 0 8px 18px -8px rgba(59,85,68,0.55);
+  }
+  .btn-secondary {
+    background: #F0F4F0;
+    color: #3B6347;
+    border: 1px solid #E3ECE4;
+    border-radius: 12px;
+    padding: 11px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    display: block;
+  }
+
+  /* ── SETUP SCREEN ─────────────────────────────────────── */
+  .setup-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 10px;
+  }
+  .setup-emoji { font-size: 52px; }
+  .setup-title { font-size: 28px; font-weight: 700; color: #1C2321; letter-spacing: -0.5px; }
+  .setup-sub { font-size: 13px; color: #4B5553; text-align: center; line-height: 1.4; }
+  .setup-card {
+    background: #FFF;
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(44,58,46,0.1);
+    padding: 18px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .setup-card-title { font-size: 15px; font-weight: 600; color: #1C2321; text-align: center; }
+  .setup-card-body { font-size: 12px; color: #4B5553; text-align: center; line-height: 1.5; }
+  .file-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 5px 0;
+    border-bottom: 1px solid #F4F7F4;
+    font-size: 10px;
+  }
+  .file-name { color: #4B5553; }
+  .file-size { color: #8A9490; font-weight: 500; }
+
+  /* ── SCAN IDLE ────────────────────────────────────────── */
+  .upload-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    padding: 24px 16px;
+    border: 2px dashed #C5D9C8;
+    border-radius: 16px;
+    background: linear-gradient(180deg, #F4F7F4 0%, #FBF9F3 100%);
+    margin: 4px 0;
+  }
+  .camera-emoji { font-size: 40px; }
+  .upload-title { font-size: 14px; font-weight: 600; color: #1C2321; }
+  .upload-sub { font-size: 11px; color: #8A9490; text-align: center; }
+  .btn-row { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+
+  /* ── SCAN RESULT ──────────────────────────────────────── */
+  .pill-preview {
+    width: 100%;
+    height: 160px;
+    background: linear-gradient(135deg, #E8F0E9, #D4E4D6);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 60px;
+    flex-shrink: 0;
+  }
+  .preview-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 14px;
+    border-top: 1px solid #F4F7F4;
+  }
+  .preview-footer-label { font-size: 11px; color: #8A9490; }
+  .start-over { font-size: 12px; color: #5B8266; font-weight: 500; }
+
+  .result-header { display: flex; justify-content: space-between; align-items: flex-start; padding: 14px; gap: 10px; }
+  .result-best-guess { font-size: 10px; color: #8A9490; letter-spacing: 1px; text-transform: uppercase; }
+  .result-name { font-size: 17px; font-weight: 700; color: #1C2321; text-transform: capitalize; margin-top: 2px; }
+  .result-brand { font-size: 12px; color: #4B5553; }
+
+  .confidence-ring {
+    width: 60px;
+    height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .ring-svg { width: 60px; height: 60px; }
+
+  .attr-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    background: #F4F7F4;
+    border-radius: 10px;
+    margin: 0 14px 10px;
+    padding: 10px;
+  }
+  .attr-key { font-size: 9px; color: #8A9490; }
+  .attr-val { font-size: 12px; font-weight: 600; color: #1C2321; text-transform: capitalize; }
+
+  .fda-section { border-top: 1px solid #F4F7F4; margin: 0 14px; padding: 10px 0; }
+  .fda-eyebrow { font-size: 9px; color: #8A9490; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+  .accordion { background: #F8FAF8; border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 500; color: #1C2321; margin-bottom: 4px; }
+
+  .action-row { padding: 10px 14px 14px; }
+  .saved-chip {
+    background: #F0FDF4;
+    border: 1px solid #BBF7D0;
+    border-radius: 10px;
+    padding: 10px;
+    text-align: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #166534;
+  }
+
+  /* ── DOWNLOAD SCREEN ──────────────────────────────────── */
+  .dl-center {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    gap: 10px;
+  }
+  .dl-card {
+    background: #FFF;
+    border-radius: 18px;
+    box-shadow: 0 4px 20px rgba(44,58,46,0.1);
+    padding: 20px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+  .track-bg { width: 100%; height: 8px; background: #E3ECE4; border-radius: 4px; overflow: hidden; }
+  .track-fill { height: 100%; background: #5B8266; border-radius: 4px; }
+
+  /* ── CABINET ──────────────────────────────────────────── */
+  .cabinet-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 16px 16px 8px;
+  }
+  .med-card {
+    display: flex;
+    gap: 10px;
+    background: #FFF;
+    border-radius: 14px;
+    padding: 10px;
+    box-shadow: 0 2px 8px rgba(44,58,46,0.07);
+    margin-bottom: 8px;
+  }
+  .med-thumb {
+    width: 64px;
+    height: 64px;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #E8F0E9, #C5D9C8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    flex-shrink: 0;
+  }
+  .med-body { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+  .med-name { font-size: 14px; font-weight: 600; color: #1C2321; text-transform: capitalize; }
+  .med-brand { font-size: 11px; color: #4B5553; }
+  .med-facts { font-size: 10px; color: #8A9490; text-transform: capitalize; }
+  .imprint-chip {
+    display: inline-block;
+    background: #F0F4F0;
+    border-radius: 5px;
+    padding: 2px 6px;
+    font-size: 10px;
+    color: #4B5553;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .med-trash { font-size: 16px; margin-left: auto; align-self: flex-start; padding: 2px; }
+
+  /* ── INTERACTIONS ─────────────────────────────────────── */
+  .check-card { padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+  .check-eyebrow { font-size: 10px; color: #8A9490; text-transform: uppercase; letter-spacing: 1px; }
+  .chips-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    background: #F0F4F0;
+    border-radius: 999px;
+    padding: 5px 11px;
+    font-size: 11px;
+    color: #3B6347;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+  .finding-card {
+    background: #FFF;
+    border-radius: 14px;
+    padding: 12px;
+    box-shadow: 0 2px 8px rgba(44,58,46,0.06);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .finding-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 6px; }
+  .finding-drugs { font-size: 13px; font-weight: 600; color: #1C2321; flex: 1; text-transform: capitalize; }
+  .severity-badge {
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .badge-major { background: #FEF2F2; color: #991B1B; }
+  .badge-moderate { background: #FFF7ED; color: #9A3412; }
+  .badge-minor { background: #F0FDF4; color: #166534; }
+  .finding-summary { font-size: 11px; color: #4B5553; line-height: 1.5; }
+  .finding-source { font-size: 10px; color: #8A9490; }
+  .results-header { display: flex; justify-content: space-between; align-items: center; }
+  .results-title { font-size: 15px; font-weight: 600; color: #1C2321; }
+  .recheck { font-size: 13px; color: #5B8266; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<h1>PillID Mobile</h1>
+<p class="page-sub">React Native · Expo · Gemma 4 on-device · 5 screens</p>
+
+<div class="screens-row">
+
+  <!-- ── 1. SETUP ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">1 · First launch</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+        <div class="setup-center">
+          <div class="setup-emoji">💊</div>
+          <div class="setup-title">PillID</div>
+          <div class="setup-sub">On-device pill identification —<br>Gemma 4 runs entirely on your phone.</div>
+          <div class="setup-card">
+            <div class="setup-card-title">One-time model download</div>
+            <div class="setup-card-body">PillID uses a quantized Gemma 3 4B vision model (~3.2 GB) to identify pills on your device. Your images never leave your phone.</div>
+            <div>
+              <div class="file-row">
+                <span class="file-name">gemma-3-4b-it-Q4_K_M.gguf</span>
+                <span class="file-size">2.6 GB</span>
+              </div>
+              <div class="file-row" style="border-bottom: none;">
+                <span class="file-name">mmproj-gemma-3-4b-it-f16.gguf</span>
+                <span class="file-size">620 MB</span>
+              </div>
+            </div>
+            <div class="btn-primary">Download model</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 2. DOWNLOADING ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">2 · Downloading</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+        <div class="dl-center">
+          <div class="setup-emoji">💊</div>
+          <div class="setup-title">PillID</div>
+          <div class="dl-card">
+            <div style="font-size:28px;">⏳</div>
+            <div class="setup-card-title">Downloading… 48%</div>
+            <div class="setup-card-body">gemma-3-4b-it-Q4_K_M.gguf (1 of 2)</div>
+            <div class="track-bg"><div class="track-fill" style="width: 48%;"></div></div>
+            <div class="file-size">1.2 GB / 2.6 GB</div>
+            <div style="font-size: 11px; color: #8A9490; text-align: center;">Keep the app open while downloading.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3. SCAN IDLE ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">3 · Scan (idle)</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+        <div class="screen-content">
+          <div class="scroll-area">
+            <div class="eyebrow">Scan · identify · verify</div>
+            <div class="screen-title">Identify a pill</div>
+            <div class="screen-sub">Take or upload a clear photo. Gemma 4 reads it on-device and looks up the FDA label.</div>
+            <div class="disclaimer">
+              <span>⚠️</span>
+              <span><strong>Not medical advice.</strong> PillID can be wrong. Always confirm with the original packaging, a pharmacist, or your doctor.</span>
+            </div>
+            <div class="card">
+              <div class="upload-zone">
+                <div class="camera-emoji">📷</div>
+                <div class="upload-title">Add a pill photo</div>
+                <div class="upload-sub">Good lighting and a plain background help.</div>
+                <div class="btn-row">
+                  <div class="btn-primary">📸 Take photo</div>
+                  <div class="btn-secondary">🖼 Choose from library</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab active"><div class="tab-icon">📷</div>Scan</div>
+          <div class="tab"><div class="tab-icon">💊</div>Cabinet</div>
+          <div class="tab"><div class="tab-icon">🛡</div>Interactions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 4. SCAN RESULT ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">4 · Scan (result)</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+        <div class="screen-content">
+          <div style="flex:1; overflow:hidden; display:flex; flex-direction:column; gap:8px; padding: 12px 12px 0;">
+            <!-- Image preview -->
+            <div class="card">
+              <div class="pill-preview">💊</div>
+              <div class="preview-footer">
+                <span class="preview-footer-label">Your photo</span>
+                <span class="start-over">Start over</span>
+              </div>
+            </div>
+            <!-- Result card -->
+            <div class="card" style="flex:1; overflow:hidden;">
+              <div class="result-header">
+                <div>
+                  <div class="result-best-guess">Best guess</div>
+                  <div class="result-name">Ibuprofen</div>
+                  <div class="result-brand">Brand: Advil</div>
+                </div>
+                <div class="confidence-ring">
+                  <svg class="ring-svg" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="22" fill="none" stroke="#E3ECE4" stroke-width="5"/>
+                    <circle cx="30" cy="30" r="22" fill="none" stroke="#5B8266" stroke-width="5"
+                      stroke-linecap="round"
+                      stroke-dasharray="110 138"
+                      transform="rotate(-90 30 30)"/>
+                    <text x="30" y="34" text-anchor="middle" fill="#3B6347" font-size="12" font-weight="700">79%</text>
+                  </svg>
+                  <div style="font-size:8px;color:#8A9490;letter-spacing:1px;text-transform:uppercase;margin-top:-6px;">confidence</div>
+                </div>
+              </div>
+              <div style="font-size:11px;color:#4B5553;font-style:italic;padding:0 14px 8px;">"Round white tablet, imprint 'I-2' consistent with ibuprofen 200mg OTC."</div>
+              <div class="attr-grid">
+                <div><div class="attr-key">Imprint</div><div class="attr-val">I-2</div></div>
+                <div><div class="attr-key">Shape</div><div class="attr-val">Round</div></div>
+                <div><div class="attr-key">Color</div><div class="attr-val">White</div></div>
+                <div><div class="attr-key">Strength</div><div class="attr-val">200 mg</div></div>
+              </div>
+              <div class="fda-section">
+                <div class="fda-eyebrow">From the FDA label</div>
+                <div class="accordion">› Purpose</div>
+                <div class="accordion">› Warnings</div>
+              </div>
+              <div class="action-row">
+                <div class="btn-primary">Add to cabinet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab active"><div class="tab-icon">📷</div>Scan</div>
+          <div class="tab"><div class="tab-icon">💊</div>Cabinet</div>
+          <div class="tab"><div class="tab-icon">🛡</div>Interactions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 5. SAVED ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">5 · Saved to cabinet</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+        <div class="screen-content">
+          <div style="flex:1; overflow:hidden; display:flex; flex-direction:column; gap:8px; padding: 12px 12px 0;">
+            <div class="card">
+              <div class="pill-preview">💊</div>
+              <div class="preview-footer">
+                <span class="preview-footer-label">Your photo</span>
+                <span class="start-over">Start over</span>
+              </div>
+            </div>
+            <div class="card" style="flex:1; overflow:hidden;">
+              <div class="result-header">
+                <div>
+                  <div class="result-best-guess">Best guess</div>
+                  <div class="result-name">Ibuprofen</div>
+                  <div class="result-brand">Brand: Advil</div>
+                </div>
+                <div class="confidence-ring">
+                  <svg class="ring-svg" viewBox="0 0 60 60">
+                    <circle cx="30" cy="30" r="22" fill="none" stroke="#E3ECE4" stroke-width="5"/>
+                    <circle cx="30" cy="30" r="22" fill="none" stroke="#5B8266" stroke-width="5"
+                      stroke-linecap="round" stroke-dasharray="110 138" transform="rotate(-90 30 30)"/>
+                    <text x="30" y="34" text-anchor="middle" fill="#3B6347" font-size="12" font-weight="700">79%</text>
+                  </svg>
+                  <div style="font-size:8px;color:#8A9490;letter-spacing:1px;text-transform:uppercase;margin-top:-6px;">confidence</div>
+                </div>
+              </div>
+              <div class="attr-grid">
+                <div><div class="attr-key">Imprint</div><div class="attr-val">I-2</div></div>
+                <div><div class="attr-key">Shape</div><div class="attr-val">Round</div></div>
+                <div><div class="attr-key">Color</div><div class="attr-val">White</div></div>
+                <div><div class="attr-key">Strength</div><div class="attr-val">200 mg</div></div>
+              </div>
+              <div class="action-row" style="padding-top: 60px;">
+                <div class="saved-chip">✓ Added to cabinet</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab active"><div class="tab-icon">📷</div>Scan</div>
+          <div class="tab"><div class="tab-icon">💊</div>Cabinet</div>
+          <div class="tab"><div class="tab-icon">🛡</div>Interactions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 6. CABINET ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">6 · Cabinet</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+        <div class="screen-content">
+          <div class="cabinet-header">
+            <div>
+              <div class="screen-title" style="font-size:20px;">Medicine cabinet</div>
+              <div class="screen-sub" style="font-size:11px;">3 medications saved</div>
+            </div>
+            <div class="btn-secondary" style="padding: 7px 12px; font-size: 11px; border-radius:10px;">Check interactions</div>
+          </div>
+          <div style="padding: 0 12px; flex:1; overflow:hidden;">
+            <div class="med-card">
+              <div class="med-thumb">💊</div>
+              <div class="med-body">
+                <div style="display:flex; justify-content:space-between;">
+                  <div class="med-name">Ibuprofen</div>
+                  <div class="med-trash">🗑</div>
+                </div>
+                <div class="med-brand">Advil</div>
+                <div class="med-facts">200 mg · tablet · white · round</div>
+                <div class="imprint-chip">Imprint: I-2</div>
+              </div>
+            </div>
+            <div class="med-card">
+              <div class="med-thumb">💊</div>
+              <div class="med-body">
+                <div style="display:flex; justify-content:space-between;">
+                  <div class="med-name">Lisinopril</div>
+                  <div class="med-trash">🗑</div>
+                </div>
+                <div class="med-brand">Prinivil</div>
+                <div class="med-facts">10 mg · tablet · pink · oval</div>
+                <div class="imprint-chip">Imprint: 10</div>
+              </div>
+            </div>
+            <div class="med-card">
+              <div class="med-thumb">💊</div>
+              <div class="med-body">
+                <div style="display:flex; justify-content:space-between;">
+                  <div class="med-name">Atorvastatin</div>
+                  <div class="med-trash">🗑</div>
+                </div>
+                <div class="med-brand">Lipitor</div>
+                <div class="med-facts">20 mg · tablet · white · oval</div>
+                <div class="imprint-chip">Imprint: PD 155 20</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab"><div class="tab-icon">📷</div>Scan</div>
+          <div class="tab active"><div class="tab-icon">💊</div>Cabinet</div>
+          <div class="tab"><div class="tab-icon">🛡</div>Interactions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 7. INTERACTIONS READY ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">7 · Interactions (ready)</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+        <div class="screen-content">
+          <div class="scroll-area" style="gap: 10px;">
+            <div class="screen-title" style="font-size:20px;">Interaction check</div>
+            <div class="screen-sub">Cross-checks your cabinet using FDA label text. Runs on-device with Gemma 4.</div>
+            <div class="disclaimer">
+              <span>⚠️</span>
+              <span><strong>Not medical advice.</strong> Always confirm with a pharmacist or your doctor.</span>
+            </div>
+            <div class="card">
+              <div class="check-card">
+                <div class="check-eyebrow">Checking 3 medications</div>
+                <div class="chips-row">
+                  <div class="chip">Ibuprofen</div>
+                  <div class="chip">Lisinopril</div>
+                  <div class="chip">Atorvastatin</div>
+                </div>
+                <div class="btn-primary">Run interaction check</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab"><div class="tab-icon">📷</div>Scan</div>
+          <div class="tab"><div class="tab-icon">💊</div>Cabinet</div>
+          <div class="tab active"><div class="tab-icon">🛡</div>Interactions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 8. INTERACTIONS RESULT ── -->
+  <div class="screen-wrap">
+    <div class="screen-label">8 · Interactions (results)</div>
+    <div class="phone">
+      <div class="notch"></div>
+      <div class="phone-inner">
+        <div class="status-bar">
+          <span>9:41</span>
+          <div class="status-icons"><span>●●●</span><span>WiFi</span><span>🔋</span></div>
+        </div>
+        <div class="screen-content">
+          <div class="scroll-area" style="gap: 10px;">
+            <div class="screen-title" style="font-size:20px;">Interaction check</div>
+            <div class="card">
+              <div class="check-card">
+                <div class="check-eyebrow">Checking 3 medications</div>
+                <div class="chips-row">
+                  <div class="chip">Ibuprofen</div>
+                  <div class="chip">Lisinopril</div>
+                  <div class="chip">Atorvastatin</div>
+                </div>
+              </div>
+            </div>
+            <div class="results-header">
+              <div class="results-title">2 potential interactions</div>
+              <div class="recheck">Re-check</div>
+            </div>
+            <div class="finding-card">
+              <div class="finding-header">
+                <div class="finding-drugs">Ibuprofen + Lisinopril</div>
+                <div class="severity-badge badge-major">Major</div>
+              </div>
+              <div class="finding-summary">NSAIDs like ibuprofen can reduce the blood pressure-lowering effect of lisinopril and may increase risk of acute kidney injury.</div>
+              <div class="finding-source">Grounded in the FDA label for lisinopril.</div>
+            </div>
+            <div class="finding-card">
+              <div class="finding-header">
+                <div class="finding-drugs">Ibuprofen + Atorvastatin</div>
+                <div class="severity-badge badge-minor">Minor</div>
+              </div>
+              <div class="finding-summary">Concomitant NSAID use may modestly increase atorvastatin plasma levels; monitor for muscle pain or weakness.</div>
+              <div class="finding-source">Grounded in the FDA label for atorvastatin.</div>
+            </div>
+          </div>
+        </div>
+        <div class="tab-bar">
+          <div class="tab"><div class="tab-icon">📷</div>Scan</div>
+          <div class="tab"><div class="tab-icon">💊</div>Cabinet</div>
+          <div class="tab active"><div class="tab-icon">🛡</div>Interactions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /screens-row -->
+
+<div style="text-align:center; color:#555; font-size:12px; margin-top:48px; line-height:1.6;">
+  PillID Mobile · Expo + React Native · Gemma 3 4B Q4_K_M (llama.rn) · Supabase · openFDA · RxNorm<br>
+  All inference runs on-device · Images never leave the phone
+</div>
+
+</body>
+</html>
