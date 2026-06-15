@@ -1,0 +1,38 @@
+{
+  "expo": {
+    "name": "PillID",
+    "slug": "pillid",
+    "version": "1.0.0",
+    "scheme": "pillid",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.nanthufs.pillid",
+      "infoPlist": {
+        "NSCameraUsageDescription": "PillID uses the camera to photograph pills for identification.",
+        "NSPhotoLibraryUsageDescription": "PillID reads photos from your library to identify pills."
+      }
+    },
+    "android": {
+      "package": "com.nanthufs.pillid",
+      "permissions": ["CAMERA", "READ_EXTERNAL_STORAGE"]
+    },
+    "web": { "bundler": "metro", "output": "static" },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "PillID reads photos from your library to identify pills.",
+          "cameraPermission": "PillID uses the camera to photograph pills for identification."
+        }
+      ]
+    ],
+    "experiments": { "typedRoutes": true },
+    "extra": {
+      "supabaseUrl": "REPLACE_WITH_YOUR_SUPABASE_URL",
+      "supabaseAnonKey": "REPLACE_WITH_YOUR_SUPABASE_ANON_KEY"
+    }
+  }
+}
