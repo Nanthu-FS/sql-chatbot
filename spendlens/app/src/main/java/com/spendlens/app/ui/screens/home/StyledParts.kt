@@ -67,7 +67,6 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.drawscope.clipRect
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.text.style.TextAlign
 import com.spendlens.app.domain.Period
 import com.spendlens.app.domain.PeriodType
@@ -612,8 +611,7 @@ fun RisoBubbles(slices: List<CategorySlice>) {
                     Modifier
                         .offset((pos[i].first * scale).dp, (pos[i].second * scale).dp)
                         .size(size.dp)
-                        .graphicsLayer { blendMode = if (colors.isDark) BlendMode.Screen else BlendMode.Multiply }
-                        .background(inks[i], CircleShape),
+                        .drawBehind { drawCircle(inks[i], blendMode = if (colors.isDark) BlendMode.Screen else BlendMode.Multiply) },
                     contentAlignment = Alignment.Center,
                 ) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
