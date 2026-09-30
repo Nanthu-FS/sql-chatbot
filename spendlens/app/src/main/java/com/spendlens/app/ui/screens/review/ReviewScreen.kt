@@ -8,8 +8,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,48 +21,28 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.AutoAwesome
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.CheckCircle
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.DeleteOutline
-import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material.icons.rounded.ZoomIn
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil.compose.AsyncImage
@@ -77,29 +55,44 @@ import com.spendlens.app.ocr.ImportPhase
 import com.spendlens.app.ocr.ImportState
 import com.spendlens.app.ui.Format
 import com.spendlens.app.ui.LocalAppContainer
+import com.spendlens.app.ui.components.BracketButton
+import com.spendlens.app.ui.components.BracketToggle
 import com.spendlens.app.ui.components.CategoryChips
 import com.spendlens.app.ui.components.DatePickerPopup
-import com.spendlens.app.ui.components.EmptyIllustration
 import com.spendlens.app.ui.components.FieldChip
-import com.spendlens.app.ui.components.GradientButton
+import com.spendlens.app.ui.components.Grayscale
+import com.spendlens.app.ui.components.Hairline
 import com.spendlens.app.ui.components.ImageViewer
+import com.spendlens.app.ui.components.Label
 import com.spendlens.app.ui.components.LocalCurrency
-import com.spendlens.app.ui.components.Pill
 import com.spendlens.app.ui.components.ScanOverlay
+import com.spendlens.app.ui.components.Statement
 import com.spendlens.app.ui.components.TimePickerPopup
-import com.spendlens.app.ui.theme.SpendTheme
+import com.spendlens.app.ui.components.cornerMarks
+import com.spendlens.app.ui.components.index
+import com.spendlens.app.ui.components.pressable
+import com.spendlens.app.ui.components.rememberHaptics
+import com.spendlens.app.ui.components.reveal
+import com.spendlens.app.ui.theme.Spend
 import kotlinx.coroutines.launch
 import java.io.File
+
+class ReviewActions(
+    val onClose: () -> Unit = {},
+    val onSave: () -> Unit = {},
+    val onChange: (String, (ImportDraft) -> ImportDraft) -> Unit = { _, _ -> },
+    val onRemove: (String) -> Unit = {},
+)
 
 @Composable
 fun ReviewScreen(onClose: () -> Unit, onSaved: (Int) -> Unit) {
     val manager = LocalAppContainer.current.importManager
     val state by manager.state.collectAsStateWithLifecycle()
-    val currency = LocalCurrency.current
     val scope = rememberCoroutineScope()
+    val haptics = rememberHaptics()
     var confirmDiscard by remember { mutableStateOf(false) }
-    var preview by remember { mutableStateOf<Any?>(null) }
     var saving by remember { mutableStateOf(false) }
+    val colors = Spend.ink
 
     val close: () -> Unit = {
         if (state.drafts.any { it.state == DraftState.READY }) {
@@ -111,181 +104,139 @@ fun ReviewScreen(onClose: () -> Unit, onSaved: (Int) -> Unit) {
     }
     BackHandler(onBack = close)
 
-    Box(Modifier.fillMaxSize()) {
-        LazyColumn(
-            Modifier
-                .fillMaxSize()
-                .imePadding(),
-            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, bottom = 120.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            item(key = "top") {
-                Row(
-                    Modifier
-                        .windowInsetsPadding(WindowInsets.statusBars)
-                        .padding(top = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    IconButton(onClick = close) { Icon(Icons.Rounded.Close, "Close") }
-                    Column(Modifier.weight(1f)) {
-                        Text("Review payments", style = MaterialTheme.typography.titleLarge)
-                        Text(subtitle(state), style = MaterialTheme.typography.bodySmall, color = SpendTheme.colors.textMuted)
-                    }
+    ReviewContent(
+        state = state,
+        saving = saving,
+        actions = ReviewActions(
+            onClose = close,
+            onSave = {
+                saving = true
+                scope.launch {
+                    val count = manager.save()
+                    haptics.confirm()
+                    saving = false
+                    onSaved(count)
                 }
-            }
-            item(key = "progress") {
-                AnimatedVisibility(visible = state.isWorking, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
-                    ProgressCard(state)
-                }
-            }
-            if (state.phase == ImportPhase.DONE && state.drafts.isEmpty()) {
-                item(key = "empty") { NothingFound(state, onClose = { manager.discard(); onClose() }) }
-            }
-            items(state.drafts, key = { it.id }) { draft ->
-                DraftCard(
-                    draft = draft,
-                    currency = currency,
-                    onChange = { transform -> manager.update(draft.id, transform) },
-                    onRemove = { manager.remove(draft.id) },
-                    onPreview = { preview = draft.stagedPath?.let(::File) ?: draft.sourceUri },
-                    modifier = Modifier.animateItem(),
-                )
-            }
-        }
-
-        val count = state.selected.size
-        Box(
-            Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.94f))
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
-        ) {
-            GradientButton(
-                text = when {
-                    state.isWorking -> "Reading screenshots…"
-                    count == 0 -> "Nothing selected"
-                    count == 1 -> "Save 1 payment"
-                    else -> "Save $count payments"
-                },
-                onClick = {
-                    saving = true
-                    scope.launch {
-                        val saved = manager.save()
-                        saving = false
-                        onSaved(saved)
-                    }
-                },
-                enabled = !state.isWorking && count > 0,
-                loading = saving,
-                icon = Icons.Rounded.CheckCircle,
-                modifier = Modifier.fillMaxWidth(),
-            )
-        }
-    }
+            },
+            onChange = manager::update,
+            onRemove = manager::remove,
+        ),
+    )
 
     if (confirmDiscard) {
         AlertDialog(
             onDismissRequest = { confirmDiscard = false },
-            title = { Text("Discard these payments?") },
-            text = { Text("Nothing from this import will be saved.") },
+            containerColor = colors.raised,
+            title = { Text("DISCARD THIS IMPORT?", style = MaterialTheme.typography.titleMedium) },
+            text = { Text("Nothing from these screenshots will be saved.", color = colors.muted) },
             confirmButton = {
-                TextButton(onClick = {
+                BracketButton("Discard", onClick = {
                     confirmDiscard = false
                     manager.discard()
                     onClose()
-                }) { Text("Discard") }
+                }, color = colors.alert)
             },
-            dismissButton = { TextButton(onClick = { confirmDiscard = false }) { Text("Keep reviewing") } },
+            dismissButton = { BracketButton("Keep", onClick = { confirmDiscard = false }) },
         )
     }
-    preview?.let { model -> ImageViewer(model = model, onDismiss = { preview = null }) }
+}
+
+@Composable
+fun ReviewContent(state: ImportState, saving: Boolean, actions: ReviewActions) {
+    val colors = Spend.ink
+    val currency = LocalCurrency.current
+    var preview by remember { mutableStateOf<Any?>(null) }
+    val count = state.selected.size
+
+    Box(Modifier.fillMaxSize().background(colors.canvas)) {
+        LazyColumn(Modifier.fillMaxSize().imePadding(), contentPadding = PaddingValues(bottom = 120.dp)) {
+            item(key = "top") {
+                Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 20.dp).padding(top = 14.dp)) {
+                    Row {
+                        BracketButton("Close", onClick = actions.onClose, color = colors.muted)
+                    }
+                    Spacer(Modifier.height(20.dp))
+                    Statement("Review ", "(${state.drafts.size})", Modifier.reveal(0), MaterialTheme.typography.displaySmall)
+                    Spacer(Modifier.height(6.dp))
+                    Label(subtitle(state), color = colors.muted, modifier = Modifier.reveal(1))
+                    Spacer(Modifier.height(16.dp))
+                    AnimatedVisibility(state.isWorking, enter = fadeIn() + expandVertically(), exit = fadeOut() + shrinkVertically()) {
+                        Progress(state)
+                    }
+                }
+            }
+            if (state.phase == ImportPhase.DONE && state.drafts.isEmpty()) {
+                item(key = "none") {
+                    Column(Modifier.padding(20.dp)) {
+                        Statement("Nothing found. ", if (state.mode == ImportMode.AUTO_FIND) "Checked ${state.total} recent screenshots — try picking them yourself." else "Those images couldn't be opened.", style = MaterialTheme.typography.headlineMedium)
+                    }
+                }
+            }
+            itemsIndexed(state.drafts, key = { _, d -> d.id }) { i, draft ->
+                DraftBlock(
+                    number = i + 1,
+                    draft = draft,
+                    currency = currency,
+                    onChange = { actions.onChange(draft.id, it) },
+                    onRemove = { actions.onRemove(draft.id) },
+                    onPreview = { preview = draft.stagedPath?.let(::File) ?: draft.sourceUri },
+                    modifier = Modifier.animateItem().reveal(2 + i),
+                )
+            }
+        }
+        Column(
+            Modifier
+                .align(androidx.compose.ui.Alignment.BottomCenter)
+                .fillMaxWidth()
+                .background(colors.canvas)
+                .navigationBarsPadding()
+                .imePadding(),
+        ) {
+            Hairline()
+            BracketButton(
+                text = when {
+                    state.isWorking -> "Reading…"
+                    count == 0 -> "Nothing selected"
+                    count == 1 -> "Save 1 payment"
+                    else -> "Save $count payments"
+                },
+                onClick = actions.onSave,
+                filled = true,
+                enabled = !state.isWorking && count > 0,
+                loading = saving,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
+            )
+        }
+    }
+    preview?.let { ImageViewer(it) { preview = null } }
 }
 
 private fun subtitle(state: ImportState): String = when (state.phase) {
-    ImportPhase.FINDING -> "Looking through your Screenshots folder…"
-    ImportPhase.SCANNING -> "Reading ${state.processed + 1} of ${state.total}"
-    ImportPhase.SAVING -> "Saving…"
+    ImportPhase.FINDING -> "Looking through Screenshots"
+    ImportPhase.SCANNING -> "Reading ${minOf(state.processed + 1, state.total)} of ${state.total} · on this phone"
+    ImportPhase.SAVING -> "Saving"
     else -> buildList {
-        add("${state.drafts.size} found")
+        add("${state.selected.size} selected")
         if (state.skipped > 0) add("${state.skipped} not payments")
         if (state.alreadyImported > 0) add("${state.alreadyImported} already added")
     }.joinToString(" · ")
 }
 
 @Composable
-private fun ProgressCard(state: ImportState) {
-    val colors = SpendTheme.colors
-    val fraction = if (state.total > 0) state.processed.toFloat() / state.total else 0f
-    val progress by animateFloatAsState(fraction, label = "importProgress")
-    Column(
-        Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(24.dp))
-            .background(colors.card)
-            .border(1.dp, colors.cardBorder, RoundedCornerShape(24.dp))
-            .padding(18.dp),
-    ) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Icon(Icons.Rounded.AutoAwesome, null, tint = colors.brand[1])
-            Spacer(Modifier.width(10.dp))
-            Text(
-                if (state.phase == ImportPhase.FINDING) "Finding screenshots" else "Reading on-device · ${state.processed}/${state.total}",
-                style = MaterialTheme.typography.titleSmall,
-            )
-        }
-        Spacer(Modifier.height(12.dp))
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(CircleShape)
-                .background(colors.chartTrack),
-        ) {
-            Box(
-                Modifier
-                    .fillMaxWidth(if (state.phase == ImportPhase.FINDING) 0.08f else progress.coerceAtLeast(0.04f))
-                    .height(8.dp)
-                    .clip(CircleShape)
-                    .background(colors.brandBrush),
-            )
-        }
-        if (state.mode == ImportMode.AUTO_FIND && state.phase == ImportPhase.SCANNING) {
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Only screenshots that look like payments will show up here.",
-                style = MaterialTheme.typography.bodySmall,
-                color = colors.textMuted,
-            )
+private fun Progress(state: ImportState) {
+    val colors = Spend.ink
+    val fraction = if (state.total > 0) state.processed.toFloat() / state.total else 0.06f
+    val p by animateFloatAsState(fraction, label = "progress")
+    Column(Modifier.padding(bottom = 16.dp)) {
+        Box(Modifier.fillMaxWidth().height(2.dp).background(colors.line)) {
+            Box(Modifier.fillMaxWidth(p.coerceAtLeast(0.04f)).height(2.dp).background(colors.text))
         }
     }
 }
 
 @Composable
-private fun NothingFound(state: ImportState, onClose: () -> Unit) {
-    Column(Modifier.fillMaxWidth().padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-        EmptyIllustration(Modifier.size(220.dp))
-        Text("No new payment screenshots", style = MaterialTheme.typography.titleLarge, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(6.dp))
-        Text(
-            if (state.mode == ImportMode.AUTO_FIND) {
-                "Checked ${state.total} recent screenshots from the last 30 days. Try picking screenshots manually instead."
-            } else {
-                "We couldn't open those images."
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = SpendTheme.colors.textMuted,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(Modifier.height(16.dp))
-        TextButton(onClick = onClose) { Text("Back") }
-    }
-}
-
-@Composable
-private fun DraftCard(
+private fun DraftBlock(
+    number: Int,
     draft: ImportDraft,
     currency: CurrencyOption,
     onChange: ((ImportDraft) -> ImportDraft) -> Unit,
@@ -293,170 +244,133 @@ private fun DraftCard(
     onPreview: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val colors = SpendTheme.colors
-    val shape = RoundedCornerShape(28.dp)
+    val colors = Spend.ink
     var pickDate by remember { mutableStateOf(false) }
     var pickTime by remember { mutableStateOf(false) }
-    val dimmed by animateFloatAsState(if (draft.include || draft.state == DraftState.SCANNING) 1f else 0.55f, label = "dim")
+    val dim by animateFloatAsState(if (draft.include || draft.state == DraftState.SCANNING) 1f else 0.45f, label = "dim")
 
-    Column(
-        modifier
-            .fillMaxWidth()
-            .clip(shape)
-            .background(colors.card)
-            .border(1.dp, if (draft.include && draft.isValid) colors.brand[0].copy(alpha = 0.5f) else colors.cardBorder, shape)
-            .padding(14.dp),
-    ) {
-        Row {
+    Column(modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
+        Hairline()
+        Row(Modifier.padding(top = 10.dp)) {
+            Label(index(number), color = colors.faint, modifier = Modifier.width(38.dp))
+            Label(status(draft), color = if (draft.flags.any { it.excludeByDefault } || draft.state == DraftState.ERROR) colors.alert else colors.muted, modifier = Modifier.weight(1f))
+            draft.paymentApp?.let { Label(it, color = colors.faint) }
+        }
+        Spacer(Modifier.height(14.dp))
+        Row(Modifier.alpha(dim)) {
             Box(
                 Modifier
-                    .width(96.dp)
-                    .height(176.dp)
-                    .clip(RoundedCornerShape(18.dp))
-                    .background(colors.subtle)
-                    .clickable(onClick = onPreview),
+                    .width(92.dp)
+                    .height(168.dp)
+                    .background(colors.surface)
+                    .cornerMarks(colors.text, inset = (-4).dp)
+                    .pressable(pressedScale = 0.96f, onClick = onPreview),
             ) {
                 AsyncImage(
                     model = draft.stagedPath?.let(::File) ?: draft.sourceUri,
                     contentDescription = "Screenshot",
                     contentScale = ContentScale.Crop,
-                    alignment = Alignment.TopCenter,
+                    alignment = androidx.compose.ui.Alignment.TopCenter,
+                    colorFilter = Grayscale,
                     modifier = Modifier.fillMaxSize(),
                 )
-                if (draft.state == DraftState.SCANNING) {
-                    ScanOverlay()
-                } else {
-                    Icon(
-                        Icons.Rounded.ZoomIn,
-                        null,
-                        tint = Color.White,
-                        modifier = Modifier
-                            .align(Alignment.BottomEnd)
-                            .padding(6.dp)
-                            .clip(CircleShape)
-                            .background(Color.Black.copy(alpha = 0.45f))
-                            .padding(4.dp)
-                            .size(16.dp),
-                    )
-                }
+                if (draft.state == DraftState.SCANNING) ScanOverlay()
             }
-            Spacer(Modifier.width(14.dp))
-            Column(Modifier.weight(1f).alpha(dimmed)) {
-                StatusRow(draft)
-                Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.width(18.dp))
+            Column(Modifier.weight(1f)) {
                 when (draft.state) {
-                    DraftState.SCANNING -> {
-                        Text("Reading screenshot…", style = MaterialTheme.typography.titleMedium, color = colors.textMuted)
-                        Text("Amount, payee and date appear here.", style = MaterialTheme.typography.bodySmall, color = colors.textFaint)
-                    }
-                    DraftState.ERROR -> {
-                        Text("Couldn't open this image", style = MaterialTheme.typography.titleMedium, color = colors.negative)
-                    }
+                    DraftState.SCANNING -> Statement("Reading ", "amount, payee and date…", style = MaterialTheme.typography.titleLarge)
+                    DraftState.ERROR -> Statement("Couldn't open ", "this image.", style = MaterialTheme.typography.titleLarge)
                     DraftState.READY -> {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Text(currency.symbol.trim(), style = MaterialTheme.typography.headlineMedium, color = colors.textMuted)
-                            Spacer(Modifier.width(4.dp))
-                            BasicTextField(
-                                value = draft.amountText,
-                                onValueChange = { text ->
-                                    val clean = text.filter { it.isDigit() || it == '.' || it == ',' }.take(12)
-                                    onChange { it.copy(amountText = clean, flags = it.flags - DraftFlag.NO_AMOUNT) }
-                                },
-                                textStyle = MaterialTheme.typography.headlineMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                                singleLine = true,
-                                cursorBrush = SolidColor(colors.brand[1]),
-                                modifier = Modifier.weight(1f),
-                                decorationBox = { inner ->
-                                    Box {
-                                        if (draft.amountText.isEmpty()) {
-                                            Text("0", style = MaterialTheme.typography.headlineMedium, color = colors.textFaint)
-                                        }
-                                        inner()
-                                    }
-                                },
-                            )
-                        }
-                        BasicTextField(
-                            value = draft.merchant,
-                            onValueChange = { text -> onChange { it.copy(merchant = text.take(60)) } },
-                            textStyle = MaterialTheme.typography.titleMedium.copy(color = MaterialTheme.colorScheme.onSurface),
-                            singleLine = true,
-                            cursorBrush = SolidColor(colors.brand[1]),
-                            modifier = Modifier.fillMaxWidth(),
-                            decorationBox = { inner ->
-                                Box {
-                                    if (draft.merchant.isEmpty()) {
-                                        Text("Paid to…", style = MaterialTheme.typography.titleMedium, color = colors.textFaint)
-                                    }
-                                    inner()
-                                }
-                            },
+                        Label("Amount", color = colors.faint)
+                        UnderlineField(
+                            value = draft.amountText,
+                            onValue = { t -> onChange { it.copy(amountText = t.filter { c -> c.isDigit() || c == '.' || c == ',' }.take(12), flags = it.flags - DraftFlag.NO_AMOUNT) } },
+                            placeholder = "0",
+                            prefix = currency.symbol.trim(),
+                            style = MaterialTheme.typography.headlineLarge,
+                            keyboard = KeyboardType.Decimal,
                         )
-                        Spacer(Modifier.height(10.dp))
+                        Spacer(Modifier.height(12.dp))
+                        Label("Paid to", color = colors.faint)
+                        UnderlineField(
+                            value = draft.merchant,
+                            onValue = { t -> onChange { it.copy(merchant = t.take(60)) } },
+                            placeholder = "Payee",
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Spacer(Modifier.height(12.dp))
                         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                            FieldChip(Format.shortDate(draft.dateTime.toLocalDate()), Icons.Rounded.CalendarMonth, { pickDate = true })
-                            FieldChip(Format.time(draft.dateTime), Icons.Rounded.Schedule, { pickTime = true })
+                            FieldChip("Date", Format.shortDate(draft.dateTime.toLocalDate()), { pickDate = true })
+                            FieldChip("Time", Format.time(draft.dateTime), { pickTime = true })
                         }
                     }
                 }
             }
         }
         if (draft.state == DraftState.READY) {
+            Spacer(Modifier.height(16.dp))
+            CategoryChips(draft.category, { c -> onChange { it.copy(category = c) } })
             Spacer(Modifier.height(12.dp))
-            CategoryChips(selected = draft.category, onSelect = { category -> onChange { it.copy(category = category) } })
-            Spacer(Modifier.height(8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Switch(
-                    checked = draft.include,
-                    onCheckedChange = { checked -> onChange { it.copy(include = checked) } },
-                    colors = SwitchDefaults.colors(checkedTrackColor = colors.brand[0]),
-                )
-                Spacer(Modifier.width(10.dp))
-                Text(
-                    if (draft.include) "Will be saved" else "Skipped",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = if (draft.include) MaterialTheme.colorScheme.onSurface else colors.textMuted,
-                    modifier = Modifier.weight(1f),
-                )
-                IconButton(onClick = onRemove) { Icon(Icons.Rounded.DeleteOutline, "Remove", tint = colors.textMuted) }
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                BracketToggle(draft.include, { v -> onChange { it.copy(include = v) } }, on = "Include", off = "Skipped")
+                Spacer(Modifier.weight(1f))
+                BracketButton("Remove", onClick = onRemove, color = colors.muted)
             }
         } else if (draft.state == DraftState.ERROR) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                TextButton(onClick = onRemove) { Text("Remove") }
-            }
+            BracketButton("Remove", onClick = onRemove, color = colors.muted)
         }
     }
 
     if (pickDate) {
-        DatePickerPopup(
-            initial = draft.dateTime.toLocalDate(),
-            onPick = { date -> onChange { it.copy(dateTime = date.atTime(it.dateTime.toLocalTime())) } },
-            onDismiss = { pickDate = false },
-        )
+        DatePickerPopup(draft.dateTime.toLocalDate(), { d -> onChange { it.copy(dateTime = d.atTime(it.dateTime.toLocalTime())) } }, { pickDate = false })
     }
     if (pickTime) {
-        TimePickerPopup(
-            initial = draft.dateTime.toLocalTime(),
-            onPick = { time -> onChange { it.copy(dateTime = it.dateTime.toLocalDate().atTime(time)) } },
-            onDismiss = { pickTime = false },
-        )
+        TimePickerPopup(draft.dateTime.toLocalTime(), { t -> onChange { it.copy(dateTime = it.dateTime.toLocalDate().atTime(t)) } }, { pickTime = false })
     }
 }
 
+private fun status(d: ImportDraft): String = when {
+    d.state == DraftState.SCANNING -> "Scanning"
+    d.state == DraftState.ERROR -> "Unreadable"
+    d.flags.isNotEmpty() -> d.flags.first().label
+    else -> "Detected"
+}
+
 @Composable
-private fun StatusRow(draft: ImportDraft) {
-    val colors = SpendTheme.colors
-    Row(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalAlignment = Alignment.CenterVertically) {
-        when {
-            draft.state == DraftState.SCANNING -> Pill("Scanning", colors.brand[0], icon = Icons.Rounded.AutoAwesome)
-            draft.state == DraftState.ERROR -> Pill("Error", colors.negative, icon = Icons.Rounded.ErrorOutline)
-            draft.flags.isNotEmpty() -> {
-                val flag = draft.flags.first()
-                Pill(flag.label, if (flag.excludeByDefault) colors.negative else colors.warning, icon = Icons.Rounded.ErrorOutline)
-            }
-            else -> Pill("Detected", colors.positive, icon = Icons.Rounded.CheckCircle)
-        }
-        draft.paymentApp?.let { Pill(it, colors.textMuted) }
+fun UnderlineField(
+    value: String,
+    onValue: (String) -> Unit,
+    placeholder: String,
+    style: TextStyle,
+    modifier: Modifier = Modifier,
+    prefix: String? = null,
+    keyboard: KeyboardType = KeyboardType.Text,
+    singleLine: Boolean = true,
+) {
+    val colors = Spend.ink
+    Column(modifier) {
+        BasicTextField(
+            value = value,
+            onValueChange = onValue,
+            textStyle = style.copy(color = colors.text),
+            singleLine = singleLine,
+            keyboardOptions = KeyboardOptions(keyboardType = keyboard),
+            cursorBrush = SolidColor(colors.text),
+            modifier = Modifier.fillMaxWidth().padding(vertical = 6.dp),
+            decorationBox = { inner ->
+                Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    if (prefix != null) {
+                        Text(prefix, style = style, color = colors.faint)
+                        Spacer(Modifier.width(6.dp))
+                    }
+                    Box(Modifier.weight(1f)) {
+                        if (value.isEmpty()) Text(placeholder, style = style, color = colors.ghost)
+                        inner()
+                    }
+                }
+            },
+        )
+        Hairline(color = if (value.isEmpty()) colors.line else colors.lineStrong)
     }
 }

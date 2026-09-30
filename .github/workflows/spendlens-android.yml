@@ -33,7 +33,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Test and build APKs
-        run: ./gradlew --no-daemon --stacktrace --continue testDebugUnitTest assembleDebug assembleRelease
+        run: ./gradlew --no-daemon --stacktrace --continue recordRoborazziDebug assembleDebug assembleRelease
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
@@ -43,6 +43,14 @@ jobs:
             spendlens/app/build/outputs/apk/release/*.apk
             spendlens/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      - name: Upload UI screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: spendlens/app/build/outputs/roborazzi/
+          if-no-files-found: ignore
 
       - name: Upload test reports
         if: failure()

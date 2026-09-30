@@ -1,12 +1,11 @@
 package com.spendlens.app.ui.screens.edit
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,41 +14,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.BasicTextField
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CalendarMonth
-import androidx.compose.material.icons.rounded.Check
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Schedule
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.SolidColor
-import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -62,15 +38,20 @@ import com.spendlens.app.domain.CategoryClassifier
 import com.spendlens.app.domain.Money
 import com.spendlens.app.ui.Format
 import com.spendlens.app.ui.appViewModel
+import com.spendlens.app.ui.components.BracketButton
 import com.spendlens.app.ui.components.DatePickerPopup
 import com.spendlens.app.ui.components.FieldChip
-import com.spendlens.app.ui.components.GradientButton
+import com.spendlens.app.ui.components.Hairline
+import com.spendlens.app.ui.components.Label
 import com.spendlens.app.ui.components.LocalCurrency
+import com.spendlens.app.ui.components.Statement
+import com.spendlens.app.ui.components.TextChip
 import com.spendlens.app.ui.components.TimePickerPopup
-import com.spendlens.app.ui.components.bounceClick
-import com.spendlens.app.ui.components.color
-import com.spendlens.app.ui.components.icon
-import com.spendlens.app.ui.theme.SpendTheme
+import com.spendlens.app.ui.components.rememberHaptics
+import com.spendlens.app.ui.components.reveal
+import com.spendlens.app.ui.components.short
+import com.spendlens.app.ui.screens.review.UnderlineField
+import com.spendlens.app.ui.theme.Spend
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 
@@ -85,15 +66,13 @@ data class EditForm(
 )
 
 class EditViewModel(private val repository: TransactionRepository, private val id: Long) : ViewModel() {
-
     var form by mutableStateOf(EditForm())
         private set
     var loaded by mutableStateOf(id < 0)
         private set
     private var original: TransactionEntity? = null
-
     val isNew: Boolean get() = id < 0
-    val canSave: Boolean get() = Money.parseInput(form.amountText) != null
+    val canSave: Boolean get() = loaded && Money.parseInput(form.amountText) != null
 
     init {
         if (id >= 0) {
@@ -101,13 +80,8 @@ class EditViewModel(private val repository: TransactionRepository, private val i
                 repository.get(id)?.let { e ->
                     original = e
                     form = EditForm(
-                        amountText = Money.toInput(e.amountMinor),
-                        merchant = e.merchant,
-                        category = Category.fromKey(e.category),
-                        categoryTouched = true,
-                        dateTime = e.timestamp.toLocalDateTime(),
-                        paymentApp = e.paymentApp.orEmpty(),
-                        note = e.note.orEmpty(),
+                        Money.toInput(e.amountMinor), e.merchant, Category.fromKey(e.category), true,
+                        e.timestamp.toLocalDateTime(), e.paymentApp.orEmpty(), e.note.orEmpty(),
                     )
                 }
                 loaded = true
@@ -117,12 +91,8 @@ class EditViewModel(private val repository: TransactionRepository, private val i
 
     fun update(transform: (EditForm) -> EditForm) {
         val next = transform(form)
-        // Suggest a category from the payee until the user picks one themselves.
-        form = if (!next.categoryTouched && next.merchant != form.merchant) {
-            next.copy(category = CategoryClassifier.classify(next.merchant))
-        } else {
-            next
-        }
+        // Suggest a category from the payee until the user picks one.
+        form = if (!next.categoryTouched && next.merchant != form.merchant) next.copy(category = CategoryClassifier.classify(next.merchant)) else next
     }
 
     fun save(onDone: () -> Unit) {
@@ -143,21 +113,29 @@ class EditViewModel(private val repository: TransactionRepository, private val i
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun EditScreen(id: Long, onDone: () -> Unit) {
     val vm = appViewModel(key = "edit-$id") { EditViewModel(it.repository, id) }
-    val form = vm.form
-    val colors = SpendTheme.colors
+    EditContent(vm.form, vm.isNew, vm.canSave, vm::update, onSave = { vm.save(onDone) }, onClose = onDone)
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun EditContent(
+    form: EditForm,
+    isNew: Boolean,
+    canSave: Boolean,
+    onUpdate: ((EditForm) -> EditForm) -> Unit,
+    onSave: () -> Unit,
+    onClose: () -> Unit,
+) {
+    val colors = Spend.ink
     val currency = LocalCurrency.current
+    val haptics = rememberHaptics()
     var pickDate by remember { mutableStateOf(false) }
     var pickTime by remember { mutableStateOf(false) }
-    val amountFocus = remember { FocusRequester() }
-    LaunchedEffect(Unit) {
-        if (vm.isNew) amountFocus.requestFocus()
-    }
 
-    Box(Modifier.fillMaxSize()) {
+    Box(Modifier.fillMaxSize().background(colors.canvas)) {
         Column(
             Modifier
                 .fillMaxSize()
@@ -165,175 +143,70 @@ fun EditScreen(id: Long, onDone: () -> Unit) {
                 .verticalScroll(rememberScrollState())
                 .statusBarsPadding()
                 .padding(horizontal = 20.dp)
-                .padding(bottom = 120.dp),
+                .padding(top = 14.dp, bottom = 120.dp),
         ) {
-            Row(Modifier.fillMaxWidth().padding(vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onDone) { Icon(Icons.Rounded.Close, "Close") }
-                Text(
-                    if (vm.isNew) "Add payment" else "Edit payment",
-                    style = MaterialTheme.typography.titleLarge,
-                    modifier = Modifier.weight(1f),
-                )
-            }
+            Row { BracketButton("Close", onClick = onClose, color = colors.muted) }
             Spacer(Modifier.height(20.dp))
+            Statement(if (isNew) "New " else "Edit ", "payment", Modifier.reveal(0), MaterialTheme.typography.displaySmall)
+            Spacer(Modifier.height(36.dp))
 
-            // Big amount input
-            Column(
-                Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(28.dp))
-                    .background(colors.heroBrush)
-                    .padding(vertical = 28.dp, horizontal = 20.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text("Amount", style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.8f))
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Text(currency.symbol.trim(), style = MaterialTheme.typography.displaySmall, color = Color.White.copy(alpha = 0.8f))
-                    Spacer(Modifier.width(6.dp))
-                    BasicTextField(
-                        value = form.amountText,
-                        onValueChange = { text ->
-                            vm.update { it.copy(amountText = text.filter { c -> c.isDigit() || c == '.' }.take(12)) }
-                        },
-                        textStyle = MaterialTheme.typography.displayMedium.copy(color = Color.White, textAlign = TextAlign.Start),
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        singleLine = true,
-                        cursorBrush = SolidColor(Color.White),
-                        modifier = Modifier
-                            .width(amountFieldWidth(form.amountText))
-                            .focusRequester(amountFocus),
-                        decorationBox = { inner ->
-                            Box {
-                                if (form.amountText.isEmpty()) {
-                                    Text("0", style = MaterialTheme.typography.displayMedium, color = Color.White.copy(alpha = 0.5f))
-                                }
-                                inner()
-                            }
-                        },
-                    )
+            Column(Modifier.reveal(1)) {
+                Label("(01)  Amount", color = colors.faint)
+                UnderlineField(form.amountText, { t -> onUpdate { it.copy(amountText = t.filter { c -> c.isDigit() || c == '.' }.take(12)) } }, "0", MaterialTheme.typography.displayMedium, prefix = currency.symbol.trim(), keyboard = KeyboardType.Decimal)
+            }
+            Spacer(Modifier.height(28.dp))
+            Column(Modifier.reveal(2)) {
+                Label("(02)  Paid to", color = colors.faint)
+                UnderlineField(form.merchant, { v -> onUpdate { it.copy(merchant = v) } }, "Swiggy, Priya, Airtel…", MaterialTheme.typography.headlineSmall)
+            }
+            Spacer(Modifier.height(28.dp))
+            Column(Modifier.reveal(3)) {
+                Label("(03)  When", color = colors.faint)
+                Spacer(Modifier.height(10.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    FieldChip("Date", Format.dayHeader(form.dateTime.toLocalDate()), { pickDate = true })
+                    FieldChip("Time", Format.time(form.dateTime), { pickTime = true })
                 }
             }
-            Spacer(Modifier.height(20.dp))
-
-            Label("Paid to")
-            FormField(form.merchant, { v -> vm.update { it.copy(merchant = v) } }, "Swiggy, Priya, Airtel…", KeyboardCapitalization.Words)
-            Spacer(Modifier.height(18.dp))
-
-            Label("When")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FieldChip(Format.dayHeader(form.dateTime.toLocalDate()), Icons.Rounded.CalendarMonth, { pickDate = true })
-                FieldChip(Format.time(form.dateTime), Icons.Rounded.Schedule, { pickTime = true })
-            }
-            Spacer(Modifier.height(18.dp))
-
-            Label("Category")
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                Category.entries.forEach { category ->
-                    val selected = category == form.category
-                    val bg by animateColorAsState(if (selected) category.color else category.color.copy(alpha = 0.12f), label = "cat")
-                    Row(
-                        Modifier
-                            .clip(RoundedCornerShape(16.dp))
-                            .background(bg)
-                            .bounceClick { vm.update { it.copy(category = category, categoryTouched = true) } }
-                            .padding(horizontal = 12.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(category.icon, null, tint = if (selected) Color.White else category.color, modifier = Modifier.size(18.dp))
-                        Spacer(Modifier.width(6.dp))
-                        Text(
-                            category.label,
-                            style = MaterialTheme.typography.labelLarge,
-                            color = if (selected) Color.White else MaterialTheme.colorScheme.onSurface,
-                        )
-                        if (selected) {
-                            Spacer(Modifier.width(4.dp))
-                            Icon(Icons.Rounded.Check, null, tint = Color.White, modifier = Modifier.size(16.dp))
-                        }
+            Spacer(Modifier.height(28.dp))
+            Column(Modifier.reveal(4)) {
+                Label("(04)  Category", color = colors.faint)
+                Spacer(Modifier.height(10.dp))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Category.entries.forEach { c ->
+                        TextChip(c.short, c == form.category, {
+                            if (c != form.category) haptics.tick()
+                            onUpdate { it.copy(category = c, categoryTouched = true) }
+                        })
                     }
                 }
             }
-            Spacer(Modifier.height(18.dp))
-
-            Label("Paid with (optional)")
-            FormField(form.paymentApp, { v -> vm.update { it.copy(paymentApp = v) } }, "Cash, Card, Google Pay…", KeyboardCapitalization.Words)
-            Spacer(Modifier.height(18.dp))
-
-            Label("Note (optional)")
-            FormField(form.note, { v -> vm.update { it.copy(note = v) } }, "Anything to remember", KeyboardCapitalization.Sentences, singleLine = false)
+            Spacer(Modifier.height(28.dp))
+            Column(Modifier.reveal(5)) {
+                Label("(05)  Paid with — optional", color = colors.faint)
+                UnderlineField(form.paymentApp, { v -> onUpdate { it.copy(paymentApp = v) } }, "Cash, card, GPay…", MaterialTheme.typography.titleMedium)
+                Spacer(Modifier.height(28.dp))
+                Label("(06)  Note — optional", color = colors.faint)
+                UnderlineField(form.note, { v -> onUpdate { it.copy(note = v) } }, "Anything to remember", MaterialTheme.typography.titleMedium, singleLine = false)
+            }
         }
-
-        Box(
-            Modifier
-                .align(Alignment.BottomCenter)
-                .fillMaxWidth()
-                .background(MaterialTheme.colorScheme.background.copy(alpha = 0.94f))
-                .navigationBarsPadding()
-                .imePadding()
-                .padding(horizontal = 20.dp, vertical = 12.dp),
+        Column(
+            Modifier.align(Alignment.BottomCenter).fillMaxWidth().background(colors.canvas).navigationBarsPadding().imePadding(),
         ) {
-            GradientButton(
-                text = if (vm.isNew) "Add payment" else "Save changes",
-                onClick = { vm.save(onDone) },
-                enabled = vm.canSave && vm.loaded,
-                icon = Icons.Rounded.Check,
-                modifier = Modifier.fillMaxWidth(),
+            Hairline()
+            BracketButton(
+                if (isNew) "Add payment" else "Save changes",
+                onClick = {
+                    haptics.confirm()
+                    onSave()
+                },
+                filled = true,
+                enabled = canSave,
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 12.dp),
             )
         }
     }
 
-    if (pickDate) {
-        DatePickerPopup(
-            initial = form.dateTime.toLocalDate(),
-            onPick = { date -> vm.update { it.copy(dateTime = date.atTime(it.dateTime.toLocalTime())) } },
-            onDismiss = { pickDate = false },
-        )
-    }
-    if (pickTime) {
-        TimePickerPopup(
-            initial = form.dateTime.toLocalTime(),
-            onPick = { time -> vm.update { it.copy(dateTime = it.dateTime.toLocalDate().atTime(time)) } },
-            onDismiss = { pickTime = false },
-        )
-    }
-}
-
-/** Grows the amount field with its content so the currency sign hugs the number. */
-private fun amountFieldWidth(text: String) = (40 + 30 * text.length.coerceAtLeast(1)).dp
-
-@Composable
-private fun Label(text: String) {
-    Text(
-        text,
-        style = MaterialTheme.typography.labelLarge,
-        color = SpendTheme.colors.textMuted,
-        modifier = Modifier.padding(bottom = 8.dp, start = 4.dp),
-    )
-}
-
-@Composable
-private fun FormField(
-    value: String,
-    onValueChange: (String) -> Unit,
-    placeholder: String,
-    capitalization: KeyboardCapitalization,
-    singleLine: Boolean = true,
-) {
-    val colors = SpendTheme.colors
-    TextField(
-        value = value,
-        onValueChange = onValueChange,
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text(placeholder) },
-        singleLine = singleLine,
-        minLines = if (singleLine) 1 else 3,
-        keyboardOptions = KeyboardOptions(capitalization = capitalization),
-        shape = RoundedCornerShape(18.dp),
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = colors.subtle,
-            unfocusedContainerColor = colors.subtle,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-        ),
-    )
+    if (pickDate) DatePickerPopup(form.dateTime.toLocalDate(), { d -> onUpdate { it.copy(dateTime = d.atTime(it.dateTime.toLocalTime())) } }, { pickDate = false })
+    if (pickTime) TimePickerPopup(form.dateTime.toLocalTime(), { t -> onUpdate { it.copy(dateTime = it.dateTime.toLocalDate().atTime(t)) } }, { pickTime = false })
 }

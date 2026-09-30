@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -18,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,23 +26,18 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.spendlens.app.domain.HeatDay
-import com.spendlens.app.ui.theme.SpendColors
-import com.spendlens.app.ui.theme.SpendTheme
+import com.spendlens.app.ui.theme.Spend
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -50,82 +45,64 @@ import java.time.temporal.ChronoUnit
 import java.time.temporal.WeekFields
 import java.util.Locale
 
-/** Empty → violet → magenta → orange as intensity rises. */
-fun SpendColors.heat(intensity: Float): Color = when {
-    intensity <= 0f -> heatEmpty
-    intensity < 0.5f -> lerp(lerp(heatEmpty, brand[0], 0.35f), brand[0], intensity * 2)
-    intensity < 0.85f -> lerp(brand[0], brand[1], (intensity - 0.5f) / 0.35f)
-    else -> lerp(brand[1], brand[2], (intensity - 0.85f) / 0.15f)
-}
-
-/** Calendar grid for one month. Tap a day to drill into it. */
+/** Month as a calendar of grey squares. Tap a day to open it. */
 @Composable
-fun MonthHeatmap(
-    days: List<HeatDay>,
-    today: LocalDate,
-    onDayClick: (LocalDate) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun MonthHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) -> Unit, modifier: Modifier = Modifier) {
     if (days.isEmpty()) return
-    val colors = SpendTheme.colors
+    val colors = Spend.ink
+    val haptics = rememberHaptics()
     val firstDay = WeekFields.of(Locale.getDefault()).firstDayOfWeek
-    val weekdays = (0 until 7).map { firstDay.plus(it.toLong()) }
     val leading = ((days.first().date.dayOfWeek.value - firstDay.value) + 7) % 7
     val cells: List<HeatDay?> = List(leading) { null } + days
     val appear = remember(days.first().date) { Animatable(0f) }
-    LaunchedEffect(days.first().date) { appear.animateTo(1f, tween(700)) }
+    LaunchedEffect(days.first().date) { appear.animateTo(1f, tween(900, easing = EmphasizedDecelerate)) }
 
-    Column(modifier, verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            weekdays.forEach { day ->
+    Column(modifier, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            (0 until 7).forEach {
                 Text(
-                    day.getDisplayName(TextStyle.NARROW, Locale.getDefault()),
-                    modifier = Modifier.weight(1f),
+                    firstDay.plus(it.toLong()).getDisplayName(TextStyle.NARROW, Locale.getDefault()),
+                    Modifier.weight(1f),
                     style = MaterialTheme.typography.labelSmall,
-                    color = colors.textFaint,
-                    textAlign = androidx.compose.ui.text.style.TextAlign.Center,
+                    color = colors.faint,
+                    textAlign = TextAlign.Center,
                 )
             }
         }
         cells.chunked(7).forEachIndexed { row, week ->
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 (0 until 7).forEach { col ->
                     val cell = week.getOrNull(col)
-                    val index = row * 7 + col
-                    val local = ((appear.value * 1.6f) - index / 60f).coerceIn(0f, 1f)
+                    val local = (appear.value * 1.5f - (row * 7 + col) / 62f).coerceIn(0f, 1f)
                     Box(
                         Modifier
                             .weight(1f)
                             .aspectRatio(1f)
-                            .graphicsLayer {
-                                alpha = local
-                                scaleX = 0.7f + 0.3f * local
-                                scaleY = 0.7f + 0.3f * local
-                            }
-                            .clip(RoundedCornerShape(10.dp))
+                            .graphicsLayer { alpha = local }
                             .then(
                                 if (cell == null) {
                                     Modifier
                                 } else {
                                     Modifier
-                                        .background(colors.heat(cell.intensity))
-                                        .then(
-                                            if (cell.date == today) Modifier.border(2.dp, colors.brand[2], RoundedCornerShape(10.dp)) else Modifier,
-                                        )
-                                        .bounceClick { onDayClick(cell.date) }
+                                        .background(colors.ramp(if (cell.amountMinor > 0) 0.15f + cell.intensity * 0.85f else 0f))
+                                        .then(if (cell.date == today) Modifier.border(1.dp, colors.text) else Modifier)
+                                        .pressable(pressedScale = 0.85f, haptic = false) {
+                                            haptics.tick()
+                                            onDayClick(cell.date)
+                                        }
                                 },
                             ),
-                        contentAlignment = Alignment.Center,
+                        contentAlignment = Alignment.TopStart,
                     ) {
                         if (cell != null) {
                             Text(
                                 cell.date.dayOfMonth.toString(),
+                                modifier = Modifier.padding(4.dp),
                                 style = MaterialTheme.typography.labelSmall,
-                                fontWeight = if (cell.date == today) FontWeight.Bold else FontWeight.Medium,
                                 color = when {
-                                    cell.intensity > 0.45f -> Color.White
-                                    cell.date.isAfter(today) -> colors.textFaint.copy(alpha = 0.5f)
-                                    else -> colors.textMuted
+                                    cell.intensity > 0.5f -> colors.inverse
+                                    cell.date.isAfter(today) -> colors.faint.copy(alpha = 0.5f)
+                                    else -> colors.muted
                                 },
                             )
                         }
@@ -133,98 +110,82 @@ fun MonthHeatmap(
                 }
             }
         }
-        HeatLegend(Modifier.padding(top = 6.dp))
+        Spacer(Modifier.height(6.dp))
+        HeatLegend()
     }
 }
 
 @Composable
 fun HeatLegend(modifier: Modifier = Modifier) {
-    val colors = SpendTheme.colors
+    val colors = Spend.ink
     Row(modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End, verticalAlignment = Alignment.CenterVertically) {
-        Text("Less", style = MaterialTheme.typography.labelSmall, color = colors.textFaint)
-        listOf(0f, 0.25f, 0.5f, 0.75f, 1f).forEach { i ->
-            Box(
-                Modifier
-                    .padding(horizontal = 2.dp)
-                    .size(12.dp)
-                    .clip(RoundedCornerShape(3.dp))
-                    .background(colors.heat(i)),
-            )
+        Label("Less", color = colors.faint)
+        Spacer(Modifier.width(6.dp))
+        listOf(0f, 0.3f, 0.55f, 0.8f, 1f).forEach {
+            Box(Modifier.padding(horizontal = 1.dp).size(10.dp).background(colors.ramp(it)))
         }
-        Text("More", style = MaterialTheme.typography.labelSmall, color = colors.textFaint)
+        Spacer(Modifier.width(6.dp))
+        Label("More", color = colors.faint)
     }
 }
 
-/** GitHub-style contribution grid for a whole year. Scrolls to the current week. */
+/** Contribution-style grid for the whole year; scrolls to the current week. */
 @Composable
-fun YearHeatmap(
-    days: List<HeatDay>,
-    today: LocalDate,
-    onDayClick: (LocalDate) -> Unit,
-    modifier: Modifier = Modifier,
-) {
+fun YearHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) -> Unit, modifier: Modifier = Modifier) {
     if (days.isEmpty()) return
-    val colors = SpendTheme.colors
+    val colors = Spend.ink
+    val haptics = rememberHaptics()
     val measurer = rememberTextMeasurer()
-    val labelStyle = MaterialTheme.typography.labelSmall.copy(color = colors.textFaint)
+    val label = MaterialTheme.typography.labelSmall.copy(color = colors.faint)
     val density = LocalDensity.current
-    val cell = 13.dp
+    val cell = 11.dp
     val gap = 3.dp
-    val labelHeight = 18.dp
+    val top = 16.dp
     val start = days.first().date
     val gridStart = start.minusDays(((start.dayOfWeek.value - DayOfWeek.MONDAY.value) + 7L) % 7)
     val weeks = (ChronoUnit.DAYS.between(gridStart, days.last().date) / 7 + 1).toInt()
-    val width = (cell + gap) * weeks
-    val scroll = rememberScrollState()
     val byDate = remember(days) { days.associateBy { it.date } }
-
+    val scroll = rememberScrollState()
     LaunchedEffect(start) {
         val focus = if (today.year == start.year) today else days.last().date
-        val week = ChronoUnit.DAYS.between(gridStart, focus) / 7
-        val target = with(density) { ((cell + gap) * week.toInt()).roundToPx() } - with(density) { 120.dp.roundToPx() }
-        scroll.scrollTo(target.coerceAtLeast(0))
+        val week = (ChronoUnit.DAYS.between(gridStart, focus) / 7).toInt()
+        scroll.scrollTo(with(density) { ((cell + gap) * week - 140.dp).roundToPx() }.coerceAtLeast(0))
     }
-
     Column(modifier) {
         Row(Modifier.horizontalScroll(scroll)) {
             Canvas(
                 Modifier
-                    .width(width)
-                    .height(labelHeight + (cell + gap) * 7)
+                    .width((cell + gap) * weeks)
+                    .height(top + (cell + gap) * 7)
                     .pointerInput(days) {
-                        detectTapGestures { offset ->
+                        detectTapGestures { o ->
                             val step = (cell + gap).toPx()
-                            val col = (offset.x / step).toInt()
-                            val row = ((offset.y - labelHeight.toPx()) / step).toInt()
-                            if (row in 0..6) {
-                                val date = gridStart.plusDays(col * 7L + row)
-                                if (byDate.containsKey(date)) onDayClick(date)
+                            val row = ((o.y - top.toPx()) / step).toInt()
+                            val date = gridStart.plusDays((o.x / step).toInt() * 7L + row)
+                            if (row in 0..6 && byDate.containsKey(date)) {
+                                haptics.tick()
+                                onDayClick(date)
                             }
                         }
                     },
             ) {
                 val step = (cell + gap).toPx()
                 val c = cell.toPx()
-                val top = labelHeight.toPx()
                 var lastMonth = -1
-                for (w in 0 until weeks) {
-                    for (d in 0 until 7) {
-                        val date = gridStart.plusDays(w * 7L + d)
-                        val heat = byDate[date] ?: continue
-                        val origin = Offset(w * step, top + d * step)
-                        drawRoundRect(colors.heat(heat.intensity), origin, Size(c, c), CornerRadius(3.dp.toPx()))
-                        if (date == today) {
-                            drawRoundRect(colors.brand[2], origin, Size(c, c), CornerRadius(3.dp.toPx()), style = Stroke(1.5.dp.toPx()))
-                        }
-                        if (date.dayOfMonth <= 7 && d == 0 && date.monthValue != lastMonth) {
-                            lastMonth = date.monthValue
-                            val label = measurer.measure(date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()), labelStyle)
-                            drawText(label, topLeft = Offset(w * step, 0f))
-                        }
+                for (w in 0 until weeks) for (d in 0 until 7) {
+                    val date = gridStart.plusDays(w * 7L + d)
+                    val heat = byDate[date] ?: continue
+                    val o = Offset(w * step, top.toPx() + d * step)
+                    drawRect(colors.ramp(if (heat.amountMinor > 0) 0.15f + heat.intensity * 0.85f else 0f), o, Size(c, c))
+                    if (date == today) drawRect(colors.text, o, Size(c, c), style = Stroke(1.dp.toPx()))
+                    if (d == 0 && date.dayOfMonth <= 7 && date.monthValue != lastMonth) {
+                        lastMonth = date.monthValue
+                        drawText(measurer.measure(date.month.getDisplayName(TextStyle.SHORT, Locale.getDefault()).uppercase(), label), topLeft = Offset(w * step, 0f))
                     }
                 }
             }
         }
-        HeatLegend(Modifier.padding(top = 10.dp))
+        Spacer(Modifier.height(10.dp))
+        HeatLegend()
     }
 }

@@ -1,6 +1,5 @@
 package com.spendlens.app.ui.screens.activity
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -14,166 +13,140 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.Delete
-import androidx.compose.material.icons.rounded.Search
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.spendlens.app.domain.Category
 import com.spendlens.app.domain.Txn
 import com.spendlens.app.ui.Format
 import com.spendlens.app.ui.appViewModel
-import com.spendlens.app.ui.components.EmptyIllustration
+import com.spendlens.app.ui.components.Hairline
+import com.spendlens.app.ui.components.Label
 import com.spendlens.app.ui.components.LocalCurrency
+import com.spendlens.app.ui.components.Statement
+import com.spendlens.app.ui.components.TextChip
 import com.spendlens.app.ui.components.TransactionRow
-import com.spendlens.app.ui.components.bounceClick
-import com.spendlens.app.ui.components.color
-import com.spendlens.app.ui.components.icon
-import com.spendlens.app.ui.theme.SpendTheme
+import com.spendlens.app.ui.components.rememberHaptics
+import com.spendlens.app.ui.components.reveal
+import com.spendlens.app.ui.components.short
+import com.spendlens.app.ui.theme.Spend
+import kotlinx.coroutines.flow.distinctUntilChanged
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun ActivityScreen(onOpenTransaction: (Long) -> Unit, onDelete: (Long) -> Unit) {
     val vm = appViewModel { ActivityViewModel(it.repository) }
     val state by vm.state.collectAsStateWithLifecycle()
-    val colors = SpendTheme.colors
-    val currency = LocalCurrency.current
     var query by rememberSaveable { mutableStateOf("") }
+    ActivityContent(
+        state = state,
+        query = query,
+        onQuery = {
+            query = it
+            vm.search(it)
+        },
+        onFilter = vm::filterBy,
+        onOpen = onOpenTransaction,
+        onDelete = onDelete,
+    )
+}
 
-    LazyColumn(
-        Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(bottom = 130.dp),
-    ) {
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun ActivityContent(
+    state: ActivityUiState,
+    query: String,
+    onQuery: (String) -> Unit,
+    onFilter: (Category?) -> Unit,
+    onOpen: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
+) {
+    val colors = Spend.ink
+    val currency = LocalCurrency.current
+    val haptics = rememberHaptics()
+
+    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 110.dp)) {
         item(key = "title") {
-            Column(
-                Modifier
-                    .windowInsetsPadding(WindowInsets.statusBars)
-                    .padding(start = 20.dp, end = 20.dp, top = 16.dp),
-            ) {
-                Text("Activity", style = MaterialTheme.typography.headlineLarge)
-                Text(
-                    "${state.count} ${if (state.count == 1) "payment" else "payments"} · ${currency.format(state.total)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = colors.textMuted,
-                )
-                Spacer(Modifier.height(16.dp))
-                TextField(
-                    value = query,
-                    onValueChange = {
-                        query = it
-                        vm.search(it)
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Search payee, category, app…") },
-                    leadingIcon = { Icon(Icons.Rounded.Search, null) },
-                    trailingIcon = {
-                        if (query.isNotEmpty()) {
-                            IconButton(onClick = {
-                                query = ""
-                                vm.search("")
-                            }) { Icon(Icons.Rounded.Close, "Clear") }
-                        }
-                    },
-                    singleLine = true,
-                    shape = RoundedCornerShape(20.dp),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = colors.subtle,
-                        unfocusedContainerColor = colors.subtle,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                    ),
-                )
+            Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 20.dp).padding(top = 22.dp)) {
+                Statement("Activity ", "(${state.count})", Modifier.reveal(0), MaterialTheme.typography.displaySmall)
+                Spacer(Modifier.height(6.dp))
+                Label("${currency.format(state.total)} in total", color = colors.muted, modifier = Modifier.reveal(1))
+                Spacer(Modifier.height(24.dp))
+                Box(Modifier.reveal(2)) {
+                    BasicTextField(
+                        value = query,
+                        onValueChange = onQuery,
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.titleMedium.copy(color = colors.text),
+                        cursorBrush = SolidColor(colors.text),
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+                        decorationBox = { inner ->
+                            Box {
+                                if (query.isEmpty()) Label("Search payee, category, app", color = colors.faint, style = MaterialTheme.typography.labelLarge)
+                                inner()
+                            }
+                        },
+                    )
+                }
+                Hairline(color = if (query.isEmpty()) colors.line else colors.text)
             }
         }
         if (state.categories.size > 1) {
             item(key = "filters") {
                 LazyRow(
-                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 14.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    Modifier.reveal(3),
+                    contentPadding = PaddingValues(horizontal = 20.dp, vertical = 16.dp),
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
-                    item { FilterChip("All", null, state.filter == null) { vm.filterBy(null) } }
-                    items(state.categories, key = { it.key }) { category ->
-                        FilterChip(category.label, category, state.filter == category) {
-                            vm.filterBy(if (state.filter == category) null else category)
-                        }
+                    item { TextChip("All", state.filter == null, { haptics.tick(); onFilter(null) }) }
+                    items(state.categories, key = { it.key }) { c ->
+                        TextChip(c.short, state.filter == c, {
+                            haptics.tick()
+                            onFilter(if (state.filter == c) null else c)
+                        })
                     }
                 }
             }
         }
         if (!state.loading && state.groups.isEmpty()) {
             item(key = "empty") {
-                Column(
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(32.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    EmptyIllustration(Modifier.size(220.dp))
-                    Text(
-                        if (state.hasAny) "No payments match" else "No payments yet",
-                        style = MaterialTheme.typography.titleLarge,
-                    )
-                    Text(
-                        if (state.hasAny) "Try another search or filter." else "Tap the scan button to add payment screenshots.",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = colors.textMuted,
-                        textAlign = TextAlign.Center,
-                    )
+                Column(Modifier.padding(20.dp).padding(top = 40.dp)) {
+                    Statement(if (state.hasAny) "Nothing matches. " else "No payments yet. ", if (state.hasAny) "Try another word." else "Tap + to add screenshots.", style = MaterialTheme.typography.headlineMedium)
                 }
             }
         }
-        state.groups.forEach { group ->
+        state.groups.forEachIndexed { g, group ->
             stickyHeader(key = "h-${group.date}") {
                 Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .background(MaterialTheme.colorScheme.background)
-                        .padding(horizontal = 20.dp, vertical = 10.dp),
+                    Modifier.fillMaxWidth().background(colors.canvas).padding(horizontal = 20.dp).padding(top = 20.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(Format.dayHeader(group.date), style = MaterialTheme.typography.titleSmall, modifier = Modifier.weight(1f))
-                    Text(currency.format(group.total), style = MaterialTheme.typography.labelLarge, color = colors.textMuted)
+                    Label(Format.dayHeader(group.date), color = colors.text, modifier = Modifier.weight(1f))
+                    Label(currency.format(group.total), color = colors.muted)
                 }
             }
             items(group.items, key = { it.id }) { txn ->
-                SwipeRow(
-                    txn = txn,
-                    onOpen = { onOpenTransaction(txn.id) },
-                    onDelete = { onDelete(txn.id) },
-                    modifier = Modifier
-                        .animateItem()
-                        .padding(horizontal = 12.dp),
-                )
+                SwipeRow(txn, { onOpen(txn.id) }, { onDelete(txn.id) }, Modifier.animateItem().padding(horizontal = 20.dp).reveal(4 + g))
             }
         }
     }
@@ -182,11 +155,13 @@ fun ActivityScreen(onOpenTransaction: (Long) -> Unit, onDelete: (Long) -> Unit) 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun SwipeRow(txn: Txn, onOpen: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
-    val colors = SpendTheme.colors
+    val colors = Spend.ink
     val currency = LocalCurrency.current
+    val haptics = rememberHaptics()
     val state = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
+        confirmValueChange = {
+            if (it == SwipeToDismissBoxValue.EndToStart) {
+                haptics.confirm()
                 onDelete()
                 true
             } else {
@@ -194,51 +169,20 @@ private fun SwipeRow(txn: Txn, onOpen: () -> Unit, onDelete: () -> Unit, modifie
             }
         },
     )
+    // A tick the moment the swipe passes the point of no return (and when it springs back).
+    LaunchedEffect(state) {
+        snapshotFlow { state.targetValue }.distinctUntilChanged().collect { if (it != state.currentValue) haptics.tick() }
+    }
     SwipeToDismissBox(
         state = state,
         modifier = modifier,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            val bg by animateColorAsState(
-                if (state.targetValue == SwipeToDismissBoxValue.EndToStart) colors.negative else colors.negative.copy(alpha = 0.5f),
-                label = "swipeBg",
-            )
-            Box(
-                Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(bg)
-                    .padding(horizontal = 24.dp),
-                contentAlignment = Alignment.CenterEnd,
-            ) {
-                Icon(Icons.Rounded.Delete, contentDescription = "Delete", tint = Color.White)
+            Box(Modifier.fillMaxSize().background(colors.alert).padding(horizontal = 20.dp), contentAlignment = Alignment.CenterEnd) {
+                Text("[ DELETE ]", style = MaterialTheme.typography.labelLarge, color = colors.inverse)
             }
         },
     ) {
-        Box(Modifier.background(MaterialTheme.colorScheme.background)) {
-            TransactionRow(txn = txn, currency = currency, onClick = onOpen)
-        }
-    }
-}
-
-@Composable
-private fun FilterChip(label: String, category: Category?, selected: Boolean, onClick: () -> Unit) {
-    val colors = SpendTheme.colors
-    val accent = category?.color ?: MaterialTheme.colorScheme.primary
-    val background by animateColorAsState(if (selected) accent else colors.subtle, label = "chipBg")
-    val content by animateColorAsState(if (selected) Color.White else colors.textMuted, label = "chipFg")
-    Row(
-        Modifier
-            .clip(CircleShape)
-            .background(background)
-            .bounceClick(onClick = onClick)
-            .padding(horizontal = 14.dp, vertical = 9.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        if (category != null) {
-            Icon(category.icon, null, tint = if (selected) Color.White else accent, modifier = Modifier.size(16.dp))
-            Spacer(Modifier.width(6.dp))
-        }
-        Text(label, style = MaterialTheme.typography.labelLarge, color = content)
+        Box(Modifier.background(colors.canvas)) { TransactionRow(txn, currency, onOpen) }
     }
 }

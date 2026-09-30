@@ -7,7 +7,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
@@ -22,6 +21,7 @@ import androidx.compose.material.icons.rounded.Home
 import androidx.compose.material.icons.automirrored.rounded.ReceiptLong
 import androidx.compose.material.icons.rounded.Settings
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -50,7 +50,15 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.spendlens.app.data.AppSettings
 import com.spendlens.app.ocr.ScreenshotFinder
-import com.spendlens.app.ui.components.FloatingNavBar
+import com.spendlens.app.ui.components.BottomBar
+import com.spendlens.app.ui.components.Emphasized
+import com.spendlens.app.ui.components.EmphasizedAccelerate
+import com.spendlens.app.ui.components.EmphasizedDecelerate
+import com.spendlens.app.ui.components.rememberHaptics
+import androidx.navigation.NavBackStackEntry
+import androidx.compose.animation.AnimatedContentTransitionScope
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
 import com.spendlens.app.ui.components.LocalCurrency
 import com.spendlens.app.ui.components.NavItem
 import com.spendlens.app.ui.screens.ScanSheet
@@ -74,10 +82,56 @@ private object Routes {
 }
 
 private val topLevel = listOf(
-    NavItem(Routes.HOME, "Home", Icons.Rounded.Home),
-    NavItem(Routes.ACTIVITY, "Activity", Icons.AutoMirrored.Rounded.ReceiptLong),
-    NavItem(Routes.SETTINGS, "Settings", Icons.Rounded.Settings),
+    NavItem(Routes.HOME, "Home"),
+    NavItem(Routes.ACTIVITY, "Activity"),
+    NavItem(Routes.SETTINGS, "Settings"),
 )
+
+private fun tabIndex(route: String?) = topLevel.indexOfFirst { it.route == route }
+
+// ---- Transitions -----------------------------------------------------------------
+// Tabs: shared X axis in the direction of travel. Pushed screens: slide over from the
+// right (modal ones from below) while the page underneath recedes and dims.
+
+private typealias Scope = AnimatedContentTransitionScope<NavBackStackEntry>
+
+private fun Scope.tabDirection(): Int {
+    val from = tabIndex(initialState.destination.route)
+    val to = tabIndex(targetState.destination.route)
+    return if (from >= 0 && to >= 0 && to < from) -1 else 1
+}
+
+private fun Scope.enter(): EnterTransition {
+    val tabs = tabIndex(initialState.destination.route) >= 0 && tabIndex(targetState.destination.route) >= 0
+    return if (tabs) {
+        val d = tabDirection()
+        slideInHorizontally(tween(420, easing = EmphasizedDecelerate)) { d * it / 6 } + fadeIn(tween(260, 80))
+    } else {
+        slideInHorizontally(tween(460, easing = EmphasizedDecelerate)) { it } + fadeIn(tween(200))
+    }
+}
+
+private fun Scope.exit(): ExitTransition {
+    val tabs = tabIndex(initialState.destination.route) >= 0 && tabIndex(targetState.destination.route) >= 0
+    return if (tabs) {
+        val d = tabDirection()
+        slideOutHorizontally(tween(300, easing = EmphasizedAccelerate)) { -d * it / 6 } + fadeOut(tween(160))
+    } else {
+        slideOutHorizontally(tween(460, easing = Emphasized)) { -it / 5 } + fadeOut(tween(300, 100))
+    }
+}
+
+private fun Scope.popEnter(): EnterTransition =
+    slideInHorizontally(tween(420, easing = EmphasizedDecelerate)) { -it / 5 } + fadeIn(tween(300))
+
+private fun Scope.popExit(): ExitTransition =
+    slideOutHorizontally(tween(320, easing = EmphasizedAccelerate)) { it } + fadeOut(tween(260, 60))
+
+private fun Scope.modalEnter(): EnterTransition =
+    slideInVertically(tween(480, easing = EmphasizedDecelerate)) { it / 3 } + fadeIn(tween(260))
+
+private fun Scope.modalExit(): ExitTransition =
+    slideOutVertically(tween(300, easing = EmphasizedAccelerate)) { it / 3 } + fadeOut(tween(220))
 
 private fun NavHostController.navigateTop(route: String) = navigate(route) {
     popUpTo(graph.findStartDestination().id) { saveState = true }
@@ -97,6 +151,8 @@ fun SpendLensRoot(settings: AppSettings) {
     var showScanSheet by rememberSaveable { mutableStateOf(false) }
     val shared by container.sharedImages.collectAsStateWithLifecycle()
 
+    val haptics = rememberHaptics()
+
     fun message(text: String) {
         scope.launch { snackbar.showSnackbar(text) }
     }
@@ -111,6 +167,7 @@ fun SpendLensRoot(settings: AppSettings) {
                 duration = SnackbarDuration.Long,
             )
             if (result == SnackbarResult.ActionPerformed) {
+                haptics.confirm()
                 container.repository.save(entity)
             } else {
                 container.repository.deleteImage(entity.imagePath)
@@ -126,7 +183,7 @@ fun SpendLensRoot(settings: AppSettings) {
     }
 
     fun startAutoFind() {
-        container.importManager.startAutoFind()
+        container.importManager.startAutoFind(settings.autoFindDays)
         nav.navigate(Routes.REVIEW) { launchSingleTop = true }
     }
 
@@ -160,10 +217,10 @@ fun SpendLensRoot(settings: AppSettings) {
             NavHost(
                 navController = nav,
                 startDestination = Routes.HOME,
-                enterTransition = { fadeIn(tween(260)) + scaleIn(tween(260), initialScale = 0.97f) },
-                exitTransition = { fadeOut(tween(180)) },
-                popEnterTransition = { fadeIn(tween(260)) },
-                popExitTransition = { fadeOut(tween(180)) + slideOutHorizontally(tween(260)) { it / 4 } },
+                enterTransition = { enter() },
+                exitTransition = { exit() },
+                popEnterTransition = { if (tabIndex(targetState.destination.route) >= 0 && tabIndex(initialState.destination.route) >= 0) enter() else popEnter() },
+                popExitTransition = { if (tabIndex(targetState.destination.route) >= 0 && tabIndex(initialState.destination.route) >= 0) exit() else popExit() },
             ) {
                 composable(Routes.HOME) {
                     HomeScreen(
@@ -186,8 +243,8 @@ fun SpendLensRoot(settings: AppSettings) {
                 }
                 composable(
                     Routes.REVIEW,
-                    enterTransition = { slideInVertically(tween(320)) { it / 3 } + fadeIn(tween(320)) },
-                    popExitTransition = { slideOutVertically(tween(260)) { it / 3 } + fadeOut(tween(260)) },
+                    enterTransition = { modalEnter() },
+                    popExitTransition = { modalExit() },
                 ) {
                     ReviewScreen(
                         onClose = { nav.popBackStack() },
@@ -200,7 +257,6 @@ fun SpendLensRoot(settings: AppSettings) {
                 composable(
                     Routes.DETAIL,
                     arguments = listOf(navArgument("id") { type = NavType.LongType }),
-                    enterTransition = { slideInHorizontally(tween(300)) { it / 3 } + fadeIn(tween(300)) },
                 ) { entry ->
                     DetailScreen(
                         id = entry.arguments?.getLong("id") ?: -1L,
@@ -215,8 +271,8 @@ fun SpendLensRoot(settings: AppSettings) {
                 composable(
                     Routes.EDIT,
                     arguments = listOf(navArgument("id") { type = NavType.LongType }),
-                    enterTransition = { slideInVertically(tween(320)) { it / 3 } + fadeIn(tween(320)) },
-                    popExitTransition = { slideOutVertically(tween(260)) { it / 3 } + fadeOut(tween(260)) },
+                    enterTransition = { modalEnter() },
+                    popExitTransition = { modalExit() },
                 ) { entry ->
                     EditScreen(id = entry.arguments?.getLong("id") ?: -1L, onDone = { nav.popBackStack() })
                 }
@@ -224,11 +280,11 @@ fun SpendLensRoot(settings: AppSettings) {
 
             AnimatedVisibility(
                 visible = topLevel.any { it.route == route },
-                enter = slideInVertically { it } + fadeIn(),
-                exit = slideOutVertically { it } + fadeOut(),
+                enter = slideInVertically(tween(420, easing = EmphasizedDecelerate)) { it } + fadeIn(),
+                exit = slideOutVertically(tween(240, easing = EmphasizedAccelerate)) { it } + fadeOut(),
                 modifier = Modifier.align(Alignment.BottomCenter),
             ) {
-                FloatingNavBar(
+                BottomBar(
                     items = topLevel,
                     currentRoute = route,
                     onNavigate = { nav.navigateTop(it) },
@@ -241,12 +297,23 @@ fun SpendLensRoot(settings: AppSettings) {
                 Modifier
                     .align(Alignment.BottomCenter)
                     .navigationBarsPadding()
-                    .padding(bottom = if (topLevel.any { it.route == route }) 90.dp else 12.dp),
-            )
+                    .padding(bottom = if (topLevel.any { it.route == route }) 76.dp else 12.dp),
+            ) { data ->
+                val ink = com.spendlens.app.ui.theme.Spend.ink
+                Snackbar(
+                    data,
+                    modifier = Modifier.padding(horizontal = 12.dp),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(2.dp),
+                    containerColor = ink.text,
+                    contentColor = ink.inverse,
+                    actionColor = ink.inverse,
+                )
+            }
         }
 
         if (showScanSheet) {
             ScanSheet(
+                autoFindDays = settings.autoFindDays,
                 onDismiss = { showScanSheet = false },
                 onPick = {
                     showScanSheet = false
