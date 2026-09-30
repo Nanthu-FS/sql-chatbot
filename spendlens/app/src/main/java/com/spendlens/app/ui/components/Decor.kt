@@ -59,7 +59,7 @@ fun Ribbon(text: String, modifier: Modifier = Modifier, angle: Float = -2.5f) {
             maxLines = 1,
             modifier = Modifier
                 .padding(vertical = 9.dp)
-                .basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 0, velocity = 28.dp),
+                .then(if (MotionSettings.loops) Modifier.basicMarquee(iterations = Int.MAX_VALUE, initialDelayMillis = 0, velocity = 28.dp) else Modifier),
         )
         Hairline(color = colors.lineStrong)
     }
@@ -68,6 +68,13 @@ fun Ribbon(text: String, modifier: Modifier = Modifier, angle: Float = -2.5f) {
 /** A single white line sweeping over a screenshot while it's being read. */
 @Composable
 fun ScanOverlay(modifier: Modifier = Modifier) {
+    if (!MotionSettings.loops) {
+        Canvas(modifier.fillMaxSize()) {
+            drawRect(Color.Black.copy(alpha = 0.45f))
+            drawLine(Color.White, Offset(0f, size.height * 0.4f), Offset(size.width, size.height * 0.4f), 1.dp.toPx())
+        }
+        return
+    }
     val y by rememberInfiniteTransition(label = "scan").animateFloat(
         0f, 1f, infiniteRepeatable(tween(1300, easing = Emphasized), RepeatMode.Reverse), label = "y",
     )

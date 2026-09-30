@@ -47,6 +47,7 @@ import com.spendlens.app.ui.components.LocalCurrency
 import com.spendlens.app.ui.components.Statement
 import com.spendlens.app.ui.components.TextChip
 import com.spendlens.app.ui.components.TransactionRow
+import com.spendlens.app.ui.components.Screen
 import com.spendlens.app.ui.components.rememberHaptics
 import com.spendlens.app.ui.components.reveal
 import com.spendlens.app.ui.components.short
@@ -85,6 +86,7 @@ fun ActivityContent(
     val currency = LocalCurrency.current
     val haptics = rememberHaptics()
 
+    Screen {
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 110.dp)) {
         item(key = "title") {
             Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 20.dp).padding(top = 22.dp)) {
@@ -138,7 +140,7 @@ fun ActivityContent(
         state.groups.forEachIndexed { g, group ->
             stickyHeader(key = "h-${group.date}") {
                 Row(
-                    Modifier.fillMaxWidth().background(colors.canvas).padding(horizontal = 20.dp).padding(top = 20.dp, bottom = 8.dp),
+                    Modifier.fillMaxWidth().background(colors.canvas.copy(alpha = 0.92f)).padding(horizontal = 20.dp).padding(top = 20.dp, bottom = 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Label(Format.dayHeader(group.date), color = colors.text, modifier = Modifier.weight(1f))
@@ -149,6 +151,7 @@ fun ActivityContent(
                 SwipeRow(txn, { onOpen(txn.id) }, { onDelete(txn.id) }, Modifier.animateItem().padding(horizontal = 20.dp).reveal(4 + g))
             }
         }
+    }
     }
 }
 
@@ -178,11 +181,14 @@ private fun SwipeRow(txn: Txn, onOpen: () -> Unit, onDelete: () -> Unit, modifie
         modifier = modifier,
         enableDismissFromStartToEnd = false,
         backgroundContent = {
-            Box(Modifier.fillMaxSize().background(colors.alert).padding(horizontal = 20.dp), contentAlignment = Alignment.CenterEnd) {
-                Text("[ DELETE ]", style = MaterialTheme.typography.labelLarge, color = colors.inverse)
+            // Only paint the red while actually swiping, so rows can stay see-through over the backdrop.
+            if (state.dismissDirection == SwipeToDismissBoxValue.EndToStart) {
+                Box(Modifier.fillMaxSize().background(colors.alert).padding(horizontal = 20.dp), contentAlignment = Alignment.CenterEnd) {
+                    Text("[ DELETE ]", style = MaterialTheme.typography.labelLarge, color = colors.inverse)
+                }
             }
         },
     ) {
-        Box(Modifier.background(colors.canvas)) { TransactionRow(txn, currency, onOpen) }
+        TransactionRow(txn, currency, onOpen)
     }
 }

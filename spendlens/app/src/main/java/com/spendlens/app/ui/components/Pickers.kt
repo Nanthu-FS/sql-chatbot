@@ -67,13 +67,13 @@ fun FieldChip(label: String, value: String, onClick: () -> Unit, modifier: Modif
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DatePickerPopup(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismiss: () -> Unit) {
+fun DatePickerPopup(initial: LocalDate, onPick: (LocalDate) -> Unit, onDismiss: () -> Unit, allowFuture: Boolean = false) {
     val colors = Spend.ink
     val limit = remember { LocalDate.now().plusDays(1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli() }
     val state = rememberDatePickerState(
         initialSelectedDateMillis = initial.atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
         selectableDates = object : SelectableDates {
-            override fun isSelectableDate(utcTimeMillis: Long) = utcTimeMillis < limit
+            override fun isSelectableDate(utcTimeMillis: Long) = allowFuture || utcTimeMillis < limit
         },
     )
     val pickerColors = DatePickerDefaults.colors(containerColor = colors.raised)

@@ -28,6 +28,14 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+/**
+ * Looping animations (ticker ribbon, scan line) are skipped when the system "Remove animations"
+ * setting is on — and in tests, which need the UI to go idle.
+ */
+object MotionSettings {
+    @Volatile var loops: Boolean = true
+}
+
 /** Material "emphasized" curves — quick start, long soft landing. */
 val Emphasized = CubicBezierEasing(0.2f, 0f, 0f, 1f)
 val EmphasizedDecelerate = CubicBezierEasing(0.05f, 0.7f, 0.1f, 1f)

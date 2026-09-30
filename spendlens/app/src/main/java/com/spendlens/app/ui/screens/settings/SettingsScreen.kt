@@ -1,8 +1,16 @@
 package com.spendlens.app.ui.screens.settings
 
+import android.Manifest
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
 import android.content.Intent
-import androidx.compose.foundation.background
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,9 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -41,13 +47,17 @@ import com.spendlens.app.data.ThemeMode
 import com.spendlens.app.data.TransactionRepository
 import com.spendlens.app.domain.CurrencyOption
 import com.spendlens.app.domain.Money
+import com.spendlens.app.domain.SampleData
 import com.spendlens.app.domain.Txn
 import com.spendlens.app.ocr.ImageStore
+import com.spendlens.app.ui.LocalAppContainer
 import com.spendlens.app.ui.appViewModel
 import com.spendlens.app.ui.components.BracketButton
+import com.spendlens.app.ui.components.BracketToggle
 import com.spendlens.app.ui.components.Hairline
 import com.spendlens.app.ui.components.Label
 import com.spendlens.app.ui.components.LineSlider
+import com.spendlens.app.ui.components.Screen
 import com.spendlens.app.ui.components.Section
 import com.spendlens.app.ui.components.Statement
 import com.spendlens.app.ui.components.TextChip
@@ -57,59 +67,140 @@ import com.spendlens.app.ui.components.rememberHaptics
 import com.spendlens.app.ui.components.reveal
 import com.spendlens.app.ui.screens.review.UnderlineField
 import com.spendlens.app.ui.theme.Spend
+import com.spendlens.app.widget.SpendWidgetReceiver
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import kotlin.math.roundToInt
 import kotlin.math.roundToLong
 
-data class SettingsUi(val settings: AppSettings = AppSettings(), val txns: List<Txn> = emptyList())
+data class SettingsUi(val settings: AppSettings = AppSettings(), val txns: List<Txn> = emptyList(), val sampleCount: Int = 0)
 
 class SettingsViewModel(
     private val settings: SettingsRepository,
     private val repository: TransactionRepository,
     private val images: ImageStore,
 ) : ViewModel() {
-    val state: StateFlow<SettingsUi> = combine(settings.settings, repository.transactions) { s, t -> SettingsUi(s, t) }
+    val state: StateFlow<SettingsUi> = combine(settings.settings, repository.transactions, repository.sampleCount) { s, t, n -> SettingsUi(s, t, n) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsUi())
 
     fun setCurrency(c: CurrencyOption) { viewModelScope.launch { settings.setCurrency(c) } }
     fun setBudget(minor: Long?) { viewModelScope.launch { settings.setMonthlyBudget(minor) } }
+    fun setIncome(minor: Long?) { viewModelScope.launch { settings.setMonthlyIncome(minor) } }
     fun setTheme(t: ThemeMode) { viewModelScope.launch { settings.setTheme(t) } }
+    fun setGlass(level: Float) { viewModelScope.launch { settings.setGlass(level) } }
     fun setAutoFindDays(d: Int) { viewModelScope.launch { settings.setAutoFindDays(d) } }
+    fun setSummary(on: Boolean) { viewModelScope.launch { settings.setSummaryNotification(on) } }
+    fun setSmsAuto(on: Boolean) { viewModelScope.launch { settings.setSmsAutoImport(on) } }
+    fun setAlerts(on: Boolean) { viewModelScope.launch { settings.setAlertNotifications(on) } }
+    fun addSamples() { viewModelScope.launch { repository.addSamples(SampleData.generate(LocalDate.now())) } }
+    fun removeSamples() { viewModelScope.launch { repository.removeSamples() } }
     fun deleteAll() { viewModelScope.launch { repository.deleteEverything(images.imagesDir) } }
 }
 
 class SettingsActions(
     val onCurrency: (CurrencyOption) -> Unit = {},
     val onBudget: (Long?) -> Unit = {},
+    val onIncome: (Long?) -> Unit = {},
     val onTheme: (ThemeMode) -> Unit = {},
+    val onGlass: (Float) -> Unit = {},
     val onAutoFindDays: (Int) -> Unit = {},
+    val onSmsImport: () -> Unit = {},
+    val onSmsAuto: (Boolean) -> Unit = {},
+    val onSummary: (Boolean) -> Unit = {},
+    val onAlerts: (Boolean) -> Unit = {},
+    val onPinWidget: () -> Unit = {},
+    val onAddSamples: () -> Unit = {},
+    val onRemoveSamples: () -> Unit = {},
     val onExport: () -> Unit = {},
     val onDeleteAll: () -> Unit = {},
 )
 
-/** Slider range for the monthly budget, in major units. */
-private fun budgetMax(c: CurrencyOption): Float = when (c) {
+/** Slider range for money amounts, in major units. */
+private fun moneyMax(c: CurrencyOption): Float = when (c) {
     CurrencyOption.INR -> 200_000f
     CurrencyOption.JPY -> 1_000_000f
     else -> 10_000f
 }
 
 @Composable
-fun SettingsScreen(onMessage: (String) -> Unit) {
+fun SettingsScreen(onMessage: (String) -> Unit, onOpenReview: () -> Unit) {
     val vm = appViewModel { SettingsViewModel(it.settings, it.repository, it.images) }
     val ui by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val container = LocalAppContainer.current
     val scope = rememberCoroutineScope()
+
+    val readSms = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) {
+            container.importManager.startSms(ui.settings.autoFindDays)
+            onOpenReview()
+        } else {
+            onMessage("SMS access is needed to read bank messages")
+        }
+    }
+    val receiveSms = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) vm.setSmsAuto(true) else onMessage("Allow SMS access to add bank messages automatically")
+    }
+    var pendingNotify by remember { mutableStateOf<(() -> Unit)?>(null) }
+    val notify = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) pendingNotify?.invoke() else onMessage("Allow notifications to use this")
+        pendingNotify = null
+    }
+    fun withNotifications(action: () -> Unit) {
+        if (Build.VERSION.SDK_INT >= 33 && !container.notifier.canPost()) {
+            pendingNotify = action
+            notify.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            action()
+        }
+    }
+
     SettingsContent(
         ui,
         SettingsActions(
             onCurrency = vm::setCurrency,
             onBudget = vm::setBudget,
+            onIncome = vm::setIncome,
             onTheme = vm::setTheme,
+            onGlass = vm::setGlass,
             onAutoFindDays = vm::setAutoFindDays,
+            onSmsImport = {
+                if (com.spendlens.app.sms.SmsReader.hasReadPermission(context)) {
+                    container.importManager.startSms(ui.settings.autoFindDays)
+                    onOpenReview()
+                } else {
+                    readSms.launch(Manifest.permission.READ_SMS)
+                }
+            },
+            onSmsAuto = { on ->
+                when {
+                    !on -> vm.setSmsAuto(false)
+                    com.spendlens.app.sms.SmsReader.hasReceivePermission(context) -> withNotifications { vm.setSmsAuto(true) }
+                    else -> receiveSms.launch(Manifest.permission.RECEIVE_SMS)
+                }
+            },
+            onSummary = { on -> if (on) withNotifications { vm.setSummary(true) } else vm.setSummary(false) },
+            onAlerts = { on -> if (on) withNotifications { vm.setAlerts(true) } else vm.setAlerts(false) },
+            onPinWidget = {
+                val manager = AppWidgetManager.getInstance(context)
+                if (manager.isRequestPinAppWidgetSupported) {
+                    manager.requestPinAppWidget(ComponentName(context, SpendWidgetReceiver::class.java), null, null)
+                } else {
+                    onMessage("Long-press your home screen → Widgets → SpendLens")
+                }
+            },
+            onAddSamples = {
+                vm.addSamples()
+                onMessage("Added sample payments — remove them any time here")
+            },
+            onRemoveSamples = {
+                vm.removeSamples()
+                onMessage("Sample payments removed")
+            },
             onExport = {
                 if (ui.txns.isEmpty()) {
                     onMessage("Nothing to export yet")
@@ -130,131 +221,184 @@ fun SettingsScreen(onMessage: (String) -> Unit) {
     )
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
     val colors = Spend.ink
     val haptics = rememberHaptics()
     val currency = ui.settings.currency
-    var budgetDialog by remember { mutableStateOf(false) }
+    var moneyDialog by remember { mutableStateOf<String?>(null) }
     var confirmWipe by remember { mutableStateOf(false) }
 
-    // Local slider state so dragging is instant; persisted when the finger lifts.
+    // Sliders keep local state so dragging is instant; money persists when the finger lifts.
     var budget by remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(ui.settings.monthlyBudgetMinor, currency) { budget = (ui.settings.monthlyBudgetMinor ?: 0L) / 100f }
+    LaunchedEffect(ui.settings.monthlyBudgetMinor) { budget = (ui.settings.monthlyBudgetMinor ?: 0L) / 100f }
+    var income by remember { mutableFloatStateOf(0f) }
+    LaunchedEffect(ui.settings.monthlyIncomeMinor) { income = (ui.settings.monthlyIncomeMinor ?: 0L) / 100f }
     var days by remember { mutableFloatStateOf(30f) }
     LaunchedEffect(ui.settings.autoFindDays) { days = ui.settings.autoFindDays.toFloat() }
+    var glass by remember { mutableFloatStateOf(ui.settings.glass) }
+    LaunchedEffect(ui.settings.glass) { glass = ui.settings.glass }
+    var n = 0
 
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(colors.canvas)
-            .verticalScroll(rememberScrollState())
-            .statusBarsPadding()
-            .padding(horizontal = 20.dp)
-            .padding(top = 22.dp, bottom = 120.dp),
-    ) {
-        Statement("Settings ", "& data", Modifier.reveal(0), MaterialTheme.typography.displaySmall)
-        Spacer(Modifier.height(8.dp))
-        Label(
-            if (ui.txns.isEmpty()) "No payments tracked yet" else "${ui.txns.size} payments · ${currency.format(ui.txns.sumOf { it.amountMinor })} tracked",
-            color = colors.muted,
-            modifier = Modifier.reveal(1),
-        )
-        Spacer(Modifier.height(40.dp))
+    Screen {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .statusBarsPadding()
+                .padding(horizontal = 20.dp)
+                .padding(top = 22.dp, bottom = 120.dp),
+            verticalArrangement = Arrangement.spacedBy(28.dp),
+        ) {
+            Column {
+                Statement("Settings ", "& data", Modifier.reveal(0), MaterialTheme.typography.displaySmall)
+                Spacer(Modifier.height(8.dp))
+                Label(
+                    if (ui.txns.isEmpty()) "No payments tracked yet" else "${ui.txns.size} payments · ${currency.format(ui.txns.sumOf { it.amountMinor })} tracked",
+                    color = colors.muted,
+                    modifier = Modifier.reveal(1),
+                )
+            }
 
-        Section(1, "Monthly budget", Modifier.reveal(2), trailing = {
-            Text(
-                if (budget <= 0f) "OFF" else currency.format((budget * 100).roundToLong()),
-                style = MaterialTheme.typography.titleMedium,
-                color = colors.text,
-                modifier = Modifier.pressable { budgetDialog = true },
-            )
-        }) {
-            LineSlider(
-                value = budget,
-                onValueChange = { budget = it },
-                range = 0f..budgetMax(currency),
-                steps = 200,
-                onFinished = { actions.onBudget(if (budget <= 0f) null else (budget * 100).roundToLong()) },
-            )
-            Label("Drag, or tap the amount to type it", color = colors.faint)
-        }
-        Spacer(Modifier.height(40.dp))
+            Section(++n, "Glass", Modifier.reveal(2), trailing = {
+                Text(if (glass < 0.01f) "OFF" else "${(glass * 100).roundToInt()}%", style = MaterialTheme.typography.titleMedium, color = colors.text)
+            }) {
+                LineSlider(value = glass, onValueChange = { glass = it; actions.onGlass(it) }, range = 0f..1f, steps = 20)
+                Label("Frosted panels and a see-through bar. 0 keeps it flat.", color = colors.faint)
+            }
 
-        Section(2, "Auto-find window", Modifier.reveal(3), trailing = {
-            Text("${days.toInt()} DAYS", style = MaterialTheme.typography.titleMedium, color = colors.text)
-        }) {
-            LineSlider(
-                value = days,
-                onValueChange = { days = it },
-                range = 7f..90f,
-                steps = 83,
-                onFinished = { actions.onAutoFindDays(days.toInt()) },
-            )
-            Label("How far back auto-find looks in Screenshots", color = colors.faint)
-        }
-        Spacer(Modifier.height(40.dp))
+            Section(++n, "Monthly budget", Modifier.reveal(3), trailing = {
+                Text(
+                    if (budget <= 0f) "OFF" else currency.format((budget * 100).roundToLong()),
+                    style = MaterialTheme.typography.titleMedium, color = colors.text,
+                    modifier = Modifier.pressable { moneyDialog = "budget" },
+                )
+            }) {
+                LineSlider(budget, { budget = it }, 0f..moneyMax(currency), 200, onFinished = { actions.onBudget(if (budget <= 0f) null else (budget * 100).roundToLong()) })
+                Label("Drag, or tap the amount to type it", color = colors.faint)
+            }
 
-        Section(3, "Currency", Modifier.reveal(4)) {
-            androidx.compose.foundation.layout.FlowRow(
-                horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
-                verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
-            ) {
-                CurrencyOption.entries.forEach { c ->
-                    TextChip(if (c.symbol.trim() == c.code) c.code else "${c.symbol.trim()} ${c.code}", c == currency, {
-                        if (c != currency) haptics.tick()
-                        actions.onCurrency(c)
-                    })
+            Section(++n, "Monthly income", Modifier.reveal(4), trailing = {
+                Text(
+                    if (income <= 0f) "NOT SET" else currency.format((income * 100).roundToLong()),
+                    style = MaterialTheme.typography.titleMedium, color = colors.text,
+                    modifier = Modifier.pressable { moneyDialog = "income" },
+                )
+            }) {
+                LineSlider(income, { income = it }, 0f..moneyMax(currency) * 2, 200, onFinished = { actions.onIncome(if (income <= 0f) null else (income * 100).roundToLong()) })
+                Label("Used for savings goals — what you could put aside", color = colors.faint)
+            }
+
+            Section(++n, "Bank SMS", Modifier.reveal(5)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Read debit alerts from the last ${days.toInt()} days", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketButton("Import", onClick = actions.onSmsImport)
+                }
+                Hairline(Modifier.padding(vertical = 10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Add new bank SMS automatically", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketToggle(ui.settings.smsAutoImport, actions.onSmsAuto, on = "On", off = "Off")
+                }
+                Spacer(Modifier.height(8.dp))
+                Label("Messages are read on this phone. Only debits are kept.", color = colors.faint)
+            }
+
+            Section(++n, "Lock screen & widget", Modifier.reveal(6)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Today's spend on the lock screen", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketToggle(ui.settings.summaryNotification, actions.onSummary, on = "On", off = "Off")
+                }
+                Hairline(Modifier.padding(vertical = 10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Alerts for unusual payments & double charges", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketToggle(ui.settings.alertNotifications, actions.onAlerts, on = "On", off = "Off")
+                }
+                Hairline(Modifier.padding(vertical = 10.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Home-screen widget: today, month, last 7 days", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketButton("Add", onClick = actions.onPinWidget)
                 }
             }
-        }
-        Spacer(Modifier.height(40.dp))
 
-        Section(4, "Appearance", Modifier.reveal(5)) {
-            UnderlineTabs(ThemeMode.entries.map { it.label }, ThemeMode.entries.indexOf(ui.settings.theme), { actions.onTheme(ThemeMode.entries[it]) })
-        }
-        Spacer(Modifier.height(40.dp))
+            Section(++n, "Auto-find window", Modifier.reveal(7), trailing = {
+                Text("${days.toInt()} DAYS", style = MaterialTheme.typography.titleMedium, color = colors.text)
+            }) {
+                LineSlider(days, { days = it }, 7f..90f, 83, onFinished = { actions.onAutoFindDays(days.toInt()) })
+                Label("How far back auto-find and SMS import look", color = colors.faint)
+            }
 
-        Section(5, "Your data", Modifier.reveal(6)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Export every payment as CSV", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
-                BracketButton("Export", onClick = actions.onExport)
+            Section(++n, "Currency", Modifier.reveal(8)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    CurrencyOption.entries.forEach { c ->
+                        TextChip(if (c.symbol.trim() == c.code) c.code else "${c.symbol.trim()} ${c.code}", c == currency, {
+                            if (c != currency) haptics.tick()
+                            actions.onCurrency(c)
+                        })
+                    }
+                }
             }
-            Hairline(Modifier.padding(vertical = 8.dp))
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Delete payments and saved screenshots", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
-                BracketButton("Delete", onClick = { confirmWipe = true }, color = colors.alert)
+
+            Section(++n, "Appearance", Modifier.reveal(9)) {
+                UnderlineTabs(ThemeMode.entries.map { it.label }, ThemeMode.entries.indexOf(ui.settings.theme), { actions.onTheme(ThemeMode.entries[it]) })
+            }
+
+            Section(++n, "Sample data", Modifier.reveal(10)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        if (ui.sampleCount > 0) "${ui.sampleCount} sample payments are mixed in" else "Six months of example payments to explore every screen",
+                        style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f),
+                    )
+                    if (ui.sampleCount > 0) {
+                        BracketButton("Remove", onClick = actions.onRemoveSamples, color = colors.alert)
+                    } else {
+                        BracketButton("Add", onClick = actions.onAddSamples)
+                    }
+                }
+            }
+
+            Section(++n, "Your data", Modifier.reveal(11)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Export every payment as CSV", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketButton("Export", onClick = actions.onExport)
+                }
+                Hairline(Modifier.padding(vertical = 8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Delete payments and saved screenshots", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketButton("Delete", onClick = { confirmWipe = true }, color = colors.alert)
+                }
+            }
+
+            Column {
+                Statement("Private by design. ", "Screenshots and messages are read on this phone. Nothing is uploaded.", Modifier.reveal(12), MaterialTheme.typography.titleLarge)
+                Spacer(Modifier.height(20.dp))
+                Label("SpendLens ${BuildConfig.VERSION_NAME}", color = colors.faint)
             }
         }
-        Spacer(Modifier.height(48.dp))
-        Statement("Private by design. ", "Screenshots are read on this phone. Nothing is uploaded.", Modifier.reveal(7), MaterialTheme.typography.titleLarge)
-        Spacer(Modifier.height(20.dp))
-        Label("SpendLens ${BuildConfig.VERSION_NAME}", color = colors.faint)
     }
 
-    if (budgetDialog) {
-        var text by remember { mutableStateOf(if (budget > 0) Money.toInput((budget * 100).roundToLong()) else "") }
+    moneyDialog?.let { which ->
+        val isBudget = which == "budget"
+        val current = if (isBudget) budget else income
+        var text by remember(which) { mutableStateOf(if (current > 0) Money.toInput((current * 100).roundToLong()) else "") }
         AlertDialog(
-            onDismissRequest = { budgetDialog = false },
+            onDismissRequest = { moneyDialog = null },
             containerColor = colors.raised,
-            title = { Text("MONTHLY BUDGET", style = MaterialTheme.typography.titleMedium) },
+            title = { Text(if (isBudget) "MONTHLY BUDGET" else "MONTHLY INCOME", style = MaterialTheme.typography.titleMedium) },
             text = {
-                Column {
-                    UnderlineField(text, { v -> text = v.filter { it.isDigit() || it == '.' }.take(12) }, "0", MaterialTheme.typography.headlineLarge, prefix = currency.symbol.trim(), keyboard = KeyboardType.Decimal)
-                    Spacer(Modifier.width(1.dp))
-                }
+                UnderlineField(text, { v -> text = v.filter { it.isDigit() || it == '.' }.take(12) }, "0", MaterialTheme.typography.headlineLarge, prefix = currency.symbol.trim(), keyboard = KeyboardType.Decimal)
             },
             confirmButton = {
                 BracketButton("Save", onClick = {
-                    actions.onBudget(Money.parseInput(text))
-                    budgetDialog = false
+                    val v = Money.parseInput(text)
+                    if (isBudget) actions.onBudget(v) else actions.onIncome(v)
+                    moneyDialog = null
                 })
             },
             dismissButton = {
-                BracketButton("Turn off", onClick = {
-                    actions.onBudget(null)
-                    budgetDialog = false
+                BracketButton(if (isBudget) "Turn off" else "Clear", onClick = {
+                    if (isBudget) actions.onBudget(null) else actions.onIncome(null)
+                    moneyDialog = null
                 }, color = colors.muted)
             },
         )
@@ -275,3 +419,4 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
         )
     }
 }
+

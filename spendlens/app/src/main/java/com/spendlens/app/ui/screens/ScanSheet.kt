@@ -27,12 +27,12 @@ import com.spendlens.app.ui.theme.Spend
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ScanSheet(onDismiss: () -> Unit, onPick: () -> Unit, onAutoFind: () -> Unit, onManual: () -> Unit, autoFindDays: Int = 30) {
+fun ScanSheet(onDismiss: () -> Unit, onPick: () -> Unit, onAutoFind: () -> Unit, onManual: () -> Unit, autoFindDays: Int = 30, onSms: () -> Unit = {}) {
     val colors = Spend.ink
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        containerColor = colors.surface,
+        containerColor = if (com.spendlens.app.ui.components.LocalGlass.current > 0.01f) colors.surface.copy(alpha = 0.94f) else colors.surface,
         shape = RoundedCornerShape(topStart = 6.dp, topEnd = 6.dp),
         dragHandle = { Hairline(Modifier.padding(vertical = 14.dp).width(40.dp), color = colors.lineStrong) },
     ) {
@@ -43,7 +43,8 @@ fun ScanSheet(onDismiss: () -> Unit, onPick: () -> Unit, onAutoFind: () -> Unit,
             Spacer(Modifier.height(24.dp))
             Option(1, "Choose screenshots", "Pick one or many from your gallery", onPick)
             Option(2, "Auto-find", "Scan Screenshots from the last $autoFindDays days", onAutoFind)
-            Option(3, "Add manually", "Cash or card, typed in", onManual)
+            Option(3, "From bank SMS", "Read debit alerts from the last $autoFindDays days", onSms)
+            Option(4, "Add manually", "Cash or card, typed in", onManual)
             Hairline()
             Spacer(Modifier.height(14.dp))
             Text(

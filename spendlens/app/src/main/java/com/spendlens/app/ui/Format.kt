@@ -2,6 +2,7 @@ package com.spendlens.app.ui
 
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 object Format {
@@ -12,6 +13,10 @@ object Format {
     private val shortDate = DateTimeFormatter.ofPattern("d MMM")
 
     fun time(dateTime: LocalDateTime): String = dateTime.format(time)
+
+    /** 20 → "8 PM", 0 → "12 AM". */
+    fun hour(h: Int): String = LocalTime.of(h, 0).format(hourFormat)
+    private val hourFormat = DateTimeFormatter.ofPattern("h a")
 
     fun date(date: LocalDate): String = date.format(fullDate)
 

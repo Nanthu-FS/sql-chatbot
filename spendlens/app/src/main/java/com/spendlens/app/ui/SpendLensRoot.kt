@@ -69,6 +69,20 @@ import com.spendlens.app.ui.screens.home.HomeScreen
 import com.spendlens.app.ui.screens.review.ReviewScreen
 import com.spendlens.app.ui.screens.settings.SettingsScreen
 import kotlinx.coroutines.launch
+import android.Manifest
+import android.os.Bundle
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import com.spendlens.app.domain.Period
+import com.spendlens.app.domain.PeriodType
+import com.spendlens.app.sms.SmsReader
+import com.spendlens.app.ui.components.LocalGlass
+import com.spendlens.app.ui.screens.compare.CompareScreen
+import com.spendlens.app.ui.screens.goals.GoalsScreen
+import com.spendlens.app.ui.screens.wrap.WrapScreen
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.hazeSource
+import java.time.LocalDate
 
 private object Routes {
     const val HOME = "home"
@@ -76,6 +90,15 @@ private object Routes {
     const val SETTINGS = "settings"
     const val REVIEW = "review"
     const val DETAIL = "detail/{id}"
+    const val EDIT = "edit/{id}"
+    const val WRAP = "wrap/{type}/{anchor}"
+    const val COMPARE = "compare/{type}/{anchor}"
+    const val GOALS = "goals"
+    fun detail(id: Long) = "detail/$id"
+    fun edit(id: Long) = "edit/$id"
+    fun wrap(p: Period) = "wrap/${p.type.name}/${p.anchor}"
+    fun compare(p: Period) = "compare/${p.type.name}/${p.anchor}"
+}"
     const val EDIT = "edit/{id}"
     fun detail(id: Long) = "detail/$id"
     fun edit(id: Long) = "edit/$id"
@@ -199,6 +222,31 @@ fun SpendLensRoot(settings: AppSettings) {
     }
     val addManually = { nav.navigate(Routes.edit(-1)) }
 
+    fun startSms() {
+        container.importManager.startSms(settings.autoFindDays)
+        nav.navigate(Routes.REVIEW) { launchSingleTop = true }
+    }
+    val readSms = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if (granted) startSms() else message("Allow SMS access to read bank debit messages")
+    }
+
+    // Taps on notifications / the widget.
+    val pendingOpen by container.pendingOpen.collectAsStateWithLifecycle()
+    val pendingScan by container.pendingScan.collectAsStateWithLifecycle()
+    LaunchedEffect(pendingOpen) {
+        pendingOpen?.let {
+            container.pendingOpen.value = null
+            nav.navigate(Routes.detail(it))
+        }
+    }
+    LaunchedEffect(pendingScan) {
+        if (pendingScan) {
+            container.pendingScan.value = false
+            showScanSheet = true
+        }
+    }
+    val haze = remember { HazeState() }
+
     // Screenshots shared into the app from other apps.
     LaunchedEffect(shared) {
         if (shared.isNotEmpty()) {
@@ -208,7 +256,7 @@ fun SpendLensRoot(settings: AppSettings) {
         }
     }
 
-    CompositionLocalProvider(LocalCurrency provides settings.currency) {
+    CompositionLocalProvider(LocalCurrency provides settings.currency, LocalGlass provides settings.glass) {
         Box(
             Modifier
                 .fillMaxSize()
@@ -217,6 +265,7 @@ fun SpendLensRoot(settings: AppSettings) {
             NavHost(
                 navController = nav,
                 startDestination = Routes.HOME,
+                modifier = Modifier.hazeSource(haze),
                 enterTransition = { enter() },
                 exitTransition = { exit() },
                 popEnterTransition = { if (tabIndex(targetState.destination.route) >= 0 && tabIndex(initialState.destination.route) >= 0) enter() else popEnter() },
@@ -230,6 +279,9 @@ fun SpendLensRoot(settings: AppSettings) {
                         onAddManually = addManually,
                         onSeeAll = { nav.navigateTop(Routes.ACTIVITY) },
                         onSetBudget = { nav.navigateTop(Routes.SETTINGS) },
+                        onOpenGoals = { nav.navigate(Routes.GOALS) },
+                        onWrap = { nav.navigate(Routes.wrap(it)) },
+                        onCompare = { nav.navigate(Routes.compare(it)) },
                     )
                 }
                 composable(Routes.ACTIVITY) {
@@ -239,7 +291,7 @@ fun SpendLensRoot(settings: AppSettings) {
                     )
                 }
                 composable(Routes.SETTINGS) {
-                    SettingsScreen(onMessage = ::message)
+                    SettingsScreen(onMessage = ::message, onOpenReview = { nav.navigate(Routes.REVIEW) { launchSingleTop = true } })
                 }
                 composable(
                     Routes.REVIEW,
@@ -266,6 +318,7 @@ fun SpendLensRoot(settings: AppSettings) {
                             nav.popBackStack()
                             deleteWithUndo(id)
                         },
+                        onOpen = { nav.navigate(Routes.detail(it)) },
                     )
                 }
                 composable(
@@ -275,6 +328,23 @@ fun SpendLensRoot(settings: AppSettings) {
                     popExitTransition = { modalExit() },
                 ) { entry ->
                     EditScreen(id = entry.arguments?.getLong("id") ?: -1L, onDone = { nav.popBackStack() })
+                }
+                composable(
+                    Routes.WRAP,
+                    arguments = listOf(navArgument("type") { type = NavType.StringType }, navArgument("anchor") { type = NavType.StringType }),
+                    enterTransition = { fadeIn(tween(400)) + scaleIn(tween(500, easing = EmphasizedDecelerate), initialScale = 0.92f) },
+                    popExitTransition = { fadeOut(tween(250)) + scaleOut(tween(300), targetScale = 0.96f) },
+                ) { entry ->
+                    WrapScreen(periodFrom(entry.arguments), onClose = { nav.popBackStack() })
+                }
+                composable(
+                    Routes.COMPARE,
+                    arguments = listOf(navArgument("type") { type = NavType.StringType }, navArgument("anchor") { type = NavType.StringType }),
+                ) { entry ->
+                    CompareScreen(periodFrom(entry.arguments), onBack = { nav.popBackStack() })
+                }
+                composable(Routes.GOALS) {
+                    GoalsScreen(onBack = { nav.popBackStack() })
                 }
             }
 
@@ -289,6 +359,7 @@ fun SpendLensRoot(settings: AppSettings) {
                     currentRoute = route,
                     onNavigate = { nav.navigateTop(it) },
                     onScan = { showScanSheet = true },
+                    haze = haze,
                 )
             }
 
@@ -327,7 +398,15 @@ fun SpendLensRoot(settings: AppSettings) {
                     showScanSheet = false
                     addManually()
                 },
+                onSms = {
+                    showScanSheet = false
+                    if (SmsReader.hasReadPermission(context)) startSms() else readSms.launch(Manifest.permission.READ_SMS)
+                },
             )
         }
     }
 }
+
+private fun periodFrom(args: Bundle?): Period = runCatching {
+    Period(PeriodType.valueOf(args?.getString("type").orEmpty()), LocalDate.parse(args?.getString("anchor")))
+}.getOrElse { Period(PeriodType.MONTH, LocalDate.now()) }

@@ -34,7 +34,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewModelScope
 import coil.compose.AsyncImage
+import com.spendlens.app.data.SettingsRepository
 import com.spendlens.app.data.TransactionRepository
+import com.spendlens.app.domain.Anomaly
+import com.spendlens.app.domain.AnomalyDetector
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.launch
+import java.time.LocalDateTime
+import androidx.compose.foundation.border
 import com.spendlens.app.domain.Txn
 import com.spendlens.app.ui.Format
 import com.spendlens.app.ui.appViewModel
@@ -60,28 +67,46 @@ import java.io.File
 sealed interface DetailState {
     data object Loading : DetailState
     data object Missing : DetailState
-    data class Loaded(val txn: Txn) : DetailState
+    data class Loaded(val txn: Txn, val anomaly: Anomaly? = null) : DetailState
 }
 
-class DetailViewModel(repository: TransactionRepository, id: Long) : ViewModel() {
-    val state: StateFlow<DetailState> = repository.observe(id)
-        .map { if (it == null) DetailState.Missing else DetailState.Loaded(it) }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetailState.Loading)
-}
+class DetailViewModel(repository: TransactionRepository, private val settings: SettingsRepository, id: Long) : ViewModel() {
+    val state: StateFlow<DetailState> = combine(repository.observe(id), repository.transactions, settings.settings) { txn, all, prefs ->
+        if (txn == null) {
+            DetailState.Missing
+        } else {
+            val anomaly = AnomalyDetector.detect(all, LocalDateTime.now(), prefs.currency, lookbackDays = 400)
+                .firstOrNull { it.txn.id == txn.id && it.key !in prefs.dismissedAlerts }
+            DetailState.Loaded(txn, anomaly)
+        }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetailState.Loading)
 
-@Composable
-fun DetailScreen(id: Long, onBack: () -> Unit, onEdit: (Long) -> Unit, onDelete: (Long) -> Unit) {
-    val vm = appViewModel(key = "detail-$id") { DetailViewModel(it.repository, id) }
-    val state by vm.state.collectAsStateWithLifecycle()
-    when (val s = state) {
-        DetailState.Loading -> Box(Modifier.fillMaxSize())
-        DetailState.Missing -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Label("Deleted") }
-        is DetailState.Loaded -> DetailContent(s.txn, onBack, onEdit, onDelete)
+    fun dismiss(key: String) {
+        viewModelScope.launch { settings.dismissAlert(key) }
     }
 }
 
 @Composable
-fun DetailContent(txn: Txn, onBack: () -> Unit, onEdit: (Long) -> Unit, onDelete: (Long) -> Unit) {
+fun DetailScreen(id: Long, onBack: () -> Unit, onEdit: (Long) -> Unit, onDelete: (Long) -> Unit, onOpen: (Long) -> Unit = {}) {
+    val vm = appViewModel(key = "detail-$id") { DetailViewModel(it.repository, it.settings, id) }
+    val state by vm.state.collectAsStateWithLifecycle()
+    when (val s = state) {
+        DetailState.Loading -> Box(Modifier.fillMaxSize())
+        DetailState.Missing -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) { Label("Deleted") }
+        is DetailState.Loaded -> DetailContent(s.txn, onBack, onEdit, onDelete, s.anomaly, onOpen, vm::dismiss)
+    }
+}
+
+@Composable
+fun DetailContent(
+    txn: Txn,
+    onBack: () -> Unit,
+    onEdit: (Long) -> Unit,
+    onDelete: (Long) -> Unit,
+    anomaly: Anomaly? = null,
+    onOpen: (Long) -> Unit = {},
+    onDismissAnomaly: (String) -> Unit = {},
+) {
     val colors = Spend.ink
     val currency = LocalCurrency.current
     val clipboard = LocalClipboardManager.current
@@ -90,10 +115,10 @@ fun DetailContent(txn: Txn, onBack: () -> Unit, onEdit: (Long) -> Unit, onDelete
     var viewImage by remember { mutableStateOf(false) }
     var showRaw by remember { mutableStateOf(false) }
 
+    com.spendlens.app.ui.components.Screen {
     Column(
         Modifier
             .fillMaxSize()
-            .background(colors.canvas)
             .verticalScroll(rememberScrollState())
             .statusBarsPadding()
             .navigationBarsPadding()
@@ -106,7 +131,25 @@ fun DetailContent(txn: Txn, onBack: () -> Unit, onEdit: (Long) -> Unit, onDelete
             BracketButton("Edit", onClick = { onEdit(txn.id) })
             BracketButton("Delete", onClick = { confirmDelete = true }, color = colors.alert)
         }
-        Spacer(Modifier.height(36.dp))
+        Spacer(Modifier.height(24.dp))
+        anomaly?.let { a ->
+            Column(
+                Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, colors.alert)
+                    .padding(14.dp)
+                    .reveal(0),
+            ) {
+                Label(a.title, color = colors.alert)
+                Spacer(Modifier.height(4.dp))
+                Text(a.detail, style = MaterialTheme.typography.bodyMedium, color = colors.text)
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = androidx.compose.foundation.layout.Arrangement.End) {
+                    a.relatedId?.let { other -> BracketButton("Open the other", onClick = { onOpen(other) }) }
+                    BracketButton("Looks fine", onClick = { onDismissAnomaly(a.key) }, color = colors.muted)
+                }
+            }
+            Spacer(Modifier.height(20.dp))
+        }
         Label(txn.category.label, color = colors.muted, modifier = Modifier.reveal(0))
         Spacer(Modifier.height(8.dp))
         Text(txn.merchant.uppercase(), style = MaterialTheme.typography.headlineLarge, color = colors.text, modifier = Modifier.reveal(1))
@@ -145,6 +188,7 @@ fun DetailContent(txn: Txn, onBack: () -> Unit, onEdit: (Long) -> Unit, onDelete
                 add("Time" to Format.time(txn.dateTime))
                 add("Category" to txn.category.label)
                 txn.paymentApp?.let { add("Paid via" to it) }
+                add("Source" to txn.source.label)
                 txn.reference?.let { add("Reference" to it) }
                 txn.note?.let { add("Note" to it) }
             }
@@ -189,6 +233,7 @@ fun DetailContent(txn: Txn, onBack: () -> Unit, onEdit: (Long) -> Unit, onDelete
         }
     }
 
+    }
     val image = txn.imagePath
     if (viewImage && image != null) ImageViewer(File(image)) { viewImage = false }
     if (confirmDelete) {

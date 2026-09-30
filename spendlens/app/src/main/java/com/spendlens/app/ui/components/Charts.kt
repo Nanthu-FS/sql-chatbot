@@ -166,21 +166,25 @@ fun BarChart(
     }
 }
 
-/** Thin cumulative line, drawn left to right, ending in a square marker. */
+/**
+ * Thin cumulative line, drawn left to right, ending in a square marker. With a [forecast], a dashed
+ * line continues from today to where the period is heading.
+ */
 @Composable
-fun Sparkline(values: List<Long>, totalPoints: Int, modifier: Modifier = Modifier) {
+fun Sparkline(values: List<Long>, totalPoints: Int, modifier: Modifier = Modifier, forecast: Long? = null) {
     if (values.size < 2 || totalPoints < 2) return
     val colors = Spend.ink
     val draw = remember { Animatable(0f) }
-    LaunchedEffect(values) {
+    LaunchedEffect(values, forecast) {
         draw.snapTo(0f)
         draw.animateTo(1f, tween(1400, easing = Emphasized))
     }
     Canvas(modifier) {
-        val maxV = max(values.max(), 1L).toFloat()
+        val maxV = max(max(values.max(), forecast ?: 0L), 1L).toFloat()
         val stepX = size.width / (totalPoints - 1)
         val pad = 4.dp.toPx()
-        val pts = values.mapIndexed { i, v -> Offset(i * stepX, pad + (size.height - 2 * pad) * (1f - v / maxV)) }
+        fun y(v: Long) = pad + (size.height - 2 * pad) * (1f - v / maxV)
+        val pts = values.mapIndexed { i, v -> Offset(i * stepX, y(v)) }
         val path = Path().apply {
             moveTo(pts[0].x, pts[0].y)
             for (i in 1 until pts.size) {
@@ -193,12 +197,70 @@ fun Sparkline(values: List<Long>, totalPoints: Int, modifier: Modifier = Modifie
         drawLine(colors.line, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx())
         clipRect(right = size.width * draw.value) {
             drawPath(path, colors.text, style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Square))
+            if (forecast != null && pts.size < totalPoints) {
+                val end = Offset(size.width, y(forecast))
+                drawLine(
+                    colors.muted, pts.last(), end, 1.dp.toPx(),
+                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),
+                )
+                drawCircle(colors.muted, 3.dp.toPx(), end, style = Stroke(1.dp.toPx()))
+            }
         }
         if (draw.value > 0.98f) {
             val end = pts.last()
             val s = 6.dp.toPx()
             drawRect(colors.text, Offset(end.x - s / 2, end.y - s / 2), Size(s, s))
         }
+    }
+}
+
+/** Two running totals on one scale — "are we ahead of last month at this point?" */
+@Composable
+fun PaceChart(a: List<Long>, b: List<Long>, days: Int, modifier: Modifier = Modifier) {
+    if (days < 2) return
+    val colors = Spend.ink
+    val draw = remember { Animatable(0f) }
+    LaunchedEffect(a, b) {
+        draw.snapTo(0f)
+        draw.animateTo(1f, tween(1200, easing = Emphasized))
+    }
+    Canvas(modifier.fillMaxWidth().height(160.dp)) {
+        val maxV = max(max(a.maxOrNull() ?: 0L, b.maxOrNull() ?: 0L), 1L).toFloat()
+        val stepX = size.width / (days - 1)
+        fun path(v: List<Long>) = Path().apply {
+            v.forEachIndexed { i, value ->
+                val p = Offset(i * stepX, size.height * (1f - value / maxV))
+                if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y)
+            }
+        }
+        for (k in 1..3) {
+            val yy = size.height * k / 4f
+            drawLine(colors.line, Offset(0f, yy), Offset(size.width, yy), 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(1.dp.toPx(), 4.dp.toPx())))
+        }
+        drawLine(colors.lineStrong, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx())
+        clipRect(right = size.width * draw.value) {
+            drawPath(path(a), colors.muted, style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx()))))
+            drawPath(path(b), colors.text, style = Stroke(2.dp.toPx()))
+        }
+    }
+}
+
+/** Tiny trend line for list rows; the last point is marked. */
+@Composable
+fun MiniSpark(values: List<Long>, modifier: Modifier = Modifier) {
+    if (values.size < 2) return
+    val colors = Spend.ink
+    Canvas(modifier) {
+        val maxV = max(values.max(), 1L).toFloat()
+        val stepX = size.width / (values.size - 1)
+        val path = Path()
+        values.forEachIndexed { i, v ->
+            val p = Offset(i * stepX, size.height * (1f - v / maxV) * 0.9f + size.height * 0.05f)
+            if (i == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y)
+        }
+        drawPath(path, colors.muted, style = Stroke(1.dp.toPx()))
+        val last = Offset(size.width, size.height * (1f - values.last() / maxV) * 0.9f + size.height * 0.05f)
+        drawRect(colors.text, Offset(last.x - 2.dp.toPx(), last.y - 2.dp.toPx()), Size(4.dp.toPx(), 4.dp.toPx()))
     }
 }
 

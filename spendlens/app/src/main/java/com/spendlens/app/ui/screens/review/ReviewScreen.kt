@@ -69,6 +69,8 @@ import com.spendlens.app.ui.components.ScanOverlay
 import com.spendlens.app.ui.components.Statement
 import com.spendlens.app.ui.components.TimePickerPopup
 import com.spendlens.app.ui.components.cornerMarks
+import com.spendlens.app.ui.components.Screen
+import com.spendlens.app.ui.components.glass
 import com.spendlens.app.ui.components.index
 import com.spendlens.app.ui.components.pressable
 import com.spendlens.app.ui.components.rememberHaptics
@@ -148,7 +150,7 @@ fun ReviewContent(state: ImportState, saving: Boolean, actions: ReviewActions) {
     var preview by remember { mutableStateOf<Any?>(null) }
     val count = state.selected.size
 
-    Box(Modifier.fillMaxSize().background(colors.canvas)) {
+    Screen {
         LazyColumn(Modifier.fillMaxSize().imePadding(), contentPadding = PaddingValues(bottom = 120.dp)) {
             item(key = "top") {
                 Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 20.dp).padding(top = 14.dp)) {
@@ -168,7 +170,15 @@ fun ReviewContent(state: ImportState, saving: Boolean, actions: ReviewActions) {
             if (state.phase == ImportPhase.DONE && state.drafts.isEmpty()) {
                 item(key = "none") {
                     Column(Modifier.padding(20.dp)) {
-                        Statement("Nothing found. ", if (state.mode == ImportMode.AUTO_FIND) "Checked ${state.total} recent screenshots — try picking them yourself." else "Those images couldn't be opened.", style = MaterialTheme.typography.headlineMedium)
+                        Statement(
+                            "Nothing found. ",
+                            when (state.mode) {
+                                ImportMode.AUTO_FIND -> "Checked ${state.total} recent screenshots — try picking them yourself."
+                                ImportMode.SMS -> "Checked ${state.total} messages — no new bank debits."
+                                ImportMode.PICKED -> "Those images couldn't be opened."
+                            },
+                            style = MaterialTheme.typography.headlineMedium,
+                        )
                     }
                 }
             }
@@ -212,7 +222,7 @@ fun ReviewContent(state: ImportState, saving: Boolean, actions: ReviewActions) {
 }
 
 private fun subtitle(state: ImportState): String = when (state.phase) {
-    ImportPhase.FINDING -> "Looking through Screenshots"
+    ImportPhase.FINDING -> if (state.mode == ImportMode.SMS) "Reading bank messages" else "Looking through Screenshots"
     ImportPhase.SCANNING -> "Reading ${minOf(state.processed + 1, state.total)} of ${state.total} · on this phone"
     ImportPhase.SAVING -> "Saving"
     else -> buildList {
@@ -249,8 +259,14 @@ private fun DraftBlock(
     var pickTime by remember { mutableStateOf(false) }
     val dim by animateFloatAsState(if (draft.include || draft.state == DraftState.SCANNING) 1f else 0.45f, label = "dim")
 
-    Column(modifier.padding(horizontal = 20.dp).padding(bottom = 28.dp)) {
-        Hairline()
+    val glassy = com.spendlens.app.ui.components.LocalGlass.current > 0.01f
+    Column(
+        modifier
+            .padding(horizontal = if (glassy) 12.dp else 20.dp)
+            .padding(bottom = if (glassy) 14.dp else 28.dp)
+            .then(if (glassy) Modifier.glass().padding(14.dp) else Modifier),
+    ) {
+        if (!glassy) Hairline()
         Row(Modifier.padding(top = 10.dp)) {
             Label(index(number), color = colors.faint, modifier = Modifier.width(38.dp))
             Label(status(draft), color = if (draft.flags.any { it.excludeByDefault } || draft.state == DraftState.ERROR) colors.alert else colors.muted, modifier = Modifier.weight(1f))
@@ -258,7 +274,21 @@ private fun DraftBlock(
         }
         Spacer(Modifier.height(14.dp))
         Row(Modifier.alpha(dim)) {
-            Box(
+            if (draft.smsFrom != null) {
+                // A bank message instead of a screenshot: show the text itself.
+                Column(
+                    Modifier
+                        .width(120.dp)
+                        .height(168.dp)
+                        .background(colors.surface)
+                        .cornerMarks(colors.text, inset = (-4).dp)
+                        .padding(10.dp),
+                ) {
+                    Label("SMS · ${draft.smsFrom}", color = colors.faint, style = MaterialTheme.typography.labelSmall)
+                    Spacer(Modifier.height(6.dp))
+                    Text(draft.rawText, style = MaterialTheme.typography.bodySmall, color = colors.muted, maxLines = 9, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                }
+            } else Box(
                 Modifier
                     .width(92.dp)
                     .height(168.dp)

@@ -50,6 +50,9 @@ import com.spendlens.app.domain.CurrencyOption
 import com.spendlens.app.domain.Txn
 import com.spendlens.app.ui.Format
 import com.spendlens.app.ui.theme.Spend
+import dev.chrisbanes.haze.HazeState
+import dev.chrisbanes.haze.HazeTint
+import dev.chrisbanes.haze.hazeEffect
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -96,16 +99,35 @@ data class NavItem(val route: String, val label: String)
 
 /** Flat bottom bar: text tabs with a sliding square marker + an ink scan button. */
 @Composable
-fun BottomBar(items: List<NavItem>, currentRoute: String?, onNavigate: (String) -> Unit, onScan: () -> Unit, modifier: Modifier = Modifier) {
+fun BottomBar(
+    items: List<NavItem>,
+    currentRoute: String?,
+    onNavigate: (String) -> Unit,
+    onScan: () -> Unit,
+    modifier: Modifier = Modifier,
+    haze: HazeState? = null,
+) {
     val colors = Spend.ink
     val haptics = rememberHaptics()
     val density = LocalDensity.current
+    val glass = LocalGlass.current
     val centers = remember { mutableStateMapOf<String, Float>() }
     val target = currentRoute?.let { centers[it] } ?: 0f
     val marker by animateDpAsState(with(density) { target.toDp() }, bouncy(), label = "navMarker")
 
-    Column(modifier.fillMaxWidth().background(colors.canvas)) {
-        Hairline()
+    // With glass on, the page shows through, blurred; otherwise a solid bar.
+    val surface = if (haze != null && glass > 0.01f) {
+        Modifier.hazeEffect(haze) {
+            blurRadius = (8 + 22 * glass).dp
+            tints = listOf(HazeTint(colors.canvas.copy(alpha = 0.78f - 0.38f * glass)))
+            noiseFactor = 0.06f * glass
+        }
+    } else {
+        Modifier.background(colors.canvas)
+    }
+
+    Column(modifier.fillMaxWidth().then(surface)) {
+        Hairline(color = if (glass > 0.01f) colors.lineStrong.copy(alpha = 0.6f) else colors.line)
         Row(
             Modifier
                 .fillMaxWidth()

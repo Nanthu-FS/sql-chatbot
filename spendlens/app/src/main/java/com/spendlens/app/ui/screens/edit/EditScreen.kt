@@ -136,7 +136,7 @@ fun EditContent(
     var pickDate by remember { mutableStateOf(false) }
     var pickTime by remember { mutableStateOf(false) }
 
-    Box(Modifier.fillMaxSize().background(colors.canvas)) {
+    com.spendlens.app.ui.components.Screen {
         Column(
             Modifier
                 .fillMaxSize()

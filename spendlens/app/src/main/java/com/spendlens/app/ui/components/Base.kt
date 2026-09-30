@@ -143,10 +143,15 @@ fun SectionHeader(number: Int, title: String, modifier: Modifier = Modifier, tra
     }
 }
 
-/** A titled block of the dashboard. */
+/** A titled block of the dashboard. With glass on, it becomes a frosted panel. */
 @Composable
 fun Section(number: Int, title: String, modifier: Modifier = Modifier, trailing: (@Composable RowScope.() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
-    Column(modifier.fillMaxWidth()) {
+    val glassy = LocalGlass.current > 0.01f
+    Column(
+        modifier
+            .fillMaxWidth()
+            .then(if (glassy) Modifier.glass().padding(16.dp) else Modifier),
+    ) {
         SectionHeader(number, title, trailing = trailing)
         Spacer(Modifier.height(18.dp))
         content()

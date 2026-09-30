@@ -36,7 +36,17 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Test and build APKs
-        run: ./gradlew --no-daemon --stacktrace --continue recordRoborazziDebug assembleDebug assembleRelease
+        run: |
+          set -o pipefail
+          ./gradlew --no-daemon --continue recordRoborazziDebug assembleDebug assembleRelease 2>&1 | tee build.log
+
+      - name: Summarise errors
+        if: failure()
+        run: |
+          echo "::group::Compiler errors"
+          grep -E "^e: |^w: .*(unresolved|Unresolved)" build.log | head -120 || true
+          echo "::endgroup::"
+          grep -E "FAILED|Test.*>.*FAILED|AssertionError|Exception:" build.log | head -60 || true
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
