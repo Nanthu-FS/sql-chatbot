@@ -161,4 +161,20 @@ class PaymentParserTest {
         assertEquals("PhonePe", PaymentParser.appFromFileName("Screenshot_2026-09-30-19-45-12-345_com.phonepe.app.jpg"))
         assertNull(PaymentParser.dateFromFileName("IMG-WA0001.jpg"))
     }
+
+    @Test
+    fun bankDebitMessage() {
+        val p = PaymentParser.parse(
+            listOf(
+                OcrLine("HDFC Bank"),
+                OcrLine("Rs.500.00 debited from A/c XX1234 on 29-09-26 to VPA swiggy.merchant@icici (UPI Ref No 426512345678)."),
+                OcrLine("Not you? Call 18002586161"),
+            ),
+            now,
+        )
+        assertEquals(50000L, p.amountMinor)
+        assertEquals("Swiggy", p.merchant)
+        assertEquals(LocalDateTime.of(2026, 9, 29, 12, 0), p.dateTime)
+        assertEquals("426512345678", p.reference)
+    }
 }

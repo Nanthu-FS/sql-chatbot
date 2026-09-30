@@ -227,19 +227,38 @@ object PaymentParser {
                 if (name != null) return name
             }
         }
-        // Fall back to the nearest "name-looking" line around the big amount.
+        // Sentences such as "Rs.500 debited … to VPA swiggy@icici" or "₹99 paid to Airtel on 2 Oct".
+        for (line in lines) {
+            val match = SENTENCE_PAYEE.find(line.text) ?: continue
+            val raw = match.groupValues[1].trim()
+            val name = if ('@' in raw) nameFromHandle(raw) else cleanName(raw)
+            if (name != null) return name
+        }
+        // Fall back to the nearest "name-looking" line around the big amount (bank names don't count).
         if (amountLine != null) {
             val order = listOf(-1, -2, 1, 2, -3, 3)
             for (offset in order) {
                 val candidate = lines.getOrNull(amountLine + offset)?.text ?: continue
+                if (Regex("""\bbank\b""", RegexOption.IGNORE_CASE).containsMatchIn(candidate)) continue
                 cleanName(candidate)?.let { return it }
             }
         }
-        // Last resort: a UPI handle like "swiggy.merchant@icici".
-        val handle = Regex("""\b([a-zA-Z][a-zA-Z._-]{2,})@[a-zA-Z]{2,}\b""").find(lines.joinToString(" ") { it.text })
-        return handle?.groupValues?.get(1)
-            ?.split('.', '_', '-')?.firstOrNull { it.length >= 3 && it.any(Char::isLetter) }
-            ?.let { titleCase(it) }
+        // Last resort: any UPI handle like "swiggy.merchant@icici".
+        val handle = Regex("""\b[a-zA-Z][\w.-]{2,}@[a-zA-Z]{2,}\b""").find(lines.joinToString(" ") { it.text })
+        return handle?.value?.let { nameFromHandle(it) }
+    }
+
+    private val SENTENCE_PAYEE = Regex(
+        """\b(?:paid|sent|transferred|debited[^.]*?)\s+to\s+(?:vpa\s+|upi\s+id\s+)?([^\s,()]+@[a-z]+|[A-Za-z][A-Za-z .&'-]{1,40}?)(?=\s*(?:[.,()]|$)|\s+(?:on|via|using|from|ref|upi|at|for)\b)""",
+        RegexOption.IGNORE_CASE,
+    )
+    private val GENERIC_HANDLE_PARTS = listOf("paytmqr", "bharatpe", "gpay", "phonepe", "upi", "yespay", "mab", "q", "merchant", "pay", "qr")
+
+    /** "swiggy.merchant@icici" → "Swiggy"; generic QR handles ("paytmqr28100…@paytm") → null. */
+    private fun nameFromHandle(handle: String): String? {
+        val tokens = handle.substringBefore('@').split('.', '_', '-').flatMap { it.split(Regex("\\d+")) }
+        val token = tokens.firstOrNull { t -> t.length >= 3 && t.all(Char::isLetter) && GENERIC_HANDLE_PARTS.none { t.lowercase() == it || t.lowercase().startsWith("paytmqr") } }
+        return token?.let { titleCase(it) }
     }
 
     private fun cleanName(raw: String): String? {

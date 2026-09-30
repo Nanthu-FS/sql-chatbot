@@ -1,10 +1,10 @@
 package com.spendlens.app.ui.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -14,7 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -46,12 +48,12 @@ fun AnimatedAmount(
     modifier: Modifier = Modifier,
     color: Color = Color.Unspecified,
 ) {
-    val animated by animateFloatAsState(
-        targetValue = amountMinor.toFloat(),
-        animationSpec = tween(durationMillis = 900, easing = FastOutSlowInEasing),
-        label = "amount",
-    )
-    val shown = if (abs(animated - amountMinor.toFloat()) < 0.5f) amountMinor else animated.toLong()
+    val animated = remember { Animatable(0f) }
+    LaunchedEffect(amountMinor) {
+        animated.animateTo(amountMinor.toFloat(), tween(durationMillis = 1000, easing = FastOutSlowInEasing))
+    }
+    val value = animated.value
+    val shown = if (abs(value - amountMinor.toFloat()) < 0.5f) amountMinor else value.toLong()
     // Round to whole units while counting so the decimals don't flicker.
     val display = if (shown == amountMinor) shown else shown / 100 * 100
     Text(currency.format(display), style = style, color = color, modifier = modifier, maxLines = 1)

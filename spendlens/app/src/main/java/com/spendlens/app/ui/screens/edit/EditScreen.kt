@@ -161,6 +161,7 @@ fun EditScreen(id: Long, onDone: () -> Unit) {
         Column(
             Modifier
                 .fillMaxSize()
+                .imePadding()
                 .verticalScroll(rememberScrollState())
                 .statusBarsPadding()
                 .padding(horizontal = 20.dp)

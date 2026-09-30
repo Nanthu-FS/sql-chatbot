@@ -10,6 +10,7 @@ import com.spendlens.app.domain.CategoryClassifier
 import com.spendlens.app.domain.Money
 import com.spendlens.app.domain.PaymentParser
 import com.spendlens.app.domain.PaymentStatus
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -176,15 +177,17 @@ class ImportManager(
     private suspend fun analyze(uri: Uri, base: ImportDraft, strict: Boolean): ImportDraft? {
         val loaded = try {
             images.load(uri)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             return if (strict) null else base.copy(state = DraftState.ERROR, include = false)
         }
         val lines = try {
             ocr.read(loaded.bitmap)
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             emptyList()
-        } finally {
-            loaded.bitmap.recycle()
         }
         return withContext(Dispatchers.Default) {
             val meta = images.meta(uri)

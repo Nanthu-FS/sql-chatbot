@@ -274,7 +274,7 @@ fun BudgetPrompt(onSetBudget: () -> Unit) {
 fun InsightsRow(insights: List<Insight>) {
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(horizontal = 0.dp),
+        contentPadding = PaddingValues(horizontal = 20.dp),
     ) {
         items(insights, key = { it.icon.name + it.title }) { insight -> InsightCard(insight) }
     }

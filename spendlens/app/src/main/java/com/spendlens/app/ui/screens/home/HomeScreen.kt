@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.AutoAwesome
 import androidx.compose.material.icons.rounded.ChevronLeft
@@ -37,6 +38,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -92,55 +94,70 @@ private fun DashboardContent(
     onSetBudget: () -> Unit,
 ) {
     val types = PeriodType.entries
+    val listState = rememberLazyListState()
+    // Drilling into a day/month from deep in the list should land on its summary.
+    LaunchedEffect(dashboard.period.type) { listState.animateScrollToItem(0) }
     LazyColumn(
         Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(start = 20.dp, end = 20.dp, bottom = 130.dp),
+        state = listState,
+        contentPadding = PaddingValues(bottom = 130.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         item(key = "header") {
-            Header(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(top = 12.dp))
+            Header(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(top = 12.dp).padding(horizontal = 20.dp))
         }
         item(key = "tabs") {
-            SegmentedTabs(
-                options = types.map { it.label },
-                selectedIndex = types.indexOf(dashboard.period.type),
-                onSelect = { vm.selectType(types[it]) },
-            )
+            Padded {
+                SegmentedTabs(
+                    options = types.map { it.label },
+                    selectedIndex = types.indexOf(dashboard.period.type),
+                    onSelect = { vm.selectType(types[it]) },
+                )
+            }
         }
         item(key = "navigator") {
-            PeriodNavigator(
-                dashboard = dashboard,
-                onPrevious = { vm.shift(-1) },
-                onNext = { vm.shift(1) },
-                onToday = vm::backToToday,
-            )
+            Padded {
+                PeriodNavigator(
+                    dashboard = dashboard,
+                    onPrevious = { vm.shift(-1) },
+                    onNext = { vm.shift(1) },
+                    onToday = vm::backToToday,
+                )
+            }
         }
-        item(key = "hero") { HeroCard(dashboard) }
+        item(key = "hero") { Padded { HeroCard(dashboard) } }
         dashboard.budget?.let { budget ->
-            item(key = "budget") { BudgetCard(budget) }
+            item(key = "budget") { Padded { BudgetCard(budget) } }
         }
         if (dashboard.budget == null && dashboard.period.type == PeriodType.MONTH) {
-            item(key = "budget-cta") { BudgetPrompt(onSetBudget) }
+            item(key = "budget-cta") { Padded { BudgetPrompt(onSetBudget) } }
         }
         if (dashboard.insights.isNotEmpty()) {
             item(key = "insights") { InsightsRow(dashboard.insights) }
         }
         item(key = "chart") {
-            SpendChartCard(dashboard, onDrillDown = { date ->
-                if (dashboard.period.type == PeriodType.YEAR) vm.openMonth(date) else vm.openDay(date)
-            })
+            Padded {
+                SpendChartCard(dashboard, onDrillDown = { date ->
+                    if (dashboard.period.type == PeriodType.YEAR) vm.openMonth(date) else vm.openDay(date)
+                })
+            }
         }
         if (dashboard.heatmap.isNotEmpty() && dashboard.total > 0) {
-            item(key = "heatmap") { HeatmapCard(dashboard, onDayClick = vm::openDay) }
+            item(key = "heatmap") { Padded { HeatmapCard(dashboard, onDayClick = vm::openDay) } }
         }
         if (dashboard.categories.isNotEmpty()) {
-            item(key = "categories") { CategoriesCard(dashboard) }
+            item(key = "categories") { Padded { CategoriesCard(dashboard) } }
         }
         if (dashboard.merchants.size > 1) {
-            item(key = "merchants") { MerchantsCard(dashboard.merchants) }
+            item(key = "merchants") { Padded { MerchantsCard(dashboard.merchants) } }
         }
-        item(key = "recent") { RecentCard(dashboard, onOpenTransaction, onSeeAll) }
+        item(key = "recent") { Padded { RecentCard(dashboard, onOpenTransaction, onSeeAll) } }
     }
+}
+
+@Composable
+private fun Padded(content: @Composable () -> Unit) {
+    Box(Modifier.padding(horizontal = 20.dp)) { content() }
 }
 
 @Composable
