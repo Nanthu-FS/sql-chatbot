@@ -78,6 +78,10 @@ ksp {
     arg("room.schemaLocation", "$projectDir/schemas")
 }
 
+// Debug and release both export the same Room schema file; run them one after the other so one
+// never reads the file while the other is still writing it.
+tasks.matching { it.name == "kspReleaseKotlin" }.configureEach { mustRunAfter("kspDebugKotlin") }
+
 dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.activity.compose)
