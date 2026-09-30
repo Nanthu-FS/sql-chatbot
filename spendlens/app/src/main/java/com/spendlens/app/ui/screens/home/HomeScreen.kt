@@ -359,7 +359,7 @@ private fun Hero(state: HomeUiState, actions: HomeActions, modifier: Modifier = 
         Spacer(Modifier.height(10.dp))
         val change = dashboard.change
         Label(
-            if (change == null) "No earlier data to compare" else "${percentLabel(change)}  ${dashboard.comparisonLabel}",
+            if (change == null) dashboard.noComparisonLabel else "${percentLabel(change)}  ${dashboard.comparisonLabel}",
             color = if (change != null && change > 0.1f) colors.text else colors.muted,
         )
         dashboard.forecast?.let { f ->
@@ -576,20 +576,22 @@ fun GoalBlock(plan: GoalPlan, currency: com.spendlens.app.domain.CurrencyOption,
             Box(Modifier.fillMaxWidth(fill).height(3.dp).background(colors.text))
         }
         Spacer(Modifier.height(8.dp))
-        Label("${currency.format(plan.goal.savedMinor)} of ${currency.format(plan.goal.targetMinor)}", color = colors.faint)
-        when {
-            plan.done -> Label("Done — well saved", color = colors.text)
-            else -> {
-                val deadline = plan.goal.deadline
-                if (plan.neededPerMonth != null && deadline != null) {
-                    Label("${currency.format(plan.neededPerMonth)} / month to hit ${deadline.format(DateTimeFormatter.ofPattern("MMM yyyy"))}", color = colors.muted)
-                }
-                if (plan.onTrack == false && plan.neededPerMonth != null && plan.projectedLeftover != null) {
-                    Label("This month's leftover looks ${currency.format((plan.neededPerMonth - plan.projectedLeftover).coerceAtLeast(0))} short", color = colors.alert)
-                }
-                if (plan.suggestion > 0) {
-                    Spacer(Modifier.height(6.dp))
-                    BracketButton("Put aside ${currency.format(plan.suggestion)}", onClick = { onPutAside(plan.suggestion) })
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Label("${currency.format(plan.goal.savedMinor)} of ${currency.format(plan.goal.targetMinor)}", color = colors.faint)
+            when {
+                plan.done -> Label("Done — well saved", color = colors.text)
+                else -> {
+                    val deadline = plan.goal.deadline
+                    if (plan.neededPerMonth != null && deadline != null) {
+                        Label("${currency.format(plan.neededPerMonth)} / month to hit ${deadline.format(DateTimeFormatter.ofPattern("MMM yyyy"))}", color = colors.muted)
+                    }
+                    if (plan.onTrack == false && plan.neededPerMonth != null && plan.projectedLeftover != null) {
+                        Label("This month's leftover looks ${currency.format((plan.neededPerMonth - plan.projectedLeftover).coerceAtLeast(0))} short", color = colors.alert)
+                    }
+                    if (plan.suggestion > 0) {
+                        Spacer(Modifier.height(2.dp))
+                        BracketButton("Put aside ${currency.format(plan.suggestion)}", onClick = { onPutAside(plan.suggestion) })
+                    }
                 }
             }
         }

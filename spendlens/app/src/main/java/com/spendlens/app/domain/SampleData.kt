@@ -40,7 +40,8 @@ object SampleData {
     )
     private val apps = listOf("Google Pay", "PhonePe", "Paytm", "Google Pay")
 
-    fun generate(today: LocalDate, days: Int = 180, seed: Int = 42): List<SamplePayment> {
+    /** With [now], nothing is dated after it — sample payments never sit in the future. */
+    fun generate(today: LocalDate, days: Int = 180, seed: Int = 42, now: LocalDateTime? = null): List<SamplePayment> {
         val rnd = Random(seed)
         val out = mutableListOf<SamplePayment>()
         fun at(date: LocalDate, hours: IntRange) = date.atTime(rnd.nextInt(hours.first, hours.last + 1), rnd.nextInt(60))
@@ -66,13 +67,15 @@ object SampleData {
             }
         }
         // Make sure today has a little activity for the Day view.
-        out += SamplePayment("Blue Tokai Coffee", Category.FOOD, 310_00, today.atTime(9, 12), "Google Pay")
+        val coffee = today.atTime(9, 12).let { if (now != null && it.isAfter(now)) maxOf(now.minusMinutes(10), today.atStartOfDay()) else it }
+        out += SamplePayment("Blue Tokai Coffee", Category.FOOD, 310_00, coffee, "Google Pay")
         // An unusually large purchase a few days ago…
         out += SamplePayment("Croma", Category.SHOPPING, 38_999_00, today.minusDays(4).atTime(18, 25), "Paytm")
         // …and the same Swiggy order paid twice, two minutes apart.
         val twice = today.minusDays(1).atTime(21, 3)
         out += SamplePayment("Swiggy", Category.FOOD, 486_00, twice, "PhonePe")
         out += SamplePayment("Swiggy", Category.FOOD, 486_00, twice.plusMinutes(2), "PhonePe")
+        if (now != null) out.removeAll { it.dateTime.isAfter(now) }
         return out.sortedBy { it.dateTime }
     }
 }

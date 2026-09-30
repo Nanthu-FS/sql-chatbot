@@ -113,6 +113,6 @@ class HomeViewModel(private val repository: TransactionRepository, private val s
     }
 
     fun loadSamples() {
-        viewModelScope.launch { repository.addSamples(SampleData.generate(LocalDate.now())) }
+        viewModelScope.launch { repository.addSamples(SampleData.generate(LocalDate.now(), now = LocalDateTime.now())) }
     }
 }

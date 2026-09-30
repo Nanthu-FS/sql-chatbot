@@ -48,7 +48,7 @@ class AppSmokeTest {
     @Test
     fun walkThroughTheApp() {
         val app = ApplicationProvider.getApplicationContext<SpendLensApplication>()
-        runBlocking { app.container.repository.addSamples(SampleData.generate(LocalDate.now())) }
+        runBlocking { app.container.repository.addSamples(SampleData.generate(LocalDate.now(), now = java.time.LocalDateTime.now())) }
 
         compose.waitUntil(15_000) { compose.onAllNodes(hasText("SPENT THIS MONTH", substring = true)).fetchSemanticsNodes().isNotEmpty() }
         shot("1_home")

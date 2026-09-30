@@ -82,7 +82,7 @@ class ScreenshotTest {
 
     private val now = LocalDateTime.now()
     private val today = now.toLocalDate()
-    private val txns: List<Txn> = SampleData.generate(today).mapIndexed { i, s ->
+    private val txns: List<Txn> = SampleData.generate(today, now = now).mapIndexed { i, s ->
         Txn(i + 1L, s.amountMinor, s.merchant, s.category, s.dateTime, s.app, reference = "SAMPLE$i", source = TxnSource.SAMPLE)
     }.sortedByDescending { it.dateTime }
     private val goals = listOf(
@@ -177,7 +177,7 @@ class ScreenshotTest {
     @Test fun wrapSummary() = shoot("17_wrap_summary") { WrapContent(WrapBuilder.of(txns, Period(PeriodType.YEAR, today), today), {}, autoAdvance = false, initialPage = 6) }
 
     @Config(qualifiers = "w400dp-h2200dp-xxhdpi")
-    @Test fun compare() = shoot("18_compare") {
+    @Test fun compare() = shoot("18_compare_months") {
         val b = Period(PeriodType.MONTH, today)
         CompareContent(Comparer.compare(txns, b.shift(-1), b, today), CompareActions())
     }

@@ -200,7 +200,7 @@ private fun TopPlaces(w: Wrap) {
     val colors = Spend.ink
     val currency = LocalCurrency.current
     PageColumn {
-        Statement("Where you ", "went back to.", Modifier.reveal(0), MaterialTheme.typography.displaySmall)
+        Statement("Top ", "places.", Modifier.reveal(0), MaterialTheme.typography.displaySmall)
         Spacer(Modifier.height(28.dp))
         w.topPlaces.forEachIndexed { i, p ->
             Column(Modifier.reveal(1 + i)) {

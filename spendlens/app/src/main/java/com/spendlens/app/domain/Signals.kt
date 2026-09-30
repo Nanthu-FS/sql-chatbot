@@ -161,7 +161,7 @@ object AnomalyDetector {
         val recent = all.filter { !it.dateTime.isBefore(since) && !it.dateTime.isAfter(now) }
         val out = mutableListOf<Anomaly>()
 
-        // Unusually large for its category: well above both the typical and the upper-normal payment.
+        // Unusually large for its category: 4× the typical payment and double the upper-normal one.
         recent.forEach { t ->
             if (t.amountMinor < MIN_AMOUNT) return@forEach
             val history = all.filter {
@@ -170,8 +170,8 @@ object AnomalyDetector {
             }.map { it.amountMinor }.sorted()
             if (history.size < MIN_SAMPLES) return@forEach
             val median = percentile(history, 0.5)
-            val p75 = percentile(history, 0.75)
-            if (median > 0 && t.amountMinor >= 3 * median && t.amountMinor >= 2 * p75) {
+            val p90 = percentile(history, 0.9)
+            if (median > 0 && t.amountMinor >= 4 * median && t.amountMinor >= 2 * p90) {
                 val times = t.amountMinor.toDouble() / median
                 out += Anomaly(
                     txn = t,
@@ -294,7 +294,7 @@ object Comparer {
             title = period.label(today),
             total = total,
             count = inside.size,
-            avgPerDay = total / days,
+            avgPerDay = (total / days).roundToWhole(),
             largest = inside.maxByOrNull { it.amountMinor },
             byCategory = inside.groupBy { it.category }.mapValues { (_, v) -> v.sumOf { it.amountMinor } },
             cumulative = cumulative,
@@ -383,7 +383,7 @@ object WrapBuilder {
             count = inside.size,
             previousTotal = previousTotal,
             change = if (previousTotal > 0) (total - previousTotal).toFloat() / previousTotal else null,
-            avgPerDay = total / days,
+            avgPerDay = (total / days).roundToWhole(),
             topPlaces = places,
             topCategory = topCategory,
             biggestDay = biggestDay,
@@ -430,15 +430,17 @@ object GoalPlanner {
         val monthsLeft = goal.deadline?.let {
             (ChronoUnit.MONTHS.between(YearMonth.from(today), YearMonth.from(it)) + 1).toInt().coerceAtLeast(1)
         }
-        val needed = monthsLeft?.let { ceilDiv(remaining, it.toLong()) }
-        val leftover = monthlyIncome?.let { it - (forecastThisMonth ?: spentThisMonth) }
-        val suggestion = when {
+        val needed = monthsLeft?.let { ceilDiv(remaining, it.toLong()).ceilToWhole().coerceAtMost(remaining) }
+        val leftover = monthlyIncome?.let { (it - (forecastThisMonth ?: spentThisMonth)).floorToWhole() }
+        val raw = when {
             remaining == 0L -> 0L
             leftover != null && needed != null -> minOf(needed, leftover.coerceAtLeast(0))
             leftover != null -> minOf(remaining, leftover.coerceAtLeast(0))
             needed != null -> needed
             else -> 0L
         }
+        // Whole units, except the last few paise that finish a goal.
+        val suggestion = if (raw >= remaining) remaining else raw.floorToWhole()
         return GoalPlan(
             goal = goal,
             remaining = remaining,
@@ -454,5 +456,11 @@ object GoalPlanner {
     private fun ceilDiv(a: Long, b: Long): Long = if (b <= 0) a else (a + b - 1) / b
 }
 
-/** Signed percentage like "+24%" / "−8%". */
-fun percentLabel(change: Float): String = (if (change >= 0) "+" else "−") + (abs(change) * 100).roundToInt() + "%"
+/** Signed percentage like "+24%" / "−8%"; past triple it reads as a multiple, "3.4×" or "17×". */
+fun percentLabel(change: Float): String {
+    if (change >= 2f) {
+        val times = 1f + change
+        return (if (times < 10f) "%.1f".format(Locale.US, times) else times.roundToInt().toString()) + "×"
+    }
+    return (if (change >= 0) "+" else "−") + (abs(change) * 100).roundToInt() + "%"
+}

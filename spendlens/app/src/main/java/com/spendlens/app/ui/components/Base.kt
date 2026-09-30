@@ -63,6 +63,12 @@ fun Label(text: String, modifier: Modifier = Modifier, color: Color = Spend.ink.
     Text(text.uppercase(), modifier = modifier, style = style, color = color, maxLines = 1, overflow = TextOverflow.Ellipsis)
 }
 
+/** Small uppercase helper line that wraps instead of cutting off. */
+@Composable
+fun Hint(text: String, modifier: Modifier = Modifier) {
+    Text(text.uppercase(), modifier = modifier, style = MaterialTheme.typography.labelMedium, color = Spend.ink.faint)
+}
+
 /** Two small squares — the reference's "• •" marker. */
 @Composable
 fun Dots(modifier: Modifier = Modifier, color: Color = Spend.ink.text) {

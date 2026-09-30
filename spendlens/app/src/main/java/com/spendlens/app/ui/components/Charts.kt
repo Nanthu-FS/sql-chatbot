@@ -198,7 +198,7 @@ fun Sparkline(values: List<Long>, totalPoints: Int, modifier: Modifier = Modifie
         clipRect(right = size.width * draw.value) {
             drawPath(path, colors.text, style = Stroke(1.5.dp.toPx(), cap = StrokeCap.Square))
             if (forecast != null && pts.size < totalPoints) {
-                val end = Offset(size.width, y(forecast))
+                val end = Offset(size.width - 4.dp.toPx(), y(forecast))
                 drawLine(
                     colors.muted, pts.last(), end, 1.dp.toPx(),
                     pathEffect = PathEffect.dashPathEffect(floatArrayOf(4.dp.toPx(), 4.dp.toPx())),

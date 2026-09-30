@@ -77,3 +77,10 @@ object Money {
         return if (amountMinor % 100 == 0L) value.setScale(0).toPlainString() else value.setScale(2).toPlainString()
     }
 }
+
+/** Derived amounts (averages, allowances, suggestions) are shown in whole currency units. */
+fun Long.roundToWhole(): Long = Math.floorDiv(this + 50, 100L) * 100
+
+fun Long.floorToWhole(): Long = Math.floorDiv(this, 100L) * 100
+
+fun Long.ceilToWhole(): Long = -Math.floorDiv(-this, 100L) * 100

@@ -201,4 +201,28 @@ class SignalsTest {
         assertEquals(samples, SampleData.generate(today)) // deterministic
         assertNotNull(PatternFinder.of(txns, today.minusDays(90), today).statement)
     }
+
+    @Test
+    fun sampleDataStaysInThePast() {
+        val now = today.atTime(7, 30)
+        val samples = SampleData.generate(today, now = now)
+        assertTrue(samples.none { it.dateTime.isAfter(now) })
+        assertTrue(samples.any { it.dateTime.toLocalDate() == today && it.merchant == "Blue Tokai Coffee" })
+    }
+
+    @Test
+    fun changeLabels() {
+        assertEquals("+24%", percentLabel(0.24f))
+        assertEquals("−8%", percentLabel(-0.08f))
+        assertEquals("3.4×", percentLabel(2.4f))
+        assertEquals("17×", percentLabel(16.44f))
+    }
+
+    @Test
+    fun wholeUnits() {
+        assertEquals(1_380_00L, 1_379_72L.roundToWhole())
+        assertEquals(1_601_00L, 1_601_20L.floorToWhole())
+        assertEquals(1_602_00L, 1_601_20L.ceilToWhole())
+        assertEquals(-15_695_00L, (-15_694_86L).floorToWhole())
+    }
 }

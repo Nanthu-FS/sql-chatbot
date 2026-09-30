@@ -43,7 +43,7 @@ class AnalyticsTest {
         val budget = d.budget!!
         assertEquals(5700_00L, budget.remaining)
         assertEquals(16, budget.daysLeft)
-        assertEquals(5700_00L / 16, budget.dailyAllowance)
+        assertEquals(356_00L, budget.dailyAllowance) // ₹5,700 over 16 days, in whole rupees
         assertFalse(d.canGoForward)
         assertEquals("Avg / day", d.averageLabel)
         assertEquals(4300_00L / 15, d.average)

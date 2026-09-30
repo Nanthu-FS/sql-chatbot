@@ -34,6 +34,8 @@ import com.spendlens.app.domain.GoalPlanner
 import com.spendlens.app.domain.Money
 import com.spendlens.app.domain.Period
 import com.spendlens.app.domain.PeriodType
+import com.spendlens.app.domain.floorToWhole
+import com.spendlens.app.domain.roundToWhole
 import com.spendlens.app.ui.appViewModel
 import com.spendlens.app.ui.components.BracketButton
 import com.spendlens.app.ui.components.DatePickerPopup
@@ -120,10 +122,17 @@ fun GoalsContent(ui: GoalsUi, actions: GoalsActions) {
                     Text("Tell SpendLens what you take home each month and it will suggest how much to put aside.", style = MaterialTheme.typography.bodyMedium, color = colors.muted)
                 } else {
                     val heading = ui.monthForecast ?: ui.monthSpent
-                    val leftover = income - heading
-                    Statement(currency.format(leftover.coerceAtLeast(0)), " likely left over", style = MaterialTheme.typography.headlineMedium)
+                    val leftover = (income - heading).floorToWhole()
+                    if (leftover >= 0) {
+                        Statement(currency.format(leftover), " likely left over", style = MaterialTheme.typography.headlineMedium)
+                    } else {
+                        Statement(currency.format(-leftover), " past your income", style = MaterialTheme.typography.headlineMedium)
+                    }
                     Spacer(Modifier.height(6.dp))
-                    Label("Income ${currency.format(income)} − spending heading to ${currency.format(heading)}", color = colors.faint)
+                    Label(
+                        "Income ${currency.format(income)} − spending heading to ${currency.format(heading.roundToWhole())}",
+                        color = if (leftover < 0) colors.alert else colors.faint,
+                    )
                 }
             }
             Spacer(Modifier.height(20.dp))

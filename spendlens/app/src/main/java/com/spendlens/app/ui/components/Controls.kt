@@ -118,6 +118,7 @@ fun BottomBar(
     // With glass on, the page shows through, blurred; otherwise a solid bar.
     val surface = if (haze != null && glass > 0.01f) {
         Modifier.hazeEffect(haze) {
+            backgroundColor = colors.canvas
             blurRadius = (8 + 22 * glass).dp
             tints = listOf(HazeTint(colors.canvas.copy(alpha = 0.78f - 0.38f * glass)))
             noiseFactor = 0.06f * glass

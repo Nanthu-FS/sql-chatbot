@@ -55,6 +55,7 @@ import com.spendlens.app.ui.appViewModel
 import com.spendlens.app.ui.components.BracketButton
 import com.spendlens.app.ui.components.BracketToggle
 import com.spendlens.app.ui.components.Hairline
+import com.spendlens.app.ui.components.Hint
 import com.spendlens.app.ui.components.Label
 import com.spendlens.app.ui.components.LineSlider
 import com.spendlens.app.ui.components.Screen
@@ -96,7 +97,7 @@ class SettingsViewModel(
     fun setSummary(on: Boolean) { viewModelScope.launch { settings.setSummaryNotification(on) } }
     fun setSmsAuto(on: Boolean) { viewModelScope.launch { settings.setSmsAutoImport(on) } }
     fun setAlerts(on: Boolean) { viewModelScope.launch { settings.setAlertNotifications(on) } }
-    fun addSamples() { viewModelScope.launch { repository.addSamples(SampleData.generate(LocalDate.now())) } }
+    fun addSamples() { viewModelScope.launch { repository.addSamples(SampleData.generate(LocalDate.now(), now = java.time.LocalDateTime.now())) } }
     fun removeSamples() { viewModelScope.launch { repository.removeSamples() } }
     fun deleteAll() { viewModelScope.launch { repository.deleteEverything(images.imagesDir) } }
 }
@@ -265,7 +266,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
                 Text(if (glass < 0.01f) "OFF" else "${(glass * 100).roundToInt()}%", style = MaterialTheme.typography.titleMedium, color = colors.text)
             }) {
                 LineSlider(value = glass, onValueChange = { glass = it; actions.onGlass(it) }, range = 0f..1f, steps = 20)
-                Label("Frosted panels and a see-through bar. 0 keeps it flat.", color = colors.faint)
+                Hint("Frosted panels and a see-through bar. 0 keeps it flat.")
             }
 
             Section(++n, "Monthly budget", Modifier.reveal(3), trailing = {
@@ -276,7 +277,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
                 )
             }) {
                 LineSlider(budget, { budget = it }, 0f..moneyMax(currency), 200, onFinished = { actions.onBudget(if (budget <= 0f) null else (budget * 100).roundToLong()) })
-                Label("Drag, or tap the amount to type it", color = colors.faint)
+                Hint("Drag, or tap the amount to type it")
             }
 
             Section(++n, "Monthly income", Modifier.reveal(4), trailing = {
@@ -287,7 +288,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
                 )
             }) {
                 LineSlider(income, { income = it }, 0f..moneyMax(currency) * 2, 200, onFinished = { actions.onIncome(if (income <= 0f) null else (income * 100).roundToLong()) })
-                Label("Used for savings goals — what you could put aside", color = colors.faint)
+                Hint("Used for savings goals — what you could put aside")
             }
 
             Section(++n, "Bank SMS", Modifier.reveal(5)) {
@@ -301,7 +302,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
                     BracketToggle(ui.settings.smsAutoImport, actions.onSmsAuto, on = "On", off = "Off")
                 }
                 Spacer(Modifier.height(8.dp))
-                Label("Messages are read on this phone. Only debits are kept.", color = colors.faint)
+                Hint("Messages are read on this phone. Only debits are kept.")
             }
 
             Section(++n, "Lock screen & widget", Modifier.reveal(6)) {
@@ -325,7 +326,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
                 Text("${days.toInt()} DAYS", style = MaterialTheme.typography.titleMedium, color = colors.text)
             }) {
                 LineSlider(days, { days = it }, 7f..90f, 83, onFinished = { actions.onAutoFindDays(days.toInt()) })
-                Label("How far back auto-find and SMS import look", color = colors.faint)
+                Hint("How far back auto-find and SMS import look")
             }
 
             Section(++n, "Currency", Modifier.reveal(8)) {

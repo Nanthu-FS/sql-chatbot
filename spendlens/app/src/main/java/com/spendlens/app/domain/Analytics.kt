@@ -68,6 +68,8 @@ data class Dashboard(
     val hasAnyData: Boolean,
     /** Where the current period is heading at today's pace; null for past periods and single days. */
     val forecast: Long? = null,
+    /** What to say when there's no percentage: nothing was spent then, or nothing was tracked yet. */
+    val noComparisonLabel: String = "No earlier data to compare",
 )
 
 object Analytics {
@@ -109,6 +111,23 @@ object Analytics {
                 PeriodType.WEEK -> "vs previous week"
                 PeriodType.MONTH -> "vs " + previous.anchor.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
                 PeriodType.YEAR -> "vs ${previous.anchor.year}"
+            }
+        }
+        // Tracked back then but spent nothing, vs. not tracking yet at all.
+        val trackedThen = all.any { !it.dateTime.isAfter(prevStart) }
+        val noComparisonLabel = when {
+            !trackedThen -> "No earlier data to compare"
+            isCurrent -> when (period.type) {
+                PeriodType.DAY -> "Nothing by this time yesterday"
+                PeriodType.WEEK -> "Nothing by this time last week"
+                PeriodType.MONTH -> "Nothing by this time last month"
+                PeriodType.YEAR -> "Nothing by this time last year"
+            }
+            else -> when (period.type) {
+                PeriodType.DAY -> "Nothing the day before"
+                PeriodType.WEEK -> "Nothing the week before"
+                PeriodType.MONTH -> "Nothing in " + previous.anchor.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
+                PeriodType.YEAR -> "Nothing in ${previous.anchor.year}"
             }
         }
 
@@ -188,6 +207,7 @@ object Analytics {
             canGoForward = !period.shift(1).isFuture(today),
             hasAnyData = all.isNotEmpty(),
             forecast = forecast,
+            noComparisonLabel = noComparisonLabel,
         )
     }
 
@@ -319,7 +339,7 @@ object Analytics {
             spent = spent,
             fraction = if (limit > 0) spent.toFloat() / limit else 0f,
             remaining = remaining,
-            dailyAllowance = daysLeft?.let { remaining.coerceAtLeast(0) / it },
+            dailyAllowance = daysLeft?.let { (remaining.coerceAtLeast(0) / it).floorToWhole() },
             daysLeft = daysLeft,
         )
     }
@@ -339,10 +359,10 @@ object Analytics {
 
         if (change != null && abs(change) >= 0.05f) {
             val pct = (abs(change) * 100).roundToInt()
-            out += if (change < 0) {
-                Insight(InsightIcon.TREND_DOWN, "$pct% less", "You've spent less $comparisonLabel. Nice!")
-            } else {
-                Insight(InsightIcon.TREND_UP, "$pct% more", "Spending is up $comparisonLabel.")
+            out += when {
+                change < 0 -> Insight(InsightIcon.TREND_DOWN, "$pct% less", "You've spent less $comparisonLabel. Nice!")
+                change >= 2f -> Insight(InsightIcon.TREND_UP, "${percentLabel(change)} as much", "Spending is up $comparisonLabel.")
+                else -> Insight(InsightIcon.TREND_UP, "$pct% more", "Spending is up $comparisonLabel.")
             }
         }
 
