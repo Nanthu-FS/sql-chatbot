@@ -123,7 +123,7 @@ fun FloatingNavBar(
         modifier
             .fillMaxWidth()
             .navigationBarsPadding()
-            .padding(start = 20.dp, end = 20.dp, bottom = 12.dp),
+            .padding(start = 16.dp, end = 16.dp, bottom = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Row(
@@ -154,7 +154,7 @@ fun FloatingNavBar(
                         .clip(CircleShape)
                         .background(background)
                         .clickable { onNavigate(item.route) }
-                        .padding(horizontal = 16.dp),
+                        .padding(horizontal = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(item.icon, contentDescription = item.label, tint = tint, modifier = Modifier.size(24.dp))
