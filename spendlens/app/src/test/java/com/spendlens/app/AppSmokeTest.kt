@@ -74,6 +74,6 @@ class AppSmokeTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithText("[ COMPARE ]").fetchSemanticsNodes().isNotEmpty() }
         compose.onNodeWithText("[ COMPARE ]").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithText("PACE").fetchSemanticsNodes().isNotEmpty() }
-        shot("6_compare")
+        shot("6_compare_view")
     }
 }
