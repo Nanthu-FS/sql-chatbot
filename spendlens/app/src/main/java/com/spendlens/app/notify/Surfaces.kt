@@ -82,7 +82,7 @@ class Surfaces(
         val fresh = AnomalyDetector.detect(repository.all(), LocalDateTime.now(), currency, lookbackDays = 3)
             .filter { it.txn.source != TxnSource.SAMPLE && it.key !in seen && it.key !in dismissed }
         fresh.take(3).forEach { a -> notifier.alert(a.key, "${a.title} · ${currency.format(a.txn.amountMinor)}", a.detail, a.txn.id) }
-        if (fresh.isNotEmpty()) alerted.edit().putStringSet(KEY, (seen + fresh.map { it.key }).takeLast(500).toSet()).apply()
+        if (fresh.isNotEmpty()) alerted.edit().putStringSet(KEY, (seen + fresh.map { it.key }).toList().takeLast(500).toSet()).apply()
     }
 
     private companion object {

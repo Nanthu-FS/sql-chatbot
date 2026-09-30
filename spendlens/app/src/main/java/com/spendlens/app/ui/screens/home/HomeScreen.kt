@@ -159,11 +159,12 @@ fun DashboardContent(state: HomeUiState, actions: HomeActions) {
     val types = PeriodType.entries
     val list = rememberLazyListState()
     LaunchedEffect(dashboard.period.type) { list.animateScrollToItem(0) }
-    var n = 0
     val isDay = dashboard.period.type == PeriodType.DAY
 
     Screen {
         LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 110.dp)) {
+            // Section numbers follow whichever sections are present; counted afresh on every pass.
+            var n = 0
             item(key = "top") {
                 Column(Modifier.windowInsetsPadding(WindowInsets.statusBars).padding(horizontal = 20.dp).padding(top = 14.dp)) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
