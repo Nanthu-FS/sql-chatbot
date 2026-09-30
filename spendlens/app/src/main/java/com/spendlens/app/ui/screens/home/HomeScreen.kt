@@ -406,7 +406,7 @@ private fun ClassicHero(state: HomeUiState) {
         PeriodType.YEAR -> if (dashboard.isCurrent) "this year" else "that year"
     }
     when (look.style) {
-        Style.TERMINAL -> Label("> spend --${dashboard.period.type.label.lowercase()} ${noun.substringAfter(' ')}", color = colors.text)
+        Style.TERMINAL -> Label("> spend --${dashboard.period.type.label.lowercase()} \"${dashboard.title.lowercase()}\"", color = colors.text)
         Style.RETRO -> Text("Total spent $noun:", style = MaterialTheme.typography.bodyLarge, color = colors.text)
         Style.BLUEPRINT -> Unit
         else -> Statement("Spent ", noun, style = MaterialTheme.typography.headlineMedium)

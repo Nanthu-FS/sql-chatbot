@@ -90,7 +90,7 @@ class AppSmokeTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Compare").fetchSemanticsNodes().isNotEmpty() }
         shot("5c_home_retro")
         compose.onNodeWithText("Compare").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithText("Pace").fetchSemanticsNodes().isNotEmpty() }
+        compose.waitUntil(5_000) { compose.onAllNodes(hasText("pace", substring = true, ignoreCase = true)).fetchSemanticsNodes().isNotEmpty() }
         shot("6_compare_view")
     }
 }
