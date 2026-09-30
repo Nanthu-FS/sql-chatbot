@@ -260,7 +260,7 @@ fun BoxedBars(slices: List<CategorySlice>) {
         slices.take(6).forEachIndexed { i, s ->
             val grow by animateFloatAsState(s.fraction, bouncy(), label = "boxbar")
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(s.category.short().uppercase(), style = MaterialTheme.typography.labelLarge, color = colors.text, modifier = Modifier.width(96.dp), maxLines = 1)
+                Text(s.category.short().uppercase(), style = MaterialTheme.typography.labelLarge, color = colors.text, modifier = Modifier.width(118.dp).padding(end = 8.dp), maxLines = 1, overflow = TextOverflow.Ellipsis)
                 Box(Modifier.weight(1f).height(18.dp).border(2.dp, colors.text).padding(2.dp)) {
                     Box(Modifier.fillMaxWidth(grow.coerceIn(0f, 1f)).height(14.dp).background(if (i == 0) colors.accent else colors.text))
                 }
@@ -325,7 +325,7 @@ fun WalletStack(slices: List<CategorySlice>, trends: Map<Category, CategoryTrend
                         }
                         Column(horizontalAlignment = Alignment.End) {
                             if (trend != null && trend.monthly.count { it > 0 } >= 2) {
-                                MiniSpark(trend.monthly, Modifier.width(120.dp).height(36.dp))
+                                MiniSpark(trend.monthly, Modifier.width(120.dp).height(36.dp), line = ink.copy(alpha = 0.8f), marker = ink)
                             }
                             Text("${(s.fraction * 100).roundToInt()}% · ${s.count} payments", style = MaterialTheme.typography.labelLarge, color = ink.copy(alpha = 0.75f))
                         }

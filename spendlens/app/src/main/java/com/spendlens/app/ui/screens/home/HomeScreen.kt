@@ -320,8 +320,8 @@ private fun Pad(order: Int, content: @Composable () -> Unit) {
     val (side, gap) = when (look.card) {
         CardStyle.PRINT -> if (glassy) 12.dp to 16.dp else 20.dp to 44.dp
         CardStyle.PAPER, CardStyle.RULED -> 20.dp to 32.dp
-        CardStyle.BRUTAL -> 16.dp to 22.dp
-        else -> 14.dp to 14.dp
+        CardStyle.BRUTAL -> 20.dp to 24.dp
+        else -> 20.dp to 14.dp
     }
     Box(Modifier.padding(horizontal = side).padding(bottom = gap).reveal(order)) { content() }
 }
@@ -448,7 +448,13 @@ private fun BentoHero(state: HomeUiState) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Label("Spent " + dashboard.title.lowercase(), color = colors.muted, style = MaterialTheme.typography.labelLarge)
+            val noun = when (dashboard.period.type) {
+                PeriodType.DAY -> if (dashboard.isCurrent) "today" else "that day"
+                PeriodType.WEEK -> if (dashboard.isCurrent) "this week" else "that week"
+                PeriodType.MONTH -> if (dashboard.isCurrent) "this month" else "that month"
+                PeriodType.YEAR -> if (dashboard.isCurrent) "this year" else "that year"
+            }
+            Label("Spent $noun", color = colors.muted, style = MaterialTheme.typography.labelLarge)
             RollingAmount(dashboard.total, currency, MaterialTheme.typography.displaySmall)
             val change = dashboard.change
             Text(
@@ -605,7 +611,7 @@ private fun Categories(state: HomeUiState) {
                 },
         ) {
             Row(Modifier.fillMaxWidth().padding(vertical = 12.dp), verticalAlignment = Alignment.CenterVertically) {
-                Label(index(i + 1), color = colors.faint, modifier = Modifier.width(34.dp))
+                if (Spend.look.numbered) Label(index(i + 1), color = colors.faint, modifier = Modifier.width(34.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
                         caps(slice.category.label),

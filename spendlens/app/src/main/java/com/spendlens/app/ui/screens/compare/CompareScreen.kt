@@ -182,7 +182,7 @@ fun CompareContent(c: Comparison, actions: CompareActions) {
 private fun PeriodPicker(tag: String, title: String, onShift: (Long) -> Unit, dashed: Boolean) {
     val colors = Spend.ink
     Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(width = 18.dp, height = 2.dp).background(if (dashed) colors.muted else colors.text))
+        Box(Modifier.size(width = 18.dp, height = 2.dp).background(if (dashed) colors.muted else colors.accent))
         Spacer(Modifier.width(10.dp))
         Label(tag, color = colors.faint, modifier = Modifier.width(18.dp))
         Icon(Icons.Rounded.ChevronLeft, "Earlier", tint = colors.muted, modifier = Modifier.size(28.dp).pressable(pressedScale = 0.8f) { onShift(-1) })

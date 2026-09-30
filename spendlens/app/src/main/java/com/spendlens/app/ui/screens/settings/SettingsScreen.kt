@@ -297,7 +297,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
 
             if (Spend.look.glassy) {
                 Section(++n, "Glass", Modifier.reveal(3), trailing = {
-                    Text(if (glass < 0.01f) "OFF" else "${(glass * 100).roundToInt()}%", style = MaterialTheme.typography.titleMedium, color = colors.text)
+                    Text(if (glass < 0.01f) caps("Off") else "${(glass * 100).roundToInt()}%", style = MaterialTheme.typography.titleMedium, color = colors.text)
                 }) {
                     LineSlider(value = glass, onValueChange = { glass = it; actions.onGlass(it) }, range = 0f..1f, steps = 20)
                     Hint("Frosted panels and a see-through bar. 0 keeps it flat.")
@@ -306,7 +306,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
 
             Section(++n, "Monthly budget", Modifier.reveal(3), trailing = {
                 Text(
-                    if (budget <= 0f) "OFF" else currency.format((budget * 100).roundToLong()),
+                    if (budget <= 0f) caps("Off") else currency.format((budget * 100).roundToLong()),
                     style = MaterialTheme.typography.titleMedium, color = colors.text,
                     modifier = Modifier.pressable { moneyDialog = "budget" },
                 )
@@ -317,7 +317,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
 
             Section(++n, "Monthly income", Modifier.reveal(4), trailing = {
                 Text(
-                    if (income <= 0f) "NOT SET" else currency.format((income * 100).roundToLong()),
+                    if (income <= 0f) caps("Not set") else currency.format((income * 100).roundToLong()),
                     style = MaterialTheme.typography.titleMedium, color = colors.text,
                     modifier = Modifier.pressable { moneyDialog = "income" },
                 )
@@ -358,7 +358,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
             }
 
             Section(++n, "Auto-find window", Modifier.reveal(7), trailing = {
-                Text("${days.toInt()} DAYS", style = MaterialTheme.typography.titleMedium, color = colors.text)
+                Text(caps("${days.toInt()} days"), style = MaterialTheme.typography.titleMedium, color = colors.text)
             }) {
                 LineSlider(days, { days = it }, 7f..90f, 83, onFinished = { actions.onAutoFindDays(days.toInt()) })
                 Hint("How far back auto-find and SMS import look")

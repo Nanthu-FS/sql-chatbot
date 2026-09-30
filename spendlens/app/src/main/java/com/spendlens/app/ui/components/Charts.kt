@@ -16,6 +16,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
@@ -247,9 +248,11 @@ fun PaceChart(a: List<Long>, b: List<Long>, days: Int, modifier: Modifier = Modi
 
 /** Tiny trend line for list rows; the last point is marked. */
 @Composable
-fun MiniSpark(values: List<Long>, modifier: Modifier = Modifier) {
+fun MiniSpark(values: List<Long>, modifier: Modifier = Modifier, line: Color = Color.Unspecified, marker: Color = Color.Unspecified) {
     if (values.size < 2) return
     val colors = Spend.ink
+    val lineColor = if (line == Color.Unspecified) colors.muted else line
+    val markerColor = if (marker == Color.Unspecified) colors.accent else marker
     Canvas(modifier) {
         val maxV = max(values.max(), 1L).toFloat()
         val stepX = size.width / (values.size - 1)
@@ -258,9 +261,9 @@ fun MiniSpark(values: List<Long>, modifier: Modifier = Modifier) {
             val p = Offset(i * stepX, size.height * (1f - v / maxV) * 0.9f + size.height * 0.05f)
             if (i == 0) path.moveTo(p.x, p.y) else path.lineTo(p.x, p.y)
         }
-        drawPath(path, colors.muted, style = Stroke(1.dp.toPx()))
+        drawPath(path, lineColor, style = Stroke(1.dp.toPx()))
         val last = Offset(size.width, size.height * (1f - values.last() / maxV) * 0.9f + size.height * 0.05f)
-        drawRect(colors.accent, Offset(last.x - 2.dp.toPx(), last.y - 2.dp.toPx()), Size(4.dp.toPx(), 4.dp.toPx()))
+        drawRect(markerColor, Offset(last.x - 2.dp.toPx(), last.y - 2.dp.toPx()), Size(4.dp.toPx(), 4.dp.toPx()))
     }
 }
 
