@@ -101,7 +101,7 @@ fun MonthHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) 
                                 modifier = Modifier.padding(4.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = when {
-                                    shade > 0.45f -> colors.inverse
+                                    shade > 0.3f -> colors.inverse
                                     cell.date.isAfter(today) -> colors.faint.copy(alpha = 0.5f)
                                     else -> colors.muted
                                 },
