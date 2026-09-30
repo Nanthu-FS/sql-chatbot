@@ -36,7 +36,15 @@ data class AppSettings(
     val style: String = "editorial",
     /** ARGB accent colour; null keeps the look's own. */
     val accent: Long? = null,
-)
+    /** App lock: salted PIN hash ("salt:hex"); null = no lock. */
+    val pinHash: String? = null,
+    val biometricUnlock: Boolean = false,
+    val introSeen: Boolean = false,
+    /** False only for the placeholder used before the stored settings arrive. */
+    val loaded: Boolean = false,
+) {
+    val lockEnabled: Boolean get() = pinHash != null
+}
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
@@ -57,6 +65,9 @@ class SettingsRepository(context: Context) {
         val dismissed = stringSetPreferencesKey("dismissed_alerts")
         val style = stringPreferencesKey("style")
         val accent = longPreferencesKey("accent")
+        val pinHash = stringPreferencesKey("pin_hash")
+        val biometric = booleanPreferencesKey("biometric_unlock")
+        val introSeen = booleanPreferencesKey("intro_seen")
     }
 
     val settings: Flow<AppSettings> = store.data.map { prefs ->
@@ -73,6 +84,10 @@ class SettingsRepository(context: Context) {
             dismissedAlerts = prefs[Keys.dismissed].orEmpty(),
             style = prefs[Keys.style] ?: "editorial",
             accent = prefs[Keys.accent],
+            pinHash = prefs[Keys.pinHash],
+            biometricUnlock = prefs[Keys.biometric] ?: false,
+            introSeen = prefs[Keys.introSeen] ?: false,
+            loaded = true,
         )
     }
 
@@ -119,6 +134,26 @@ class SettingsRepository(context: Context) {
     /** Null goes back to the look's own accent. */
     suspend fun setAccent(argb: Long?) {
         store.edit { prefs -> if (argb == null) prefs.remove(Keys.accent) else prefs[Keys.accent] = argb }
+    }
+
+    /** Null turns the lock off (and fingerprint unlock with it). */
+    suspend fun setPinHash(hash: String?) {
+        store.edit { prefs ->
+            if (hash == null) {
+                prefs.remove(Keys.pinHash)
+                prefs.remove(Keys.biometric)
+            } else {
+                prefs[Keys.pinHash] = hash
+            }
+        }
+    }
+
+    suspend fun setBiometricUnlock(on: Boolean) {
+        store.edit { it[Keys.biometric] = on }
+    }
+
+    suspend fun setIntroSeen(seen: Boolean) {
+        store.edit { it[Keys.introSeen] = seen }
     }
 
     suspend fun dismissAlert(key: String) {

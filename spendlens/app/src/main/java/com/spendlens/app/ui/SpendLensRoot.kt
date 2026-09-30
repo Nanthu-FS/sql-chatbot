@@ -80,6 +80,7 @@ import com.spendlens.app.ui.components.LocalGlass
 import com.spendlens.app.ui.theme.Spend
 import com.spendlens.app.ui.screens.compare.CompareScreen
 import com.spendlens.app.ui.screens.goals.GoalsScreen
+import com.spendlens.app.ui.screens.intro.IntroScreen
 import com.spendlens.app.ui.screens.wrap.WrapScreen
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.hazeSource
@@ -169,6 +170,8 @@ fun SpendLensRoot(settings: AppSettings) {
     val snackbar = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
     var showScanSheet by rememberSaveable { mutableStateOf(false) }
+    var replayIntro by rememberSaveable { mutableStateOf(false) }
+    val showIntro = (settings.loaded && !settings.introSeen) || replayIntro
     val shared by container.sharedImages.collectAsStateWithLifecycle()
 
     val haptics = rememberHaptics()
@@ -288,7 +291,7 @@ fun SpendLensRoot(settings: AppSettings) {
                     )
                 }
                 composable(Routes.SETTINGS) {
-                    SettingsScreen(onMessage = ::message, onOpenReview = { nav.navigate(Routes.REVIEW) { launchSingleTop = true } })
+                    SettingsScreen(onMessage = ::message, onOpenReview = { nav.navigate(Routes.REVIEW) { launchSingleTop = true } }, onReplayIntro = { replayIntro = true })
                 }
                 composable(
                     Routes.REVIEW,
@@ -376,6 +379,14 @@ fun SpendLensRoot(settings: AppSettings) {
                     contentColor = ink.inverse,
                     actionColor = ink.inverse,
                 )
+            }
+
+            // First launch (or "Play intro" in Settings): the motion intro over everything.
+            if (showIntro) {
+                IntroScreen(onDone = {
+                    replayIntro = false
+                    if (!settings.introSeen) scope.launch { container.settings.setIntroSeen(true) }
+                })
             }
         }
 

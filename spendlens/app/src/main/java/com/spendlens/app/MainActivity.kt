@@ -4,7 +4,6 @@ import android.content.Intent
 import android.graphics.Color
 import android.net.Uri
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -22,16 +21,29 @@ import com.spendlens.app.ui.theme.SpendLensTheme
 import com.spendlens.app.ui.theme.Style
 import com.spendlens.app.notify.Notifier
 import com.spendlens.app.work.RefreshWorker
+import androidx.biometric.BiometricPrompt
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.fragment.app.FragmentActivity
+import com.spendlens.app.lock.AppLock
+import com.spendlens.app.lock.Biometrics
+import com.spendlens.app.lock.LocalBiometricUnlock
+import com.spendlens.app.ui.components.Screen
+import com.spendlens.app.ui.screens.lock.LockScreen
 
-class MainActivity : ComponentActivity() {
+/** FragmentActivity so the system fingerprint prompt can attach to it. */
+class MainActivity : FragmentActivity() {
 
     private val container get() = (application as SpendLensApplication).container
+    private lateinit var biometricPrompt: BiometricPrompt
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (savedInstanceState == null) handleShare(intent)
         runCatching { RefreshWorker.schedule(this) }
+        biometricPrompt = Biometrics.create(this) { container.lock.unlockWithBiometrics() }
 
         setContent {
             val settings by container.settings.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
@@ -49,12 +61,33 @@ class MainActivity : ComponentActivity() {
                 enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
                 onDispose { }
             }
-            CompositionLocalProvider(LocalAppContainer provides container) {
+            val lockState by container.lock.state.collectAsStateWithLifecycle()
+            val canUseBiometrics = settings.biometricUnlock && Biometrics.available(this)
+            val unlockWithBiometrics: (() -> Unit)? = if (canUseBiometrics) ({ Biometrics.prompt(biometricPrompt) }) else null
+            CompositionLocalProvider(LocalAppContainer provides container, LocalBiometricUnlock provides unlockWithBiometrics) {
                 SpendLensTheme(darkTheme = dark, style = Style.from(settings.style), accent = settings.accent?.let { androidx.compose.ui.graphics.Color(it.toInt()) }) {
-                    SpendLensRoot(settings = settings)
+                    when (lockState) {
+                        // Nothing until we know whether to lock, so no totals flash on screen.
+                        AppLock.State.UNKNOWN -> Screen {}
+                        AppLock.State.LOCKED -> Box {
+                            Box(Modifier.clearAndSetSemantics { }) { SpendLensRoot(settings = settings) }
+                            LockScreen(container.lock, unlockWithBiometrics)
+                        }
+                        AppLock.State.OPEN -> SpendLensRoot(settings = settings)
+                    }
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        container.lock.onForeground()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) container.lock.onBackground()
     }
 
     override fun onNewIntent(intent: Intent) {

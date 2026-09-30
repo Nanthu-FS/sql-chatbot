@@ -50,6 +50,9 @@ import com.spendlens.app.ui.screens.settings.SettingsActions
 import com.spendlens.app.ui.screens.settings.SettingsContent
 import com.spendlens.app.ui.screens.settings.SettingsUi
 import com.spendlens.app.ui.screens.wrap.WrapContent
+import com.spendlens.app.ui.screens.intro.INTRO_MS
+import com.spendlens.app.ui.screens.intro.IntroContent
+import com.spendlens.app.ui.screens.lock.LockContent
 import com.spendlens.app.ui.theme.SpendLensTheme
 import com.spendlens.app.ui.theme.Style
 import com.spendlens.app.ui.theme.lookFor
@@ -268,4 +271,29 @@ class ScreenshotTest {
     }
 
     @Test fun homeWeekWallet() = shoot("36_home_week_wallet_light", dark = false, style = Style.WALLET) { DashboardContent(home(PeriodType.WEEK), HomeActions()) }
+
+    // ---- Intro frames, lock screen, lock settings.
+
+    @Test fun introLogo() = shoot("37_intro_logo") { IntroContent(1_500f) {} }
+
+    @Test fun introScan() = shoot("38_intro_scan") { IntroContent(3_700f) {} }
+
+    @Test fun introChart() = shoot("39_intro_chart", dark = false, style = Style.SWISS) { IntroContent(6_500f) {} }
+
+    @Test fun introLooks() = shoot("40_intro_looks") { IntroContent(8_900f) {} }
+
+    @Test fun introEnd() = shoot("41_intro_end", style = Style.BENTO) { IntroContent(INTRO_MS) {} }
+
+    @Test fun lockEditorial() = shoot("42_lock_editorial") { LockContent(onPin = { false }, error = null, onBiometric = {}) }
+
+    @Test fun lockBrutal() = shoot("43_lock_brutal", dark = false, style = Style.BRUTAL) { LockContent(onPin = { false }, error = "Wrong PIN", onBiometric = null) }
+
+    @Config(qualifiers = "w400dp-h3800dp-xxhdpi")
+    @Test fun settingsLock() = shoot("44_settings_lock") {
+        SettingsContent(
+            SettingsUi(AppSettings(pinHash = "salt:hash", biometricUnlock = true, loaded = true), txns, sampleCount = 0),
+            SettingsActions(),
+            biometricAvailable = true,
+        )
+    }
 }

@@ -5,6 +5,7 @@ import android.net.Uri
 import com.spendlens.app.data.AppDatabase
 import com.spendlens.app.data.SettingsRepository
 import com.spendlens.app.data.TransactionRepository
+import com.spendlens.app.lock.AppLock
 import com.spendlens.app.notify.Notifier
 import com.spendlens.app.notify.Surfaces
 import com.spendlens.app.ocr.ImageStore
@@ -34,6 +35,7 @@ class AppContainer(context: Context, databaseName: String = AppDatabase.NAME) {
     val notifier = Notifier(context)
     val surfaces = Surfaces(context, repository, settings, notifier)
     val smsAutoImporter = SmsAutoImporter(repository, settings, notifier)
+    val lock = AppLock(settings, appScope)
 
     /** Images shared to the app from the gallery or a payment app, waiting to be imported. */
     val sharedImages = MutableStateFlow<List<Uri>>(emptyList())

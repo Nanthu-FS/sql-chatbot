@@ -50,6 +50,11 @@ class AppSmokeTest {
         val app = ApplicationProvider.getApplicationContext<SpendLensApplication>()
         runBlocking { app.container.repository.addSamples(SampleData.generate(LocalDate.now(), now = java.time.LocalDateTime.now())) }
 
+        // First launch plays the intro (straight to its last frame with animations off).
+        compose.waitUntil(15_000) { compose.onAllNodesWithText("[ GET STARTED ]").fetchSemanticsNodes().isNotEmpty() }
+        shot("0_intro")
+        compose.onNodeWithText("[ GET STARTED ]").performClick()
+
         compose.waitUntil(15_000) { compose.onAllNodes(hasText("SPENT THIS MONTH", substring = true)).fetchSemanticsNodes().isNotEmpty() }
         shot("1_home")
 

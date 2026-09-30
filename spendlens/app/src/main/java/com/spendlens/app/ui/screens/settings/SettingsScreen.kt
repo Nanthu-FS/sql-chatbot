@@ -1,6 +1,10 @@
 package com.spendlens.app.ui.screens.settings
 
 import android.Manifest
+import androidx.compose.runtime.key
+import com.spendlens.app.lock.Biometrics
+import com.spendlens.app.ui.screens.lock.PinDialog
+import com.spendlens.app.ui.screens.lock.PinMode
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
@@ -111,6 +115,7 @@ class SettingsViewModel(
     fun setTheme(t: ThemeMode) { viewModelScope.launch { settings.setTheme(t) } }
     fun setGlass(level: Float) { viewModelScope.launch { settings.setGlass(level) } }
     fun setStyle(key: String) { viewModelScope.launch { settings.setStyle(key) } }
+    fun setBiometric(on: Boolean) { viewModelScope.launch { settings.setBiometricUnlock(on) } }
     fun setAccent(argb: Long?) { viewModelScope.launch { settings.setAccent(argb) } }
     fun setAutoFindDays(d: Int) { viewModelScope.launch { settings.setAutoFindDays(d) } }
     fun setSummary(on: Boolean) { viewModelScope.launch { settings.setSummaryNotification(on) } }
@@ -128,6 +133,10 @@ class SettingsActions(
     val onTheme: (ThemeMode) -> Unit = {},
     val onGlass: (Float) -> Unit = {},
     val onStyle: (String) -> Unit = {},
+    val onLock: (Boolean) -> Unit = {},
+    val onChangePin: () -> Unit = {},
+    val onBiometric: (Boolean) -> Unit = {},
+    val onReplayIntro: () -> Unit = {},
     val onAccent: (Long?) -> Unit = {},
     val onAutoFindDays: (Int) -> Unit = {},
     val onSmsImport: () -> Unit = {},
@@ -149,12 +158,13 @@ private fun moneyMax(c: CurrencyOption): Float = when (c) {
 }
 
 @Composable
-fun SettingsScreen(onMessage: (String) -> Unit, onOpenReview: () -> Unit) {
+fun SettingsScreen(onMessage: (String) -> Unit, onOpenReview: () -> Unit, onReplayIntro: () -> Unit = {}) {
     val vm = appViewModel { SettingsViewModel(it.settings, it.repository, it.images) }
     val ui by vm.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val container = LocalAppContainer.current
     val scope = rememberCoroutineScope()
+    var pinFlow by remember { mutableStateOf<PinFlow?>(null) }
 
     val readSms = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) {
@@ -241,13 +251,40 @@ fun SettingsScreen(onMessage: (String) -> Unit, onOpenReview: () -> Unit) {
                 vm.deleteAll()
                 onMessage("All data deleted")
             },
+            onLock = { on -> pinFlow = if (on) PinFlow.ENABLE else PinFlow.DISABLE },
+            onChangePin = { pinFlow = PinFlow.CHANGE_CHECK },
+            onBiometric = vm::setBiometric,
+            onReplayIntro = onReplayIntro,
         ),
+        biometricAvailable = Biometrics.available(context),
     )
+
+    // PIN steps run in a full-screen pad; each step is a fresh dialog.
+    val lock = container.lock
+    pinFlow?.let { flow ->
+        key(flow) {
+            when (flow) {
+                PinFlow.ENABLE, PinFlow.CHANGE_NEW -> PinDialog(PinMode.CHOOSE, lock::check, onDone = { pin ->
+                    lock.setPin(pin)
+                    pinFlow = null
+                    onMessage(if (flow == PinFlow.ENABLE) "App lock is on" else "PIN changed")
+                }, onDismiss = { pinFlow = null })
+                PinFlow.CHANGE_CHECK -> PinDialog(PinMode.CONFIRM, lock::check, onDone = { pinFlow = PinFlow.CHANGE_NEW }, onDismiss = { pinFlow = null })
+                PinFlow.DISABLE -> PinDialog(PinMode.CONFIRM, lock::check, onDone = {
+                    lock.clearPin()
+                    pinFlow = null
+                    onMessage("App lock is off")
+                }, onDismiss = { pinFlow = null })
+            }
+        }
+    }
 }
+
+private enum class PinFlow { ENABLE, CHANGE_CHECK, CHANGE_NEW, DISABLE }
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
+fun SettingsContent(ui: SettingsUi, actions: SettingsActions, biometricAvailable: Boolean = false) {
     val colors = Spend.ink
     val haptics = rememberHaptics()
     val currency = ui.settings.currency
@@ -393,10 +430,38 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
                 }
             }
 
+            Section(++n, "App lock", Modifier.reveal(10)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Lock with a PIN", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketToggle(ui.settings.lockEnabled, actions.onLock, on = "On", off = "Off")
+                }
+                if (ui.settings.lockEnabled) {
+                    if (biometricAvailable) {
+                        Hairline(Modifier.padding(vertical = 10.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text("Unlock with fingerprint", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                            BracketToggle(ui.settings.biometricUnlock, actions.onBiometric, on = "On", off = "Off")
+                        }
+                    }
+                    Hairline(Modifier.padding(vertical = 10.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text("Change your PIN", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                        BracketButton("Change", onClick = actions.onChangePin)
+                    }
+                }
+                Spacer(Modifier.height(8.dp))
+                Hint("Locks when you leave SpendLens for 30 seconds. The widget and lock-screen summary still show totals.")
+            }
+
             Section(++n, "Your data", Modifier.reveal(11)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Export every payment as CSV", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
                     BracketButton("Export", onClick = actions.onExport)
+                }
+                Hairline(Modifier.padding(vertical = 8.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Watch the intro again", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketButton("Play", onClick = actions.onReplayIntro)
                 }
                 Hairline(Modifier.padding(vertical = 8.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
