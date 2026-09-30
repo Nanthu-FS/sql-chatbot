@@ -109,7 +109,7 @@ fun PinPad(
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         LensMark(Modifier.size(44.dp))
         Spacer(Modifier.height(20.dp))
-        Text(caps(title), style = MaterialTheme.typography.headlineMedium, color = colors.text, textAlign = TextAlign.Center)
+        Text(caps(title), style = MaterialTheme.typography.headlineMedium, color = colors.text, textAlign = TextAlign.Center, modifier = Modifier.padding(horizontal = 28.dp))
         Spacer(Modifier.height(8.dp))
         Label(subtitle, color = colors.muted, style = MaterialTheme.typography.labelLarge)
         if (error != null) {
