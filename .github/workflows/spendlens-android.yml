@@ -46,7 +46,9 @@ jobs:
           echo "::group::Compiler errors"
           grep -E "^e: |^w: .*(unresolved|Unresolved)" build.log | head -120 || true
           echo "::endgroup::"
-          grep -E "FAILED|Test.*>.*FAILED|AssertionError|Exception:" build.log | head -60 || true
+          echo "::group::Test failures"
+          grep -E -A40 " > .* FAILED$" build.log | grep -v -E "^\s+at (org\.junit|org\.robolectric\.internal|java\.base|jdk\.internal|org\.gradle|worker\.org|kotlin\.coroutines|kotlinx\.coroutines)" | head -300 || true
+          echo "::endgroup::"
 
       - name: Upload APKs
         uses: actions/upload-artifact@v4
@@ -66,7 +68,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Commit UI screenshots for review
-        if: github.event_name == 'push'
+        if: always() && github.event_name == 'push'
         working-directory: .
         run: |
           mkdir -p docs/screenshots
