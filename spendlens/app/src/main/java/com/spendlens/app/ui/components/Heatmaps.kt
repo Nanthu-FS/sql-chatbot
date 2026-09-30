@@ -38,6 +38,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.spendlens.app.domain.HeatDay
 import com.spendlens.app.ui.theme.Spend
+import com.spendlens.app.ui.theme.contentOn
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.TextStyle
@@ -85,7 +86,7 @@ fun MonthHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) 
                                     Modifier
                                 } else {
                                     Modifier
-                                        .background(colors.ramp(shade))
+                                        .background(colors.heat(shade))
                                         .then(if (cell.date == today) Modifier.border(1.dp, colors.text) else Modifier)
                                         .pressable(pressedScale = 0.85f, haptic = false) {
                                             haptics.tick()
@@ -101,7 +102,7 @@ fun MonthHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) 
                                 modifier = Modifier.padding(4.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = when {
-                                    shade > 0.3f -> colors.inverse
+                                    shade > 0.3f -> contentOn(colors.heat(shade))
                                     cell.date.isAfter(today) -> colors.faint.copy(alpha = 0.5f)
                                     else -> colors.muted
                                 },
@@ -123,7 +124,7 @@ fun HeatLegend(modifier: Modifier = Modifier) {
         Label("Less", color = colors.faint)
         Spacer(Modifier.width(6.dp))
         listOf(0f, 0.3f, 0.55f, 0.8f, 1f).forEach {
-            Box(Modifier.padding(horizontal = 1.dp).size(10.dp).background(colors.ramp(it)))
+            Box(Modifier.padding(horizontal = 1.dp).size(10.dp).background(colors.heat(it)))
         }
         Spacer(Modifier.width(6.dp))
         Label("More", color = colors.faint)
@@ -177,7 +178,7 @@ fun YearHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) -
                     val date = gridStart.plusDays(w * 7L + d)
                     val heat = byDate[date] ?: continue
                     val o = Offset(w * step, top.toPx() + d * step)
-                    drawRect(colors.ramp(if (heat.amountMinor > 0) 0.15f + heat.intensity * 0.85f else 0f), o, Size(c, c))
+                    drawRect(colors.heat(if (heat.amountMinor > 0) 0.15f + heat.intensity * 0.85f else 0f), o, Size(c, c))
                     if (date == today) drawRect(colors.text, o, Size(c, c), style = Stroke(1.dp.toPx()))
                     if (d == 0 && date.dayOfMonth <= 7 && date.monthValue != lastMonth) {
                         lastMonth = date.monthValue

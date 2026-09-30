@@ -19,6 +19,7 @@ import com.spendlens.app.data.ThemeMode
 import com.spendlens.app.ui.LocalAppContainer
 import com.spendlens.app.ui.SpendLensRoot
 import com.spendlens.app.ui.theme.SpendLensTheme
+import com.spendlens.app.ui.theme.Style
 import com.spendlens.app.notify.Notifier
 import com.spendlens.app.work.RefreshWorker
 
@@ -49,7 +50,7 @@ class MainActivity : ComponentActivity() {
                 onDispose { }
             }
             CompositionLocalProvider(LocalAppContainer provides container) {
-                SpendLensTheme(darkTheme = dark) {
+                SpendLensTheme(darkTheme = dark, style = Style.from(settings.style), accent = settings.accent?.let { androidx.compose.ui.graphics.Color(it.toInt()) }) {
                     SpendLensRoot(settings = settings)
                 }
             }

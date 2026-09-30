@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
@@ -47,6 +48,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.spendlens.app.domain.Anomaly
 import com.spendlens.app.domain.BudgetStatus
@@ -62,6 +64,7 @@ import com.spendlens.app.domain.SpendPatterns
 import com.spendlens.app.domain.percentLabel
 import com.spendlens.app.ui.Format
 import com.spendlens.app.ui.appViewModel
+import com.spendlens.app.ui.components.caps
 import com.spendlens.app.ui.components.BarChart
 import com.spendlens.app.ui.components.BracketButton
 import com.spendlens.app.ui.components.Dots
@@ -83,13 +86,17 @@ import com.spendlens.app.ui.components.TransactionRow
 import com.spendlens.app.ui.components.UnderlineTabs
 import com.spendlens.app.ui.components.YearHeatmap
 import com.spendlens.app.ui.components.bouncy
+import com.spendlens.app.ui.components.controlShape
+import com.spendlens.app.ui.components.sectionFrame
 import com.spendlens.app.ui.components.glass
 import com.spendlens.app.ui.components.index
 import com.spendlens.app.ui.components.pressable
 import com.spendlens.app.ui.components.rememberHaptics
 import com.spendlens.app.ui.components.reveal
 import com.spendlens.app.ui.components.short
+import com.spendlens.app.ui.theme.CardStyle
 import com.spendlens.app.ui.theme.Spend
+import com.spendlens.app.ui.theme.Style
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -160,6 +167,9 @@ fun DashboardContent(state: HomeUiState, actions: HomeActions) {
     val list = rememberLazyListState()
     LaunchedEffect(dashboard.period.type) { list.animateScrollToItem(0) }
     val isDay = dashboard.period.type == PeriodType.DAY
+    val look = Spend.look
+    // The calendar look leads with the month grid.
+    val calendarFirst = look.style == Style.CALENDAR
 
     Screen {
         LazyColumn(Modifier.fillMaxSize(), state = list, contentPadding = PaddingValues(bottom = 110.dp)) {
@@ -183,7 +193,8 @@ fun DashboardContent(state: HomeUiState, actions: HomeActions) {
                 }
             }
             item(key = "hero") { Hero(state, actions, Modifier.reveal(0)) }
-            item(key = "ribbon") {
+            if (!look.ribbon) item(key = "gap") { Spacer(Modifier.height(28.dp)) }
+            if (look.ribbon) item(key = "ribbon") {
                 val currency = LocalCurrency.current
                 val top = dashboard.categories.firstOrNull()?.category?.label
                 Ribbon(
@@ -197,6 +208,23 @@ fun DashboardContent(state: HomeUiState, actions: HomeActions) {
                     Modifier.padding(vertical = 26.dp).reveal(1),
                 )
             }
+            fun heat() {
+                if (dashboard.heatmap.isNotEmpty() && dashboard.total > 0) {
+                    val num = ++n
+                    item(key = "heat") {
+                        Pad(4) {
+                            Section(num, if (dashboard.period.type == PeriodType.MONTH) "Calendar" else "Year at a glance") {
+                                if (dashboard.period.type == PeriodType.MONTH) {
+                                    MonthHeatmap(dashboard.heatmap, LocalDate.now(), actions.onOpenDay)
+                                } else {
+                                    YearHeatmap(dashboard.heatmap, LocalDate.now(), actions.onOpenDay)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            if (calendarFirst) heat()
             if (state.anomalies.isNotEmpty()) {
                 val num = ++n
                 item(key = "alerts") { Pad(2) { Section(num, "Worth a look") { Alerts(state.anomalies, actions) } } }
@@ -240,20 +268,7 @@ fun DashboardContent(state: HomeUiState, actions: HomeActions) {
                     }
                 }
             }
-            if (dashboard.heatmap.isNotEmpty() && dashboard.total > 0) {
-                val num = ++n
-                item(key = "heat") {
-                    Pad(4) {
-                        Section(num, if (dashboard.period.type == PeriodType.MONTH) "Calendar" else "Year at a glance") {
-                            if (dashboard.period.type == PeriodType.MONTH) {
-                                MonthHeatmap(dashboard.heatmap, LocalDate.now(), actions.onOpenDay)
-                            } else {
-                                YearHeatmap(dashboard.heatmap, LocalDate.now(), actions.onOpenDay)
-                            }
-                        }
-                    }
-                }
-            }
+            if (!calendarFirst) heat()
             if (dashboard.categories.isNotEmpty()) {
                 val num = ++n
                 item(key = "categories") { Pad(5) { Section(num, "Where it went") { Categories(state) } } }
@@ -300,15 +315,22 @@ fun DashboardContent(state: HomeUiState, actions: HomeActions) {
 
 @Composable
 private fun Pad(order: Int, content: @Composable () -> Unit) {
+    val look = Spend.look
     val glassy = LocalGlass.current > 0.01f
-    Box(Modifier.padding(horizontal = if (glassy) 12.dp else 20.dp).padding(bottom = if (glassy) 16.dp else 44.dp).reveal(order)) { content() }
+    val (side, gap) = when (look.card) {
+        CardStyle.PRINT -> if (glassy) 12.dp to 16.dp else 20.dp to 44.dp
+        CardStyle.PAPER, CardStyle.RULED -> 20.dp to 32.dp
+        CardStyle.BRUTAL -> 16.dp to 22.dp
+        else -> 14.dp to 14.dp
+    }
+    Box(Modifier.padding(horizontal = side).padding(bottom = gap).reveal(order)) { content() }
 }
 
 @Composable
 private fun StreakBadge(days: Int) {
     val colors = Spend.ink
-    Row(Modifier.border(1.dp, colors.text).padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Box(Modifier.size(5.dp).background(colors.text))
+    Row(Modifier.border(1.dp, colors.accent, controlShape()).padding(horizontal = 8.dp, vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Box(Modifier.size(5.dp).background(colors.accent))
         Spacer(Modifier.width(6.dp))
         Label("$days-day no-spend streak", color = colors.text)
     }
@@ -347,33 +369,10 @@ private fun Hero(state: HomeUiState, actions: HomeActions, modifier: Modifier = 
             )
         }
         Spacer(Modifier.height(28.dp))
-        val noun = when (dashboard.period.type) {
-            PeriodType.DAY -> if (dashboard.isCurrent) "today" else "that day"
-            PeriodType.WEEK -> if (dashboard.isCurrent) "this week" else "that week"
-            PeriodType.MONTH -> if (dashboard.isCurrent) "this month" else "that month"
-            PeriodType.YEAR -> if (dashboard.isCurrent) "this year" else "that year"
-        }
-        Statement("Spent ", noun, style = MaterialTheme.typography.headlineMedium)
-        Spacer(Modifier.height(6.dp))
-        RollingAmount(dashboard.total, currency, MaterialTheme.typography.displayLarge)
-        Spacer(Modifier.height(10.dp))
-        val change = dashboard.change
-        Label(
-            if (change == null) dashboard.noComparisonLabel else "${percentLabel(change)}  ${dashboard.comparisonLabel}",
-            color = if (change != null && change > 0.1f) colors.text else colors.muted,
-        )
-        dashboard.forecast?.let { f ->
-            Spacer(Modifier.height(6.dp))
-            val end = dashboard.period.endExclusive.minusDays(1).format(DateTimeFormatter.ofPattern("d MMM"))
-            Label("At this pace ≈ ${currency.compact(f)} by $end", color = colors.text)
-        }
-        Spacer(Modifier.height(20.dp))
-        Sparkline(dashboard.cumulative, dashboard.bars.size, Modifier.fillMaxWidth().height(56.dp), forecast = dashboard.forecast)
-        Spacer(Modifier.height(18.dp))
-        Row(Modifier.fillMaxWidth()) {
-            Stat("Payments", dashboard.count.toString(), Modifier.weight(1f))
-            Stat(dashboard.averageLabel, currency.compact(dashboard.average), Modifier.weight(1f))
-            Stat("Largest", dashboard.largest?.let { currency.compact(it.amountMinor) } ?: "—", Modifier.weight(1f))
+        when (Spend.look.style) {
+            Style.BENTO -> BentoHero(state)
+            Style.BRUTAL -> Column(Modifier.fillMaxWidth().sectionFrame()) { ClassicHero(state) }
+            else -> ClassicHero(state)
         }
         if (dashboard.period.type != PeriodType.DAY) {
             Spacer(Modifier.height(14.dp))
@@ -381,6 +380,123 @@ private fun Hero(state: HomeUiState, actions: HomeActions, modifier: Modifier = 
                 BracketButton("${dashboard.period.type.label} wrapped", onClick = { actions.onWrap(dashboard.period) })
                 BracketButton("Compare", onClick = { actions.onCompare(dashboard.period) })
             }
+        }
+    }
+}
+
+/** Total, change, forecast, a chart and three stats — shaped by the current look. */
+@Composable
+private fun ClassicHero(state: HomeUiState) {
+    val dashboard = state.dashboard ?: return
+    val colors = Spend.ink
+    val look = Spend.look
+    val currency = LocalCurrency.current
+    val noun = when (dashboard.period.type) {
+        PeriodType.DAY -> if (dashboard.isCurrent) "today" else "that day"
+        PeriodType.WEEK -> if (dashboard.isCurrent) "this week" else "that week"
+        PeriodType.MONTH -> if (dashboard.isCurrent) "this month" else "that month"
+        PeriodType.YEAR -> if (dashboard.isCurrent) "this year" else "that year"
+    }
+    Statement("Spent ", noun, style = MaterialTheme.typography.headlineMedium)
+    Spacer(Modifier.height(6.dp))
+    val big = when (look.style) {
+        Style.SWISS -> MaterialTheme.typography.displayLarge.copy(fontSize = 84.sp, lineHeight = 84.sp)
+        Style.DOT -> MaterialTheme.typography.displayLarge.copy(fontSize = 76.sp, lineHeight = 76.sp)
+        Style.RECEIPT -> MaterialTheme.typography.displayLarge.copy(fontSize = 50.sp, lineHeight = 54.sp)
+        else -> MaterialTheme.typography.displayLarge
+    }
+    RollingAmount(dashboard.total, currency, big)
+    Spacer(Modifier.height(10.dp))
+    val change = dashboard.change
+    Label(
+        if (change == null) dashboard.noComparisonLabel else "${percentLabel(change)}  ${dashboard.comparisonLabel}",
+        color = if (change != null && change > 0.1f) colors.text else colors.muted,
+    )
+    dashboard.forecast?.let { f ->
+        Spacer(Modifier.height(6.dp))
+        val end = dashboard.period.endExclusive.minusDays(1).format(DateTimeFormatter.ofPattern("d MMM"))
+        Label("At this pace ≈ ${currency.compact(f)} by $end", color = colors.text)
+    }
+    Spacer(Modifier.height(20.dp))
+    when (look.style) {
+        Style.DOT -> DotDays(dashboard.bars)
+        Style.RECEIPT -> Barcode(dashboard.bars)
+        else -> Sparkline(dashboard.cumulative, dashboard.bars.size, Modifier.fillMaxWidth().height(56.dp), forecast = dashboard.forecast)
+    }
+    Spacer(Modifier.height(18.dp))
+    val largest = dashboard.largest?.let { currency.compact(it.amountMinor) } ?: "—"
+    if (look.style == Style.SWISS) {
+        StatCells(listOf("Payments" to dashboard.count.toString(), dashboard.averageLabel to currency.compact(dashboard.average), "Largest" to largest))
+    } else {
+        Row(Modifier.fillMaxWidth()) {
+            Stat("Payments", dashboard.count.toString(), Modifier.weight(1f))
+            Stat(dashboard.averageLabel, currency.compact(dashboard.average), Modifier.weight(1f))
+            Stat("Largest", largest, Modifier.weight(1f))
+        }
+    }
+}
+
+/** Bento: a total tile with a budget ring, then four small tiles. */
+@Composable
+private fun BentoHero(state: HomeUiState) {
+    val dashboard = state.dashboard ?: return
+    val colors = Spend.ink
+    val currency = LocalCurrency.current
+    val look = Spend.look
+    Row(
+        Modifier.fillMaxWidth().background(colors.surface, RoundedCornerShape(look.radius)).padding(20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Label("Spent " + dashboard.title.lowercase(), color = colors.muted, style = MaterialTheme.typography.labelLarge)
+            RollingAmount(dashboard.total, currency, MaterialTheme.typography.displaySmall)
+            val change = dashboard.change
+            Text(
+                if (change == null) dashboard.noComparisonLabel else "${percentLabel(change)} ${dashboard.comparisonLabel}",
+                style = MaterialTheme.typography.bodyMedium, color = colors.muted,
+            )
+            dashboard.forecast?.let { Text("Pace ≈ ${currency.compact(it)}", style = MaterialTheme.typography.bodyMedium, color = colors.muted) }
+            val budget = dashboard.budget
+            if (budget != null && budget.remaining < 0) {
+                Text(
+                    "${currency.format(-budget.remaining)} over budget",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = colors.alert,
+                    modifier = Modifier.padding(top = 6.dp).background(colors.alert.copy(alpha = 0.14f), RoundedCornerShape(99.dp)).padding(horizontal = 10.dp, vertical = 5.dp),
+                )
+            }
+        }
+        val budget = dashboard.budget
+        val f = dashboard.forecast
+        when {
+            budget != null -> BudgetRing(budget.fraction, "${(budget.fraction * 100).roundToInt()}%", "of ${currency.compact(budget.limit)}")
+            f != null && f > 0 -> BudgetRing(dashboard.total.toFloat() / f, currency.compact(dashboard.total), "of ≈${currency.compact(f)}")
+        }
+    }
+    Spacer(Modifier.height(12.dp))
+    val streak = state.streaks?.current ?: 0
+    val top = dashboard.categories.firstOrNull()
+    val patterns = state.patterns
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BentoTile("No-spend streak", if (streak == 1) "1 day" else "$streak days", "Longest ${state.streaks?.longest ?: 0}", Modifier.weight(1f), accent = true)
+            BentoTile(
+                "Worth a look", state.anomalies.size.toString(),
+                state.anomalies.take(2).joinToString(" · ") { it.txn.merchant }.ifEmpty { "All clear" },
+                Modifier.weight(1f),
+                footColor = if (state.anomalies.isNotEmpty()) colors.alert else null,
+            )
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            BentoTile("Most on", top?.category?.label ?: "—", top?.let { "${(it.fraction * 100).roundToInt()}% · ${currency.compact(it.amountMinor)}" } ?: "", Modifier.weight(1f))
+            val day = patterns?.topDay
+            val part = patterns?.topPart
+            BentoTile(
+                "You spend most",
+                if (day != null && part != null) dayPartLabel(day, part) else "—",
+                patterns?.busiestHour?.let { "Busiest hour · ${Format.hour(it)}" } ?: "",
+                Modifier.weight(1f),
+            )
         }
     }
 }
@@ -437,7 +553,7 @@ private fun BudgetBlock(budget: BudgetStatus) {
     }
     Spacer(Modifier.height(14.dp))
     Box(Modifier.fillMaxWidth().height(3.dp).background(colors.line)) {
-        Box(Modifier.fillMaxWidth(fill).height(3.dp).background(if (over) colors.alert else colors.text))
+        Box(Modifier.fillMaxWidth(fill).height(3.dp).background(if (over) colors.alert else colors.accent))
     }
     Spacer(Modifier.height(10.dp))
     Row {
@@ -462,6 +578,18 @@ private fun Categories(state: HomeUiState) {
     val currency = LocalCurrency.current
     val haptics = rememberHaptics()
     val slices = dashboard.categories
+    when (Spend.look.style) {
+        Style.RECEIPT -> return ReceiptLines(slices, currency)
+        Style.DOT -> return DotShares(slices, currency)
+        Style.BRUTAL -> return BoxedBars(slices)
+        Style.WALLET -> return WalletStack(slices, state.trends, currency)
+        Style.SWISS -> {
+            SplitBar(slices.map { it.fraction }, null, Modifier.height(28.dp))
+            Spacer(Modifier.height(14.dp))
+            return SplitLegend(slices)
+        }
+        else -> Unit
+    }
     var selected by remember(dashboard.period, slices.size) { mutableStateOf<Int?>(null) }
     SplitBar(slices.map { it.fraction }, selected)
     Spacer(Modifier.height(12.dp))
@@ -480,7 +608,7 @@ private fun Categories(state: HomeUiState) {
                 Label(index(i + 1), color = colors.faint, modifier = Modifier.width(34.dp))
                 Column(Modifier.weight(1f)) {
                     Text(
-                        slice.category.label.uppercase(),
+                        caps(slice.category.label),
                         style = MaterialTheme.typography.headlineSmall,
                         color = if (i == 0 || selected == i) colors.text else colors.muted,
                         maxLines = 1,
@@ -532,7 +660,7 @@ private fun Patterns(p: SpendPatterns) {
                         .weight(1f)
                         .padding(horizontal = 2.dp)
                         .height(18.dp)
-                        .background(colors.ramp(t))
+                        .background(colors.heat(t))
                         .then(if (top) Modifier.border(1.dp, colors.text) else Modifier),
                 )
             }
@@ -568,12 +696,12 @@ fun GoalBlock(plan: GoalPlan, currency: com.spendlens.app.domain.CurrencyOption,
     val fill by animateFloatAsState(plan.progress, bouncy(), label = "goal")
     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
         Row(verticalAlignment = Alignment.Bottom) {
-            Text(plan.goal.name.uppercase(), style = MaterialTheme.typography.headlineSmall, color = colors.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(caps(plan.goal.name), style = MaterialTheme.typography.headlineSmall, color = colors.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
             Label("${(plan.progress * 100).roundToInt()}%", color = colors.text, style = MaterialTheme.typography.labelLarge)
         }
         Spacer(Modifier.height(10.dp))
         Box(Modifier.fillMaxWidth().height(3.dp).background(colors.line)) {
-            Box(Modifier.fillMaxWidth(fill).height(3.dp).background(colors.text))
+            Box(Modifier.fillMaxWidth(fill).height(3.dp).background(colors.accent))
         }
         Spacer(Modifier.height(8.dp))
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {

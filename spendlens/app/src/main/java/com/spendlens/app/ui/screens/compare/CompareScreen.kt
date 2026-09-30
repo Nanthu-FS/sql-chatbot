@@ -39,6 +39,7 @@ import com.spendlens.app.domain.Period
 import com.spendlens.app.domain.PeriodType
 import com.spendlens.app.domain.percentLabel
 import com.spendlens.app.ui.appViewModel
+import com.spendlens.app.ui.components.caps
 import com.spendlens.app.ui.components.AmountText
 import com.spendlens.app.ui.components.BracketButton
 import com.spendlens.app.ui.components.Hairline
@@ -162,7 +163,7 @@ fun CompareContent(c: Comparison, actions: CompareActions) {
                 c.rows.forEach { row ->
                     Column(Modifier.fillMaxWidth().padding(vertical = 10.dp)) {
                         Row(verticalAlignment = Alignment.Bottom) {
-                            Text(row.category.label.uppercase(), style = MaterialTheme.typography.titleMedium, color = colors.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(caps(row.category.label), style = MaterialTheme.typography.titleMedium, color = colors.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
                             Label(row.change?.let { percentLabel(it) } ?: "new", color = if ((row.change ?: 1f) > 0.1f) colors.text else colors.faint)
                         }
                         Spacer(Modifier.height(6.dp))

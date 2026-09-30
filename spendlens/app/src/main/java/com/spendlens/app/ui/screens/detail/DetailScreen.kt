@@ -45,6 +45,7 @@ import androidx.compose.foundation.border
 import com.spendlens.app.domain.Txn
 import com.spendlens.app.ui.Format
 import com.spendlens.app.ui.appViewModel
+import com.spendlens.app.ui.components.caps
 import com.spendlens.app.ui.components.AmountText
 import com.spendlens.app.ui.components.BracketButton
 import com.spendlens.app.ui.components.Grayscale
@@ -152,7 +153,7 @@ fun DetailContent(
         }
         Label(txn.category.label, color = colors.muted, modifier = Modifier.reveal(0))
         Spacer(Modifier.height(8.dp))
-        Text(txn.merchant.uppercase(), style = MaterialTheme.typography.headlineLarge, color = colors.text, modifier = Modifier.reveal(1))
+        Text(caps(txn.merchant), style = MaterialTheme.typography.headlineLarge, color = colors.text, modifier = Modifier.reveal(1))
         Spacer(Modifier.height(4.dp))
         AmountText(txn.amountMinor, currency, MaterialTheme.typography.displayLarge, Modifier.reveal(2))
         Spacer(Modifier.height(28.dp))

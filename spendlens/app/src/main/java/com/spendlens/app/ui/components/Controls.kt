@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.Add
@@ -36,6 +37,8 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onGloballyPositioned
@@ -49,7 +52,9 @@ import androidx.compose.ui.unit.dp
 import com.spendlens.app.domain.CurrencyOption
 import com.spendlens.app.domain.Txn
 import com.spendlens.app.ui.Format
+import com.spendlens.app.ui.theme.ControlStyle
 import com.spendlens.app.ui.theme.Spend
+import com.spendlens.app.ui.theme.TabStyle
 import dev.chrisbanes.haze.HazeState
 import dev.chrisbanes.haze.HazeTint
 import dev.chrisbanes.haze.hazeEffect
@@ -59,37 +64,76 @@ import kotlin.math.roundToInt
 import kotlin.math.sign
 import kotlin.math.sqrt
 
-/** DAY  MONTH  YEAR with a 2dp underline that springs (and overshoots) to the selection. */
+/**
+ * DAY  WEEK  MONTH  YEAR. Print looks: a 2dp underline that springs (and overshoots) to the
+ * selection. Card looks: a sliding accent pill. Grid looks: ruled cells with a sliding ink block.
+ */
 @Composable
 fun UnderlineTabs(options: List<String>, selectedIndex: Int, onSelect: (Int) -> Unit, modifier: Modifier = Modifier) {
     val colors = Spend.ink
+    val look = Spend.look
     val haptics = rememberHaptics()
-    BoxWithConstraints(modifier.fillMaxWidth()) {
+    val segmented = look.tabs == TabStyle.SEGMENTED
+    val cells = look.tabs == TabStyle.CELLS
+    val brutal = look.control == ControlStyle.BLOCK
+    BoxWithConstraints(
+        modifier
+            .fillMaxWidth()
+            .then(
+                when {
+                    segmented -> Modifier.background(colors.ghost, RoundedCornerShape(look.controlRadius.coerceAtMost(100.dp))).padding(4.dp)
+                    cells && brutal -> Modifier.hardShadow(colors.text, 4.dp).background(colors.raised).border(3.dp, colors.text)
+                    cells -> Modifier.border(1.dp, colors.lineStrong)
+                    else -> Modifier
+                },
+            ),
+    ) {
         val segment = maxWidth / options.size
         val offset by animateDpAsState(segment * selectedIndex, bouncy(), label = "tab")
+        val selectedFill = if (cells) colors.text else colors.accent
+        val selectedText = if (cells) colors.inverse else colors.onAccent
+        if (segmented || cells) {
+            Box(
+                Modifier
+                    .offset(x = offset)
+                    .width(segment)
+                    .height(44.dp)
+                    .background(selectedFill, if (segmented) RoundedCornerShape(look.controlRadius.coerceAtMost(100.dp)) else RoundedCornerShape(0.dp)),
+            )
+        }
         Column {
             Row(Modifier.fillMaxWidth()) {
                 options.forEachIndexed { i, label ->
-                    val color by animateColorAsState(if (i == selectedIndex) colors.text else colors.faint, label = "tabColor")
+                    val selected = i == selectedIndex
+                    val color by animateColorAsState(
+                        when {
+                            selected && (segmented || cells) -> selectedText
+                            selected -> colors.text
+                            else -> if (segmented || cells) colors.muted else colors.faint
+                        },
+                        label = "tabColor",
+                    )
                     Box(
                         Modifier
                             .weight(1f)
+                            .height(if (segmented || cells) 44.dp else 46.dp)
                             .pressable(haptic = false) {
-                                if (i != selectedIndex) {
+                                if (!selected) {
                                     haptics.tick()
                                     onSelect(i)
                                 }
-                            }
-                            .padding(vertical = 14.dp),
+                            },
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(label.uppercase(), style = MaterialTheme.typography.labelLarge, color = color, textAlign = TextAlign.Center)
+                        Text(caps(label), style = MaterialTheme.typography.labelLarge, color = color, textAlign = TextAlign.Center)
                     }
                 }
             }
-            Box(Modifier.fillMaxWidth().height(2.dp)) {
-                Hairline(Modifier.align(Alignment.BottomStart))
-                Box(Modifier.offset(x = offset + segment * 0.3f).width(segment * 0.4f).height(2.dp).background(colors.text))
+            if (!segmented && !cells) {
+                Box(Modifier.fillMaxWidth().height(2.dp)) {
+                    Hairline(Modifier.align(Alignment.BottomStart))
+                    Box(Modifier.offset(x = offset + segment * 0.3f).width(segment * 0.4f).height(2.dp).background(colors.accent))
+                }
             }
         }
     }
@@ -142,7 +186,7 @@ fun BottomBar(
                         val selected = item.route == currentRoute
                         val color by animateColorAsState(if (selected) colors.text else colors.faint, label = "navColor")
                         Text(
-                            item.label.uppercase(),
+                            caps(item.label),
                             style = MaterialTheme.typography.labelLarge,
                             color = color,
                             modifier = Modifier
@@ -161,18 +205,25 @@ fun BottomBar(
                             .align(Alignment.BottomStart)
                             .offset(x = marker - 2.dp)
                             .size(4.dp)
-                            .background(colors.text),
+                            .background(colors.accent),
                     )
                 }
             }
+            val look = Spend.look
             Box(
                 Modifier
                     .size(48.dp)
-                    .background(colors.text, RoundedCornerShape(2.dp))
-                    .pressable(pressedScale = 0.88f, onClick = onScan),
+                    .pressable(pressedScale = 0.88f, onClick = onScan)
+                    .then(
+                        if (look.control == ControlStyle.BLOCK) {
+                            Modifier.hardShadow(colors.text, 3.dp).background(colors.accent).border(3.dp, colors.text)
+                        } else {
+                            Modifier.background(colors.accent, RoundedCornerShape(look.controlRadius.coerceIn(2.dp, 100.dp)))
+                        },
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add payments", tint = colors.inverse, modifier = Modifier.size(22.dp))
+                Icon(Icons.Rounded.Add, contentDescription = "Add payments", tint = colors.onAccent, modifier = Modifier.size(22.dp))
             }
         }
     }
@@ -194,6 +245,7 @@ fun LineSlider(
     onFinished: () -> Unit = {},
 ) {
     val colors = Spend.ink
+    val round = Spend.look.controlRadius > 8.dp
     val haptics = rememberHaptics()
     val scope = rememberCoroutineScope()
     val thumbScale = remember { Animatable(1f) }
@@ -266,7 +318,7 @@ fun LineSlider(
         val width = maxWidth
         val thumbX: Dp = width * (fraction + overshoot.value).coerceIn(-0.05f, 1.05f)
         Hairline(color = colors.lineStrong)
-        Box(Modifier.width(width * fraction).height(1.dp).background(colors.text))
+        Box(Modifier.width(width * fraction).height(if (round) 2.dp else 1.dp).background(colors.accent))
         if (steps in 1..24) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 repeat(steps + 1) { Box(Modifier.width(1.dp).height(5.dp).background(colors.lineStrong)) }
@@ -280,7 +332,7 @@ fun LineSlider(
                     scaleX = thumbScale.value
                     scaleY = thumbScale.value
                 }
-                .background(colors.text),
+                .background(colors.accent, if (round) CircleShape else RectangleShape),
         )
     }
 }
@@ -290,10 +342,20 @@ fun LineSlider(
 fun BracketToggle(checked: Boolean, onChange: (Boolean) -> Unit, on: String, off: String, modifier: Modifier = Modifier) {
     val colors = Spend.ink
     val haptics = rememberHaptics()
+    val look = Spend.look
     val border by animateColorAsState(if (checked) colors.text else colors.line, label = "toggle")
+    val pill = look.control == ControlStyle.PILL
+    val bg by animateColorAsState(if (pill && checked) colors.accent else if (pill) colors.ghost else Color.Transparent, label = "toggleBg")
+    val ink = if (pill && checked) colors.onAccent else colors.text
     Row(
         modifier
-            .border(1.dp, border, RoundedCornerShape(2.dp))
+            .then(
+                when (look.control) {
+                    ControlStyle.PILL -> Modifier.background(bg, controlShape())
+                    ControlStyle.BLOCK -> Modifier.background(if (checked) colors.accent else colors.raised).border(2.dp, colors.text)
+                    else -> Modifier.border(1.dp, border, controlShape())
+                },
+            )
             .pressable(haptic = false) {
                 if (checked) haptics.tick() else haptics.confirm()
                 onChange(!checked)
@@ -304,11 +366,11 @@ fun BracketToggle(checked: Boolean, onChange: (Boolean) -> Unit, on: String, off
         Box(
             Modifier
                 .size(8.dp)
-                .border(1.dp, colors.text)
-                .background(if (checked) colors.text else colors.canvas),
+                .border(1.dp, ink, if (pill) CircleShape else RectangleShape)
+                .background(if (checked) ink else Color.Transparent, if (pill) CircleShape else RectangleShape),
         )
         Spacer(Modifier.width(8.dp))
-        Text((if (checked) on else off).uppercase(), style = MaterialTheme.typography.labelLarge, color = if (checked) colors.text else colors.faint)
+        Text(caps(if (checked) on else off), style = MaterialTheme.typography.labelLarge, color = if (checked) ink else colors.muted)
     }
 }
 
@@ -319,7 +381,7 @@ fun TransactionRow(txn: Txn, currency: CurrencyOption, onClick: () -> Unit, modi
     Column(modifier.fillMaxWidth().pressable(pressedScale = 0.98f, onClick = onClick)) {
         Row(Modifier.fillMaxWidth().padding(vertical = 14.dp), verticalAlignment = Alignment.Top) {
             Text(
-                if (showDate) Format.shortDate(txn.dateTime.toLocalDate()).uppercase() else Format.time(txn.dateTime).uppercase(),
+                caps(if (showDate) Format.shortDate(txn.dateTime.toLocalDate()) else Format.time(txn.dateTime)),
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.faint,
                 modifier = Modifier.width(58.dp).padding(top = 3.dp),

@@ -32,6 +32,10 @@ data class AppSettings(
     val smsAutoImport: Boolean = false,
     val alertNotifications: Boolean = true,
     val dismissedAlerts: Set<String> = emptySet(),
+    /** Key of the chosen look (see ui.theme.Style). */
+    val style: String = "editorial",
+    /** ARGB accent colour; null keeps the look's own. */
+    val accent: Long? = null,
 )
 
 private val Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
@@ -51,6 +55,8 @@ class SettingsRepository(context: Context) {
         val smsAuto = booleanPreferencesKey("sms_auto_import")
         val alerts = booleanPreferencesKey("alert_notifications")
         val dismissed = stringSetPreferencesKey("dismissed_alerts")
+        val style = stringPreferencesKey("style")
+        val accent = longPreferencesKey("accent")
     }
 
     val settings: Flow<AppSettings> = store.data.map { prefs ->
@@ -65,6 +71,8 @@ class SettingsRepository(context: Context) {
             smsAutoImport = prefs[Keys.smsAuto] ?: false,
             alertNotifications = prefs[Keys.alerts] ?: true,
             dismissedAlerts = prefs[Keys.dismissed].orEmpty(),
+            style = prefs[Keys.style] ?: "editorial",
+            accent = prefs[Keys.accent],
         )
     }
 
@@ -102,6 +110,15 @@ class SettingsRepository(context: Context) {
 
     suspend fun setAlertNotifications(on: Boolean) {
         store.edit { it[Keys.alerts] = on }
+    }
+
+    suspend fun setStyle(key: String) {
+        store.edit { it[Keys.style] = key }
+    }
+
+    /** Null goes back to the look's own accent. */
+    suspend fun setAccent(argb: Long?) {
+        store.edit { prefs -> if (argb == null) prefs.remove(Keys.accent) else prefs[Keys.accent] = argb }
     }
 
     suspend fun dismissAlert(key: String) {

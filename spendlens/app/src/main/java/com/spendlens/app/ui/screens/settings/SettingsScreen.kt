@@ -1,6 +1,23 @@
 package com.spendlens.app.ui.screens.settings
 
 import android.Manifest
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import com.spendlens.app.ui.components.caps
+import com.spendlens.app.ui.components.numberStyle
+import com.spendlens.app.ui.theme.AccentChoices
+import com.spendlens.app.ui.theme.SpendLensTheme
+import com.spendlens.app.ui.theme.Style
+import com.spendlens.app.ui.theme.contentOn
+import com.spendlens.app.ui.theme.inkFor
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
@@ -93,6 +110,8 @@ class SettingsViewModel(
     fun setIncome(minor: Long?) { viewModelScope.launch { settings.setMonthlyIncome(minor) } }
     fun setTheme(t: ThemeMode) { viewModelScope.launch { settings.setTheme(t) } }
     fun setGlass(level: Float) { viewModelScope.launch { settings.setGlass(level) } }
+    fun setStyle(key: String) { viewModelScope.launch { settings.setStyle(key) } }
+    fun setAccent(argb: Long?) { viewModelScope.launch { settings.setAccent(argb) } }
     fun setAutoFindDays(d: Int) { viewModelScope.launch { settings.setAutoFindDays(d) } }
     fun setSummary(on: Boolean) { viewModelScope.launch { settings.setSummaryNotification(on) } }
     fun setSmsAuto(on: Boolean) { viewModelScope.launch { settings.setSmsAutoImport(on) } }
@@ -108,6 +127,8 @@ class SettingsActions(
     val onIncome: (Long?) -> Unit = {},
     val onTheme: (ThemeMode) -> Unit = {},
     val onGlass: (Float) -> Unit = {},
+    val onStyle: (String) -> Unit = {},
+    val onAccent: (Long?) -> Unit = {},
     val onAutoFindDays: (Int) -> Unit = {},
     val onSmsImport: () -> Unit = {},
     val onSmsAuto: (Boolean) -> Unit = {},
@@ -168,6 +189,8 @@ fun SettingsScreen(onMessage: (String) -> Unit, onOpenReview: () -> Unit) {
             onIncome = vm::setIncome,
             onTheme = vm::setTheme,
             onGlass = vm::setGlass,
+            onStyle = vm::setStyle,
+            onAccent = vm::setAccent,
             onAutoFindDays = vm::setAutoFindDays,
             onSmsImport = {
                 if (com.spendlens.app.sms.SmsReader.hasReadPermission(context)) {
@@ -262,11 +285,23 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
                 )
             }
 
-            Section(++n, "Glass", Modifier.reveal(2), trailing = {
-                Text(if (glass < 0.01f) "OFF" else "${(glass * 100).roundToInt()}%", style = MaterialTheme.typography.titleMedium, color = colors.text)
+            Section(++n, "Theme", Modifier.reveal(2), trailing = {
+                Text(Style.from(ui.settings.style).label, style = MaterialTheme.typography.titleMedium, color = colors.text)
             }) {
-                LineSlider(value = glass, onValueChange = { glass = it; actions.onGlass(it) }, range = 0f..1f, steps = 20)
-                Hint("Frosted panels and a see-through bar. 0 keeps it flat.")
+                ThemePicker(ui.settings.style, ui.settings.accent, colors.isDark, actions.onStyle)
+                Spacer(Modifier.height(18.dp))
+                Label("Accent", color = colors.muted)
+                Spacer(Modifier.height(10.dp))
+                AccentPicker(ui.settings.accent, actions.onAccent)
+            }
+
+            if (Spend.look.glassy) {
+                Section(++n, "Glass", Modifier.reveal(3), trailing = {
+                    Text(if (glass < 0.01f) "OFF" else "${(glass * 100).roundToInt()}%", style = MaterialTheme.typography.titleMedium, color = colors.text)
+                }) {
+                    LineSlider(value = glass, onValueChange = { glass = it; actions.onGlass(it) }, range = 0f..1f, steps = 20)
+                    Hint("Frosted panels and a see-through bar. 0 keeps it flat.")
+                }
             }
 
             Section(++n, "Monthly budget", Modifier.reveal(3), trailing = {
@@ -418,6 +453,95 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
             },
             dismissButton = { BracketButton("Cancel", onClick = { confirmWipe = false }) },
         )
+    }
+}
+
+/** One small card per look, each drawn in that look, so the choice is visible before it's made. */
+@Composable
+private fun ThemePicker(current: String, accent: Long?, dark: Boolean, onPick: (String) -> Unit) {
+    val haptics = rememberHaptics()
+    val selectedStyle = Style.from(current)
+    val active = Spend.ink
+    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Style.entries.chunked(2).forEach { pair ->
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                pair.forEach { style ->
+                    val selected = style == selectedStyle
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .border(if (selected) 2.dp else 1.dp, if (selected) active.accent else active.line, RoundedCornerShape(14.dp))
+                            .padding(4.dp)
+                            .pressable(pressedScale = 0.96f, haptic = false) {
+                                if (!selected) {
+                                    haptics.confirm()
+                                    onPick(style.key)
+                                }
+                            },
+                    ) {
+                        SpendLensTheme(darkTheme = dark, style = style, accent = accent?.let { Color(it.toInt()) }) {
+                            StylePreview(style)
+                        }
+                    }
+                }
+                if (pair.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun StylePreview(style: Style) {
+    val ink = Spend.ink
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .height(96.dp)
+            .background(ink.canvas, RoundedCornerShape(10.dp))
+            .padding(12.dp),
+    ) {
+        Text(caps(style.label), style = MaterialTheme.typography.labelLarge, color = ink.text, maxLines = 1)
+        Spacer(Modifier.weight(1f))
+        Text("₹95,633", style = numberStyle(MaterialTheme.typography.headlineMedium), color = ink.text, maxLines = 1)
+        Spacer(Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(width = 22.dp, height = 6.dp).background(ink.accent, RoundedCornerShape(3.dp)))
+            Box(Modifier.size(width = 14.dp, height = 6.dp).background(ink.muted, RoundedCornerShape(3.dp)))
+            Box(Modifier.size(width = 8.dp, height = 6.dp).background(ink.line, RoundedCornerShape(3.dp)))
+        }
+    }
+}
+
+/** "Style colour" plus a row of swatches. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AccentPicker(current: Long?, onPick: (Long?) -> Unit) {
+    val colors = Spend.ink
+    val haptics = rememberHaptics()
+    val look = Spend.look
+    val lookDefault = inkFor(look.style, colors.isDark).accent
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        val options: List<Pair<Long?, Color>> = listOf<Pair<Long?, Color>>(null to lookDefault) + AccentChoices.map { it.toArgb().toLong() to it }
+        options.forEach { (value, swatch) ->
+            val selected = value == current
+            Box(
+                Modifier
+                    .size(40.dp)
+                    .border(2.dp, if (selected) colors.text else Color.Transparent, CircleShape)
+                    .padding(4.dp)
+                    .background(swatch, CircleShape)
+                    .pressable(pressedScale = 0.85f, haptic = false) {
+                        if (!selected) {
+                            haptics.tick()
+                            onPick(value)
+                        }
+                    }
+                    .semantics { contentDescription = if (value == null) "Theme's own accent" else "Accent colour" },
+                contentAlignment = Alignment.Center,
+            ) {
+                if (value == null) Text("A", style = MaterialTheme.typography.labelLarge, color = contentOn(swatch))
+            }
+        }
     }
 }
 

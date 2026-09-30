@@ -47,6 +47,7 @@ import com.spendlens.app.domain.WrapBuilder
 import com.spendlens.app.domain.percentLabel
 import com.spendlens.app.ui.Format
 import com.spendlens.app.ui.appViewModel
+import com.spendlens.app.ui.components.caps
 import com.spendlens.app.ui.components.AmountText
 import com.spendlens.app.ui.components.BracketButton
 import com.spendlens.app.ui.components.Hairline
@@ -208,7 +209,7 @@ private fun TopPlaces(w: Wrap) {
                 Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.Bottom) {
                     Label(index(i + 1), color = colors.faint, modifier = Modifier.width(40.dp).padding(bottom = 6.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(p.name.uppercase(), style = MaterialTheme.typography.headlineLarge, color = if (i == 0) colors.text else colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(caps(p.name), style = MaterialTheme.typography.headlineLarge, color = if (i == 0) colors.text else colors.muted, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Label("${p.count}× · ${(p.fraction * 100).roundToInt()}% of everything", color = colors.faint)
                     }
                     Text(currency.format(p.amountMinor), style = MaterialTheme.typography.titleMedium, color = colors.text)
@@ -227,7 +228,7 @@ private fun BiggestDay(w: Wrap) {
     PageColumn {
         Label("Biggest day", color = colors.muted, modifier = Modifier.reveal(0))
         Spacer(Modifier.height(8.dp))
-        Text(day.format(DateTimeFormatter.ofPattern("EEE d MMM")).uppercase(), style = MaterialTheme.typography.displayMedium, color = colors.text, modifier = Modifier.reveal(1))
+        Text(caps(day.format(DateTimeFormatter.ofPattern("EEE d MMM"))), style = MaterialTheme.typography.displayMedium, color = colors.text, modifier = Modifier.reveal(1))
         Spacer(Modifier.height(10.dp))
         AmountText(amount, currency, MaterialTheme.typography.headlineLarge, Modifier.reveal(2))
         Spacer(Modifier.height(10.dp))
@@ -241,7 +242,7 @@ private fun Hours(w: Wrap) {
     val hour = w.busiestHour ?: return
     PageColumn {
         Label("Busiest hour", color = colors.muted, modifier = Modifier.reveal(0))
-        Text(Format.hour(hour).uppercase(), style = MaterialTheme.typography.displayLarge, color = colors.text, modifier = Modifier.reveal(1))
+        Text(caps(Format.hour(hour)), style = MaterialTheme.typography.displayLarge, color = colors.text, modifier = Modifier.reveal(1))
         Spacer(Modifier.height(10.dp))
         Statement(
             "${(w.busiestHourShare * 100).roundToInt()}% ",
@@ -260,7 +261,7 @@ private fun TopCategory(w: Wrap) {
     val top = w.topCategory ?: return
     PageColumn {
         Label("Most went to", color = colors.muted, modifier = Modifier.reveal(0))
-        Text(top.category.label.uppercase(), style = MaterialTheme.typography.displayMedium, color = colors.text, modifier = Modifier.reveal(1))
+        Text(caps(top.category.label), style = MaterialTheme.typography.displayMedium, color = colors.text, modifier = Modifier.reveal(1))
         Spacer(Modifier.height(10.dp))
         Statement("${(top.fraction * 100).roundToInt()}% ", "of the total — ${currency.format(top.amountMinor)} across ${top.count} payments.", Modifier.reveal(2), MaterialTheme.typography.headlineMedium)
     }

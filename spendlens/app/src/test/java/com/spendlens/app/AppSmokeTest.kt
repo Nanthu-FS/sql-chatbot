@@ -70,10 +70,16 @@ class AppSmokeTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithText("SAMPLE DATA").fetchSemanticsNodes().isNotEmpty() }
         shot("5_settings")
 
-        compose.onNodeWithText("HOME").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithText("[ COMPARE ]").fetchSemanticsNodes().isNotEmpty() }
-        compose.onNodeWithText("[ COMPARE ]").performClick()
-        compose.waitUntil(5_000) { compose.onAllNodesWithText("PACE").fetchSemanticsNodes().isNotEmpty() }
+        // Switch the whole app to another look from Settings; labels drop to sentence case.
+        compose.onNodeWithText("Bento").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Home").fetchSemanticsNodes().isNotEmpty() }
+        shot("5b_settings_bento")
+
+        compose.onNodeWithText("Home").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Compare").fetchSemanticsNodes().isNotEmpty() }
+        shot("5c_home_bento")
+        compose.onNodeWithText("Compare").performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Pace").fetchSemanticsNodes().isNotEmpty() }
         shot("6_compare_view")
     }
 }

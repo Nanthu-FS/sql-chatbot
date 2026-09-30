@@ -61,7 +61,7 @@ fun FieldChip(label: String, value: String, onClick: () -> Unit, modifier: Modif
     ) {
         Label(label, color = colors.faint, style = MaterialTheme.typography.labelSmall)
         Spacer(Modifier.height(2.dp))
-        Text(value.uppercase(), style = MaterialTheme.typography.labelLarge, color = colors.text)
+        Text(caps(value), style = MaterialTheme.typography.labelLarge, color = colors.text)
     }
 }
 

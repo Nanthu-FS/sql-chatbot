@@ -77,6 +77,7 @@ import com.spendlens.app.domain.Period
 import com.spendlens.app.domain.PeriodType
 import com.spendlens.app.sms.SmsReader
 import com.spendlens.app.ui.components.LocalGlass
+import com.spendlens.app.ui.theme.Spend
 import com.spendlens.app.ui.screens.compare.CompareScreen
 import com.spendlens.app.ui.screens.goals.GoalsScreen
 import com.spendlens.app.ui.screens.wrap.WrapScreen
@@ -252,7 +253,7 @@ fun SpendLensRoot(settings: AppSettings) {
         }
     }
 
-    CompositionLocalProvider(LocalCurrency provides settings.currency, LocalGlass provides settings.glass) {
+    CompositionLocalProvider(LocalCurrency provides settings.currency, LocalGlass provides (if (Spend.look.glassy) settings.glass else 0f)) {
         Box(
             Modifier
                 .fillMaxSize()

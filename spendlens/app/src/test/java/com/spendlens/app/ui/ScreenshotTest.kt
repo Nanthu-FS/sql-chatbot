@@ -51,6 +51,9 @@ import com.spendlens.app.ui.screens.settings.SettingsContent
 import com.spendlens.app.ui.screens.settings.SettingsUi
 import com.spendlens.app.ui.screens.wrap.WrapContent
 import com.spendlens.app.ui.theme.SpendLensTheme
+import com.spendlens.app.ui.theme.Style
+import com.spendlens.app.ui.theme.lookFor
+import androidx.compose.ui.graphics.Color
 import org.junit.BeforeClass
 import org.junit.Rule
 import org.junit.Test
@@ -90,11 +93,19 @@ class ScreenshotTest {
         Goal(2, "New phone", 45_000_00, 45_000_00, null),
     )
 
-    private fun shoot(name: String, dark: Boolean = true, glass: Float = 0.55f, content: @Composable () -> Unit) {
+    private fun shoot(
+        name: String,
+        dark: Boolean = true,
+        glass: Float = 0.55f,
+        style: Style = Style.EDITORIAL,
+        accent: Color? = null,
+        content: @Composable () -> Unit,
+    ) {
         compose.mainClock.autoAdvance = false
         compose.setContent {
-            SpendLensTheme(darkTheme = dark) {
-                CompositionLocalProvider(LocalCurrency provides CurrencyOption.INR, LocalGlass provides glass) { content() }
+            SpendLensTheme(darkTheme = dark, style = style, accent = accent) {
+                val g = if (lookFor(style).glassy) glass else 0f
+                CompositionLocalProvider(LocalCurrency provides CurrencyOption.INR, LocalGlass provides g) { content() }
             }
         }
         compose.mainClock.advanceTimeBy(3_000)
@@ -188,4 +199,73 @@ class ScreenshotTest {
         val spent = txns.filter { it.dateTime in month }.sumOf { it.amountMinor }
         GoalsContent(GoalsUi(goals.map { GoalPlanner.plan(it, 90_000_00, spent, spent + 10_000_00, today) }, 90_000_00, spent, spent + 10_000_00), GoalsActions())
     }
+
+    // ---- Every look on the home screen, then other screens in other looks.
+
+    private fun homeIn(name: String, style: Style, dark: Boolean, accent: Color? = null) =
+        shoot(name, dark = dark, style = style, accent = accent) { DashboardContent(home(PeriodType.MONTH), HomeActions()) }
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeReceipt() = homeIn("20_theme_receipt", Style.RECEIPT, dark = false)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeBento() = homeIn("21_theme_bento", Style.BENTO, dark = true)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeSwiss() = homeIn("22_theme_swiss", Style.SWISS, dark = false)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeDot() = homeIn("23_theme_dot", Style.DOT, dark = true)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeCalendar() = homeIn("24_theme_calendar", Style.CALENDAR, dark = false)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeBrutal() = homeIn("25_theme_brutal", Style.BRUTAL, dark = false)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeWallet() = homeIn("26_theme_wallet", Style.WALLET, dark = true)
+
+    @Config(qualifiers = "w400dp-h2600dp-xxhdpi")
+    @Test fun themeEditorialAccent() = homeIn("27_theme_editorial_accent", Style.EDITORIAL, dark = true, accent = Color(0xFFFF7A1A))
+
+    @Test fun themeBentoLight() = homeIn("28_theme_bento_light", Style.BENTO, dark = false, accent = Color(0xFF2B3BE8))
+
+    @Config(qualifiers = "w400dp-h2000dp-xxhdpi")
+    @Test fun settingsThemes() = shoot("29_settings_themes", style = Style.BENTO) {
+        SettingsContent(SettingsUi(AppSettings(monthlyBudgetMinor = 45_000_00, style = "bento", theme = ThemeMode.DARK), txns, sampleCount = 0), SettingsActions())
+    }
+
+    @Test fun activityBrutal() = shoot("30_activity_brutal", dark = false, style = Style.BRUTAL) {
+        val groups = txns.take(30).groupBy { it.dateTime.toLocalDate() }.map { (d, l) -> DayGroup(d, l.sumOf { it.amountMinor }, l) }
+        ActivityContent(ActivityUiState(false, null, groups, Category.entries.take(8), txns.sumOf { it.amountMinor }, txns.size, true), "", {}, {}, {}, {})
+    }
+
+    @Test fun detailSwiss() = shoot("31_detail_swiss", dark = false, style = Style.SWISS) {
+        val anomaly = AnomalyDetector.detect(txns, now, CurrencyOption.INR).first { it.txn.merchant == "Swiggy" }
+        DetailContent(anomaly.txn, {}, {}, {}, anomaly)
+    }
+
+    @Config(qualifiers = "w400dp-h2200dp-xxhdpi")
+    @Test fun compareWallet() = shoot("32_compare_wallet_view", style = Style.WALLET) {
+        val b = Period(PeriodType.MONTH, today)
+        CompareContent(Comparer.compare(txns, b.shift(-1), b, today), CompareActions())
+    }
+
+    @Config(qualifiers = "w400dp-h1600dp-xxhdpi")
+    @Test fun goalsCalendar() = shoot("33_goals_calendar", dark = false, style = Style.CALENDAR) {
+        val month = Period(PeriodType.MONTH, today)
+        val spent = txns.filter { it.dateTime in month }.sumOf { it.amountMinor }
+        GoalsContent(GoalsUi(goals.map { GoalPlanner.plan(it, 90_000_00, spent, spent + 10_000_00, today) }, 90_000_00, spent, spent + 10_000_00), GoalsActions())
+    }
+
+    @Test fun editReceipt() = shoot("34_edit_receipt", dark = false, style = Style.RECEIPT) {
+        EditContent(EditForm(amountText = "320", merchant = "Chai Point", category = Category.FOOD), isNew = true, canSave = true, onUpdate = {}, onSave = {}, onClose = {})
+    }
+
+    @Test fun wrapDot() = shoot("35_wrap_dot", style = Style.DOT) {
+        WrapContent(WrapBuilder.of(txns, Period(PeriodType.MONTH, today.minusMonths(1)), today), {}, autoAdvance = false)
+    }
+
+    @Test fun homeWeekWallet() = shoot("36_home_week_wallet_light", dark = false, style = Style.WALLET) { DashboardContent(home(PeriodType.WEEK), HomeActions()) }
 }

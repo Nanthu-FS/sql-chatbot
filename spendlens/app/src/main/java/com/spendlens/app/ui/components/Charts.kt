@@ -131,9 +131,9 @@ fun BarChart(
             val h = max(if (maxValue > 0) bar.value.toFloat() / maxValue * chartH * eased else 0f, 2.dp.toPx())
             val w = if (sel == i) barW * pop.value else barW
             val color = when {
-                sel == i -> colors.text
+                sel == i -> colors.accent
                 sel != null -> colors.line
-                bar.isCurrent -> colors.text
+                bar.isCurrent -> colors.accent
                 bar.value == 0L -> colors.ghost
                 else -> colors.muted
             }
@@ -209,7 +209,7 @@ fun Sparkline(values: List<Long>, totalPoints: Int, modifier: Modifier = Modifie
         if (draw.value > 0.98f) {
             val end = pts.last()
             val s = 6.dp.toPx()
-            drawRect(colors.text, Offset(end.x - s / 2, end.y - s / 2), Size(s, s))
+            drawRect(colors.accent, Offset(end.x - s / 2, end.y - s / 2), Size(s, s))
         }
     }
 }
@@ -240,7 +240,7 @@ fun PaceChart(a: List<Long>, b: List<Long>, days: Int, modifier: Modifier = Modi
         drawLine(colors.lineStrong, Offset(0f, size.height), Offset(size.width, size.height), 1.dp.toPx())
         clipRect(right = size.width * draw.value) {
             drawPath(path(a), colors.muted, style = Stroke(1.5.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(5.dp.toPx(), 4.dp.toPx()))))
-            drawPath(path(b), colors.text, style = Stroke(2.dp.toPx()))
+            drawPath(path(b), colors.accent, style = Stroke(2.dp.toPx()))
         }
     }
 }
@@ -260,7 +260,7 @@ fun MiniSpark(values: List<Long>, modifier: Modifier = Modifier) {
         }
         drawPath(path, colors.muted, style = Stroke(1.dp.toPx()))
         val last = Offset(size.width, size.height * (1f - values.last() / maxV) * 0.9f + size.height * 0.05f)
-        drawRect(colors.text, Offset(last.x - 2.dp.toPx(), last.y - 2.dp.toPx()), Size(4.dp.toPx(), 4.dp.toPx()))
+        drawRect(colors.accent, Offset(last.x - 2.dp.toPx(), last.y - 2.dp.toPx()), Size(4.dp.toPx(), 4.dp.toPx()))
     }
 }
 
@@ -281,8 +281,9 @@ fun SplitBar(fractions: List<Float>, selected: Int?, modifier: Modifier = Modifi
             val w = size.width * f * grow.value
             val shade = if (n <= 1) 1f else 1f - i.toFloat() / (n - 1) * 0.8f
             val color = when {
+                selected == null && i == 0 -> colors.accent
                 selected == null -> colors.ramp(shade)
-                selected == i -> colors.text
+                selected == i -> colors.accent
                 else -> colors.ghost
             }
             if (w > gap) drawRect(color, Offset(x, 0f), Size(w - gap, size.height))

@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.spendlens.app.ui.components.caps
 import com.spendlens.app.ui.components.Hairline
 import com.spendlens.app.ui.components.Label
 import com.spendlens.app.ui.components.Statement
@@ -64,7 +65,7 @@ private fun Option(n: Int, title: String, body: String, onClick: () -> Unit) {
         Row(Modifier.fillMaxWidth().padding(vertical = 16.dp), verticalAlignment = Alignment.Top) {
             Label(index(n), color = colors.faint, modifier = Modifier.width(38.dp).padding(top = 5.dp))
             Column(Modifier.weight(1f)) {
-                Text(title.uppercase(), style = MaterialTheme.typography.headlineSmall, color = colors.text)
+                Text(caps(title), style = MaterialTheme.typography.headlineSmall, color = colors.text)
                 Spacer(Modifier.height(3.dp))
                 Text(body, style = MaterialTheme.typography.bodyMedium, color = colors.muted)
             }
