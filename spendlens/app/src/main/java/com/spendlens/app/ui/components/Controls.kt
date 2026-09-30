@@ -1,5 +1,9 @@
 package com.spendlens.app.ui.components
 
+import com.spendlens.app.ui.theme.CardStyle
+import com.spendlens.app.ui.theme.Style
+import com.spendlens.app.ui.theme.AuroraGlow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateDpAsState
@@ -167,6 +171,8 @@ fun BottomBar(
             tints = listOf(HazeTint(colors.canvas.copy(alpha = 0.78f - 0.38f * glass)))
             noiseFactor = 0.06f * glass
         }
+    } else if (Spend.look.card == CardStyle.BEVEL) {
+        Modifier.bevel()
     } else {
         Modifier.background(colors.canvas)
     }
@@ -217,13 +223,17 @@ fun BottomBar(
                     .then(
                         if (look.control == ControlStyle.BLOCK) {
                             Modifier.hardShadow(colors.text, 3.dp).background(colors.accent).border(3.dp, colors.text)
+                        } else if (look.control == ControlStyle.BEVEL) {
+                            Modifier.bevel()
+                        } else if (look.style == Style.AURORA) {
+                            Modifier.background(Brush.linearGradient(listOf(colors.accent, AuroraGlow[0])), CircleShape)
                         } else {
                             Modifier.background(colors.accent, RoundedCornerShape(look.controlRadius.coerceIn(2.dp, 100.dp)))
                         },
                     ),
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(Icons.Rounded.Add, contentDescription = "Add payments", tint = colors.onAccent, modifier = Modifier.size(22.dp))
+                Icon(Icons.Rounded.Add, contentDescription = "Add payments", tint = if (look.control == ControlStyle.BEVEL) colors.text else colors.onAccent, modifier = Modifier.size(22.dp))
             }
         }
     }
@@ -353,6 +363,7 @@ fun BracketToggle(checked: Boolean, onChange: (Boolean) -> Unit, on: String, off
                 when (look.control) {
                     ControlStyle.PILL -> Modifier.background(bg, controlShape())
                     ControlStyle.BLOCK -> Modifier.background(if (checked) colors.accent else colors.raised).border(2.dp, colors.text)
+                    ControlStyle.BEVEL -> Modifier.bevel(pressed = checked)
                     else -> Modifier.border(1.dp, border, controlShape())
                 },
             )

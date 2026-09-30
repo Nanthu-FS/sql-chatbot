@@ -49,6 +49,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.spendlens.app.lock.AppLock
 import com.spendlens.app.ui.components.BracketButton
+import com.spendlens.app.ui.components.bevel
+import androidx.compose.ui.graphics.RectangleShape
 import com.spendlens.app.ui.components.Label
 import com.spendlens.app.ui.components.Screen
 import com.spendlens.app.ui.components.caps
@@ -139,14 +141,18 @@ fun PinPad(
             keys.chunked(3).forEach { row ->
                 Row(horizontalArrangement = Arrangement.spacedBy(22.dp)) {
                     row.forEach { k ->
-                        val keyShape = CircleShape
+                        val keyShape = if (look.control == ControlStyle.BEVEL) RectangleShape else CircleShape
                         Box(
                             Modifier
                                 .size(72.dp)
                                 .then(
                                     when (k) {
                                         "bio", "del" -> Modifier
-                                        else -> if (look.control == ControlStyle.PILL) Modifier.background(colors.ghost, keyShape) else Modifier.border(1.dp, colors.line, keyShape)
+                                        else -> when (look.control) {
+                                            ControlStyle.PILL -> Modifier.background(colors.ghost, keyShape)
+                                            ControlStyle.BEVEL -> Modifier.bevel()
+                                            else -> Modifier.border(1.dp, colors.line, keyShape)
+                                        }
                                     },
                                 )
                                 .then(

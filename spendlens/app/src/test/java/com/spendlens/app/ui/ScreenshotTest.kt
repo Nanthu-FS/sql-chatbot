@@ -1,5 +1,12 @@
 package com.spendlens.app.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.unit.dp
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.test.junit4.createComposeRule
@@ -295,5 +302,79 @@ class ScreenshotTest {
             SettingsActions(),
             biometricAvailable = true,
         )
+    }
+
+    // ---- Big totals must stay visible in every look (a wide face once wrapped the figure out of sight).
+
+    private fun heroesAll(name: String, dark: Boolean) = shoot(name, dark = dark) {
+        val state = home(PeriodType.MONTH).let { it.copy(dashboard = it.dashboard?.copy(total = 1_95_232_50L)) }
+        Column {
+            Style.entries.forEach { style ->
+                SpendLensTheme(darkTheme = dark, style = style) {
+                    CompositionLocalProvider(LocalGlass provides (if (lookFor(style).glassy) 0.55f else 0f)) {
+                        Box(Modifier.fillMaxWidth().height(330.dp).clipToBounds()) { DashboardContent(state, HomeActions()) }
+                    }
+                }
+            }
+        }
+    }
+
+    @Config(qualifiers = "w360dp-h4400dp-xxhdpi")
+    @Test fun heroesDark() = heroesAll("45_heroes_all_dark", dark = true)
+
+    @Config(qualifiers = "w360dp-h4400dp-xxhdpi")
+    @Test fun heroesLight() = heroesAll("46_heroes_all_light", dark = false)
+
+    // ---- The five newer looks.
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeTerminal() = homeIn("47_theme_terminal", Style.TERMINAL, dark = true)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeAurora() = homeIn("48_theme_aurora", Style.AURORA, dark = true)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeRiso() = homeIn("49_theme_riso", Style.RISO, dark = false)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeRetro() = homeIn("50_theme_retro", Style.RETRO, dark = false)
+
+    @Config(qualifiers = "w400dp-h3600dp-xxhdpi")
+    @Test fun themeBlueprint() = homeIn("51_theme_blueprint", Style.BLUEPRINT, dark = true)
+
+    @Config(qualifiers = "w400dp-h2400dp-xxhdpi")
+    @Test fun themeTerminalLight() = homeIn("52_theme_terminal_light", Style.TERMINAL, dark = false)
+
+    @Config(qualifiers = "w400dp-h2400dp-xxhdpi")
+    @Test fun themeAuroraLight() = homeIn("53_theme_aurora_light", Style.AURORA, dark = false)
+
+    @Config(qualifiers = "w400dp-h2400dp-xxhdpi")
+    @Test fun themeRisoDark() = homeIn("54_theme_riso_dark", Style.RISO, dark = true)
+
+    @Config(qualifiers = "w400dp-h2400dp-xxhdpi")
+    @Test fun themeRetroDark() = homeIn("55_theme_retro_dark", Style.RETRO, dark = true)
+
+    @Config(qualifiers = "w400dp-h2400dp-xxhdpi")
+    @Test fun themeBlueprintLight() = homeIn("56_theme_blueprint_light", Style.BLUEPRINT, dark = false, accent = Color(0xFF14B8A6))
+
+    @Config(qualifiers = "w400dp-h2600dp-xxhdpi")
+    @Test fun settingsThemesRetro() = shoot("57_settings_themes_retro", dark = false, style = Style.RETRO) {
+        SettingsContent(SettingsUi(AppSettings(monthlyBudgetMinor = 45_000_00, style = "retro", theme = ThemeMode.LIGHT), txns, sampleCount = 0), SettingsActions())
+    }
+
+    @Test fun activityTerminal() = shoot("58_activity_terminal", style = Style.TERMINAL) {
+        val groups = txns.take(30).groupBy { it.dateTime.toLocalDate() }.map { (d, l) -> DayGroup(d, l.sumOf { it.amountMinor }, l) }
+        ActivityContent(ActivityUiState(false, null, groups, Category.entries.take(8), txns.sumOf { it.amountMinor }, txns.size, true), "", {}, {}, {}, {})
+    }
+
+    @Test fun detailBlueprint() = shoot("59_detail_blueprint", style = Style.BLUEPRINT) {
+        val anomaly = AnomalyDetector.detect(txns, now, CurrencyOption.INR).first { it.txn.merchant == "Swiggy" }
+        DetailContent(anomaly.txn, {}, {}, {}, anomaly)
+    }
+
+    @Test fun lockRetro() = shoot("60_lock_retro", dark = false, style = Style.RETRO) { LockContent(onPin = { false }, error = null, onBiometric = {}) }
+
+    @Test fun wrapAurora() = shoot("61_wrap_aurora", style = Style.AURORA) {
+        WrapContent(WrapBuilder.of(txns, Period(PeriodType.MONTH, today.minusMonths(1)), today), {}, autoAdvance = false)
     }
 }

@@ -32,12 +32,12 @@ import kotlin.math.abs
 
 /** Total that rolls up to its new value instead of jumping. */
 @Composable
-fun RollingAmount(amountMinor: Long, currency: CurrencyOption, style: TextStyle, modifier: Modifier = Modifier) {
+fun RollingAmount(amountMinor: Long, currency: CurrencyOption, style: TextStyle, modifier: Modifier = Modifier, color: Color = Spend.ink.text) {
     val anim = remember { Animatable(0f) }
     LaunchedEffect(amountMinor) { anim.animateTo(amountMinor.toFloat(), tween(1100, easing = Emphasized)) }
     val v = anim.value
     val shown = if (abs(v - amountMinor.toFloat()) < 0.5f) amountMinor else v.toLong() / 100 * 100
-    AmountText(shown, currency, style, modifier)
+    AmountText(shown, currency, style, modifier, color)
 }
 
 /** Slightly tilted ribbon with scrolling uppercase text — the reference's "TURNING COMPLEXITY…" band. */

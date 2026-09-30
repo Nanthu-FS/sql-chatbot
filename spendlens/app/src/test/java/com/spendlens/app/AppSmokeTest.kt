@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
@@ -80,9 +81,14 @@ class AppSmokeTest {
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Home").fetchSemanticsNodes().isNotEmpty() }
         shot("5b_settings_bento")
 
+        // One of the newer looks: bevelled windows everywhere.
+        compose.onNodeWithText("Retro desktop").performScrollTo().performClick()
+        compose.waitUntil(5_000) { compose.onAllNodesWithText("Home").fetchSemanticsNodes().isNotEmpty() }
+        shot("5b2_settings_retro")
+
         compose.onNodeWithText("Home").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Compare").fetchSemanticsNodes().isNotEmpty() }
-        shot("5c_home_bento")
+        shot("5c_home_retro")
         compose.onNodeWithText("Compare").performClick()
         compose.waitUntil(5_000) { compose.onAllNodesWithText("Pace").fetchSemanticsNodes().isNotEmpty() }
         shot("6_compare_view")

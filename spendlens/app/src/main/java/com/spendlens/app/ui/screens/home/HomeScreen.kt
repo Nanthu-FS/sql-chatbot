@@ -95,6 +95,12 @@ import com.spendlens.app.ui.components.rememberHaptics
 import com.spendlens.app.ui.components.reveal
 import com.spendlens.app.ui.components.short
 import com.spendlens.app.ui.theme.CardStyle
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.foundation.layout.offset
+import com.spendlens.app.ui.components.RetroWindow
+import com.spendlens.app.ui.components.NotchFrame
+import com.spendlens.app.ui.components.bevel
+import com.spendlens.app.ui.theme.RisoBlue
 import com.spendlens.app.ui.theme.Spend
 import com.spendlens.app.ui.theme.Style
 import java.time.DayOfWeek
@@ -371,7 +377,9 @@ private fun Hero(state: HomeUiState, actions: HomeActions, modifier: Modifier = 
         Spacer(Modifier.height(28.dp))
         when (Spend.look.style) {
             Style.BENTO -> BentoHero(state)
-            Style.BRUTAL -> Column(Modifier.fillMaxWidth().sectionFrame()) { ClassicHero(state) }
+            Style.BRUTAL, Style.RISO -> Column(Modifier.fillMaxWidth().sectionFrame()) { ClassicHero(state) }
+            Style.RETRO -> RetroWindow("spent.exe — ${dashboard.title}") { ClassicHero(state) }
+            Style.BLUEPRINT -> NotchFrame("TOTAL / ${dashboard.title.uppercase()}") { ClassicHero(state) }
             else -> ClassicHero(state)
         }
         if (dashboard.period.type != PeriodType.DAY) {
@@ -397,15 +405,38 @@ private fun ClassicHero(state: HomeUiState) {
         PeriodType.MONTH -> if (dashboard.isCurrent) "this month" else "that month"
         PeriodType.YEAR -> if (dashboard.isCurrent) "this year" else "that year"
     }
-    Statement("Spent ", noun, style = MaterialTheme.typography.headlineMedium)
+    when (look.style) {
+        Style.TERMINAL -> Label("> spend --${dashboard.period.type.label.lowercase()} ${noun.substringAfter(' ')}", color = colors.text)
+        Style.RETRO -> Text("Total spent $noun:", style = MaterialTheme.typography.bodyLarge, color = colors.text)
+        Style.BLUEPRINT -> Unit
+        else -> Statement("Spent ", noun, style = MaterialTheme.typography.headlineMedium)
+    }
     Spacer(Modifier.height(6.dp))
     val big = when (look.style) {
         Style.SWISS -> MaterialTheme.typography.displayLarge.copy(fontSize = 84.sp, lineHeight = 84.sp)
         Style.DOT -> MaterialTheme.typography.displayLarge.copy(fontSize = 76.sp, lineHeight = 76.sp)
         Style.RECEIPT -> MaterialTheme.typography.displayLarge.copy(fontSize = 50.sp, lineHeight = 54.sp)
+        Style.TERMINAL -> MaterialTheme.typography.displayLarge.copy(fontSize = 72.sp, lineHeight = 70.sp, shadow = Shadow(colors.text.copy(alpha = 0.6f), blurRadius = 22f))
+        Style.RISO -> MaterialTheme.typography.displayLarge.copy(fontSize = 64.sp, lineHeight = 68.sp)
+        Style.RETRO -> MaterialTheme.typography.displayLarge.copy(fontSize = 48.sp, lineHeight = 52.sp)
         else -> MaterialTheme.typography.displayLarge
     }
-    RollingAmount(dashboard.total, currency, big)
+    when (look.style) {
+        // Two inks, slightly out of register.
+        Style.RISO -> Box {
+            RollingAmount(dashboard.total, currency, big, Modifier.offset(3.dp, 3.dp).alpha(0.9f), color = colors.accent)
+            RollingAmount(dashboard.total, currency, big, Modifier.alpha(0.88f), color = if (colors.isDark) colors.text else RisoBlue)
+        }
+        Style.RETRO -> RollingAmount(
+            dashboard.total, currency, big,
+            Modifier.fillMaxWidth().padding(vertical = 8.dp).bevel(pressed = true, fill = colors.raised).padding(horizontal = 10.dp, vertical = 8.dp),
+        )
+        else -> RollingAmount(dashboard.total, currency, big)
+    }
+    if (look.style == Style.BLUEPRINT) {
+        Spacer(Modifier.height(10.dp))
+        DimensionLine(dashboard.period.span())
+    }
     Spacer(Modifier.height(10.dp))
     val change = dashboard.change
     Label(
@@ -421,6 +452,8 @@ private fun ClassicHero(state: HomeUiState) {
     when (look.style) {
         Style.DOT -> DotDays(dashboard.bars)
         Style.RECEIPT -> Barcode(dashboard.bars)
+        Style.TERMINAL -> TerminalBars(dashboard.bars)
+        Style.RETRO -> BudgetBlocks(dashboard.budget?.let { it.spent.toFloat() / it.limit.coerceAtLeast(1) }, dashboard.bars)
         else -> Sparkline(dashboard.cumulative, dashboard.bars.size, Modifier.fillMaxWidth().height(56.dp), forecast = dashboard.forecast)
     }
     Spacer(Modifier.height(18.dp))
@@ -589,6 +622,11 @@ private fun Categories(state: HomeUiState) {
         Style.DOT -> return DotShares(slices, currency)
         Style.BRUTAL -> return BoxedBars(slices)
         Style.WALLET -> return WalletStack(slices, state.trends, currency)
+        Style.TERMINAL -> return AsciiBars(slices)
+        Style.RISO -> return RisoBubbles(slices)
+        Style.RETRO -> return RetroList(slices, currency)
+        Style.BLUEPRINT -> return HatchedBars(slices)
+        Style.AURORA -> return GlowSplit(slices)
         Style.SWISS -> {
             SplitBar(slices.map { it.fraction }, null, Modifier.height(28.dp))
             Spacer(Modifier.height(14.dp))

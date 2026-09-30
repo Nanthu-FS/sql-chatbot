@@ -56,6 +56,26 @@ import com.spendlens.app.ui.components.hardShadow
 import com.spendlens.app.ui.components.numberStyle
 import com.spendlens.app.ui.components.pressable
 import com.spendlens.app.ui.components.rememberHaptics
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.BlendMode
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.text.style.TextAlign
+import com.spendlens.app.domain.Period
+import com.spendlens.app.domain.PeriodType
+import com.spendlens.app.ui.components.bevel
+import com.spendlens.app.ui.theme.AuroraGlow
+import com.spendlens.app.ui.theme.RisoBlue
+import java.time.temporal.ChronoUnit
+import kotlin.math.sqrt
 import com.spendlens.app.ui.theme.Spend
 import com.spendlens.app.ui.theme.contentOn
 import java.time.format.TextStyle
@@ -373,6 +393,244 @@ fun SplitLegend(slices: List<CategorySlice>) {
                     }
                     if (pair.size == 1 && j == 0) Spacer(Modifier.weight(1f))
                 }
+            }
+        }
+    }
+}
+
+// ---------------------------------------------------------------- terminal, aurora, riso, retro, blueprint
+
+fun Period.span(): String = when (type) {
+    PeriodType.DAY -> "24 HOURS"
+    PeriodType.YEAR -> "12 MONTHS"
+    else -> "${ChronoUnit.DAYS.between(start, endExclusive)} DAYS"
+}
+
+/** Blueprint: "◀ ———— 30 DAYS ———— ▶" under the total. */
+@Composable
+fun DimensionLine(text: String, modifier: Modifier = Modifier) {
+    val colors = Spend.ink
+    Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Label("◀", color = colors.text)
+        Box(Modifier.weight(1f).padding(horizontal = 6.dp).height(1.dp).background(colors.text))
+        Label(text, color = colors.text)
+        Box(Modifier.weight(1f).padding(horizontal = 6.dp).height(1.dp).background(colors.text))
+        Label("▶", color = colors.text)
+    }
+}
+
+/** Terminal: glowing phosphor bars, the busiest day in the accent. */
+@Composable
+fun TerminalBars(bars: List<BarEntry>, modifier: Modifier = Modifier) {
+    if (bars.isEmpty()) return
+    val colors = Spend.ink
+    val max = bars.maxOf { it.value }.coerceAtLeast(1L)
+    val top = bars.indexOfFirst { it.value == max }
+    Canvas(modifier.fillMaxWidth().height(48.dp)) {
+        val gap = 2.dp.toPx()
+        val w = (size.width - gap * (bars.size - 1)) / bars.size
+        bars.forEachIndexed { i, bar ->
+            val h = (size.height * bar.value / max).coerceAtLeast(2.dp.toPx())
+            val color = if (i == top) colors.accent else colors.text
+            val x = i * (w + gap)
+            drawRect(color.copy(alpha = 0.25f), Offset(x - 1.dp.toPx(), size.height - h - 1.dp.toPx()), Size(w + 2.dp.toPx(), h + 1.dp.toPx()))
+            drawRect(color, Offset(x, size.height - h), Size(w, h))
+        }
+    }
+}
+
+/** Terminal: "SHOPPING  ████████░░░░░░░░  48%". */
+@Composable
+fun AsciiBars(slices: List<CategorySlice>) {
+    val colors = Spend.ink
+    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+        slices.take(6).forEachIndexed { i, s ->
+            val filled = (s.fraction * 16).roundToInt().coerceIn(if (s.fraction > 0f) 1 else 0, 16)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(s.category.short().uppercase(), style = MaterialTheme.typography.bodyLarge, color = if (i == 0) colors.accent else colors.text, maxLines = 1, overflow = TextOverflow.Clip, modifier = Modifier.width(96.dp))
+                Text("█".repeat(filled) + "░".repeat(16 - filled), style = MaterialTheme.typography.bodyLarge, color = if (i == 0) colors.accent else colors.text, maxLines = 1, softWrap = false, overflow = TextOverflow.Clip, modifier = Modifier.weight(1f))
+                Text("${(s.fraction * 100).roundToInt()}%".padStart(4), style = MaterialTheme.typography.bodyLarge, color = colors.text, maxLines = 1, modifier = Modifier.width(44.dp), textAlign = TextAlign.End)
+            }
+        }
+    }
+}
+
+/** Retro: budget as a row of blocks (red past the limit); falls back to a days strip without a budget. */
+@Composable
+fun BudgetBlocks(fraction: Float?, bars: List<BarEntry>, modifier: Modifier = Modifier) {
+    val colors = Spend.ink
+    Column(modifier.fillMaxWidth()) {
+        Text(if (fraction != null) "Budget used:" else "Spending by day:", style = MaterialTheme.typography.bodyMedium, color = colors.text)
+        Spacer(Modifier.height(6.dp))
+        Row(
+            Modifier.fillMaxWidth().height(24.dp).bevel(pressed = true, fill = colors.raised).padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            if (fraction != null) {
+                val blocks = 18
+                val lit = (fraction * blocks / fraction.coerceAtLeast(1f)).roundToInt()
+                val over = if (fraction > 1f) (blocks / fraction).roundToInt() else blocks
+                repeat(blocks) { i ->
+                    val color = when {
+                        i >= lit -> Color.Transparent
+                        i >= over -> colors.alert
+                        else -> colors.accent
+                    }
+                    Box(Modifier.weight(1f).fillMaxHeight().background(color))
+                }
+            } else {
+                val max = bars.maxOfOrNull { it.value }?.coerceAtLeast(1L) ?: 1L
+                bars.forEach { bar ->
+                    Box(Modifier.weight(1f).fillMaxHeight().background(colors.accent.copy(alpha = 0.12f + 0.88f * bar.value / max)))
+                }
+            }
+        }
+    }
+}
+
+/** Retro: "▣ Shopping ........ ₹45,278". */
+@Composable
+fun RetroList(slices: List<CategorySlice>, currency: CurrencyOption) {
+    val colors = Spend.ink
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        slices.take(6).forEach { s ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("▣ " + s.category.label, style = MaterialTheme.typography.bodyLarge, color = colors.text, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                Text(currency.format(s.amountMinor).substringBefore('.'), style = MaterialTheme.typography.bodyLarge, color = colors.text, maxLines = 1)
+            }
+        }
+    }
+}
+
+/** Blueprint: outlined bars, the largest hatched in the accent with a leader note. */
+@Composable
+fun HatchedBars(slices: List<CategorySlice>) {
+    if (slices.isEmpty()) return
+    val colors = Spend.ink
+    val shown = slices.take(5)
+    val max = shown.maxOf { it.fraction }.coerceAtLeast(0.01f)
+    Column {
+        Box(Modifier.fillMaxWidth().height(150.dp)) {
+            Canvas(Modifier.fillMaxSize()) {
+                val stroke = 1.5.dp.toPx()
+                drawRect(colors.text, Offset(0f, 0f), Size(stroke, size.height))
+                drawRect(colors.text, Offset(0f, size.height - stroke), Size(size.width, stroke))
+                val pad = 10.dp.toPx()
+                val gap = 10.dp.toPx()
+                val w = (size.width - pad * 2 - gap * (shown.size - 1)) / shown.size
+                shown.forEachIndexed { i, s ->
+                    val h = ((size.height - 24.dp.toPx()) * s.fraction / max).coerceAtLeast(4.dp.toPx())
+                    val left = pad + i * (w + gap)
+                    val topY = size.height - stroke - h
+                    val color = if (i == 0) colors.accent else colors.text
+                    if (i == 0) {
+                        clipRect(left, topY, left + w, size.height - stroke) {
+                            var x = left - h
+                            while (x < left + w) {
+                                drawLine(color.copy(alpha = 0.5f), Offset(x, size.height), Offset(x + h, size.height - h), 1.5.dp.toPx())
+                                x += 7.dp.toPx()
+                            }
+                        }
+                    }
+                    drawRect(color, Offset(left, topY), Size(w, h), style = Stroke(stroke))
+                }
+            }
+            Label(
+                "← A: ${shown[0].category.short().uppercase()} ${(shown[0].fraction * 100).roundToInt()}%",
+                color = colors.text,
+                modifier = Modifier.align(Alignment.TopEnd).padding(top = 4.dp, end = 4.dp),
+            )
+        }
+        Spacer(Modifier.height(6.dp))
+        Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            shown.forEach { s ->
+                Text(s.category.short().uppercase().take(4), style = MaterialTheme.typography.labelMedium, color = colors.text, modifier = Modifier.weight(1f), textAlign = TextAlign.Center, maxLines = 1)
+            }
+        }
+    }
+}
+
+/** Aurora: a glowing split bar and a colour-keyed legend. */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun GlowSplit(slices: List<CategorySlice>) {
+    if (slices.isEmpty()) return
+    val colors = Spend.ink
+    val palette = listOf(colors.accent) + AuroraGlow
+    val shown = slices.take(4)
+    val rest = 1f - shown.sumOf { it.fraction.toDouble() }.toFloat()
+    val grow by animateFloatAsState(1f, tween(900, easing = Emphasized), label = "glow")
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .height(14.dp)
+            .drawBehind {
+                drawRoundRect(colors.accent.copy(alpha = 0.35f), Offset(-6.dp.toPx(), -6.dp.toPx()), Size(size.width + 12.dp.toPx(), size.height + 12.dp.toPx()), CornerRadius(20.dp.toPx()))
+            }
+            .clip(RoundedCornerShape(999.dp)),
+    ) {
+        shown.forEachIndexed { i, s ->
+            Box(Modifier.weight(s.fraction.coerceAtLeast(0.001f) * grow + 0.0001f).fillMaxHeight().background(palette[i]))
+        }
+        if (rest > 0.001f) Box(Modifier.weight(rest).fillMaxHeight().background(colors.text.copy(alpha = 0.3f)))
+    }
+    Spacer(Modifier.height(14.dp))
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(14.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        shown.forEachIndexed { i, s ->
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Box(Modifier.size(8.dp).background(palette[i], CircleShape))
+                Spacer(Modifier.width(6.dp))
+                Text("${s.category.short()} ${(s.fraction * 100).roundToInt()}%", style = MaterialTheme.typography.bodyMedium, color = colors.text)
+            }
+        }
+    }
+}
+
+/** Riso: overlapping ink circles sized by share, overprinted where they meet. */
+@Composable
+fun RisoBubbles(slices: List<CategorySlice>) {
+    if (slices.isEmpty()) return
+    val colors = Spend.ink
+    val inks = listOf(colors.accent, if (colors.isDark) Color(0xFF3FA9F5) else RisoBlue, Color(0xFFFFD23F))
+    val shown = slices.take(3)
+    val top = shown[0].fraction.coerceAtLeast(0.01f)
+    BoxWithConstraints(Modifier.fillMaxWidth()) {
+        val base = 150f
+        val d = shown.map { (base * sqrt(it.fraction / top)).coerceAtLeast(56f) }
+        val pos = buildList {
+            add(0f to 12f)
+            if (d.size > 1) add(d[0] * 0.78f to 0f)
+            if (d.size > 2) add(d[0] * 0.78f + d[1] * 0.55f to d[1] * 0.8f)
+        }
+        val right = d.indices.maxOf { pos[it].first + d[it] }
+        val scale = (maxWidth.value / right).coerceAtMost(1f)
+        val height = d.indices.maxOf { pos[it].second + d[it] } * scale
+        Box(Modifier.fillMaxWidth().height(height.dp)) {
+            shown.forEachIndexed { i, s ->
+                val size = d[i] * scale
+                Box(
+                    Modifier
+                        .offset((pos[i].first * scale).dp, (pos[i].second * scale).dp)
+                        .size(size.dp)
+                        .graphicsLayer { blendMode = if (colors.isDark) BlendMode.Screen else BlendMode.Multiply }
+                        .background(inks[i], CircleShape),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("${(s.fraction * 100).roundToInt()}%", style = numberStyle(MaterialTheme.typography.headlineSmall), color = contentOn(inks[i]))
+                        if (size > 70f) Text(s.category.short().uppercase(), style = MaterialTheme.typography.labelMedium, color = contentOn(inks[i]), maxLines = 1)
+                    }
+                }
+            }
+        }
+    }
+    val others = slices.drop(3).take(4)
+    if (others.isNotEmpty()) {
+        Spacer(Modifier.height(12.dp))
+        others.forEach { s ->
+            Row(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Text(s.category.label, style = MaterialTheme.typography.bodyMedium, color = colors.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text("${(s.fraction * 100).roundToInt()}%", style = MaterialTheme.typography.bodyMedium, color = colors.muted)
             }
         }
     }

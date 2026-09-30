@@ -66,7 +66,12 @@ enum class Style(val key: String, val label: String, val blurb: String) {
     DOT("dot", "Dot matrix", "Dotted figures, black and red"),
     CALENDAR("calendar", "Calendar", "Soft cards, month first"),
     BRUTAL("brutal", "Neo-brutal", "Thick borders, hard shadows"),
-    WALLET("wallet", "Wallet", "Stacked category cards");
+    WALLET("wallet", "Wallet", "Stacked category cards"),
+    TERMINAL("terminal", "Terminal", "Phosphor text, commands, scanlines"),
+    AURORA("aurora", "Aurora", "Glass cards over glowing colour"),
+    RISO("riso", "Risograph", "Overprinted ink, grain, sticky notes"),
+    RETRO("retro", "Retro desktop", "Bevelled windows, title bars"),
+    BLUEPRINT("blueprint", "Blueprint", "Drafting grid, notes, dimensions");
 
     companion object {
         fun from(key: String?): Style = entries.firstOrNull { it.key == key } ?: EDITORIAL
@@ -74,10 +79,10 @@ enum class Style(val key: String, val label: String, val blurb: String) {
 }
 
 /** How a dashboard section is framed. */
-enum class CardStyle { PRINT, PAPER, TILE, RULED, OUTLINE, SOFT, BRUTAL }
+enum class CardStyle { PRINT, PAPER, TILE, RULED, OUTLINE, SOFT, BRUTAL, TERMINAL, GLASS, RISO, BEVEL, BLUEPRINT }
 
 /** Buttons, chips and toggles. */
-enum class ControlStyle { BRACKET, PILL, BLOCK, SOLID }
+enum class ControlStyle { BRACKET, PILL, BLOCK, SOLID, BEVEL }
 
 /** Period tabs and similar segmented choices. */
 enum class TabStyle { UNDERLINE, SEGMENTED, CELLS }
@@ -143,6 +148,26 @@ private val Sora = FontFamily(
     Font(R.font.sora_700, FontWeight.Bold),
 )
 
+private val Vt323 = FontFamily(Font(R.font.vt323_400, FontWeight.Normal))
+private val Unbounded = FontFamily(Font(R.font.unbounded_600, FontWeight.SemiBold), Font(R.font.unbounded_800, FontWeight.ExtraBold))
+private val Outfit = FontFamily(
+    Font(R.font.outfit_400, FontWeight.Normal),
+    Font(R.font.outfit_500, FontWeight.Medium),
+    Font(R.font.outfit_600, FontWeight.SemiBold),
+)
+private val Bagel = FontFamily(Font(R.font.bagel_400, FontWeight.Normal))
+private val Karla = FontFamily(
+    Font(R.font.karla_400, FontWeight.Normal),
+    Font(R.font.karla_600, FontWeight.SemiBold),
+    Font(R.font.karla_800, FontWeight.ExtraBold),
+)
+private val Pixelify = FontFamily(Font(R.font.pixelify_400, FontWeight.Normal), Font(R.font.pixelify_600, FontWeight.SemiBold))
+private val JetBrainsMono = FontFamily(
+    Font(R.font.jetbrains_mono_400, FontWeight.Normal),
+    Font(R.font.jetbrains_mono_700, FontWeight.Bold),
+    Font(R.font.jetbrains_mono_800, FontWeight.ExtraBold),
+)
+
 // ---------------------------------------------------------------- looks
 
 fun lookFor(style: Style): Look = when (style) {
@@ -154,6 +179,11 @@ fun lookFor(style: Style): Look = when (style) {
     Style.CALENDAR -> Look(style, CardStyle.SOFT, 22.dp, 14.dp, ControlStyle.PILL, TabStyle.SEGMENTED, upper = false, numbered = false, dashed = false, ribbon = false, glassy = false, numbers = Manrope, numberWeight = FontWeight.ExtraBold, numberTracking = -0.04f)
     Style.BRUTAL -> Look(style, CardStyle.BRUTAL, 0.dp, 0.dp, ControlStyle.BLOCK, TabStyle.CELLS, upper = true, numbered = false, dashed = false, ribbon = false, glassy = false, numbers = Syne, numberWeight = FontWeight.ExtraBold, numberTracking = -0.04f)
     Style.WALLET -> Look(style, CardStyle.TILE, 22.dp, 16.dp, ControlStyle.PILL, TabStyle.SEGMENTED, upper = false, numbered = false, dashed = false, ribbon = false, glassy = true, numbers = Sora, numberWeight = FontWeight.Bold, numberTracking = -0.04f)
+    Style.TERMINAL -> Look(style, CardStyle.TERMINAL, 0.dp, 0.dp, ControlStyle.BRACKET, TabStyle.CELLS, upper = false, numbered = false, dashed = true, ribbon = false, glassy = false, numbers = Vt323, numberWeight = FontWeight.Normal, numberTracking = 0f)
+    Style.AURORA -> Look(style, CardStyle.GLASS, 24.dp, 999.dp, ControlStyle.PILL, TabStyle.SEGMENTED, upper = false, numbered = false, dashed = false, ribbon = false, glassy = true, numbers = Unbounded, numberWeight = FontWeight.ExtraBold, numberTracking = -0.03f)
+    Style.RISO -> Look(style, CardStyle.RISO, 0.dp, 999.dp, ControlStyle.PILL, TabStyle.UNDERLINE, upper = false, numbered = false, dashed = false, ribbon = false, glassy = false, numbers = Bagel, numberWeight = FontWeight.Normal, numberTracking = 0f)
+    Style.RETRO -> Look(style, CardStyle.BEVEL, 0.dp, 0.dp, ControlStyle.BEVEL, TabStyle.SEGMENTED, upper = false, numbered = false, dashed = false, ribbon = false, glassy = false, numbers = Pixelify, numberWeight = FontWeight.SemiBold, numberTracking = 0.02f)
+    Style.BLUEPRINT -> Look(style, CardStyle.BLUEPRINT, 0.dp, 0.dp, ControlStyle.BRACKET, TabStyle.UNDERLINE, upper = true, numbered = false, dashed = false, ribbon = false, glassy = false, numbers = JetBrainsMono, numberWeight = FontWeight.ExtraBold, numberTracking = -0.03f)
 }
 
 // ---------------------------------------------------------------- palettes
@@ -210,7 +240,38 @@ fun inkFor(style: Style, dark: Boolean): Ink = when (style) {
     } else {
         ink(0xFFEEF1F8, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFDCE1EE, 0xFFB5BDD4, 0xFF0A0F1E, 0xFF56607A, 0xFF858EA8, 0xFFE3E8F3, 0xFFFFFFFF, 0xFFD0402A, false, 0xFFE0533D)
     }
+    Style.TERMINAL -> if (dark) {
+        ink(0xFF040804, 0xFF07100A, 0xFF0B170E, 0xFF164D24, 0xFF1F8A3D, 0xFF5CFF85, 0xFF2FB257, 0xFF1F8A3D, 0xFF0E2414, 0xFF040804, 0xFFFF6B4A, true, 0xFFFFB000)
+    } else {
+        ink(0xFFEEF3E8, 0xFFF6F9F2, 0xFFFFFFFF, 0xFFC9D8C0, 0xFF6E8F64, 0xFF103B1A, 0xFF3E6B45, 0xFF6F8F70, 0xFFDCE7D3, 0xFFEEF3E8, 0xFFC2410C, false, 0xFFB45309)
+    }
+    Style.AURORA -> if (dark) {
+        ink(0xFF070A1C, 0xFF11152B, 0xFF181D38, 0xFF262B4A, 0xFF3C4270, 0xFFF4F2FF, 0xFFA9A6C8, 0xFF75729A, 0xFF1B1F3A, 0xFF070A1C, 0xFFFF8FA3, true, 0xFF8B6CFF)
+    } else {
+        ink(0xFFF3F1FF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFE2DEF7, 0xFFBDB6E6, 0xFF140F33, 0xFF5E5883, 0xFF8C87AD, 0xFFE9E6FA, 0xFFFFFFFF, 0xFFD6336C, false, 0xFF6D4AFF)
+    }
+    Style.RISO -> if (dark) {
+        ink(0xFF1B1A24, 0xFF25232F, 0xFF2C2A38, 0xFF3A3848, 0xFFF4EEE3, 0xFFF4EEE3, 0xFFB9B2A4, 0xFF857F73, 0xFF2E2C3A, 0xFF1B1A24, 0xFFFF7A6E, true, 0xFFFF48B0)
+    } else {
+        ink(0xFFF4EEE3, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFD9CFBE, 0xFF1A1A2E, 0xFF1A1A2E, 0xFF55546A, 0xFF8A8779, 0xFFE8E0D0, 0xFFF4EEE3, 0xFFD62828, false, 0xFFFF48B0)
+    }
+    Style.RETRO -> if (dark) {
+        ink(0xFF2B2B2B, 0xFF3C3C3C, 0xFF1E1E1E, 0xFF5A5A5A, 0xFF0A0A0A, 0xFFF0F0F0, 0xFFBDBDBD, 0xFF8A8A8A, 0xFF4A4A4A, 0xFF000000, 0xFFFF5A5A, true, 0xFF3A6EFF)
+    } else {
+        ink(0xFFC0C0C0, 0xFFC0C0C0, 0xFFFFFFFF, 0xFF808080, 0xFF404040, 0xFF000000, 0xFF303030, 0xFF5A5A5A, 0xFFA8A8A8, 0xFFFFFFFF, 0xFFC00000, false, 0xFF000080)
+    }
+    Style.BLUEPRINT -> if (dark) {
+        ink(0xFF0B3D91, 0xFF0B3D91, 0xFF124AA6, 0xFF3D69B3, 0xFFEAF2FF, 0xFFEAF2FF, 0xFFA9C1EA, 0xFF7898CF, 0xFF174A9E, 0xFF0B3D91, 0xFFFFD23F, true, 0xFFFF8A3D)
+    } else {
+        ink(0xFFF4F7FC, 0xFFF4F7FC, 0xFFFFFFFF, 0xFFB9CBE8, 0xFF0B3D91, 0xFF0B3D91, 0xFF4A6BA8, 0xFF7F97C4, 0xFFE1E9F6, 0xFFF4F7FC, 0xFFC8102E, false, 0xFFE8590C)
+    }
 }
+
+/** Second print colour of the risograph look (the first is the accent). */
+val RisoBlue = Color(0xFF0078BF)
+
+/** Extra glow colours of the aurora look (the first is the accent). */
+val AuroraGlow = listOf(Color(0xFF2DE2E6), Color(0xFFFF4FD8), Color(0xFFFFD166))
 
 /** Accent choices offered in Settings (null = the style's own). */
 val AccentChoices: List<Color> = listOf(
@@ -232,6 +293,8 @@ private class Faces(
     val labelTracking: Double,
     /** Sentence-case labels read better a size up. */
     val labelBump: Int,
+    /** Pixel and terminal faces run small; body sizes go up by this. */
+    val bodyBump: Int = 0,
 )
 
 private fun facesFor(style: Style): Faces = when (style) {
@@ -243,6 +306,11 @@ private fun facesFor(style: Style): Faces = when (style) {
     Style.CALENDAR -> Faces(Manrope, FontWeight.ExtraBold, Manrope, Manrope, FontWeight.SemiBold, 1.0, 0.9f, 0.0, 2)
     Style.BRUTAL -> Faces(Syne, FontWeight.ExtraBold, DmMono, DmMono, FontWeight.Medium, 0.6, 0.85f, 0.02, 0)
     Style.WALLET -> Faces(Sora, FontWeight.Bold, Sora, Sora, FontWeight.SemiBold, 0.8, 0.88f, 0.0, 2)
+    Style.TERMINAL -> Faces(Vt323, FontWeight.Normal, Vt323, Vt323, FontWeight.Normal, 0.0, 1.05f, 0.02, 5, bodyBump = 5)
+    Style.AURORA -> Faces(Unbounded, FontWeight.ExtraBold, Outfit, Outfit, FontWeight.Medium, 0.7, 0.8f, 0.0, 2)
+    Style.RISO -> Faces(Bagel, FontWeight.Normal, Karla, Karla, FontWeight.ExtraBold, 0.2, 0.85f, 0.06, 1, bodyBump = 1)
+    Style.RETRO -> Faces(Pixelify, FontWeight.SemiBold, Pixelify, Pixelify, FontWeight.Normal, 0.0, 0.9f, 0.0, 3, bodyBump = 1)
+    Style.BLUEPRINT -> Faces(JetBrainsMono, FontWeight.ExtraBold, JetBrainsMono, JetBrainsMono, FontWeight.Normal, 0.5, 0.78f, 0.1, 0)
 }
 
 fun typographyFor(style: Style): Typography {
@@ -252,7 +320,7 @@ fun typographyFor(style: Style): Typography {
         fontSize = (size * f.displayScale).sp, lineHeight = (line * f.displayScale).sp, letterSpacing = (tracking * f.tighten).em,
     )
     fun body(size: Int, weight: FontWeight, line: Int, tracking: Double) = TextStyle(
-        fontFamily = f.body, fontWeight = weight, fontSize = size.sp, lineHeight = line.sp, letterSpacing = (tracking * f.tighten).em,
+        fontFamily = f.body, fontWeight = weight, fontSize = (size + f.bodyBump).sp, lineHeight = (line + f.bodyBump).sp, letterSpacing = (tracking * f.tighten).em,
     )
     fun label(size: Int, line: Int, tracking: Double) = TextStyle(
         fontFamily = f.label, fontWeight = f.labelWeight,

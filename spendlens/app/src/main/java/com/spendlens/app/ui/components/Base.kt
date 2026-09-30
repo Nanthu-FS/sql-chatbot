@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,6 +24,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,12 +42,14 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
+import androidx.compose.ui.unit.isSpecified
 import com.spendlens.app.domain.Category
 import com.spendlens.app.domain.CurrencyOption
 import com.spendlens.app.ui.theme.CardStyle
@@ -159,19 +164,36 @@ fun AmountText(amountMinor: Long, currency: CurrencyOption, style: TextStyle, mo
     val decimals = if ('.' in formatted) "." + formatted.substringAfter('.') else ""
     val colors = Spend.ink
     val numbers = numberStyle(style)
-    Text(
-        buildAnnotatedString {
-            withStyle(SpanStyle(color = colors.faint, fontSize = style.fontSize * 0.55f, fontFamily = style.fontFamily, fontWeight = FontWeight.Normal, letterSpacing = 0.em)) {
-                append(currency.symbol.trim())
+    val text = buildAnnotatedString {
+        withStyle(SpanStyle(color = colors.faint, fontSize = 0.55.em, fontFamily = style.fontFamily, fontWeight = FontWeight.Normal, letterSpacing = 0.em)) {
+            append(currency.symbol.trim())
+        }
+        // No-break space: the figure must never wrap away from its symbol.
+        append("\u00A0")
+        withStyle(SpanStyle(color = color)) { append(whole) }
+        withStyle(SpanStyle(color = colors.faint)) { append(decimals) }
+    }
+    // Wide display faces overflow narrow screens on big totals, so shrink the whole figure to fit.
+    BoxWithConstraints(modifier) {
+        val measurer = rememberTextMeasurer()
+        val maxWidth = constraints.maxWidth
+        val bounded = constraints.hasBoundedWidth
+        val scale = remember(text, numbers, maxWidth, bounded) {
+            if (!bounded) {
+                1f
+            } else {
+                val width = measurer.measure(text, numbers, softWrap = false, maxLines = 1).size.width
+                if (width <= maxWidth) 1f else (maxWidth.toFloat() / width * 0.98f).coerceAtLeast(0.3f)
             }
-            append(" ")
-            withStyle(SpanStyle(color = color)) { append(whole) }
-            withStyle(SpanStyle(color = colors.faint)) { append(decimals) }
-        },
-        modifier = modifier,
-        style = numbers,
-        maxLines = 1,
-    )
+        }
+        Text(
+            text,
+            style = if (scale == 1f) numbers else numbers.copy(fontSize = numbers.fontSize * scale, lineHeight = if (numbers.lineHeight.isSpecified) numbers.lineHeight * scale else numbers.lineHeight),
+            softWrap = false,
+            maxLines = 1,
+            overflow = TextOverflow.Clip,
+        )
+    }
 }
 
 /**
@@ -190,7 +212,7 @@ fun SectionHeader(number: Int, title: String, modifier: Modifier = Modifier, tra
                 Spacer(Modifier.width(10.dp))
             }
             Label(
-                title,
+                if (look.card == CardStyle.TERMINAL) "> " + title.lowercase() else title,
                 color = colors.text,
                 modifier = Modifier.weight(1f),
                 style = if (look.upper) MaterialTheme.typography.labelMedium else MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
@@ -223,12 +245,100 @@ fun Modifier.sectionFrame(): Modifier = composed {
         CardStyle.OUTLINE -> border(1.dp, ink.line, RoundedCornerShape(look.radius)).padding(16.dp)
         CardStyle.SOFT -> background(ink.raised, RoundedCornerShape(look.radius)).padding(16.dp)
         CardStyle.BRUTAL -> hardShadow(ink.text, 6.dp).background(ink.raised).border(3.dp, ink.text).padding(16.dp)
+        CardStyle.TERMINAL -> this
+            .drawBehind {
+                drawLine(ink.lineStrong, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx())))
+            }
+            .padding(top = 14.dp)
+        CardStyle.GLASS -> {
+            val shape = RoundedCornerShape(look.radius)
+            val fill = if (ink.isDark) Color.White.copy(alpha = 0.05f + 0.06f * glass) else Color.White.copy(alpha = 0.45f + 0.3f * glass)
+            val edge = if (ink.isDark) Color.White.copy(alpha = 0.18f) else ink.line
+            background(fill, shape).border(1.dp, edge, shape).padding(18.dp)
+        }
+        CardStyle.RISO -> hardShadow(ink.accent, 5.dp).background(ink.raised).border(2.dp, ink.lineStrong).padding(16.dp)
+        CardStyle.BEVEL -> bevel().padding(12.dp)
+        CardStyle.BLUEPRINT -> border(1.5.dp, ink.lineStrong).padding(14.dp)
+    }
+}
+
+/** Win95-style bevel: light top-left edge, dark bottom-right; [pressed] flips it (sunken fields, held buttons). */
+fun Modifier.bevel(pressed: Boolean = false, fill: Color? = null): Modifier = composed {
+    val ink = Spend.ink
+    val light = if (ink.isDark) androidx.compose.ui.graphics.lerp(ink.surface, Color.White, 0.25f) else Color.White
+    val dark = ink.lineStrong
+    val (topLeft, bottomRight) = if (pressed) dark to light else light to dark
+    val bg = fill ?: ink.surface
+    drawBehind {
+        val s = 2.dp.toPx()
+        drawRect(bg)
+        drawRect(topLeft, size = Size(size.width, s))
+        drawRect(topLeft, size = Size(s, size.height))
+        drawRect(bottomRight, Offset(0f, size.height - s), Size(size.width, s))
+        drawRect(bottomRight, Offset(size.width - s, 0f), Size(s, size.height))
+    }
+}
+
+/** Navy-to-blue title bar of a retro window, with the minimise/close boxes. */
+@Composable
+fun TitleBar(title: String, modifier: Modifier = Modifier) {
+    val ink = Spend.ink
+    val start = ink.accent
+    val end = androidx.compose.ui.graphics.lerp(ink.accent, Color(0xFF1084D0), 0.7f)
+    Row(
+        modifier
+            .fillMaxWidth()
+            .background(androidx.compose.ui.graphics.Brush.horizontalGradient(listOf(start, end)))
+            .padding(horizontal = 6.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, style = MaterialTheme.typography.labelLarge, color = contentOn(start), maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+        listOf("_", "x").forEach {
+            Spacer(Modifier.width(3.dp))
+            Box(Modifier.size(width = 16.dp, height = 14.dp).bevel(), contentAlignment = Alignment.Center) {
+                Text(it, style = MaterialTheme.typography.labelSmall, color = ink.text)
+            }
+        }
+    }
+}
+
+/** A bevelled window with a title bar; the body gets the usual padding. */
+@Composable
+fun RetroWindow(title: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    Column(modifier.fillMaxWidth().bevel().padding(3.dp)) {
+        TitleBar(title)
+        Column(Modifier.fillMaxWidth().padding(12.dp), content = content)
+    }
+}
+
+/** Blueprint frame: a ruled box with its label set into the top line ("FIG. 02 — RHYTHM"). */
+@Composable
+fun NotchFrame(label: String, modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
+    val ink = Spend.ink
+    Box(modifier.fillMaxWidth().padding(top = 8.dp)) {
+        Column(Modifier.fillMaxWidth().border(1.5.dp, ink.lineStrong).padding(start = 14.dp, end = 14.dp, top = 20.dp, bottom = 14.dp), content = content)
+        Label(
+            label,
+            color = ink.text,
+            modifier = Modifier.padding(start = 12.dp).offset(y = (-7).dp).background(ink.canvas).padding(horizontal = 6.dp),
+        )
     }
 }
 
 /** A titled block of the dashboard, framed the way the current look frames things. */
 @Composable
 fun Section(number: Int, title: String, modifier: Modifier = Modifier, trailing: (@Composable RowScope.() -> Unit)? = null, content: @Composable ColumnScope.() -> Unit) {
+    when (Spend.look.card) {
+        CardStyle.BEVEL -> return RetroWindow(title.lowercase().replace(' ', '_') + ".txt", modifier) {
+            if (trailing != null) Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End, content = trailing)
+            content()
+        }
+        CardStyle.BLUEPRINT -> return NotchFrame("FIG. ${index(number).trim('(', ')')} — ${title.uppercase()}", modifier) {
+            if (trailing != null) Row(Modifier.fillMaxWidth().padding(bottom = 10.dp), horizontalArrangement = Arrangement.End, content = trailing)
+            content()
+        }
+        else -> Unit
+    }
     Column(modifier.fillMaxWidth().sectionFrame()) {
         SectionHeader(number, title, trailing = trailing)
         Spacer(Modifier.height(18.dp))
@@ -261,6 +371,7 @@ fun BracketButton(
     }
     val frame = when {
         filled && look.control == ControlStyle.BLOCK -> Modifier.hardShadow(colors.text, 4.dp).background(fill).border(3.dp, colors.text)
+        look.control == ControlStyle.BEVEL -> if (filled) Modifier.border(1.dp, colors.text).bevel(fill = fill) else Modifier.bevel()
         filled -> Modifier.background(fill, shape)
         look.control == ControlStyle.PILL -> Modifier.background(colors.ghost, shape)
         look.control == ControlStyle.BLOCK -> Modifier.hardShadow(colors.text, 3.dp).background(colors.raised).border(2.dp, colors.text)
@@ -268,7 +379,7 @@ fun BracketButton(
     }
     val padH = when {
         filled -> 20.dp
-        look.control == ControlStyle.PILL || look.control == ControlStyle.BLOCK -> 14.dp
+        look.control == ControlStyle.PILL || look.control == ControlStyle.BLOCK || look.control == ControlStyle.BEVEL -> 14.dp
         else -> 4.dp
     }
     val padV = if (filled) 18.dp else 10.dp
@@ -306,7 +417,7 @@ fun TextChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
         when {
             selected && filledStyle -> colors.onAccent
             selected -> colors.text
-            else -> if (filledStyle) colors.muted else colors.faint
+            else -> if (filledStyle || look.control == ControlStyle.BEVEL) colors.muted else colors.faint
         },
         label = "chip",
     )
@@ -315,6 +426,7 @@ fun TextChip(text: String, selected: Boolean, onClick: () -> Unit, modifier: Mod
     val frame = when (look.control) {
         ControlStyle.BLOCK -> Modifier.background(bg).border(2.dp, colors.text)
         ControlStyle.PILL -> Modifier.background(bg, shape)
+        ControlStyle.BEVEL -> Modifier.bevel(pressed = selected)
         else -> Modifier.border(1.dp, border, shape)
     }
     Box(

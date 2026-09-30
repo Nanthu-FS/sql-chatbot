@@ -88,6 +88,9 @@ import com.spendlens.app.ui.components.pressable
 import com.spendlens.app.ui.components.rememberHaptics
 import com.spendlens.app.ui.components.reveal
 import com.spendlens.app.ui.screens.review.UnderlineField
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import com.spendlens.app.ui.components.texture
 import com.spendlens.app.ui.theme.Spend
 import com.spendlens.app.widget.SpendWidgetReceiver
 import kotlinx.coroutines.flow.SharingStarted
@@ -562,7 +565,9 @@ private fun StylePreview(style: Style) {
         Modifier
             .fillMaxWidth()
             .height(96.dp)
-            .background(ink.canvas, RoundedCornerShape(10.dp))
+            .clip(RoundedCornerShape(10.dp))
+            .background(ink.canvas)
+            .drawBehind { texture(style, ink) }
             .padding(12.dp),
     ) {
         Text(caps(style.label), style = MaterialTheme.typography.labelLarge, color = ink.text, maxLines = 1)
