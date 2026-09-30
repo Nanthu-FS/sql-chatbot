@@ -19,6 +19,8 @@ import com.spendlens.app.data.ThemeMode
 import com.spendlens.app.ui.LocalAppContainer
 import com.spendlens.app.ui.SpendLensRoot
 import com.spendlens.app.ui.theme.SpendLensTheme
+import com.spendlens.app.notify.Notifier
+import com.spendlens.app.work.RefreshWorker
 
 class MainActivity : ComponentActivity() {
 
@@ -28,6 +30,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         if (savedInstanceState == null) handleShare(intent)
+        runCatching { RefreshWorker.schedule(this) }
 
         setContent {
             val settings by container.settings.settings.collectAsStateWithLifecycle(initialValue = AppSettings())
@@ -60,6 +63,8 @@ class MainActivity : ComponentActivity() {
 
     private fun handleShare(intent: Intent?) {
         intent ?: return
+        if (intent.getStringExtra(Notifier.EXTRA_ACTION) == Notifier.ACTION_SCAN) container.pendingScan.value = true
+        intent.getLongExtra(Notifier.EXTRA_OPEN_TXN, -1L).takeIf { it > 0 }?.let { container.pendingOpen.value = it }
         val uris: List<Uri> = when (intent.action) {
             Intent.ACTION_SEND -> listOfNotNull(IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java))
             Intent.ACTION_SEND_MULTIPLE ->

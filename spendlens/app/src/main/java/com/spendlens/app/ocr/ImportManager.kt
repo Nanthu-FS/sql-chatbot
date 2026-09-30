@@ -10,6 +10,9 @@ import com.spendlens.app.domain.CategoryClassifier
 import com.spendlens.app.domain.Money
 import com.spendlens.app.domain.PaymentParser
 import com.spendlens.app.domain.PaymentStatus
+import com.spendlens.app.domain.SmsParser
+import com.spendlens.app.domain.TxnSource
+import com.spendlens.app.sms.SmsReader
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -26,7 +29,7 @@ import java.time.LocalDateTime
 import java.util.UUID
 import kotlin.math.abs
 
-enum class ImportMode { PICKED, AUTO_FIND }
+enum class ImportMode { PICKED, AUTO_FIND, SMS }
 
 enum class ImportPhase { IDLE, FINDING, SCANNING, DONE, SAVING }
 
@@ -55,6 +58,8 @@ data class ImportDraft(
     val rawText: String = "",
     val include: Boolean = true,
     val flags: Set<DraftFlag> = emptySet(),
+    /** Set for drafts read from a bank SMS instead of a screenshot. */
+    val smsFrom: String? = null,
 ) {
     val amountMinor: Long? get() = Money.parseInput(amountText)
     val isValid: Boolean get() = state == DraftState.READY && amountMinor != null
@@ -80,6 +85,7 @@ class ImportManager(
     private val images: ImageStore,
     private val ocr: OcrEngine,
     private val finder: ScreenshotFinder,
+    private val smsReader: SmsReader,
     private val scope: CoroutineScope,
 ) {
     private val _state = MutableStateFlow(ImportState())
@@ -130,6 +136,61 @@ class ImportManager(
         }
     }
 
+    /** Reads bank debit SMS from the inbox and turns them into drafts to review. */
+    fun startSms(days: Int) {
+        discard()
+        _state.value = ImportState(ImportMode.SMS, ImportPhase.FINDING)
+        job = scope.launch {
+            val known = repository.importedSourceUris()
+            val messages = runCatching { smsReader.inbox(days) }.getOrDefault(emptyList())
+            _state.update { it.copy(phase = ImportPhase.SCANNING, total = messages.size) }
+            val drafts = mutableListOf<ImportDraft>()
+            var skipped = 0
+            var already = 0
+            for (message in messages) {
+                val uri = "sms:${message.id}"
+                if (uri in known) {
+                    already++
+                    continue
+                }
+                val parsed = SmsParser.parse(message.address, message.body, message.date)
+                if (parsed == null) {
+                    skipped++
+                    continue
+                }
+                val duplicate = repository.isDuplicate(parsed.amountMinor, parsed.dateTime, parsed.reference) ||
+                    drafts.any { d ->
+                        (parsed.reference != null && d.reference == parsed.reference) ||
+                            (d.amountMinor == parsed.amountMinor && abs(Duration.between(d.dateTime, parsed.dateTime).toMinutes()) <= 3)
+                    }
+                val flags = if (duplicate) setOf(DraftFlag.DUPLICATE) else emptySet()
+                drafts += ImportDraft(
+                    sourceUri = uri,
+                    state = DraftState.READY,
+                    amountText = Money.toInput(parsed.amountMinor),
+                    merchant = parsed.merchant.orEmpty(),
+                    category = CategoryClassifier.classify(parsed.merchant, parsed.body),
+                    dateTime = parsed.dateTime,
+                    paymentApp = parsed.via,
+                    reference = parsed.reference,
+                    rawText = parsed.body,
+                    include = !duplicate,
+                    flags = flags,
+                    smsFrom = message.address,
+                )
+            }
+            _state.update {
+                it.copy(
+                    phase = ImportPhase.DONE,
+                    processed = messages.size,
+                    drafts = drafts.sortedByDescending { d -> d.dateTime },
+                    skipped = skipped,
+                    alreadyImported = already,
+                )
+            }
+        }
+    }
+
     fun update(id: String, transform: (ImportDraft) -> ImportDraft) {
         _state.update { s -> s.copy(drafts = s.drafts.map { if (it.id == id) transform(it) else it }) }
     }
@@ -156,6 +217,7 @@ class ImportManager(
                 imagePath = d.stagedPath?.let { images.persist(File(it))?.absolutePath },
                 sourceUri = d.sourceUri,
                 rawText = d.rawText,
+                source = if (d.smsFrom != null) TxnSource.SMS.key else TxnSource.SCREENSHOT.key,
             )
         }
         repository.saveAll(entities)

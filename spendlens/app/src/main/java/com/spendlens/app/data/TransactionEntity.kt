@@ -22,4 +22,17 @@ data class TransactionEntity(
     val sourceUri: String? = null,
     val rawText: String? = null,
     val createdAt: Long = System.currentTimeMillis(),
+    /** [com.spendlens.app.domain.TxnSource.key] — added in schema v2. */
+    val source: String = "screenshot",
+)
+
+@Entity(tableName = "goals")
+data class GoalEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    val name: String,
+    val targetMinor: Long,
+    val savedMinor: Long = 0,
+    /** Epoch day of the target date, if any. */
+    val deadline: Long? = null,
+    val createdAt: Long = System.currentTimeMillis(),
 )

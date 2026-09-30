@@ -9,6 +9,8 @@ import java.time.format.TextStyle
 import java.util.Locale
 import kotlin.math.abs
 import kotlin.math.roundToInt
+import kotlin.math.roundToLong
+import java.time.temporal.ChronoUnit
 import kotlin.math.sqrt
 
 data class BarEntry(
@@ -37,6 +39,8 @@ data class BudgetStatus(
     val remaining: Long,
     val dailyAllowance: Long?,
     val daysLeft: Int?,
+    /** How far the forecast lands past the limit, if it does. */
+    val projectedOver: Long? = null,
 )
 
 data class Dashboard(
@@ -62,6 +66,8 @@ data class Dashboard(
     val isCurrent: Boolean,
     val canGoForward: Boolean,
     val hasAnyData: Boolean,
+    /** Where the current period is heading at today's pace; null for past periods and single days. */
+    val forecast: Long? = null,
 )
 
 object Analytics {
@@ -94,11 +100,13 @@ object Analytics {
         val comparisonLabel = when {
             isCurrent -> when (period.type) {
                 PeriodType.DAY -> "vs this time yesterday"
+                PeriodType.WEEK -> "vs this time last week"
                 PeriodType.MONTH -> "vs same time last month"
                 PeriodType.YEAR -> "vs same time last year"
             }
             else -> when (period.type) {
                 PeriodType.DAY -> "vs previous day"
+                PeriodType.WEEK -> "vs previous week"
                 PeriodType.MONTH -> "vs " + previous.anchor.month.getDisplayName(TextStyle.FULL, Locale.getDefault())
                 PeriodType.YEAR -> "vs ${previous.anchor.year}"
             }
@@ -106,8 +114,8 @@ object Analytics {
 
         val (averageLabel, average) = when (period.type) {
             PeriodType.DAY -> "Avg / payment" to if (inPeriod.isEmpty()) 0L else total / inPeriod.size
-            PeriodType.MONTH -> {
-                val days = if (isCurrent) today.dayOfMonth else period.start.lengthOfMonth()
+            PeriodType.WEEK, PeriodType.MONTH -> {
+                val days = if (isCurrent) ChronoUnit.DAYS.between(period.start, today).toInt() + 1 else period.lengthInDays
                 "Avg / day" to total / days.coerceAtLeast(1)
             }
             PeriodType.YEAR -> {
@@ -145,7 +153,12 @@ object Analytics {
             .sortedByDescending { it.amountMinor }
             .take(5)
 
-        val budget = monthlyBudget?.takeIf { it > 0 }?.let { budgetStatus(it, period, total, today) }
+        val forecast = forecast(all, period, total, now)
+        val budget = monthlyBudget?.takeIf { it > 0 }?.let { limit ->
+            budgetStatus(limit, period, total, today).let { b ->
+                b.copy(projectedOver = forecast?.let { f -> (f - b.limit).takeIf { it > 0 } })
+            }
+        }
 
         return Dashboard(
             period = period,
@@ -160,7 +173,7 @@ object Analytics {
             largest = inPeriod.maxByOrNull { it.amountMinor },
             barsTitle = when (period.type) {
                 PeriodType.DAY -> "Spending by hour"
-                PeriodType.MONTH -> "Spending by day"
+                PeriodType.WEEK, PeriodType.MONTH -> "Spending by day"
                 PeriodType.YEAR -> "Spending by month"
             },
             bars = bars,
@@ -174,6 +187,7 @@ object Analytics {
             isCurrent = isCurrent,
             canGoForward = !period.shift(1).isFuture(today),
             hasAnyData = all.isNotEmpty(),
+            forecast = forecast,
         )
     }
 
@@ -190,6 +204,19 @@ object Analytics {
                         tooltipLabel = time.format(hourFormat) + " – " + time.plusHours(1).format(hourFormat),
                         value = byHour[hour],
                         isCurrent = period.anchor == today && hour == now.hour,
+                    )
+                }
+            }
+            PeriodType.WEEK -> {
+                (0 until 7).map { offset ->
+                    val date = period.start.plusDays(offset.toLong())
+                    val sum = txns.filter { it.dateTime.toLocalDate() == date }.sumOf { it.amountMinor }
+                    BarEntry(
+                        axisLabel = date.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).take(2),
+                        tooltipLabel = date.format(tooltipDay),
+                        value = sum,
+                        isCurrent = date == today,
+                        date = date,
                     )
                 }
             }
@@ -226,8 +253,36 @@ object Analytics {
         }
     }
 
+    /**
+     * Projects the current period's total. Blends this period's pace with the 60 days before it,
+     * leaning on history early in the period (when a single big day would skew things).
+     */
+    fun forecast(all: List<Txn>, period: Period, spent: Long, now: LocalDateTime): Long? {
+        if (period.type == PeriodType.DAY || !period.isCurrent(now.toLocalDate())) return null
+        val start = period.start.atStartOfDay()
+        val totalDays = period.lengthInDays.toDouble()
+        val elapsedDays = (Duration.between(start, now).toMinutes() / 1440.0).coerceIn(0.0, totalDays)
+        val remaining = totalDays - elapsedDays
+        val historyStart = start.minusDays(60)
+        val history = all.filter { !it.dateTime.isBefore(historyStart) && it.dateTime.isBefore(start) }
+        val trackedFrom = history.minOfOrNull { it.dateTime }
+        val historyRate = trackedFrom?.let { from ->
+            val days = (Duration.between(from.toLocalDate().atStartOfDay(), start).toMinutes() / 1440.0).coerceAtLeast(7.0)
+            history.sumOf { it.amountMinor } / days
+        }
+        val currentRate = if (elapsedDays >= 1.0) spent / elapsedDays else null
+        val rate = when {
+            currentRate == null && historyRate == null -> return if (spent > 0) spent else null
+            currentRate == null -> historyRate!!
+            historyRate == null -> currentRate
+            elapsedDays / totalDays < 0.25 -> 0.3 * currentRate + 0.7 * historyRate
+            else -> 0.65 * currentRate + 0.35 * historyRate
+        }
+        return spent + (rate * remaining).roundToLong()
+    }
+
     private fun heatmap(period: Period, txns: List<Txn>): List<HeatDay> {
-        if (period.type == PeriodType.DAY) return emptyList()
+        if (period.type == PeriodType.DAY || period.type == PeriodType.WEEK) return emptyList()
         val byDate = txns.groupBy { it.dateTime.toLocalDate() }.mapValues { (_, v) -> v.sumOf { it.amountMinor } }
         val max = byDate.values.maxOrNull() ?: 0L
         val days = mutableListOf<HeatDay>()
@@ -243,18 +298,20 @@ object Analytics {
     private fun budgetStatus(monthly: Long, period: Period, spent: Long, today: LocalDate): BudgetStatus {
         val limit = when (period.type) {
             PeriodType.DAY -> monthly / period.anchor.lengthOfMonth()
+            PeriodType.WEEK -> monthly * 7 / period.anchor.lengthOfMonth()
             PeriodType.MONTH -> monthly
             PeriodType.YEAR -> monthly * 12
         }
         val remaining = limit - spent
-        val daysLeft = if (period.type == PeriodType.MONTH && period.isCurrent(today)) {
-            period.start.lengthOfMonth() - today.dayOfMonth + 1
+        val daysLeft = if ((period.type == PeriodType.MONTH || period.type == PeriodType.WEEK) && period.isCurrent(today)) {
+            ChronoUnit.DAYS.between(today, period.endExclusive).toInt()
         } else {
             null
         }
         return BudgetStatus(
             label = when (period.type) {
                 PeriodType.DAY -> "Daily budget"
+                PeriodType.WEEK -> "Weekly budget"
                 PeriodType.MONTH -> "Monthly budget"
                 PeriodType.YEAR -> "Yearly budget"
             },
@@ -296,7 +353,7 @@ object Analytics {
 
         if (period.type != PeriodType.DAY) {
             bars.filter { it.value > 0 }.maxByOrNull { it.value }?.takeIf { bars.count { b -> b.value > 0 } > 1 }?.let { peak ->
-                val what = if (period.type == PeriodType.MONTH) "Biggest day" else "Biggest month"
+                val what = if (period.type == PeriodType.YEAR) "Biggest month" else "Biggest day"
                 out += Insight(InsightIcon.CALENDAR, what, "${peak.tooltipLabel} · ${currency.format(peak.value)}")
             }
         }

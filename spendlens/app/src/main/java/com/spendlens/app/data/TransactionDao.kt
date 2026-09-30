@@ -46,4 +46,28 @@ interface TransactionDao {
 
     @Query("SELECT COUNT(*) FROM transactions WHERE amountMinor = :amountMinor AND timestamp BETWEEN :from AND :to")
     suspend fun countSimilar(amountMinor: Long, from: Long, to: Long): Int
+
+    @Query("SELECT COUNT(*) FROM transactions WHERE source = :source")
+    fun observeCountBySource(source: String): Flow<Int>
+
+    @Query("DELETE FROM transactions WHERE source = :source")
+    suspend fun deleteBySource(source: String): Int
+
+    @Query("SELECT COALESCE(SUM(amountMinor), 0) FROM transactions WHERE timestamp >= :from AND timestamp < :to")
+    suspend fun sumBetween(from: Long, to: Long): Long
+}
+
+@Dao
+interface GoalDao {
+    @Query("SELECT * FROM goals ORDER BY createdAt")
+    fun observeAll(): Flow<List<GoalEntity>>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(goal: GoalEntity): Long
+
+    @Query("UPDATE goals SET savedMinor = MAX(0, savedMinor + :delta) WHERE id = :id")
+    suspend fun addToSaved(id: Long, delta: Long)
+
+    @Query("DELETE FROM goals WHERE id = :id")
+    suspend fun delete(id: Long)
 }

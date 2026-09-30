@@ -196,7 +196,7 @@ fun DashboardContent(dashboard: Dashboard, actions: HomeActions) {
             Pad(3) {
                 var selected by remember(dashboard.period) { mutableStateOf<Int?>(null) }
                 val currency = LocalCurrency.current
-                Section(numChart, when (dashboard.period.type) { PeriodType.DAY -> "By hour"; PeriodType.MONTH -> "By day"; PeriodType.YEAR -> "By month" }) {
+                Section(numChart, when (dashboard.period.type) { PeriodType.DAY -> "By hour"; PeriodType.WEEK, PeriodType.MONTH -> "By day"; PeriodType.YEAR -> "By month" }) {
                     BarChart(
                         bars = dashboard.bars,
                         selectedIndex = selected,
@@ -300,6 +300,7 @@ private fun Hero(dashboard: Dashboard, actions: HomeActions, modifier: Modifier 
         Spacer(Modifier.height(28.dp))
         val (ink, tail) = when (dashboard.period.type) {
             PeriodType.DAY -> "Spent " to if (dashboard.isCurrent) "today" else "that day"
+            PeriodType.WEEK -> "Spent " to if (dashboard.isCurrent) "this week" else "that week"
             PeriodType.MONTH -> "Spent " to if (dashboard.isCurrent) "this month" else "that month"
             PeriodType.YEAR -> "Spent " to if (dashboard.isCurrent) "this year" else "that year"
         }

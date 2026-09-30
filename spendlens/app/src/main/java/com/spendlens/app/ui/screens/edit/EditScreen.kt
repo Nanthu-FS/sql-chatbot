@@ -36,6 +36,7 @@ import com.spendlens.app.data.toLocalDateTime
 import com.spendlens.app.domain.Category
 import com.spendlens.app.domain.CategoryClassifier
 import com.spendlens.app.domain.Money
+import com.spendlens.app.domain.TxnSource
 import com.spendlens.app.ui.Format
 import com.spendlens.app.ui.appViewModel
 import com.spendlens.app.ui.components.BracketButton
@@ -98,7 +99,7 @@ class EditViewModel(private val repository: TransactionRepository, private val i
     fun save(onDone: () -> Unit) {
         val amount = Money.parseInput(form.amountText) ?: return
         viewModelScope.launch {
-            val base = original ?: TransactionEntity(amountMinor = 0, merchant = "", category = "", timestamp = 0)
+            val base = original ?: TransactionEntity(amountMinor = 0, merchant = "", category = "", timestamp = 0, source = TxnSource.MANUAL.key)
             val entity = base.copy(
                 amountMinor = amount,
                 merchant = form.merchant.trim().ifBlank { "Unknown payee" },
