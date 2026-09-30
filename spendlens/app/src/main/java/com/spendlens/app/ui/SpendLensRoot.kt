@@ -98,10 +98,6 @@ private object Routes {
     fun edit(id: Long) = "edit/$id"
     fun wrap(p: Period) = "wrap/${p.type.name}/${p.anchor}"
     fun compare(p: Period) = "compare/${p.type.name}/${p.anchor}"
-}"
-    const val EDIT = "edit/{id}"
-    fun detail(id: Long) = "detail/$id"
-    fun edit(id: Long) = "edit/$id"
 }
 
 private val topLevel = listOf(
