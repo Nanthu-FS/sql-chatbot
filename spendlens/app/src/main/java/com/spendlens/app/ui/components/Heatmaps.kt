@@ -73,6 +73,7 @@ fun MonthHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) 
             Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 (0 until 7).forEach { col ->
                     val cell = week.getOrNull(col)
+                    val shade = if (cell != null && cell.amountMinor > 0) 0.15f + cell.intensity * 0.85f else 0f
                     val local = (appear.value * 1.5f - (row * 7 + col) / 62f).coerceIn(0f, 1f)
                     Box(
                         Modifier
@@ -84,7 +85,7 @@ fun MonthHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) 
                                     Modifier
                                 } else {
                                     Modifier
-                                        .background(colors.ramp(if (cell.amountMinor > 0) 0.15f + cell.intensity * 0.85f else 0f))
+                                        .background(colors.ramp(shade))
                                         .then(if (cell.date == today) Modifier.border(1.dp, colors.text) else Modifier)
                                         .pressable(pressedScale = 0.85f, haptic = false) {
                                             haptics.tick()
@@ -100,7 +101,7 @@ fun MonthHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) 
                                 modifier = Modifier.padding(4.dp),
                                 style = MaterialTheme.typography.labelSmall,
                                 color = when {
-                                    cell.intensity > 0.5f -> colors.inverse
+                                    shade > 0.45f -> colors.inverse
                                     cell.date.isAfter(today) -> colors.faint.copy(alpha = 0.5f)
                                     else -> colors.muted
                                 },
@@ -149,7 +150,7 @@ fun YearHeatmap(days: List<HeatDay>, today: LocalDate, onDayClick: (LocalDate) -
     LaunchedEffect(start) {
         val focus = if (today.year == start.year) today else days.last().date
         val week = (ChronoUnit.DAYS.between(gridStart, focus) / 7).toInt()
-        scroll.scrollTo(with(density) { ((cell + gap) * week - 140.dp).roundToPx() }.coerceAtLeast(0))
+        scroll.scrollTo(with(density) { ((cell + gap) * week - 300.dp).roundToPx() }.coerceAtLeast(0))
     }
     Column(modifier) {
         Row(Modifier.horizontalScroll(scroll)) {

@@ -365,7 +365,7 @@ fun UnderlineField(
                         Spacer(Modifier.width(6.dp))
                     }
                     Box(Modifier.weight(1f)) {
-                        if (value.isEmpty()) Text(placeholder, style = style, color = colors.ghost)
+                        if (value.isEmpty()) Text(placeholder, style = style, color = colors.faint)
                         inner()
                     }
                 }

@@ -202,7 +202,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions) {
                 verticalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(6.dp),
             ) {
                 CurrencyOption.entries.forEach { c ->
-                    TextChip("${c.symbol.trim()} ${c.code}", c == currency, {
+                    TextChip(if (c.symbol.trim() == c.code) c.code else "${c.symbol.trim()} ${c.code}", c == currency, {
                         if (c != currency) haptics.tick()
                         actions.onCurrency(c)
                     })
