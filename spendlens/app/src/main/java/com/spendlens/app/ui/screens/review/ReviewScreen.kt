@@ -274,8 +274,8 @@ private fun DraftBlock(
         }
         Spacer(Modifier.height(14.dp))
         Row(Modifier.alpha(dim)) {
-            if (draft.smsFrom != null) {
-                // A bank message instead of a screenshot: show the text itself.
+            if (draft.smsFrom != null || draft.sourceUri.startsWith("text:")) {
+                // A bank message or shared text instead of a screenshot: show the text itself.
                 Column(
                     Modifier
                         .width(120.dp)
@@ -284,7 +284,7 @@ private fun DraftBlock(
                         .cornerMarks(colors.text, inset = (-4).dp)
                         .padding(10.dp),
                 ) {
-                    Label("SMS · ${draft.smsFrom}", color = colors.faint, style = MaterialTheme.typography.labelSmall)
+                    Label(draft.smsFrom?.let { "SMS · $it" } ?: "Shared text", color = colors.faint, style = MaterialTheme.typography.labelSmall)
                     Spacer(Modifier.height(6.dp))
                     Text(draft.rawText, style = MaterialTheme.typography.bodySmall, color = colors.muted, maxLines = 9, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 }

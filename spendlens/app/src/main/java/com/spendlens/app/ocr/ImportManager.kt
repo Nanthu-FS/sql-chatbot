@@ -8,6 +8,7 @@ import com.spendlens.app.data.toEpochMillis
 import com.spendlens.app.domain.Category
 import com.spendlens.app.domain.CategoryClassifier
 import com.spendlens.app.domain.Money
+import com.spendlens.app.domain.OcrLine
 import com.spendlens.app.domain.PaymentParser
 import com.spendlens.app.domain.PaymentStatus
 import com.spendlens.app.domain.SmsParser
@@ -108,6 +109,18 @@ class ImportManager(
                 }
             }
             _state.update { it.copy(phase = ImportPhase.DONE) }
+        }
+    }
+
+    /** A receipt shared as text: read like a bank SMS first, then like a screenshot's text. */
+    fun startText(text: String, now: LocalDateTime = LocalDateTime.now()) {
+        discard()
+        _state.value = ImportState(ImportMode.PICKED, ImportPhase.SCANNING, total = 1)
+        job = scope.launch {
+            val draft = withContext(Dispatchers.Default) { draftFromText(text, now) }
+            val duplicate = draft.amountMinor?.let { repository.isDuplicate(it, draft.dateTime, draft.reference) } == true
+            val result = if (duplicate) draft.copy(flags = draft.flags + DraftFlag.DUPLICATE, include = false) else draft
+            _state.value = ImportState(ImportMode.PICKED, ImportPhase.DONE, total = 1, processed = 1, drafts = listOf(result))
         }
     }
 
@@ -217,7 +230,11 @@ class ImportManager(
                 imagePath = d.stagedPath?.let { images.persist(File(it))?.absolutePath },
                 sourceUri = d.sourceUri,
                 rawText = d.rawText,
-                source = if (d.smsFrom != null) TxnSource.SMS.key else TxnSource.SCREENSHOT.key,
+                source = when {
+                    d.smsFrom != null -> TxnSource.SMS.key
+                    d.sourceUri.startsWith("text:") -> TxnSource.SHARED.key
+                    else -> TxnSource.SCREENSHOT.key
+                },
             )
         }
         repository.saveAll(entities)
@@ -319,4 +336,46 @@ class ImportManager(
     private companion object {
         const val KEY_SEEN = "seen_uris"
     }
+}
+
+/** Turns shared text (a UPI receipt, a bank SMS, an e-mail) into a draft to review. */
+internal fun draftFromText(text: String, now: LocalDateTime): ImportDraft {
+    val source = "text:" + Integer.toHexString(text.hashCode()) + ":" + text.length
+    SmsParser.parse("SHARED", text, now)?.let { sms ->
+        return ImportDraft(
+            sourceUri = source,
+            state = DraftState.READY,
+            amountText = Money.toInput(sms.amountMinor),
+            merchant = sms.merchant.orEmpty(),
+            category = CategoryClassifier.classify(sms.merchant, sms.body),
+            dateTime = sms.dateTime,
+            paymentApp = sms.via,
+            reference = sms.reference,
+            rawText = text,
+        )
+    }
+    val lines = text.lines().map { it.trim() }.filter { it.isNotEmpty() }.mapIndexed { i, line -> OcrLine(line, top = i * 40, bottom = i * 40 + 30) }
+    val parsed = PaymentParser.parse(lines, now)
+    val amount = parsed.amountMinor
+    val looksLikePayment = amount != null && parsed.confidence >= 0.45f
+    val flags = buildSet {
+        if (amount == null) add(DraftFlag.NO_AMOUNT)
+        if (parsed.isIncoming) add(DraftFlag.INCOMING)
+        if (parsed.status == PaymentStatus.FAILED) add(DraftFlag.FAILED)
+        if (parsed.status == PaymentStatus.PENDING) add(DraftFlag.PENDING)
+        if (!looksLikePayment && amount != null) add(DraftFlag.UNSURE)
+    }
+    return ImportDraft(
+        sourceUri = source,
+        state = DraftState.READY,
+        amountText = amount?.let { Money.toInput(it) }.orEmpty(),
+        merchant = parsed.merchant.orEmpty(),
+        category = CategoryClassifier.classify(parsed.merchant, parsed.rawText),
+        dateTime = parsed.dateTime ?: now,
+        paymentApp = parsed.paymentApp,
+        reference = parsed.reference,
+        rawText = text,
+        include = flags.none { it.excludeByDefault },
+        flags = flags,
+    )
 }

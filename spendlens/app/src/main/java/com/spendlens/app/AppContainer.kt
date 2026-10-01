@@ -40,6 +40,9 @@ class AppContainer(context: Context, databaseName: String = AppDatabase.NAME) {
     /** Images shared to the app from the gallery or a payment app, waiting to be imported. */
     val sharedImages = MutableStateFlow<List<Uri>>(emptyList())
 
+    /** A payment message or receipt shared as text (UPI apps, bank SMS, e-mail). */
+    val sharedText = MutableStateFlow<String?>(null)
+
     /** A payment to open (from a notification tap), or the scan sheet to show. */
     val pendingOpen = MutableStateFlow<Long?>(null)
     val pendingScan = MutableStateFlow(false)

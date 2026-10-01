@@ -105,7 +105,11 @@ class MainActivity : FragmentActivity() {
                 IntentCompat.getParcelableArrayListExtra(intent, Intent.EXTRA_STREAM, Uri::class.java).orEmpty()
             else -> emptyList()
         }
-        if (uris.isNotEmpty()) container.sharedImages.value = uris
+        if (uris.isNotEmpty()) {
+            container.sharedImages.value = uris
+        } else if (intent.action == Intent.ACTION_SEND) {
+            intent.getStringExtra(Intent.EXTRA_TEXT)?.takeIf { it.isNotBlank() }?.let { container.sharedText.value = it }
+        }
     }
 
 }

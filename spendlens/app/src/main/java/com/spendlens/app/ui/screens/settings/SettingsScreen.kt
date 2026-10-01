@@ -118,6 +118,7 @@ class SettingsViewModel(
     fun setTheme(t: ThemeMode) { viewModelScope.launch { settings.setTheme(t) } }
     fun setGlass(level: Float) { viewModelScope.launch { settings.setGlass(level) } }
     fun setStyle(key: String) { viewModelScope.launch { settings.setStyle(key) } }
+    fun setPrivate(on: Boolean) { viewModelScope.launch { settings.setPrivateMode(on) } }
     fun setBiometric(on: Boolean) { viewModelScope.launch { settings.setBiometricUnlock(on) } }
     fun setAccent(argb: Long?) { viewModelScope.launch { settings.setAccent(argb) } }
     fun setAutoFindDays(d: Int) { viewModelScope.launch { settings.setAutoFindDays(d) } }
@@ -139,6 +140,7 @@ class SettingsActions(
     val onLock: (Boolean) -> Unit = {},
     val onChangePin: () -> Unit = {},
     val onBiometric: (Boolean) -> Unit = {},
+    val onPrivate: (Boolean) -> Unit = {},
     val onReplayIntro: () -> Unit = {},
     val onAccent: (Long?) -> Unit = {},
     val onAutoFindDays: (Int) -> Unit = {},
@@ -257,6 +259,7 @@ fun SettingsScreen(onMessage: (String) -> Unit, onOpenReview: () -> Unit, onRepl
             onLock = { on -> pinFlow = if (on) PinFlow.ENABLE else PinFlow.DISABLE },
             onChangePin = { pinFlow = PinFlow.CHANGE_CHECK },
             onBiometric = vm::setBiometric,
+            onPrivate = vm::setPrivate,
             onReplayIntro = onReplayIntro,
         ),
         biometricAvailable = Biometrics.available(context),
@@ -433,7 +436,12 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions, biometricAvailable
                 }
             }
 
-            Section(++n, "App lock", Modifier.reveal(10)) {
+            Section(++n, "Privacy", Modifier.reveal(10)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text("Private mode — hide amounts", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
+                    BracketToggle(ui.settings.privateMode, actions.onPrivate, on = "On", off = "Off")
+                }
+                Hairline(Modifier.padding(vertical = 10.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Text("Lock with a PIN", style = MaterialTheme.typography.bodyMedium, color = colors.muted, modifier = Modifier.weight(1f))
                     BracketToggle(ui.settings.lockEnabled, actions.onLock, on = "On", off = "Off")
@@ -453,7 +461,7 @@ fun SettingsContent(ui: SettingsUi, actions: SettingsActions, biometricAvailable
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                Hint("Locks when you leave SpendLens for 30 seconds. The widget and lock-screen summary still show totals.")
+                Hint("Private mode hides every amount — in the app, the widget and notifications. Tap the eye on Home to switch it quickly. The PIN lock kicks in after 30 seconds away.")
             }
 
             Section(++n, "Your data", Modifier.reveal(11)) {

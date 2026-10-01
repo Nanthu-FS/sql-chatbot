@@ -48,6 +48,27 @@ import com.spendlens.app.ui.components.Statement
 import com.spendlens.app.ui.components.reveal
 import com.spendlens.app.ui.screens.home.GoalBlock
 import com.spendlens.app.ui.screens.review.UnderlineField
+import androidx.compose.foundation.border
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.DirectionsCar
+import androidx.compose.material.icons.rounded.Smartphone
+import androidx.compose.material.icons.rounded.TwoWheeler
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.ui.text.style.TextOverflow
+import com.spendlens.app.domain.CurrencyOption
+import com.spendlens.app.domain.WishCatalog
+import com.spendlens.app.domain.WishKind
+import com.spendlens.app.ui.components.Hint
+import com.spendlens.app.ui.components.UnderlineTabs
+import com.spendlens.app.ui.components.bevel
+import com.spendlens.app.ui.components.numberStyle
+import com.spendlens.app.ui.components.pressable
+import com.spendlens.app.ui.theme.ControlStyle
 import com.spendlens.app.ui.theme.Spend
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -137,8 +158,13 @@ fun GoalsContent(ui: GoalsUi, actions: GoalsActions) {
             }
             Spacer(Modifier.height(20.dp))
 
+            Section(2, "Save for something", Modifier.reveal(2)) {
+                WishPicker(onPick = { editing = it })
+            }
+            Spacer(Modifier.height(20.dp))
+
             ui.plans.forEachIndexed { i, plan ->
-                Section(2 + i, plan.goal.deadline?.let { "By " + it.format(DateTimeFormatter.ofPattern("MMM yyyy")) } ?: "No deadline", Modifier.reveal(2 + i), trailing = {
+                Section(3 + i, plan.goal.deadline?.let { "By " + it.format(DateTimeFormatter.ofPattern("MMM yyyy")) } ?: "No deadline", Modifier.reveal(3 + i), trailing = {
                     BracketButton("Edit", { editing = plan.goal }, color = colors.muted)
                 }) {
                     GoalBlock(plan, currency, onPutAside = { actions.onPutAside(plan.goal.id, it) })
@@ -170,6 +196,54 @@ fun GoalsContent(ui: GoalsUi, actions: GoalsActions) {
             dismissButton = { BracketButton("Clear", { actions.onIncome(null); incomeDialog = false }, color = colors.muted) },
         )
     }
+}
+
+/** Phones, bikes and cars with their prices; tapping one opens a goal pre-filled with it. */
+@Composable
+private fun WishPicker(onPick: (Goal) -> Unit) {
+    val colors = Spend.ink
+    val look = Spend.look
+    val currency = LocalCurrency.current
+    val kinds = WishKind.entries
+    var kind by rememberSaveable { mutableStateOf(WishKind.PHONE) }
+    UnderlineTabs(kinds.map { it.label }, kinds.indexOf(kind), { kind = kinds[it] })
+    Spacer(Modifier.height(14.dp))
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        WishCatalog.of(kind).forEach { item ->
+            val shape = RoundedCornerShape(look.radius.coerceAtMost(16.dp))
+            Column(
+                Modifier
+                    .width(158.dp)
+                    .then(if (look.control == ControlStyle.BEVEL) Modifier.bevel() else Modifier.border(1.dp, colors.line, shape))
+                    .pressable(pressedScale = 0.96f) { onPick(WishCatalog.goalFor(item, currency, LocalDate.now())) }
+                    .padding(14.dp),
+            ) {
+                Icon(
+                    when (item.kind) {
+                        WishKind.PHONE -> Icons.Rounded.Smartphone
+                        WishKind.BIKE -> Icons.Rounded.TwoWheeler
+                        WishKind.CAR -> Icons.Rounded.DirectionsCar
+                    },
+                    contentDescription = null,
+                    tint = colors.accent,
+                    modifier = Modifier.size(22.dp),
+                )
+                Spacer(Modifier.height(10.dp))
+                Text(item.name, style = MaterialTheme.typography.titleSmall, color = colors.text, maxLines = 2, minLines = 2, overflow = TextOverflow.Ellipsis)
+                Spacer(Modifier.height(8.dp))
+                Text(currency.format(WishCatalog.price(item, currency)), style = numberStyle(MaterialTheme.typography.titleLarge), color = colors.text, maxLines = 1)
+                Spacer(Modifier.height(4.dp))
+                Label("≈ ${currency.compact(WishCatalog.perMonth(item, currency))}/mo · ${item.kind.months} mo", color = colors.faint)
+                Spacer(Modifier.height(10.dp))
+                Label("Save for this →", color = colors.accent)
+            }
+        }
+    }
+    Spacer(Modifier.height(10.dp))
+    Hint(if (currency == CurrencyOption.INR) "Approximate starting prices in India (ex-showroom for vehicles). Edit the amount to match your quote." else "Rough conversions of Indian prices. Edit the amount to match your quote.")
 }
 
 @Composable

@@ -12,6 +12,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.core.stringSetPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.spendlens.app.domain.CurrencyOption
+import com.spendlens.app.domain.Privacy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -40,6 +41,8 @@ data class AppSettings(
     val pinHash: String? = null,
     val biometricUnlock: Boolean = false,
     val introSeen: Boolean = false,
+    /** Hide every amount until switched off. */
+    val privateMode: Boolean = false,
     /** False only for the placeholder used before the stored settings arrive. */
     val loaded: Boolean = false,
 ) {
@@ -68,6 +71,7 @@ class SettingsRepository(context: Context) {
         val pinHash = stringPreferencesKey("pin_hash")
         val biometric = booleanPreferencesKey("biometric_unlock")
         val introSeen = booleanPreferencesKey("intro_seen")
+        val privateMode = booleanPreferencesKey("private_mode")
     }
 
     val settings: Flow<AppSettings> = store.data.map { prefs ->
@@ -87,8 +91,9 @@ class SettingsRepository(context: Context) {
             pinHash = prefs[Keys.pinHash],
             biometricUnlock = prefs[Keys.biometric] ?: false,
             introSeen = prefs[Keys.introSeen] ?: false,
+            privateMode = prefs[Keys.privateMode] ?: false,
             loaded = true,
-        )
+        ).also { Privacy.hidden = it.privateMode }
     }
 
     suspend fun setCurrency(currency: CurrencyOption) {
@@ -150,6 +155,11 @@ class SettingsRepository(context: Context) {
 
     suspend fun setBiometricUnlock(on: Boolean) {
         store.edit { it[Keys.biometric] = on }
+    }
+
+    suspend fun setPrivateMode(on: Boolean) {
+        Privacy.hidden = on
+        store.edit { it[Keys.privateMode] = on }
     }
 
     suspend fun setIntroSeen(seen: Boolean) {

@@ -25,6 +25,18 @@ class MoneyAndCategoryTest {
     }
 
     @Test
+    fun privateModeMasksEveryAmount() {
+        Privacy.hidden = true
+        try {
+            assertEquals("₹•••••", CurrencyOption.INR.format(12_345_678))
+            assertEquals("$•••", CurrencyOption.USD.compact(300_000_000))
+        } finally {
+            Privacy.hidden = false
+        }
+        assertEquals("₹999", CurrencyOption.INR.format(99_900))
+    }
+
+    @Test
     fun parsesUserInput() {
         assertEquals(125_050L, Money.parseInput("1,250.5"))
         assertEquals(9_900L, Money.parseInput("₹ 99"))

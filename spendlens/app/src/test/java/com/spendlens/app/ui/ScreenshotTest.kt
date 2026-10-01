@@ -22,6 +22,7 @@ import com.spendlens.app.domain.Goal
 import com.spendlens.app.domain.GoalPlanner
 import com.spendlens.app.domain.Period
 import com.spendlens.app.domain.PeriodType
+import com.spendlens.app.domain.Privacy
 import com.spendlens.app.domain.SampleData
 import com.spendlens.app.domain.Txn
 import com.spendlens.app.domain.TxnSource
@@ -376,5 +377,38 @@ class ScreenshotTest {
 
     @Test fun wrapAurora() = shoot("61_wrap_aurora", style = Style.AURORA) {
         WrapContent(WrapBuilder.of(txns, Period(PeriodType.MONTH, today.minusMonths(1)), today), {}, autoAdvance = false)
+    }
+
+    // ---- Save for something, private mode, shared text.
+
+    @Config(qualifiers = "w400dp-h2200dp-xxhdpi")
+    @Test fun goalsWishlist() = shoot("62_goals_wishlist") {
+        val month = Period(PeriodType.MONTH, today)
+        val spent = txns.filter { it.dateTime in month }.sumOf { it.amountMinor }
+        GoalsContent(GoalsUi(goals.map { GoalPlanner.plan(it, 90_000_00, spent, spent + 10_000_00, today) }, 90_000_00, spent, spent + 10_000_00), GoalsActions())
+    }
+
+    @Config(qualifiers = "w400dp-h1400dp-xxhdpi")
+    @Test fun goalsWishlistRiso() = shoot("63_goals_wishlist_riso", dark = false, style = Style.RISO) {
+        GoalsContent(GoalsUi(emptyList(), null, 0, null), GoalsActions())
+    }
+
+    @Config(qualifiers = "w400dp-h2600dp-xxhdpi")
+    @Test fun homePrivate() {
+        Privacy.hidden = true
+        try {
+            shoot("64_home_private") { DashboardContent(home(PeriodType.MONTH), HomeActions()) }
+        } finally {
+            Privacy.hidden = false
+        }
+    }
+
+    @Test fun reviewSharedText() = shoot("65_review_shared_text", dark = false, style = Style.BENTO) {
+        val text = "Payment successful\n₹1,250\nPaid to Blue Tokai Coffee\nUPI transaction ID 426598765432\n30 Sep 2026, 9:41 am"
+        val state = ImportState(
+            mode = ImportMode.PICKED, phase = ImportPhase.DONE, total = 1, processed = 1,
+            drafts = listOf(ImportDraft(sourceUri = "text:1a2b:80", state = DraftState.READY, amountText = "1250", merchant = "Blue Tokai Coffee", category = Category.FOOD, dateTime = now.minusHours(2), paymentApp = "UPI", rawText = text)),
+        )
+        ReviewContent(state, saving = false, actions = ReviewActions())
     }
 }

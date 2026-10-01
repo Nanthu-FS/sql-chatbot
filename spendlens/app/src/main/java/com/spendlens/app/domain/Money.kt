@@ -1,8 +1,20 @@
 package com.spendlens.app.domain
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import java.math.BigDecimal
 import java.math.RoundingMode
 import kotlin.math.abs
+
+/**
+ * Private mode: every formatted amount reads "₹•••••" — on screen, in notifications and on the
+ * widget. Snapshot state, so anything showing an amount redraws when it flips.
+ */
+object Privacy {
+    var hidden by mutableStateOf(false)
+    const val MASK = "•••••"
+}
 
 enum class CurrencyOption(val code: String, val symbol: String, val label: String, private val indianGrouping: Boolean = false) {
     INR("INR", "₹", "Indian Rupee", indianGrouping = true),
@@ -15,6 +27,7 @@ enum class CurrencyOption(val code: String, val symbol: String, val label: Strin
 
     /** Whole amounts drop the decimals ("₹1,250"); anything else shows two ("₹1,250.50"). */
     fun format(amountMinor: Long, forceDecimals: Boolean = false): String {
+        if (Privacy.hidden) return symbol + Privacy.MASK
         val value = abs(amountMinor)
         val grouped = groupDigits((value / 100).toString())
         val fraction = if (value % 100 == 0L && !forceDecimals) "" else "." + (value % 100).toString().padStart(2, '0')
@@ -38,6 +51,7 @@ enum class CurrencyOption(val code: String, val symbol: String, val label: Strin
 
     /** Axis-friendly short form: ₹1.2K, ₹3.4L, ₹1.1Cr / $1.2K, $3.4M. */
     fun compact(amountMinor: Long): String {
+        if (Privacy.hidden) return symbol + "•••"
         val major = abs(amountMinor) / 100.0
         val (divisor, suffix) = when {
             indianGrouping && major >= 1e7 -> 1e7 to "Cr"

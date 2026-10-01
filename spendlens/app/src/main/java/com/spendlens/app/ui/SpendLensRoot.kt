@@ -173,6 +173,7 @@ fun SpendLensRoot(settings: AppSettings) {
     var replayIntro by rememberSaveable { mutableStateOf(false) }
     val showIntro = (settings.loaded && !settings.introSeen) || replayIntro
     val shared by container.sharedImages.collectAsStateWithLifecycle()
+    val sharedText by container.sharedText.collectAsStateWithLifecycle()
 
     val haptics = rememberHaptics()
 
@@ -201,6 +202,14 @@ fun SpendLensRoot(settings: AppSettings) {
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.PickMultipleVisualMedia(maxItems = 50)) { uris ->
         if (uris.isNotEmpty()) {
             container.importManager.startPicked(uris)
+            nav.navigate(Routes.REVIEW) { launchSingleTop = true }
+        }
+    }
+    // A receipt or bank message shared as text.
+    LaunchedEffect(sharedText) {
+        sharedText?.let { text ->
+            container.importManager.startText(text)
+            container.sharedText.value = null
             nav.navigate(Routes.REVIEW) { launchSingleTop = true }
         }
     }

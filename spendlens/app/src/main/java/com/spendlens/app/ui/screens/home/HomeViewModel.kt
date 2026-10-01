@@ -1,5 +1,6 @@
 package com.spendlens.app.ui.screens.home
 
+import com.spendlens.app.domain.Privacy
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.spendlens.app.data.SettingsRepository
@@ -103,6 +104,10 @@ class HomeViewModel(private val repository: TransactionRepository, private val s
     }
 
     fun backToToday() = period.update { Period(it.type, LocalDate.now()) }
+
+    fun togglePrivate() {
+        viewModelScope.launch { settings.setPrivateMode(!Privacy.hidden) }
+    }
 
     fun dismissAlert(key: String) {
         viewModelScope.launch { settings.dismissAlert(key) }

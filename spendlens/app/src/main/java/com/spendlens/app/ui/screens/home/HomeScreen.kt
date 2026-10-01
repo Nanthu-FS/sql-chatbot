@@ -1,5 +1,8 @@
 package com.spendlens.app.ui.screens.home
 
+import androidx.compose.material.icons.rounded.VisibilityOff
+import androidx.compose.material.icons.rounded.Visibility
+import com.spendlens.app.domain.Privacy
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
@@ -124,6 +127,7 @@ class HomeActions(
     val onOpenGoals: () -> Unit = {},
     val onWrap: (Period) -> Unit = {},
     val onCompare: (Period) -> Unit = {},
+    val onTogglePrivate: () -> Unit = {},
 )
 
 @Composable
@@ -160,6 +164,7 @@ fun HomeScreen(
                 onOpenGoals = onOpenGoals,
                 onWrap = onWrap,
                 onCompare = onCompare,
+                onTogglePrivate = vm::togglePrivate,
             ),
         )
     }
@@ -190,8 +195,14 @@ fun DashboardContent(state: HomeUiState, actions: HomeActions) {
                             StreakBadge(streak)
                             Spacer(Modifier.width(10.dp))
                         }
-                        Dots(color = colors.muted)
-                        Spacer(Modifier.width(10.dp))
+                        val hidden = Privacy.hidden
+                        Icon(
+                            if (hidden) Icons.Rounded.VisibilityOff else Icons.Rounded.Visibility,
+                            contentDescription = if (hidden) "Show amounts" else "Hide amounts",
+                            tint = if (hidden) colors.accent else colors.muted,
+                            modifier = Modifier.size(36.dp).pressable(pressedScale = 0.85f, onClick = actions.onTogglePrivate).padding(8.dp),
+                        )
+                        Spacer(Modifier.width(6.dp))
                         Label(LocalDate.now().format(DateTimeFormatter.ofPattern("dd.MM.yy")), color = colors.muted)
                     }
                     Spacer(Modifier.height(18.dp))

@@ -22,6 +22,7 @@ enum class TxnSource(val key: String, val label: String) {
     SCREENSHOT("screenshot", "Screenshot"),
     MANUAL("manual", "Added by hand"),
     SMS("sms", "Bank SMS"),
+    SHARED("shared", "Shared text"),
     SAMPLE("sample", "Sample data");
 
     companion object {
