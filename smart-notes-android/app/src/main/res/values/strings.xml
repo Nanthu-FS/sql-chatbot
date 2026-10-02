@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">Smart Notes</string>
+    <string name="save_to_smart_notes">Save to Smart Notes</string>
+    <string name="quick_note">Quick note</string>
+    <string name="checklist_widget">Smart Notes checklist</string>
+    <string name="checklist_widget_description">A checklist from one of your notes</string>
+</resources>
