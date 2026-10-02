@@ -2,7 +2,7 @@ package com.smartnotes.core
 
 /** Markdown checklist helpers shared by gestures, widgets and voice notes. */
 object Checklist {
-    private val ITEM = Regex("^(\\s*)- \\[( |x|X)] (.*)$")
+    private val ITEM = Regex("^(\\s*)- \\[( |x|X)\\] (.*)$")
 
     data class Item(val lineIndex: Int, val text: String, val done: Boolean)
 

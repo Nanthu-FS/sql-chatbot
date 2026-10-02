@@ -37,7 +37,7 @@ fun NoteEntity.meta(): String = listOfNotNull(
     sourceGlyph(source).ifEmpty { null },
 ).joinToString(" · ")
 
-private val LINKS = Regex("\\[\\[([^\\]]+)]]|\\[([^\\]\\[]+)]")
+private val LINKS = Regex("\\[\\[([^\\]]+)\\]\\]|\\[([^\\]\\[]+)\\]")
 
 /** Makes [[Wiki links]] and [Citations] tappable; [onOpen] receives the note title. */
 fun linkify(text: String, accent: Color, onOpen: (String) -> Unit): AnnotatedString = buildAnnotatedString {

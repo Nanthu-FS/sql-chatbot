@@ -3,7 +3,7 @@ package com.smartnotes.core
 /** Suggests related notes while the user types, like Obsidian backlinks but automatic. */
 object AutoLinker {
 
-    private val WIKI_LINK = Regex("\\[\\[([^\\]]+)]]")
+    private val WIKI_LINK = Regex("\\[\\[([^\\]]+)\\]\\]")
 
     fun suggest(
         current: NoteDoc,

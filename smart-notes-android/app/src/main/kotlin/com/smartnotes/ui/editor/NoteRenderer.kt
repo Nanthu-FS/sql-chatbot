@@ -42,9 +42,9 @@ import com.smartnotes.ui.theme.SkinCard
 import com.smartnotes.ui.theme.SkinLabel
 import kotlinx.coroutines.delay
 
-private val TIMER = Regex("^\\{\\{\\s*timer\\s+(\\d+)\\s*}}$", RegexOption.IGNORE_CASE)
-private val WEATHER = Regex("^\\{\\{\\s*weather\\s+(.+?)\\s*}}$", RegexOption.IGNORE_CASE)
-private val TODO = Regex("^\\s*- \\[( |x|X)] (.*)$")
+private val TIMER = Regex("^\\{\\{\\s*timer\\s+(\\d+)\\s*\\}\\}$", RegexOption.IGNORE_CASE)
+private val WEATHER = Regex("^\\{\\{\\s*weather\\s+(.+?)\\s*\\}\\}$", RegexOption.IGNORE_CASE)
+private val TODO = Regex("^\\s*- \\[( |x|X)\\] (.*)$")
 
 /**
  * Renders a note body: headings, checklists, [[links]], Mermaid diagrams and live widgets.
