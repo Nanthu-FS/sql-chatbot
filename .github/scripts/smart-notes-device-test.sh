@@ -21,5 +21,13 @@ adb shell monkey -p com.smartnotes -s 7 --throttle 150 --pct-syskeys 0 --pct-app
 
 adb logcat -d -b crash > "$OUT/crash.txt"
 adb logcat -d '*:E' > "$OUT/errors.txt"
-grep -c "CRASH\|FATAL EXCEPTION" "$OUT/monkey.txt" "$OUT/crash.txt" || true
+set +x
+echo "===== INSTRUMENTATION RESULTS ====="
+grep -E "INSTRUMENTATION_STATUS: (class|test)=|INSTRUMENTATION_STATUS_CODE|INSTRUMENTATION_RESULT|INSTRUMENTATION_CODE|Tests run|^OK|FAILURES|Process crashed" "$OUT/instrument.txt"
+echo "===== INSTRUMENTATION STACKS ====="
+grep -A 25 "INSTRUMENTATION_STATUS: stack=" "$OUT/instrument.txt" | head -150
+echo "===== CRASH BUFFER ====="
+head -120 "$OUT/crash.txt"
+echo "===== MONKEY CRASH ====="
+grep -B 2 -A 40 "CRASH" "$OUT/monkey.txt" | head -80
 exit 0

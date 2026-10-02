@@ -8,6 +8,9 @@ on:
       - ".github/workflows/smart-notes-device-test.yml"
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   emulator:
     runs-on: ubuntu-latest
@@ -55,6 +58,19 @@ jobs:
           tail -n 40 device-out/instrument.txt >> "$GITHUB_STEP_SUMMARY" || true
           echo "### Crashes" >> "$GITHUB_STEP_SUMMARY"
           cat device-out/crash.txt >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Commit device report
+        if: always()
+        working-directory: .
+        run: |
+          rm -rf device-report && mkdir -p device-report
+          cp -r smart-notes-android/device-out/. device-report/ || true
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add device-report
+          git commit -m "Device test report [skip ci]" || exit 0
+          git pull --rebase origin "${GITHUB_REF_NAME}"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - uses: actions/upload-artifact@v4
         if: always()
