@@ -1,0 +1,4 @@
+### Core unit tests: 17 run, 0 failed
+- com.genshincalc.core.BaseStatsTest: 6 tests, 0 failed
+- com.genshincalc.core.EngineTest: 5 tests, 0 failed
+- com.genshincalc.core.FormulasTest: 6 tests, 0 failed

@@ -1,0 +1,422 @@
+  bash arg: -p
+  bash arg: com.genshincalc.app
+  bash arg: -s
+  bash arg: 11
+  bash arg: --throttle
+  bash arg: 120
+  bash arg: --pct-syskeys
+  bash arg: 0
+  bash arg: --pct-appswitch
+  bash arg: 0
+  bash arg: --pct-anyevent
+  bash arg: 0
+  bash arg: -v
+  bash arg: 3000
+args: [-p, com.genshincalc.app, -s, 11, --throttle, 120, --pct-syskeys, 0, --pct-appswitch, 0, --pct-anyevent, 0, -v, 3000]
+ arg: "-p"
+ arg: "com.genshincalc.app"
+ arg: "-s"
+ arg: "11"
+ arg: "--throttle"
+ arg: "120"
+ arg: "--pct-syskeys"
+ arg: "0"
+ arg: "--pct-appswitch"
+ arg: "0"
+ arg: "--pct-anyevent"
+ arg: "0"
+ arg: "-v"
+ arg: "3000"
+data="com.genshincalc.app"
+data="11"
+arg="--throttle" mCurArgData="null" mNextArg=5 argwas="--throttle" nextarg="120"
+data="120"
+arg="--pct-syskeys" mCurArgData="null" mNextArg=7 argwas="--pct-syskeys" nextarg="0"
+data="0"
+arg="--pct-appswitch" mCurArgData="null" mNextArg=9 argwas="--pct-appswitch" nextarg="0"
+data="0"
+arg="--pct-anyevent" mCurArgData="null" mNextArg=11 argwas="--pct-anyevent" nextarg="0"
+data="0"
+:Monkey: seed=11 count=3000
+:AllowPackage: com.genshincalc.app
+:IncludeCategory: android.intent.category.LAUNCHER
+:IncludeCategory: android.intent.category.MONKEY
+// Event percentages:
+//   0: 18.07229%
+//   1: 12.048193%
+//   2: 2.4096386%
+//   3: 18.07229%
+//   4: -0.0%
+//   5: -0.0%
+//   6: 30.120483%
+//   7: 18.07229%
+//   8: -0.0%
+//   9: -0.0%
+//   10: 1.2048193%
+//   11: -0.0%
+:Switch: #Intent;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;launchFlags=0x10200000;component=com.genshincalc.app/.MainActivity;end
+    // Allowing start of Intent { act=android.intent.action.MAIN cat=[android.intent.category.LAUNCHER] cmp=com.genshincalc.app/.MainActivity } in package com.genshincalc.app
+:Sending Touch (ACTION_DOWN): 0:(393.0,700.0)
+:Sending Touch (ACTION_UP): 0:(339.5088,730.8262)
+:Sending Touch (ACTION_DOWN): 0:(608.0,1215.0)
+:Sending Touch (ACTION_UP): 0:(584.73047,1215.5889)
+:Sending Touch (ACTION_DOWN): 0:(534.0,1541.0)
+:Sending Touch (ACTION_UP): 0:(539.3008,1549.0127)
+:Sending Trackball (ACTION_MOVE): 0:(3.0,-1.0)
+:Sending Touch (ACTION_DOWN): 0:(156.0,283.0)
+:Sending Touch (ACTION_UP): 0:(231.33789,281.0703)
+:Sending Trackball (ACTION_MOVE): 0:(-4.0,-1.0)
+:Sending Trackball (ACTION_MOVE): 0:(4.0,3.0)
+:Sending Trackball (ACTION_MOVE): 0:(2.0,1.0)
+:Sending Touch (ACTION_DOWN): 0:(566.0,657.0)
+:Sending Touch (ACTION_UP): 0:(504.58496,772.33105)
+:Sending Touch (ACTION_DOWN): 0:(246.0,2121.0)
+:Sending Touch (ACTION_UP): 0:(275.71484,2089.5605)
+:Sending Touch (ACTION_DOWN): 0:(118.0,2027.0)
+:Sending Touch (ACTION_UP): 0:(131.91113,2024.0303)
+:Sending Touch (ACTION_DOWN): 0:(1054.0,760.0)
+:Sending Touch (ACTION_UP): 0:(1031.3828,765.8799)
+:Sending Touch (ACTION_DOWN): 0:(699.0,395.0)
+:Sending Touch (ACTION_UP): 0:(709.71387,418.08496)
+    //[calendar_time:2026-10-03 16:31:14.559  system_uptime:88482]
+    // Sending event #100
+:Sending Touch (ACTION_DOWN): 0:(756.0,216.0)
+:Sending Touch (ACTION_UP): 0:(740.61914,208.23535)
+:Sending Touch (ACTION_DOWN): 0:(463.0,1718.0)
+:Sending Touch (ACTION_UP): 0:(448.9629,1721.1973)
+:Sending Touch (ACTION_DOWN): 0:(93.0,229.0)
+:Sending Touch (ACTION_UP): 0:(104.17871,211.63574)
+:Sending Trackball (ACTION_MOVE): 0:(1.0,0.0)
+:Sending Trackball (ACTION_MOVE): 0:(2.0,-3.0)
+:Sending Touch (ACTION_DOWN): 0:(331.0,1146.0)
+:Sending Touch (ACTION_UP): 0:(348.95898,1147.542)
+:Sending Touch (ACTION_DOWN): 0:(624.0,763.0)
+:Sending Touch (ACTION_UP): 0:(653.7119,735.86816)
+:Sending Touch (ACTION_DOWN): 0:(510.0,600.0)
+:Sending Touch (ACTION_UP): 0:(523.31445,616.34863)
+:Sending Touch (ACTION_DOWN): 0:(582.0,1151.0)
+:Sending Touch (ACTION_UP): 0:(596.6045,1150.6738)
+:Sending Touch (ACTION_DOWN): 0:(258.0,1028.0)
+:Sending Touch (ACTION_UP): 0:(265.91016,1025.2441)
+:Sending Trackball (ACTION_MOVE): 0:(-2.0,2.0)
+:Sending Trackball (ACTION_MOVE): 0:(2.0,4.0)
+:Sending Trackball (ACTION_MOVE): 0:(-3.0,2.0)
+    //[calendar_time:2026-10-03 16:31:21.742  system_uptime:95599]
+    // Sending event #200
+    //[calendar_time:2026-10-03 16:31:21.872  system_uptime:95728]
+    // Sending event #200
+:Sending Touch (ACTION_DOWN): 0:(626.0,1051.0)
+:Sending Touch (ACTION_UP): 0:(684.72754,1132.7217)
+:Sending Touch (ACTION_DOWN): 0:(705.0,552.0)
+:Sending Touch (ACTION_UP): 0:(710.50586,549.1621)
+:Sending Touch (ACTION_DOWN): 0:(477.0,483.0)
+:Sending Touch (ACTION_UP): 0:(462.4619,478.53223)
+:Sending Trackball (ACTION_MOVE): 0:(-3.0,-4.0)
+:Sending Trackball (ACTION_MOVE): 0:(2.0,3.0)
+:Sending Trackball (ACTION_MOVE): 0:(-4.0,2.0)
+:Sending Touch (ACTION_DOWN): 0:(816.0,146.0)
+:Sending Touch (ACTION_UP): 0:(845.8613,157.98242)
+:Sending Trackball (ACTION_MOVE): 0:(3.0,4.0)
+:Sending Trackball (ACTION_MOVE): 0:(0.0,-3.0)
+:Sending Touch (ACTION_DOWN): 0:(704.0,308.0)
+:Sending Touch (ACTION_UP): 0:(710.3467,302.06738)
+:Sending Touch (ACTION_DOWN): 0:(712.0,1344.0)
+:Sending Touch (ACTION_UP): 0:(623.0078,1290.7715)
+    //[calendar_time:2026-10-03 16:31:24.430  system_uptime:98286]
+    // Sending event #300
+    //[calendar_time:2026-10-03 16:31:24.550  system_uptime:98407]
+    // Sending event #300
+:Sending Trackball (ACTION_MOVE): 0:(3.0,0.0)
+:Sending Trackball (ACTION_MOVE): 0:(3.0,-3.0)
+:Sending Touch (ACTION_DOWN): 0:(56.0,422.0)
+:Sending Touch (ACTION_UP): 0:(45.746094,415.792)
+:Sending Trackball (ACTION_MOVE): 0:(1.0,0.0)
+:Sending Touch (ACTION_DOWN): 0:(605.0,75.0)
+:Sending Touch (ACTION_UP): 0:(605.17285,87.16797)
+:Sending Trackball (ACTION_MOVE): 0:(2.0,-1.0)
+:Sending Touch (ACTION_DOWN): 0:(546.0,0.0)
+:Sending Touch (ACTION_UP): 0:(546.0117,0.0)
+:Sending Trackball (ACTION_MOVE): 0:(1.0,0.0)
+:Sending Trackball (ACTION_MOVE): 0:(-3.0,1.0)
+    //[calendar_time:2026-10-03 16:31:27.294  system_uptime:101150]
+    // Sending event #400
+:Sending Touch (ACTION_DOWN): 0:(461.0,469.0)
+:Sending Touch (ACTION_UP): 0:(456.6748,468.7998)
+:Sending Touch (ACTION_DOWN): 0:(73.0,1154.0)
+:Sending Touch (ACTION_UP): 0:(106.009766,1169.794)
+:Sending Trackball (ACTION_MOVE): 0:(-3.0,1.0)
+:Sending Touch (ACTION_DOWN): 0:(340.0,824.0)
+:Sending Touch (ACTION_UP): 0:(348.8496,827.4346)
+:Sending Trackball (ACTION_MOVE): 0:(0.0,-3.0)
+:Sending Trackball (ACTION_UP): 0:(0.0,0.0)
+:Sending Touch (ACTION_DOWN): 0:(182.0,2023.0)
+:Sending Touch (ACTION_UP): 0:(182.1123,2019.4873)
+:Sending Touch (ACTION_DOWN): 0:(228.0,522.0)
+:Sending Touch (ACTION_UP): 0:(228.14453,520.3115)
+:Sending Touch (ACTION_DOWN): 0:(127.0,111.0)
+:Sending Touch (ACTION_UP): 0:(137.01465,49.47754)
+:Sending Touch (ACTION_DOWN): 0:(432.0,829.0)
+:Sending Touch (ACTION_UP): 0:(420.42383,845.6113)
+:Sending Touch (ACTION_DOWN): 0:(819.0,1869.0)
+:Sending Touch (ACTION_UP): 0:(815.9258,1862.707)
+:Sending Touch (ACTION_DOWN): 0:(1052.0,1389.0)
+:Sending Touch (ACTION_UP): 0:(1050.8428,1402.0322)
+:Sending Touch (ACTION_DOWN): 0:(92.0,1397.0)
+:Sending Touch (ACTION_UP): 0:(92.72266,1389.2578)
+:Sending Trackball (ACTION_MOVE): 0:(4.0,-2.0)
+:Sending Touch (ACTION_DOWN): 0:(904.0,557.0)
+:Sending Touch (ACTION_UP): 0:(956.167,520.0498)
+    //[calendar_time:2026-10-03 16:31:31.943  system_uptime:105799]
+    // Sending event #500
+    //[calendar_time:2026-10-03 16:31:32.063  system_uptime:105920]
+    // Sending event #500
+:Sending Trackball (ACTION_MOVE): 0:(-1.0,-4.0)
+:Sending Trackball (ACTION_UP): 0:(0.0,0.0)
+:Sending Touch (ACTION_DOWN): 0:(971.0,864.0)
+:Sending Touch (ACTION_UP): 0:(977.93066,866.3906)
+:Sending Touch (ACTION_DOWN): 0:(1025.0,305.0)
+:Sending Touch (ACTION_UP): 0:(1036.8848,309.24805)
+:Sending Touch (ACTION_DOWN): 0:(43.0,2116.0)
+:Sending Touch (ACTION_UP): 0:(126.06543,2004.3975)
+:Sending Trackball (ACTION_MOVE): 0:(-5.0,-2.0)
+:Sending Trackball (ACTION_UP): 0:(0.0,0.0)
+:Sending Touch (ACTION_DOWN): 0:(626.0,2160.0)
+:Sending Touch (ACTION_UP): 0:(615.0742,2169.8877)
+:Sending Touch (ACTION_DOWN): 0:(522.0,616.0)
+:Sending Touch (ACTION_UP): 0:(453.22168,539.8545)
+:Sending Touch (ACTION_DOWN): 0:(115.0,1558.0)
+:Sending Touch (ACTION_UP): 0:(103.04785,1558.9932)
+:Sending Touch (ACTION_DOWN): 0:(138.0,1063.0)
+:Sending Touch (ACTION_UP): 0:(129.22559,1052.5273)
+:Sending Touch (ACTION_DOWN): 0:(501.0,1376.0)
+:Sending Touch (ACTION_UP): 0:(500.99023,1376.8301)
+:Sending Touch (ACTION_DOWN): 0:(987.0,1615.0)
+:Sending Touch (ACTION_UP): 0:(980.124,1611.7803)
+:Sending Touch (ACTION_DOWN): 0:(424.0,665.0)
+:Sending Touch (ACTION_UP): 0:(363.0957,606.15137)
+:Sending Trackball (ACTION_MOVE): 0:(1.0,-1.0)
+    //[calendar_time:2026-10-03 16:31:36.007  system_uptime:109863]
+    // Sending event #600
+:Sending Touch (ACTION_DOWN): 0:(119.0,1775.0)
+:Sending Touch (ACTION_UP): 0:(133.80469,1774.3818)
+:Sending Touch (ACTION_DOWN): 0:(937.0,1767.0)
+:Sending Touch (ACTION_UP): 0:(972.0469,1761.1885)
+:Sending Touch (ACTION_DOWN): 0:(394.0,1977.0)
+:Sending Touch (ACTION_UP): 0:(375.79297,1986.8594)
+:Sending Flip keyboardOpen=false
+Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0: open failed: EACCES (Permission denied)
+    // Injection Failed
+:Sending Touch (ACTION_DOWN): 0:(780.0,845.0)
+:Sending Touch (ACTION_UP): 0:(783.30566,855.6543)
+:Sending Touch (ACTION_DOWN): 0:(119.0,1399.0)
+:Sending Touch (ACTION_UP): 0:(125.07324,1408.291)
+:Sending Touch (ACTION_DOWN): 0:(248.0,450.0)
+:Sending Touch (ACTION_UP): 0:(269.03027,463.792)
+:Sending Touch (ACTION_DOWN): 0:(508.0,1050.0)
+:Sending Touch (ACTION_UP): 0:(519.99805,1085.0322)
+:Sending Trackball (ACTION_MOVE): 0:(3.0,-1.0)
+:Sending Trackball (ACTION_MOVE): 0:(0.0,-4.0)
+:Sending Touch (ACTION_DOWN): 0:(71.0,248.0)
+:Sending Touch (ACTION_UP): 0:(53.064453,259.53223)
+:Sending Touch (ACTION_DOWN): 0:(482.0,1914.0)
+:Sending Touch (ACTION_UP): 0:(481.23438,1899.0225)
+// CRASH: com.genshincalc.app (pid 4544)
+// Short Msg: java.util.regex.PatternSyntaxException
+// Long Msg: java.util.regex.PatternSyntaxException: Syntax error in regexp pattern near index 25
+\{(param\d+):([A-Z0-9]+)}
+// Build Label: google/sdk_gphone64_x86_64/emu64xa:14/UE1A.230829.050/12077443:userdebug/dev-keys
+// Build Changelist: 12077443
+// Build Time: 1720722121000
+// java.lang.ExceptionInInitializerError
+// 	at com.genshincalc.app.ui.LibraryDetailsKt$CharacterDetailScreen$1$1$1$4$1.invoke(LibraryDetails.kt:110)
+// 	at com.genshincalc.app.ui.LibraryDetailsKt$CharacterDetailScreen$1$1$1$4$1.invoke(LibraryDetails.kt:106)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:118)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at com.genshincalc.app.ui.ComponentsKt$SectionCard$1.invoke(Components.kt:137)
+// 	at com.genshincalc.app.ui.ComponentsKt$SectionCard$1.invoke(Components.kt:125)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:118)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at androidx.compose.material3.CardKt$Card$1.invoke(Card.kt:888)
+// 	at androidx.compose.material3.CardKt$Card$1.invoke(Card.kt:96)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at androidx.compose.material3.SurfaceKt$Surface$1.invoke(Surface.kt:126)
+// 	at androidx.compose.material3.SurfaceKt$Surface$1.invoke(Surface.kt:108)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at androidx.compose.runtime.CompositionLocalKt.CompositionLocalProvider(CompositionLocal.kt:380)
+// 	at androidx.compose.material3.SurfaceKt.Surface-T9BRK9s(Surface.kt:105)
+// 	at androidx.compose.material3.CardKt.Card(Card.kt:89)
+// 	at com.genshincalc.app.ui.ComponentsKt.SectionCard(Components.kt:122)
+// 	at com.genshincalc.app.ui.LibraryDetailsKt$CharacterDetailScreen$1$1$1$4.invoke(LibraryDetails.kt:106)
+// 	at com.genshincalc.app.ui.LibraryDetailsKt$CharacterDetailScreen$1$1$1$4.invoke(LibraryDetails.kt:105)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:118)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at androidx.compose.foundation.lazy.LazyListIntervalContent$item$3.invoke(LazyListIntervalContent.kt:59)
+// 	at androidx.compose.foundation.lazy.LazyListIntervalContent$item$3.invoke(LazyListIntervalContent.kt:59)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:139)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at androidx.compose.foundation.lazy.LazyListItemProviderImpl$Item$1.invoke(LazyListItemProvider.kt:79)
+// 	at androidx.compose.foundation.lazy.LazyListItemProviderImpl$Item$1.invoke(LazyListItemProvider.kt:77)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at androidx.compose.runtime.CompositionLocalKt.CompositionLocalProvider(CompositionLocal.kt:401)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutPinnableItemKt.LazyLayoutPinnableItem(LazyLayoutPinnableItem.kt:58)
+// 	at androidx.compose.foundation.lazy.LazyListItemProviderImpl.Item(LazyListItemProvider.kt:77)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutItemContentFactoryKt$SkippableItem$1.invoke(LazyLayoutItemContentFactory.kt:136)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutItemContentFactoryKt$SkippableItem$1.invoke(LazyLayoutItemContentFactory.kt:135)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at androidx.compose.runtime.CompositionLocalKt.CompositionLocalProvider(CompositionLocal.kt:401)
+// 	at androidx.compose.runtime.saveable.SaveableStateHolderImpl.SaveableStateProvider(SaveableStateHolder.kt:85)
+// 	at androidx.compose.foundation.lazy.layout.LazySaveableStateHolder.SaveableStateProvider(LazySaveableStateHolder.kt:85)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutItemContentFactoryKt.SkippableItem-JVlU9Rs(LazyLayoutItemContentFactory.kt:135)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutItemContentFactoryKt.access$SkippableItem-JVlU9Rs(LazyLayoutItemContentFactory.kt:1)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutItemContentFactory$CachedItemContent$createContentLambda$1.invoke(LazyLayoutItemContentFactory.kt:101)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutItemContentFactory$CachedItemContent$createContentLambda$1.invoke(LazyLayoutItemContentFactory.kt:91)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at androidx.compose.ui.layout.LayoutNodeSubcompositionsState$subcompose$3$1$1.invoke(SubcomposeLayout.kt:1017)
+// 	at androidx.compose.ui.layout.LayoutNodeSubcompositionsState$subcompose$3$1$1.invoke(SubcomposeLayout.kt:493)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:109)
+// 	at androidx.compose.runtime.internal.ComposableLambdaImpl.invoke(ComposableLambda.jvm.kt:35)
+// 	at androidx.compose.runtime.ActualJvm_jvmKt.invokeComposable(ActualJvm.jvm.kt:97)
+// 	at androidx.compose.runtime.ComposerImpl.doCompose(Composer.kt:3595)
+// 	at androidx.compose.runtime.ComposerImpl.composeContent$runtime_release(Composer.kt:3522)
+// 	at androidx.compose.runtime.CompositionImpl.composeContent(Composition.kt:743)
+// 	at androidx.compose.runtime.Recomposer.composeInitial$runtime_release(Recomposer.kt:1122)
+// 	at androidx.compose.runtime.ComposerImpl$CompositionContextImpl.composeInitial$runtime_release(Composer.kt:3876)
+// 	at androidx.compose.runtime.ComposerImpl$CompositionContextImpl.composeInitial$runtime_release(Composer.kt:3876)
+// 	at androidx.compose.runtime.CompositionImpl.composeInitial(Composition.kt:649)
+// 	at androidx.compose.runtime.CompositionImpl.setContent(Composition.kt:635)
+// 	at androidx.compose.ui.layout.LayoutNodeSubcompositionsState.subcomposeInto(SubcomposeLayout.kt:516)
+// 	at androidx.compose.ui.layout.LayoutNodeSubcompositionsState.subcompose(SubcomposeLayout.kt:488)
+// 	at androidx.compose.ui.layout.LayoutNodeSubcompositionsState.subcompose(SubcomposeLayout.kt:479)
+// 	at androidx.compose.ui.layout.LayoutNodeSubcompositionsState.subcompose(SubcomposeLayout.kt:463)
+// 	at androidx.compose.ui.layout.LayoutNodeSubcompositionsState$Scope.subcompose(SubcomposeLayout.kt:895)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutMeasureScopeImpl.measure-0kLqBqw(LazyLayoutMeasureScope.kt:125)
+// 	at androidx.compose.foundation.lazy.LazyListMeasuredItemProvider.getAndMeasure-0kLqBqw(LazyListMeasuredItemProvider.kt:55)
+// 	at androidx.compose.foundation.lazy.LazyListMeasuredItemProvider.getAndMeasure-0kLqBqw$default(LazyListMeasuredItemProvider.kt:49)
+// 	at androidx.compose.foundation.lazy.LazyListMeasureKt.measureLazyList-x0Ok8Vo(LazyListMeasure.kt:214)
+// 	at androidx.compose.foundation.lazy.LazyListKt$rememberLazyListMeasurePolicy$1$1.invoke-0kLqBqw(LazyList.kt:326)
+// 	at androidx.compose.foundation.lazy.LazyListKt$rememberLazyListMeasurePolicy$1$1.invoke(LazyList.kt:183)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutKt$LazyLayout$3$2$1.invoke-0kLqBqw(LazyLayout.kt:119)
+// 	at androidx.compose.foundation.lazy.layout.LazyLayoutKt$LazyLayout$3$2$1.invoke(LazyLayout.kt:112)
+// 	at androidx.compose.ui.layout.LayoutNodeSubcompositionsState$createMeasurePolicy$1.measure-3p2s80s(SubcomposeLayout.kt:725)
+// 	at androidx.compose.ui.node.InnerNodeCoordinator.measure-BRTryo0(InnerNodeCoordinator.kt:135)
+// 	at androidx.compose.ui.graphics.SimpleGraphicsLayerModifier.measure-3p2s80s(GraphicsLayerModifier.kt:646)
+// 	at androidx.compose.ui.node.LayoutModifierNodeCoordinator.measure-BRTryo0(LayoutModifierNodeCoordinator.kt:188)
+// 	at androidx.compose.foundation.layout.FillNode.measure-3p2s80s(Size.kt:699)
+// 	at androidx.compose.ui.node.LayoutModifierNodeCoordinator.measure-BRTryo0(LayoutModifierNodeCoordinator.kt:188)
+// 	at androidx.compose.foundation.layout.PaddingValuesModifier.measure-3p2s80s(Padding.kt:472)
+// 	at androidx.compose.ui.node.LayoutModifierNodeCoordinator.measure-BRTryo0(LayoutModifierNodeCoordinator.kt:188)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1.invoke(LayoutNodeLayoutDelegate.kt:316)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1.invoke(LayoutNodeLayoutDelegate.kt:315)
+// 	at androidx.compose.runtime.snapshots.Snapshot$Companion.observe(Snapshot.kt:503)
+// 	at androidx.compose.runtime.snapshots.SnapshotStateObserver$ObservedScopeMap.observe(SnapshotStateObserver.kt:502)
+// 	at androidx.compose.runtime.snapshots.SnapshotStateObserver.observeReads(SnapshotStateObserver.kt:258)
+// 	at androidx.compose.ui.node.OwnerSnapshotObserver.observeReads$ui_release(OwnerSnapshotObserver.kt:133)
+// 	at androidx.compose.ui.node.OwnerSnapshotObserver.observeMeasureSnapshotReads$ui_release(OwnerSnapshotObserver.kt:113)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate.performMeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:1782)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate.access$performMeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:40)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate.remeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:696)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate.measure-BRTryo0(LayoutNodeLayoutDelegate.kt:672)
+// 	at androidx.compose.material3.ScaffoldKt$ScaffoldLayout$1$1.invoke-0kLqBqw(Scaffold.kt:263)
+// 	at androidx.compose.material3.ScaffoldKt$ScaffoldLayout$1$1.invoke(Scaffold.kt:140)
+// 	at androidx.compose.ui.layout.LayoutNodeSubcompositionsState$createMeasurePolicy$1.measure-3p2s80s(SubcomposeLayout.kt:725)
+// 	at androidx.compose.ui.node.InnerNodeCoordinator.measure-BRTryo0(InnerNodeCoordinator.kt:135)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1.invoke(LayoutNodeLayoutDelegate.kt:316)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1.invoke(LayoutNodeLayoutDelegate.kt:315)
+// 	at androidx.compose.runtime.snapshots.Snapshot$Companion.observe(Snapshot.kt:503)
+// 	at androidx.compose.runtime.snapshots.SnapshotStateObserver$ObservedScopeMap.observe(SnapshotStateObserver.kt:502)
+// 	at androidx.compose.runtime.snapshots.SnapshotStateObserver.observeReads(SnapshotStateObserver.kt:258)
+// 	at androidx.compose.ui.node.OwnerSnapshotObserver.observeReads$ui_release(OwnerSnapshotObserver.kt:133)
+// 	at androidx.compose.ui.node.OwnerSnapshotObserver.observeMeasureSnapshotReads$ui_release(OwnerSnapshotObserver.kt:113)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate.performMeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:1782)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate.access$performMeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:40)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate.remeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:696)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate.measure-BRTryo0(LayoutNodeLayoutDelegate.kt:672)
+// 	at androidx.compose.foundation.layout.BoxMeasurePolicy.measure-3p2s80s(Box.kt:151)
+// 	at androidx.compose.ui.node.InnerNodeCoordinator.measure-BRTryo0(InnerNodeCoordinator.kt:135)
+// 	at androidx.compose.ui.graphics.SimpleGraphicsLayerModifier.measure-3p2s80s(GraphicsLayerModifier.kt:646)
+// 	at androidx.compose.ui.node.LayoutModifierNodeCoordinator.measure-BRTryo0(LayoutModifierNodeCoordinator.kt:188)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1.invoke(LayoutNodeLayoutDelegate.kt:316)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1.invoke(LayoutNodeLayoutDelegate.kt:315)
+// 	at androidx.compose.runtime.snapshots.Snapshot$Companion.observe(Snapshot.kt:503)
+// 	at androidx.compose.runtime.snapshots.SnapshotStateObserver$ObservedScopeMap.observe(SnapshotStateObserver.kt:502)
+// 	at androidx.compose.runtime.snapshots.SnapshotStateObserver.observeReads(SnapshotStateObserver.kt:258)
+// 	at androidx.compose.ui.node.OwnerSnapshotObserver.observeReads$ui_release(OwnerSnapshotObserver.kt:133)
+// 	at androidx.compose.ui.node.OwnerSnapshotObserver.observeMeasureSnapshotReads$ui_release(OwnerSnapshotObserver.kt:113)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate.performMeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:1782)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate.access$performMeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:40)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate.remeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:696)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate.measure-BRTryo0(LayoutNodeLayoutDelegate.kt:672)
+// 	at androidx.compose.ui.layout.RootMeasurePolicy.measure-3p2s80s(RootMeasurePolicy.kt:38)
+// 	at androidx.compose.ui.node.InnerNodeCoordinator.measure-BRTryo0(InnerNodeCoordinator.kt:135)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1.invoke(LayoutNodeLayoutDelegate.kt:316)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$performMeasureBlock$1.invoke(LayoutNodeLayoutDelegate.kt:315)
+// 	at androidx.compose.runtime.snapshots.Snapshot$Companion.observe(Snapshot.kt:2441)
+// 	at androidx.compose.runtime.snapshots.SnapshotStateObserver$ObservedScopeMap.observe(SnapshotStateObserver.kt:502)
+// 	at androidx.compose.runtime.snapshots.SnapshotStateObserver.observeReads(SnapshotStateObserver.kt:258)
+// 	at androidx.compose.ui.node.OwnerSnapshotObserver.observeReads$ui_release(OwnerSnapshotObserver.kt:133)
+// 	at androidx.compose.ui.node.OwnerSnapshotObserver.observeMeasureSnapshotReads$ui_release(OwnerSnapshotObserver.kt:113)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate.performMeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:1782)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate.access$performMeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:40)
+// 	at androidx.compose.ui.node.LayoutNodeLayoutDelegate$MeasurePassDelegate.remeasure-BRTryo0(LayoutNodeLayoutDelegate.kt:696)
+// 	at androidx.compose.ui.node.LayoutNode.remeasure-_Sx5XlM$ui_release(LayoutNode.kt:1222)
+// 	at androidx.compose.ui.node.MeasureAndLayoutDelegate.doRemeasure-sdFAvZA(MeasureAndLayoutDelegate.kt:367)
+// 	at androidx.compose.ui.node.MeasureAndLayoutDelegate.remeasureOnly(MeasureAndLayoutDelegate.kt:622)
+// 	at androidx.compose.ui.node.MeasureAndLayoutDelegate.measureOnly(MeasureAndLayoutDelegate.kt:420)
+// 	at androidx.compose.ui.platform.AndroidComposeView.onMeasure(AndroidComposeView.android.kt:1370)
+// 	at android.view.View.measure(View.java:27122)
+// 	at androidx.compose.ui.platform.AbstractComposeView.internalOnMeasure$ui_release(ComposeView.android.kt:309)
+// 	at androidx.compose.ui.platform.AbstractComposeView.onMeasure(ComposeView.android.kt:296)
+// 	at android.view.View.measure(View.java:27122)
+// 	at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:7008)
+// 	at android.widget.FrameLayout.onMeasure(FrameLayout.java:194)
+// 	at android.view.View.measure(View.java:27122)
+// 	at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:7008)
+// 	at android.widget.LinearLayout.measureChildBeforeLayout(LinearLayout.java:1608)
+// 	at android.widget.LinearLayout.measureVertical(LinearLayout.java:878)
+// 	at android.widget.LinearLayout.onMeasure(LinearLayout.java:721)
+// 	at android.view.View.measure(View.java:27122)
+// 	at android.view.ViewGroup.measureChildWithMargins(ViewGroup.java:7008)
+// 	at android.widget.FrameLayout.onMeasure(FrameLayout.java:194)
+// 	at com.android.internal.policy.DecorView.onMeasure(DecorView.java:750)
+// 	at android.view.View.measure(View.java:27122)
+// 	at android.view.ViewRootImpl.performMeasure(ViewRootImpl.java:4182)
+// 	at android.view.ViewRootImpl.measureHierarchy(ViewRootImpl.java:2759)
+// 	at android.view.ViewRootImpl.performTraversals(ViewRootImpl.java:3086)
+// 	at android.view.ViewRootImpl.doTraversal(ViewRootImpl.java:2465)
+// 	at android.view.ViewRootImpl$TraversalRunnable.run(ViewRootImpl.java:9305)
+// 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1339)
+// 	at android.view.Choreographer$CallbackRecord.run(Choreographer.java:1348)
+// 	at android.view.Choreographer.doCallbacks(Choreographer.java:952)
+// 	at android.view.Choreographer.doFrame(Choreographer.java:882)
+// 	at android.view.Choreographer$FrameDisplayEventReceiver.run(Choreographer.java:1322)
+// 	at android.os.Handler.handleCallback(Handler.java:958)
+// 	at android.os.Handler.dispatchMessage(Handler.java:99)
+// 	at android.os.Looper.loopOnce(Looper.java:205)
+// 	at android.os.Looper.loop(Looper.java:294)
+// 	at android.app.ActivityThread.main(ActivityThread.java:8177)
+// 	at java.lang.reflect.Method.invoke(Native Method)
+// 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:552)
+// 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:971)
+// Caused by: java.util.regex.PatternSyntaxException: Syntax error in regexp pattern near index 25
+// \{(param\d+):([A-Z0-9]+)}
+// 	at com.android.icu.util.regex.PatternNative.compileImpl(Native Method)
+// 	at com.android.icu.util.regex.PatternNative.<init>(PatternNative.java:53)
+// 	at com.android.icu.util.regex.PatternNative.create(PatternNative.java:49)
+// 	at java.util.regex.Pattern.compile(Pattern.java:3533)
+// 	at java.util.regex.Pattern.<init>(Pattern.java:1419)
+// 	at java.util.regex.Pattern.compile(Pattern.java:921)
+// 	at kotlin.text.Regex.<init>(Regex.kt:88)
+// 	at com.genshincalc.core.text.TalentText.<clinit>(Format.kt:39)
+// 	... 174 more
+// 
+** Monkey aborted due to error.
+Events injected: 686
+:Sending rotation degree=0, persist=false
+:Dropped: keys=0 pointers=0 trackballs=0 flips=1 rotations=0
+## Network stats: elapsed time=33084ms (0ms mobile, 0ms wifi, 33084ms not connected)
+** System appears to have crashed at event 686 of 3000 using seed 11
