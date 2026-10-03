@@ -128,7 +128,7 @@ private fun TeamBar(data: GameDataSet, team: Team, vm: CalcViewModel, nav: Nav) 
                 CharacterAvatar(c, 46.dp, selected = i == team.activeIndex)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    c.name.substringBefore(" (").split(" ").last(),
+                    shortName(c.name),
                     style = MaterialTheme.typography.labelSmall,
                     maxLines = 1, overflow = TextOverflow.Ellipsis,
                     fontWeight = if (i == team.activeIndex) FontWeight.Bold else FontWeight.Normal,
@@ -146,5 +146,15 @@ private fun TeamBar(data: GameDataSet, team: Team, vm: CalcViewModel, nav: Nav) 
                 Text("Add", style = MaterialTheme.typography.labelSmall)
             }
         }
+    }
+}
+
+/** Name for the small party avatars: "Hu Tao", "Kazuha", "Raiden". */
+internal fun shortName(name: String): String {
+    val n = name.substringBefore(" (")
+    return when {
+        n.length <= 9 -> n
+        n.endsWith(" Shogun") -> n.substringBefore(" ")
+        else -> n.split(" ").last()
     }
 }

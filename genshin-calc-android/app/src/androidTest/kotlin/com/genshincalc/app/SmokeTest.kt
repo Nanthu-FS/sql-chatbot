@@ -180,7 +180,10 @@ class SmokeTest {
         shot("23_reaction_detail")
         back()
 
+        // The calculator keeps its sub-tab (Build) while the library is shown.
         tag("nav_calculator").performClick()
+        waitForTag("build_list")
+        tag("tab_damage").performClick()
         waitForTag("damage_list")
         tag("damage_list").assertIsDisplayed()
     }

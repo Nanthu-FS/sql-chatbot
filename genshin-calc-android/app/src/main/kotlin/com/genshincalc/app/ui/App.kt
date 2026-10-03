@@ -25,6 +25,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,9 +68,21 @@ fun App(vm: CalcViewModel) {
         return
     }
 
+    // Keeps each screen's rememberSaveable state (sub-tab, scroll, search) while another screen covers it.
+    val screens = rememberSaveableStateHolder()
     val stack = remember { mutableStateListOf<Route>() }
     var tab by rememberSaveable { mutableIntStateOf(0) }
-    val nav = remember { Nav(push = { stack.add(it) }, pop = { if (stack.isNotEmpty()) stack.removeAt(stack.lastIndex) }) }
+    val nav = remember {
+        Nav(
+            push = { stack.add(it) },
+            pop = {
+                if (stack.isNotEmpty()) {
+                    screens.removeState(routeKey(stack.lastIndex, stack.last()))
+                    stack.removeAt(stack.lastIndex)
+                }
+            },
+        )
+    }
     BackHandler(enabled = stack.isNotEmpty()) { nav.pop() }
 
     error?.let { message ->
@@ -83,21 +96,39 @@ fun App(vm: CalcViewModel) {
 
     val top = stack.lastOrNull()
     if (top != null) {
-        RouteScreen(top, gameData, team, vm, nav)
+        screens.SaveableStateProvider(routeKey(stack.lastIndex, top)) {
+            RouteScreen(top, gameData, team, vm, nav)
+        }
         return
     }
 
+    screens.SaveableStateProvider("main") { MainTabs(tab, { tab = it }, gameData, team, result, vm, nav) }
+}
+
+private fun routeKey(index: Int, route: Route) = "route$index:$route"
+
+@Composable
+private fun MainTabs(
+    tab: Int,
+    setTab: (Int) -> Unit,
+    gameData: com.genshincalc.core.model.GameDataSet,
+    team: com.genshincalc.core.model.Team,
+    result: com.genshincalc.core.calc.TeamResult?,
+    vm: CalcViewModel,
+    nav: Nav,
+) {
+    val tabs = rememberSaveableStateHolder()
     Scaffold(
         bottomBar = {
             NavigationBar {
                 NavigationBarItem(
-                    selected = tab == 0, onClick = { tab = 0 },
+                    selected = tab == 0, onClick = { setTab(0) },
                     icon = { Icon(Icons.Filled.Home, contentDescription = null) },
                     label = { Text("Calculator") },
                     modifier = Modifier.testTag("nav_calculator"),
                 )
                 NavigationBarItem(
-                    selected = tab == 1, onClick = { tab = 1 },
+                    selected = tab == 1, onClick = { setTab(1) },
                     icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = null) },
                     label = { Text("Library") },
                     modifier = Modifier.testTag("nav_library"),
@@ -106,9 +137,11 @@ fun App(vm: CalcViewModel) {
         },
     ) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
-            when (tab) {
-                0 -> CalculatorScreen(gameData, team, result, vm, nav)
-                else -> LibraryScreen(gameData, nav)
+            tabs.SaveableStateProvider(tab) {
+                when (tab) {
+                    0 -> CalculatorScreen(gameData, team, result, vm, nav)
+                    else -> LibraryScreen(gameData, nav)
+                }
             }
         }
     }
