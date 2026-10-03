@@ -1,0 +1,171 @@
+package com.genshincalc.core.calc
+
+import com.genshincalc.core.model.Element
+import com.genshincalc.core.model.Reaction
+
+/**
+ * The game's damage formulas.
+ *
+ * Outgoing DMG = (Base DMG + Flat DMG + Additive reaction bonus) x (1 + DMG Bonus) x CRIT
+ *                x Enemy DEF multiplier x Enemy RES multiplier x Amplifying multiplier
+ *
+ * Transformative DMG = Level multiplier x Reaction multiplier x (1 + EM bonus + Reaction bonus)
+ *                      x Enemy RES multiplier                      (no DEF, no CRIT by default)
+ */
+object Formulas {
+
+    /** DEF reduction above this is ignored. */
+    const val MAX_DEF_REDUCTION = 0.9
+
+    fun defMultiplier(charLevel: Int, enemyLevel: Int, defReduction: Double = 0.0, defIgnore: Double = 0.0): Double {
+        val attacker = charLevel + 100.0
+        val defender = (enemyLevel + 100.0) *
+            (1 - defReduction.coerceAtMost(MAX_DEF_REDUCTION)) *
+            (1 - defIgnore.coerceIn(0.0, 1.0))
+        return (attacker / (attacker + defender)).coerceAtMost(1.0)
+    }
+
+    fun resMultiplier(res: Double): Double = when {
+        res < 0 -> 1 - res / 2
+        res < 0.75 -> 1 - res
+        else -> 1 / (4 * res + 1)
+    }
+
+    /** EM bonus for Vaporize / Melt: 2.78 x EM / (EM + 1400). */
+    fun amplifyingEmBonus(em: Double): Double = 25.0 / 9.0 * em / (em + 1400)
+
+    /** EM bonus for Aggravate / Spread: 5 x EM / (EM + 1200). */
+    fun additiveEmBonus(em: Double): Double = 5 * em / (em + 1200)
+
+    /** EM bonus for transformative reactions: 16 x EM / (EM + 2000). */
+    fun transformativeEmBonus(em: Double): Double = 16 * em / (em + 2000)
+
+    /** EM bonus for Lunar reactions: 6 x EM / (EM + 2000). */
+    fun lunarEmBonus(em: Double): Double = 6 * em / (em + 2000)
+
+    /** EM bonus for Crystallize shields: 4.44 x EM / (EM + 1400). */
+    fun crystallizeEmBonus(em: Double): Double = 40.0 / 9.0 * em / (em + 1400)
+
+    /** Base multiplier of Vaporize/Melt for the triggering element, or null if it can't trigger it. */
+    fun amplifyingMultiplier(reaction: Reaction, trigger: Element): Double? = when (reaction) {
+        Reaction.VAPORIZE -> when (trigger) {
+            Element.HYDRO -> 2.0
+            Element.PYRO -> 1.5
+            else -> null
+        }
+        Reaction.MELT -> when (trigger) {
+            Element.PYRO -> 2.0
+            Element.CRYO -> 1.5
+            else -> null
+        }
+        else -> null
+    }
+
+    /** Base multiplier of Aggravate/Spread, or null if [trigger] can't trigger it. */
+    fun additiveMultiplier(reaction: Reaction, trigger: Element): Double? = when {
+        reaction == Reaction.AGGRAVATE && trigger == Element.ELECTRO -> 1.15
+        reaction == Reaction.SPREAD && trigger == Element.DENDRO -> 1.25
+        else -> null
+    }
+
+    /** Reaction multiplier of transformative reactions (Version 7.x values). */
+    fun transformativeMultiplier(reaction: Reaction): Double = when (reaction) {
+        Reaction.OVERLOADED -> 2.75
+        Reaction.SUPERCONDUCT -> 1.5
+        Reaction.ELECTRO_CHARGED -> 2.0
+        Reaction.SWIRL -> 0.6
+        Reaction.SHATTERED -> 3.0
+        Reaction.BURNING -> 0.25
+        Reaction.BLOOM -> 2.0
+        Reaction.HYPERBLOOM -> 3.0
+        Reaction.BURGEON -> 3.0
+        Reaction.LUNAR_CHARGED -> 3.0
+        Reaction.LUNAR_CRYSTALLIZE -> 1.6
+        else -> 0.0
+    }
+
+    /** Element whose RES reduces the reaction's damage (Swirl uses the swirled element). */
+    fun transformativeResElement(reaction: Reaction): Element = when (reaction) {
+        Reaction.OVERLOADED, Reaction.BURNING -> Element.PYRO
+        Reaction.SUPERCONDUCT -> Element.CRYO
+        Reaction.ELECTRO_CHARGED, Reaction.LUNAR_CHARGED -> Element.ELECTRO
+        Reaction.SHATTERED -> Element.PHYSICAL
+        Reaction.BLOOM, Reaction.HYPERBLOOM, Reaction.BURGEON, Reaction.LUNAR_BLOOM -> Element.DENDRO
+        Reaction.LUNAR_CRYSTALLIZE -> Element.GEO
+        else -> Element.ANEMO
+    }
+
+    /** Multiplier applied by Lunar reactions when the DMG comes from a talent instead of a reaction. */
+    fun lunarDirectMultiplier(reaction: Reaction): Double = when (reaction) {
+        Reaction.LUNAR_CHARGED -> 3.0
+        Reaction.LUNAR_BLOOM -> 1.0
+        Reaction.LUNAR_CRYSTALLIZE -> 1.6
+        else -> 1.0
+    }
+
+    /** Character-level multiplier used by transformative, additive and Lunar reactions. */
+    fun levelMultiplier(level: Int): Double = TRANSFORMATIVE_LEVEL[level.coerceIn(1, TRANSFORMATIVE_LEVEL.size - 1)]
+
+    /** Character-level multiplier for Crystallize shields. */
+    fun crystallizeLevelMultiplier(level: Int): Double =
+        CRYSTALLIZE_LEVEL[level.coerceIn(1, CRYSTALLIZE_LEVEL.size - 1)]
+
+    fun averageCritMultiplier(critRate: Double, critDmg: Double): Double = 1 + critRate.coerceIn(0.0, 1.0) * critDmg
+
+    // ElementCoeffExcelConfigData (PlayerElementLevelCo / PlayerShieldLevelCo), levels 0..200.
+    private val TRANSFORMATIVE_LEVEL = doubleArrayOf(
+        -1.0, 17.165606, 18.535048, 19.904854, 21.274902, 22.6454, 24.649612, 26.640642, 28.868587,
+        31.36768, 34.143345, 37.201, 40.66, 44.446667, 48.56352, 53.74848, 59.081898, 64.420044,
+        69.72446, 75.12314, 80.58478, 86.11203, 91.70374, 97.24463, 102.812645, 108.40956,
+        113.20169, 118.102905, 122.97932, 129.72733, 136.29291, 142.67085, 149.02902, 155.41699,
+        161.8255, 169.10631, 176.51808, 184.07274, 191.70952, 199.55692, 207.38205, 215.3989,
+        224.16566, 233.50217, 243.35057, 256.06308, 268.5435, 281.52606, 295.01364, 309.0672,
+        323.6016, 336.75754, 350.5303, 364.4827, 378.61917, 398.6004, 416.39825, 434.387,
+        452.95105, 472.60623, 492.8849, 513.56854, 539.1032, 565.51056, 592.53876, 624.4434,
+        651.47015, 679.4968, 707.79407, 736.67145, 765.64026, 794.7734, 824.67737, 851.1578,
+        877.74207, 914.2291, 946.74677, 979.4114, 1011.223, 1044.7917, 1077.4437, 1109.9976,
+        1142.9766, 1176.3695, 1210.1844, 1253.8357, 1288.9528, 1325.4841, 1363.4569, 1405.0974,
+        1446.8535, 1462.788, 1475.6956, 1497.9644, 1516.9423, 1561.468, 1593.5062, 1621.0258,
+        1643.8679, 1662.1382, 1674.8092, 2084.6357, 2139.0503, 2193.2134, 2234.1733, 2284.8242,
+        2303.8215, 2322.88, 2341.9995, 2361.1807, 2380.4233, 2399.7278, 2419.0942, 2438.5225,
+        2458.0132, 2491.481, 2515.0237, 2538.6436, 2562.3406, 2586.115, 2609.9673, 2633.8972,
+        2657.905, 2681.9912, 2706.1558, 2730.399, 2740.8057, 2751.238, 2761.696, 2772.1797,
+        2782.689, 2793.2239, 2803.7847, 2814.3713, 2824.984, 2835.6223, 2846.2866, 2856.9773,
+        2867.6938, 2878.4368, 2889.2056, 2900.001, 2910.8225, 2921.6704, 2932.545, 2943.4458,
+        2954.3733, 2965.3271, 2976.3079, 2987.3152, 2998.3494, 3009.4102, 3020.498, 3031.6128,
+        3042.7544, 3053.923, 3065.119, 3076.3418, 3087.5918, 3098.8691, 3110.1738, 3121.5056,
+        3132.865, 3144.252, 3155.6663, 3167.108, 3178.5774, 3190.0747, 3201.5996, 3213.152,
+        3224.7327, 3236.341, 3247.9773, 3259.6416, 3271.334, 3283.0544, 3294.803, 3306.5798,
+        3318.3848, 3330.218, 3342.0798, 3353.97, 3365.8887, 3377.8357, 3389.8115, 3401.816,
+        3413.8489, 3425.911, 3438.0015, 3450.1208, 3462.2693, 3474.4465, 3486.6528, 3498.8884,
+        3511.1528, 3523.4465, 3535.623, 3547.975, 3560.3562, 3572.7668, 3585.207,
+    )
+
+    private val CRYSTALLIZE_LEVEL = doubleArrayOf(
+        -1.0, 91.1791, 98.707664, 106.23622, 113.76477, 121.29332, 128.82188, 136.35042, 143.87898,
+        151.40752, 158.93608, 169.99149, 181.07625, 192.19037, 204.0482, 215.939, 227.86275,
+        247.68594, 267.5421, 287.4312, 303.82642, 320.22522, 336.62762, 352.31927, 368.01093,
+        383.70255, 394.43237, 405.18146, 415.94992, 426.73764, 437.5447, 450.6, 463.7003,
+        476.84558, 491.1275, 502.55457, 514.0121, 531.4096, 549.9796, 568.5849, 584.9965,
+        605.67035, 626.3862, 646.0523, 665.7556, 685.4961, 700.8394, 723.3331, 745.8653, 768.4357,
+        786.79193, 809.5388, 832.32904, 855.16266, 878.0396, 899.4848, 919.362, 946.0396, 974.7642,
+        1003.5786, 1030.077, 1056.635, 1085.2463, 1113.9244, 1149.2587, 1178.0648, 1200.2238,
+        1227.6603, 1257.243, 1284.9174, 1314.7529, 1342.6652, 1372.7524, 1396.321, 1427.3124,
+        1458.3745, 1482.3358, 1511.9109, 1541.5493, 1569.1537, 1596.8143, 1622.4197, 1648.074,
+        1666.3761, 1684.6782, 1702.9803, 1726.1047, 1754.6715, 1785.8666, 1817.1375, 1851.0603,
+        1885.0671, 1921.7493, 1958.5233, 2006.1941, 2041.569, 2054.4722, 2065.975, 2174.7227,
+        2186.7683, 2198.814, 2205.506, 2212.198, 2218.8901, 2225.582, 2232.2742, 2238.9663,
+        2245.6582, 2252.3503, 2259.0422, 2265.7344, 2272.4265, 2279.1184, 2285.8105, 2292.5024,
+        2299.1946, 2305.8867, 2312.5786, 2319.2708, 2325.9626, 2332.6548, 2339.347, 2346.0388,
+        2352.731, 2359.423, 2366.115, 2372.8071, 2379.499, 2386.1912, 2392.8833, 2399.5752,
+        2406.2673, 2412.9592, 2419.6514, 2426.3435, 2433.0354, 2439.7275, 2446.4194, 2453.1116,
+        2459.8037, 2466.4956, 2473.1877, 2479.8796, 2486.5718, 2493.264, 2499.9558, 2506.648,
+        2513.3398, 2520.032, 2526.724, 2533.416, 2540.1082, 2546.8, 2553.4922, 2560.1843,
+        2566.8762, 2573.5684, 2580.2605, 2586.9524, 2593.6445, 2600.3364, 2607.0286, 2613.7207,
+        2620.4126, 2627.1047, 2633.7966, 2640.4888, 2647.181, 2653.8728, 2660.565, 2667.2568,
+        2673.949, 2680.641, 2687.333, 2694.0251, 2700.717, 2707.4092, 2714.1013, 2720.7932,
+        2727.4854, 2734.1772, 2740.8694, 2747.5615, 2754.2534, 2760.9456, 2767.6375, 2774.3296,
+        2781.0217, 2787.7136, 2794.4058, 2801.0977, 2807.7898, 2814.482, 2821.1738, 2827.866,
+        2834.558, 2841.25, 2847.9421, 2854.634, 2861.3262, 2868.0183,
+    )
+}
