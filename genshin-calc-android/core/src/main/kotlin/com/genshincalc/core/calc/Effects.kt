@@ -160,6 +160,8 @@ class Modifiers {
     /** Lunar reactions: "elevated" DMG, a separate multiplier. */
     val lunarElevate = mutableMapOf<Reaction, Double>()
     val talentBonus = mutableMapOf<TalentType, Int>()
+    /** Hits whose element is replaced (Anemo absorption: "Additional Elemental DMG"). */
+    val elementOverrides = mutableMapOf<String, Element>()
 
     fun hitMods(kind: HitModKind, hit: HitContext): List<HitMod> = hitMods.filter { it.kind == kind && it.filter.matches(hit) }
 }
@@ -283,6 +285,9 @@ class EffectScope internal constructor(
     fun lunarElevate(reaction: Reaction, amount: Double) = sink.lunarElevate.merge(reaction, amount, Double::plus)
 
     fun talentLevel(type: TalentType, delta: Int) = sink.talentBonus.merge(type, delta, Int::plus)
+
+    /** Sets the element of specific hits (e.g. the absorbed element of an Anemo burst). */
+    fun convertElement(element: Element, vararg hitIds: String) = hitIds.forEach { sink.elementOverrides[it] = element }
 
     /**
      * Converts matching attacks to [element]. Party-wide infusions only affect Sword, Claymore and

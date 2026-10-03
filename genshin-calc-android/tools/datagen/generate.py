@@ -426,6 +426,11 @@ def apply_overrides(char_id, hits, talents):
             else:
                 h[k] = v
     for extra in ov.get("addHits", []):
+        extra = dict(extra)
+        # Synthetic scaling values (constant across talent levels) live in the talent's params.
+        for pname, value in extra.pop("params", {}).items():
+            talent = next(t for t in talents if t["type"] == extra["talent"])
+            talent["params"][pname] = value if isinstance(value, list) else [value] * 15
         hits.append(extra)
     return hits
 

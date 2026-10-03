@@ -122,6 +122,7 @@ class TeamCalculator(
             conv.reactionFlat.forEach { (k, v) -> m.mods.reactionFlat.merge(k, v, Double::plus) }
             conv.lunarBase.forEach { (k, v) -> m.mods.lunarBase.merge(k, v, Double::plus) }
             conv.lunarElevate.forEach { (k, v) -> m.mods.lunarElevate.merge(k, v, Double::plus) }
+            m.mods.elementOverrides.putAll(conv.elementOverrides)
         }
 
         val enemyRes = Element.entries.associateWith { team.enemy.baseRes(it) }

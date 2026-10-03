@@ -28,9 +28,12 @@ internal class HitCalculator(
             .maxByOrNull { it.priority.ordinal }
             ?.element
 
-    fun hits(m: MemberState): List<HitResult> = m.character.hits.map { hit(m, it) }
+    fun hits(m: MemberState): List<HitResult> = m.character.hits
+        .filter { (it.constellation ?: 0) <= m.constellation && (it.ascension ?: 0) <= m.ascension }
+        .map { hit(m, it) }
 
     private fun resolveElement(m: MemberState, hit: HitData, part: HitPart): Element {
+        m.mods.elementOverrides[hit.id]?.let { return it }
         part.element?.let { return it }
         hit.element?.let { return it }
         // Physical-by-default attack: infusions may convert it. Bows only take their own infusions

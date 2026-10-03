@@ -90,6 +90,15 @@ class MemberState internal constructor(
         return values[(talentLevel(type) - 1).coerceIn(0, values.size - 1)]
     }
 
+    /** Energy cost of the Elemental Burst (used by Raiden's Eye of Stormy Judgment). */
+    val burstEnergyCost: Double
+        get() {
+            val talent = character.talent(TalentType.BURST) ?: return 0.0
+            val attr = talent.attributes.firstOrNull { it.label.equals("Energy Cost", ignoreCase = true) } ?: return 0.0
+            val param = Regex("""param\d+""").find(attr.value)?.value ?: return 0.0
+            return talent.params[param]?.firstOrNull() ?: 0.0
+        }
+
     fun weaponRefinementValue(index: Int): Double {
         val raw = weapon?.refinements?.getOrNull(refinement - 1)?.getOrNull(index) ?: return 0.0
         return parseGameNumber(raw)

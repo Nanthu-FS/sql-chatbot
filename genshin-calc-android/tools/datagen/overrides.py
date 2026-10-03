@@ -24,6 +24,31 @@ def lunar(kind):
     return {"special": kind}
 
 
+def extra(talent, key, name, category, element, terms, cons=None, asc=None, special=None, count=1, flat=None):
+    """A damage row that comes from a passive or constellation instead of a talent table.
+
+    terms: list of (stat, multiplier) with constant multipliers, e.g. [("ATK", 0.75)].
+    """
+    prefix = {"NORMAL": "normal", "SKILL": "skill", "BURST": "burst"}[talent]
+    params, out_terms = {}, []
+    for i, (stat, value) in enumerate(terms):
+        pname = f"x_{key}_{i}"
+        params[pname] = value
+        out_terms.append({"stat": stat, "param": pname})
+    hit = {
+        "id": f"{prefix}/{key}", "talent": talent, "name": name, "kind": "DMG", "category": category,
+        "element": element, "parts": [{"terms": out_terms, "flat": None, "count": count, "element": None}],
+        "params": params,
+    }
+    if cons:
+        hit["constellation"] = cons
+    if asc:
+        hit["ascension"] = asc
+    if special:
+        hit["special"] = special
+    return hit
+
+
 CHARACTER_OVERRIDES = {
     # Arataki Kesagiri / Saichimonji are physical until Royal Descent infuses them.
     "aratakiitto": {"hits": {
@@ -144,3 +169,21 @@ CHARACTER_OVERRIDES = {
         "burst/skill-2-hit-dmg": lunar("LUNAR_CRYSTALLIZE"),
     }},
 }
+
+# Extra damage rows from passives and constellations.
+EXTRA_HITS = {
+    "xiangling": [extra("NORMAL", "c2-implode", "Implode DMG (C2)", "NONE", "PYRO", [("ATK", 0.75)], cons=2)],
+    "yelan": [extra("BURST", "c2-water-arrow", "Additional Water Arrow (C2)", "BURST", "HYDRO", [("HP", 0.14)], cons=2)],
+    "nahida": [extra("SKILL", "c6-karmic-oblivion", "Tri-Karma Purification: Karmic Oblivion (C6)", "SKILL", "DENDRO",
+                     [("ATK", 2.0), ("EM", 4.0)], cons=6)],
+    "keqing": [extra("SKILL", "c1-blink-dmg", "Blink DMG (C1)", "NONE", "ELECTRO", [("ATK", 0.5)], cons=1)],
+    "chongyun": [extra("NORMAL", "c1-ice-blade", "Ice Blade DMG (C1, x3)", "NONE", "CRYO", [("ATK", 0.5)], cons=1, count=3)],
+    "yanfei": [extra("NORMAL", "a4-blazing-eye", "Blazing Eye DMG (A4, on CRIT)", "CHARGED", "PYRO", [("ATK", 0.8)], asc=4)],
+    "baizhu": [extra("SKILL", "c2-gossamer-splice", "Gossamer Sprite: Splice DMG (C2)", "SKILL", "DENDRO", [("ATK", 2.5)], cons=2)],
+    "beidou": [extra("NORMAL", "c4-electro-dmg", "Stunning Revenge Electro DMG (C4)", "NONE", "ELECTRO", [("ATK", 0.2)], cons=4)],
+    "zhongli": [],
+}
+
+for _cid, _hits in EXTRA_HITS.items():
+    CHARACTER_OVERRIDES.setdefault(_cid, {}).setdefault("addHits", []).extend(_hits)
+CHARACTER_OVERRIDES.setdefault("zhongli", {}).setdefault("hits", {})["skill/stone-stele"] = {"name": "Stone Stele DMG"}

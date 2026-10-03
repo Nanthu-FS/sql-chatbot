@@ -79,6 +79,9 @@ data class HitData(
     val special: SpecialDamage? = null,
     /** Parts are separate instances whose damage is summed (e.g. "45% + 45%", "30% x 3"). */
     val parts: List<HitPart>,
+    /** Rows added by a constellation / ascension passive only exist from that level on. */
+    val constellation: Int? = null,
+    val ascension: Int? = null,
 )
 
 @Serializable
