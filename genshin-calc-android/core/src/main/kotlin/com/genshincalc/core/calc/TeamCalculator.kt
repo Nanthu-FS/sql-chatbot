@@ -146,7 +146,10 @@ class TeamCalculator(
                 ownEffects = own.map { AppliedEffect(it.effect, it.owner.index, it.value, it.active, it.effect.requirement(it.owner)) },
                 receivedEffects = received.map { AppliedEffect(it.effect, it.owner.index, it.value, true, true) },
                 infusion = hitCalc.infusionFor(m, com.genshincalc.core.model.AttackCategory.NORMAL),
-            )
+            ).also {
+                it.debugHitMods = m.mods.hitMods.toList()
+                it.debugElementOverrides = m.mods.elementOverrides.toMap()
+            }
         }
         return TeamResult(
             members = results,

@@ -76,7 +76,11 @@ data class MemberResult(
     /** Effects currently boosting this member. */
     val receivedEffects: List<AppliedEffect>,
     val infusion: Element?,
-)
+) {
+    /** Hit modifiers applied to this member (for tests and debugging). */
+    internal var debugHitMods: List<HitMod> = emptyList()
+    internal var debugElementOverrides: Map<String, Element> = emptyMap()
+}
 
 data class TeamResult(
     val members: List<MemberResult>,
