@@ -3,6 +3,7 @@ package com.genshincalc.app.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -55,6 +56,8 @@ fun CalculatorScreen(data: GameDataSet, team: Team, result: TeamResult?, vm: Cal
     Column(Modifier.fillMaxSize()) {
         TopAppBar(
             title = { Text("Damage Calculator") },
+            // The surrounding Scaffold already pads for the status bar.
+            windowInsets = WindowInsets(0, 0, 0, 0),
             actions = {
                 IconButton(onClick = { confirmReset = true }, modifier = Modifier.testTag("reset_team")) {
                     Icon(Icons.Filled.Refresh, contentDescription = "Reset to sample team")

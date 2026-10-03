@@ -3,6 +3,7 @@ package com.genshincalc.app.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -43,7 +44,7 @@ import com.genshincalc.core.text.ReactionGuide
 fun LibraryScreen(data: GameDataSet, nav: Nav) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     Column(Modifier.fillMaxSize()) {
-        TopAppBar(title = { Text("Library · Game ${data.gameVersion}") })
+        TopAppBar(title = { Text("Library · Game ${data.gameVersion}") }, windowInsets = WindowInsets(0, 0, 0, 0))
         val tabs = listOf("Characters", "Weapons", "Artifacts", "Reactions")
         TabRow(selectedTabIndex = tab) {
             tabs.forEachIndexed { i, t ->

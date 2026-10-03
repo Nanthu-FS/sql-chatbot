@@ -36,7 +36,8 @@ object Format {
 
 /** Renders talent attribute templates such as "{param1:F1P}+{param2:F1P}" at a talent level. */
 object TalentText {
-    private val placeholder = Regex("""\{(param\d+):([A-Z0-9]+)}""")
+    // Braces are escaped: Android's ICU regex engine rejects a bare '}'.
+    private val placeholder = Regex("""\{(param\d+|x_[A-Za-z0-9_-]+):([A-Z0-9]+)\}""")
 
     fun format(attribute: TalentAttribute, params: Map<String, List<Double>>, level: Int): String =
         format(attribute.value, params, level)

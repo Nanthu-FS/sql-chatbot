@@ -90,7 +90,8 @@ class SmokeTest {
         shot("02_hit_detail")
         rule.onNodeWithText("Close").performClick()
 
-        tag("reaction_VAPORIZE").performScrollTo().performClick()
+        tag("damage_list").performScrollToNode(hasTestTag("reaction_VAPORIZE"))
+        tag("reaction_VAPORIZE").performClick()
         shot("03_vaporize")
         tag("damage_list").performScrollToNode(hasText("Active buffs"))
         shot("04_damage_bottom")
