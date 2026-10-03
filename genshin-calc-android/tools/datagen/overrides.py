@@ -27,11 +27,15 @@ def lunar(kind):
 def extra(talent, key, name, category, element, terms, cons=None, asc=None, special=None, count=1, flat=None):
     """A damage row that comes from a passive or constellation instead of a talent table.
 
-    terms: list of (stat, multiplier) with constant multipliers, e.g. [("ATK", 0.75)].
+    terms: list of (stat, multiplier) with constant multipliers, e.g. [("ATK", 0.75)], or (stat, "paramN")
+    to reuse a scaling of the same talent.
     """
     prefix = {"NORMAL": "normal", "SKILL": "skill", "BURST": "burst"}[talent]
     params, out_terms = {}, []
     for i, (stat, value) in enumerate(terms):
+        if isinstance(value, str):  # an existing talent scaling, e.g. "param15"
+            out_terms.append({"stat": stat, "param": value})
+            continue
         pname = f"x_{key}_{i}"
         params[pname] = value
         out_terms.append({"stat": stat, "param": pname})
@@ -181,6 +185,29 @@ EXTRA_HITS = {
     "yanfei": [extra("NORMAL", "a4-blazing-eye", "Blazing Eye DMG (A4, on CRIT)", "CHARGED", "PYRO", [("ATK", 0.8)], asc=4)],
     "baizhu": [extra("SKILL", "c2-gossamer-splice", "Gossamer Sprite: Splice DMG (C2)", "SKILL", "DENDRO", [("ATK", 2.5)], cons=2)],
     "beidou": [extra("NORMAL", "c4-electro-dmg", "Stunning Revenge Electro DMG (C4)", "NONE", "ELECTRO", [("ATK", 0.2)], cons=4)],
+    "cyno": [extra("SKILL", "a1-duststalker-bolt", "Duststalker Bolt DMG (A1, x3)", "SKILL", "ELECTRO", [("ATK", 1.0)], asc=1, count=3)],
+    "wanderer": [extra("SKILL", "a4-wind-arrow", "Gales of Reverie Wind Arrow DMG (A4, x4)", "NONE", "ANEMO", [("ATK", 0.35)], asc=4, count=4)],
+    "tighnari": [extra("NORMAL", "c6-clusterbloom-arrow", "Additional Clusterbloom Arrow DMG (C6)", "CHARGED", "DENDRO", [("ATK", 1.5)], cons=6)],
+    "collei": [
+        extra("SKILL", "a1-sprout", "Sprout DMG (A1)", "SKILL", "DENDRO", [("ATK", 0.4)], asc=1),
+        extra("SKILL", "c6-miniature-cuilein-anbar", "Miniature Cuilein-Anbar DMG (C6)", "NONE", "DENDRO", [("ATK", 2.0)], cons=6),
+    ],
+    "candace": [extra("BURST", "c6-wave", "Crimson Crown Wave DMG (C6)", "BURST", "HYDRO", [("HP", 0.15)], cons=6)],
+    "kaveh": [extra("BURST", "c6-pairidaeza-light", "Pairidaeza's Light DMG (C6)", "NONE", "DENDRO", [("ATK", 0.618)], cons=6)],
+    "dori": [extra("BURST", "c2-jinni-toop", "Jinni Toop DMG (C2)", "NONE", "ELECTRO", [("ATK", 0.5)], cons=2)],
+    "yaoyao": [extra("SKILL", "c6-mega-radish", "Mega Radish DMG (C6)", "BURST", "DENDRO", [("ATK", 0.75)], cons=6)],
+    "neuvillette": [extra("NORMAL", "c6-current", "Additional Current DMG (C6, x2)", "CHARGED", "HYDRO", [("HP", 0.10)], cons=6, count=2)],
+    "clorinde": [
+        extra("SKILL", "c1-nightvigil-shade", "Nightvigil Shade DMG (C1, x2)", "NORMAL", "ELECTRO", [("ATK", 0.3)], cons=1, count=2),
+        extra("SKILL", "c6-glimbright-shade", "Glimbright Shade DMG (C6)", "NORMAL", "ELECTRO", [("ATK", 2.0)], cons=6),
+    ],
+    "chevreuse": [extra("SKILL", "c2-chain-explosion", "Chain Explosion DMG (C2, x2)", "SKILL", "PYRO", [("ATK", 1.2)], cons=2, count=2)],
+    "charlotte": [extra("BURST", "c6-coordinated-attack", "Coordinated Attack DMG (C6)", "BURST", "CRYO", [("ATK", 1.8)], cons=6)],
+    "lyney": [extra("NORMAL", "c6-pyrotechnic-strike-reprised", "Pyrotechnic Strike: Reprised DMG (C6)", "CHARGED", "PYRO",
+                    [("ATK", "param15")], cons=6)],
+    "emilie": [extra("SKILL", "a1-cleardew-cologne", "Cleardew Cologne DMG (A1)", "NONE", "DENDRO", [("ATK", 6.0)], asc=1)],
+    "escoffier": [extra("SKILL", "c6-special-grade-frosty-parfait", "Special-Grade Frosty Parfait DMG (C6)", "SKILL", "CRYO",
+                        [("ATK", 5.0)], cons=6)],
     "zhongli": [],
 }
 
