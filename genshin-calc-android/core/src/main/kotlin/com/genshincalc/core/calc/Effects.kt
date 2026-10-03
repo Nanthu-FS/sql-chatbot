@@ -181,7 +181,10 @@ data class AppliedEffect(
     val effect: Effect,
     val ownerIndex: Int,
     val value: Int,
+    /** Unlocked and switched on. */
     val active: Boolean,
+    /** Requirement (ascension, constellation, set pieces...) met. */
+    val unlocked: Boolean = true,
 )
 
 /** Values exposed to effect bodies. */

@@ -142,8 +142,8 @@ class TeamCalculator(
                 finalStats = m.final,
                 hits = hitCalc.hits(m),
                 transformative = hitCalc.transformative(m),
-                ownEffects = own.map { AppliedEffect(it.effect, it.owner.index, it.value, it.active) },
-                receivedEffects = received.map { AppliedEffect(it.effect, it.owner.index, it.value, true) },
+                ownEffects = own.map { AppliedEffect(it.effect, it.owner.index, it.value, it.active, it.effect.requirement(it.owner)) },
+                receivedEffects = received.map { AppliedEffect(it.effect, it.owner.index, it.value, true, true) },
                 infusion = hitCalc.infusionFor(m, com.genshincalc.core.model.AttackCategory.NORMAL),
             )
         }
@@ -153,7 +153,9 @@ class TeamCalculator(
             enemyRes = enemyRes,
             resShred = enemy.resShred.toMap(),
             defReduction = enemy.defReduction,
-            teamEffects = instances.filter { it.teamWide }.map { AppliedEffect(it.effect, 0, it.value, it.active) },
+            teamEffects = instances.filter { it.teamWide }.map {
+                AppliedEffect(it.effect, 0, it.value, it.active, it.effect.requirement(it.owner))
+            },
         )
     }
 
