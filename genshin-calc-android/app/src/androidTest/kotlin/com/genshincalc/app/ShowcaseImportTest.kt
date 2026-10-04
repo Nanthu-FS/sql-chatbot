@@ -70,7 +70,9 @@ class ShowcaseImportTest {
         tag("showcase_uid").performTextInput("800000001")
         shot("30_showcase_uid")
         rule.runOnUiThread { vm.loadShowcaseJson("800000001", fixture) }
-        waitForTag("showcase_apply")
+        rule.waitUntil(30_000) { vm.showcase.value.showcase != null || vm.showcase.value.error != null }
+        assertEquals(null, vm.showcase.value.error)
+        waitForTag("showcase_char_0")
         rule.onNodeWithText("Paimon's Friend").assertExists()
         shot("31_showcase_loaded")
 

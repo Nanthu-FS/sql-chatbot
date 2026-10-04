@@ -39,8 +39,10 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p core/build
-          curl -sSf --max-time 30 -A "TeyvatDmgCalc-CI/1.0 (github.com/Nanthu-FS/sql-chatbot)" \
-            -o core/build/showcase-sample.json "https://enka.network/api/uid/618285856/" || rm -f core/build/showcase-sample.json
+          code=$(curl -sS --max-time 30 -A "TeyvatDmgCalc-CI/1.0 (github.com/Nanthu-FS/sql-chatbot)" -w "%{http_code}" \
+            -o core/build/showcase-sample.json "https://enka.network/api/uid/618285856/" || echo failed)
+          echo "showcase sample: HTTP $code, $(wc -c < core/build/showcase-sample.json 2>/dev/null || echo 0) bytes"
+          [ "$code" = "200" ] || rm -f core/build/showcase-sample.json
 
       - name: Unit tests and APKs
         run: |
@@ -63,7 +65,8 @@ jobs:
               lines.append(f"- {f.split('TEST-')[-1][:-4]}: {t} tests, {fa + er} failed")
               for c in re.finditer(r'<testcase name="([^"]+)"[^>]*>\s*<failure message="([^"]*)"', s):
                   lines.append(f"  - FAILED {c.group(1)}: {c.group(2)[:300]}")
-              lines += ["  - " + l.strip().replace("&lt;", "<").replace("&gt;", ">") for l in s.splitlines() if l.strip().startswith("LIVE")]
+              out = re.sub(r"<system-out><!\[CDATA\[", "\n", s)
+              lines += ["  - " + l.strip().replace("&lt;", "<").replace("&gt;", ">") for l in out.splitlines() if l.strip().startswith("LIVE")]
           print(f"### Core unit tests: {total} run, {failed} failed")
           print("\n".join(lines))
           PY
