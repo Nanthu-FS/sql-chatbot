@@ -2,6 +2,6 @@ Starting: Intent { cmp=com.smartnotes/.ui.MainActivity }
 Status: ok
 LaunchState: COLD
 Activity: com.smartnotes/.ui.MainActivity
-TotalTime: 4485
-WaitTime: 4570
+TotalTime: 4841
+WaitTime: 4845
 Complete
