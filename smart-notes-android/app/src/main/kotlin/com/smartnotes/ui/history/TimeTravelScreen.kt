@@ -40,8 +40,10 @@ import java.util.Date
 @Composable
 fun TimeTravelScreen(vm: MainViewModel, nav: NavController, noteId: Long) {
     val t = LocalSkin.current
-    val note by vm.repo.note(noteId).collectAsState(initial = null)
-    val versions by vm.repo.versions(noteId).collectAsState(initial = emptyList())
+    val noteFlow = remember(noteId) { vm.repo.note(noteId) }
+    val versionsFlow = remember(noteId) { vm.repo.versions(noteId) }
+    val note by noteFlow.collectAsState(initial = null)
+    val versions by versionsFlow.collectAsState(initial = emptyList())
     var position by remember { mutableFloatStateOf(1f) }
     var playing by remember { mutableStateOf(false) }
 

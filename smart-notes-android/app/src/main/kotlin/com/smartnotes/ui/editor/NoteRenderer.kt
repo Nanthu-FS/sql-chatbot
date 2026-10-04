@@ -130,7 +130,7 @@ private fun TimerWidget(minutes: Int) {
 
 @Composable
 private fun WeatherWidget(city: String) {
-    val state by produceState<Result<WeatherNow>?>(null, city) {
+    val state by produceState(Weather.cached(city)?.let { Result.success(it) }, city) {
         value = runCatching { Weather.now(city) }
     }
     SkinCard(title = "Weather · $city") {
@@ -152,13 +152,26 @@ private fun MermaidBlock(code: String) {
     val html = """
         <html><head><meta name="viewport" content="width=device-width, initial-scale=1">
         <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script></head>
-        <body style="margin:0;background:#fff"><pre class="mermaid">$escaped</pre>
+        <body style="margin:0;background:transparent"><pre class="mermaid">$escaped</pre>
         <script>mermaid.initialize({ startOnLoad: true, theme: 'neutral' });</script></body></html>
     """.trimIndent()
     SkinCard(title = "Diagram") {
         AndroidView(
-            factory = { ctx -> WebView(ctx).apply { settings.javaScriptEnabled = true } },
-            update = { it.loadDataWithBaseURL("https://smartnotes.local/", html, "text/html", "utf-8", null) },
+            factory = { ctx ->
+                WebView(ctx).apply {
+                    settings.javaScriptEnabled = true
+                    setBackgroundColor(android.graphics.Color.TRANSPARENT)
+                    isVerticalScrollBarEnabled = false
+                    isHorizontalScrollBarEnabled = false
+                }
+            },
+            // Reload only when the diagram itself changes; reloading on every recomposition flashed white.
+            update = { view ->
+                if (view.tag != html) {
+                    view.tag = html
+                    view.loadDataWithBaseURL("https://smartnotes.local/", html, "text/html", "utf-8", null)
+                }
+            },
             modifier = Modifier.fillMaxWidth().height(260.dp),
         )
     }

@@ -19,7 +19,19 @@ data class WeatherNow(val place: String, val tempC: Double, val summary: String)
 object Weather {
     private val json = Json { ignoreUnknownKeys = true }
 
-    suspend fun now(city: String): WeatherNow = withContext(Dispatchers.IO) {
+    private const val TTL_MS = 10 * 60 * 1000L
+    private val cache = java.util.concurrent.ConcurrentHashMap<String, Pair<Long, WeatherNow>>()
+
+    /** Last result for [city] if it's fresh, so re-opening a note doesn't show "Loading…" again. */
+    fun cached(city: String): WeatherNow? =
+        cache[city.lowercase()]?.takeIf { System.currentTimeMillis() - it.first < TTL_MS }?.second
+
+    suspend fun now(city: String): WeatherNow {
+        cached(city)?.let { return it }
+        return fetch(city).also { cache[city.lowercase()] = System.currentTimeMillis() to it }
+    }
+
+    private suspend fun fetch(city: String): WeatherNow = withContext(Dispatchers.IO) {
         val q = URLEncoder.encode(city, "UTF-8")
         val geo = get("https://geocoding-api.open-meteo.com/v1/search?name=$q&count=1")
         val hit = geo["results"]?.jsonArray?.firstOrNull()?.jsonObject ?: error("Unknown place: $city")

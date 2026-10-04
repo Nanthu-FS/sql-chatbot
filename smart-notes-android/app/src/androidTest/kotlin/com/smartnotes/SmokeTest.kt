@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performImeAction
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performTextInput
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
@@ -113,6 +114,31 @@ class SmokeTest {
         back()
         back()
         shot("home_after_new_note")
+    }
+
+    /** Mirrors the user's recording: chips in Write, switch modes, draw, back out. */
+    @Test
+    fun widgetsDiagramAndQuickEditing() {
+        setSkin(Skin.BRUTAL)
+        rule.onAllNodesWithText("Login flow", substring = true, ignoreCase = true).onFirst().performClick()
+        Thread.sleep(3000) // weather + mermaid load
+        shot("diagram_weather_read")
+        back()
+
+        desc("New note").performClick()
+        rule.waitForIdle()
+        listOf("+ Todo", "+ Heading", "+ Timer", "+ Weather", "+ Diagram").forEach {
+            rule.onNodeWithText(it).performScrollTo().performClick()
+        }
+        shot("chips_write")
+        rule.onNodeWithText("READ").performClick()
+        Thread.sleep(2000)
+        shot("chips_read")
+        rule.onNodeWithText("DRAW").performClick()
+        shot("chips_draw")
+        back()
+        Thread.sleep(1500) // tidy-up runs after the editor closes
+        shot("home_after_quick_note")
     }
 
     @Test

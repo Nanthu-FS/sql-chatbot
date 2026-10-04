@@ -41,7 +41,8 @@ private val json = Json { ignoreUnknownKeys = true }
 /** Board (infinite canvas) view: each paragraph of the note becomes a card you can drag around. */
 @Composable
 fun BoardScreen(vm: MainViewModel, nav: NavController, noteId: Long) {
-    val note by vm.repo.note(noteId).collectAsState(initial = null)
+    val flow = remember(noteId) { vm.repo.note(noteId) }
+    val note by flow.collectAsState(initial = null)
     val n = note ?: return
     Board(vm, nav, n)
 }

@@ -25,12 +25,14 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -57,14 +59,17 @@ import com.smartnotes.ui.theme.SkinLabel
 import com.smartnotes.ui.theme.SkinScaffold
 import com.smartnotes.ui.theme.SkinSegmented
 import com.smartnotes.ui.theme.SkinTextField
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.launch
 
 private enum class Mode(val label: String) { WRITE("Write"), READ("Read"), DRAW("Draw") }
 
 @Composable
 fun EditorScreen(vm: MainViewModel, nav: NavController, noteId: Long) {
-    val note by vm.repo.note(noteId).collectAsState(initial = null)
+    val flow = remember(noteId) { vm.repo.note(noteId) }
+    val note by flow.collectAsState(initial = null)
     val n = note ?: return
     EditorContent(vm, nav, n)
 }
@@ -83,10 +88,23 @@ private fun EditorContent(vm: MainViewModel, nav: NavController, note: NoteEntit
     var gestureNote by remember { mutableStateOf<String?>(null) }
     var circled by remember { mutableStateOf<String?>(null) }
     val lineBounds = remember(note.id) { mutableStateMapOf<Int, Rect>() }
-    val reminders by vm.repo.reminders(note.id).collectAsState(initial = emptyList())
+    val remindersFlow = remember(note.id) { vm.repo.reminders(note.id) }
+    val reminders by remindersFlow.collectAsState(initial = emptyList())
 
     // Body edits from elsewhere (the widget, time travel) flow back in when we're not mid-edit.
     LaunchedEffect(note.body) { if (mode != Mode.WRITE) body = note.body }
+
+    // Flush pending edits when the editor goes away, so backing out quickly never loses text.
+    val latestTitle by rememberUpdatedState(title)
+    val latestBody by rememberUpdatedState(body)
+    val latestNote by rememberUpdatedState(note)
+    DisposableEffect(note.id) {
+        onDispose {
+            if (latestTitle != latestNote.title || latestBody != latestNote.body) {
+                vm.save(latestNote.copy(title = latestTitle, body = latestBody))
+            }
+        }
+    }
 
     // Autosave, debounced.
     LaunchedEffect(title, body) {
@@ -95,7 +113,12 @@ private fun EditorContent(vm: MainViewModel, nav: NavController, note: NoteEntit
         vm.save(note.copy(title = title, body = body))
     }
 
-    val suggestions = remember(body, note.id) { vm.linkSuggestions(note, body) }
+    // Ranking related notes is too slow to redo on the main thread for every keystroke.
+    var suggestions by remember(note.id) { mutableStateOf(emptyList<com.smartnotes.core.ScoredNote>()) }
+    LaunchedEffect(body, note.id) {
+        delay(400)
+        suggestions = withContext(Dispatchers.Default) { vm.linkSuggestions(note, body) }
+    }
 
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         if (granted) placeDialog = true
@@ -194,16 +217,19 @@ private fun EditorContent(vm: MainViewModel, nav: NavController, note: NoteEntit
                 GestureLayer(onStroke = { stroke ->
                     val ys = stroke.points.map { it.y }
                     val centerY = (ys.min() + ys.max()) / 2
+                    // The line under the stroke, or failing that the nearest text line.
                     val hitLine = lineBounds.entries.firstOrNull { centerY in it.value.top..it.value.bottom }?.key
+                        ?: lineBounds.entries.minByOrNull { kotlin.math.abs(it.value.center.y - centerY) }
+                            ?.takeIf { kotlin.math.abs(it.value.center.y - centerY) < 120f }?.key
                     when (stroke.gesture) {
-                        Gesture.CHECKMARK -> hitLine?.let {
-                            body = Checklist.makeTodo(body, it); vm.save(note.copy(title = title, body = body))
+                        Gesture.CHECKMARK -> if (hitLine != null) {
+                            body = Checklist.makeTodo(body, hitLine); vm.save(note.copy(title = title, body = body))
                             gestureNote = "✓ Made a todo"
-                        }
-                        Gesture.STRIKE -> hitLine?.let {
-                            body = Checklist.toggle(body, it); vm.save(note.copy(title = title, body = body))
+                        } else gestureNote = "✓ Draw the tick over a line of text"
+                        Gesture.STRIKE -> if (hitLine != null) {
+                            body = Checklist.toggle(body, hitLine); vm.save(note.copy(title = title, body = body))
                             gestureNote = "— Toggled"
-                        }
+                        } else gestureNote = "— Draw the line through a todo"
                         Gesture.CIRCLE -> {
                             val top = ys.min(); val bottom = ys.max()
                             val text = lineBounds.entries.filter { it.value.bottom >= top && it.value.top <= bottom }

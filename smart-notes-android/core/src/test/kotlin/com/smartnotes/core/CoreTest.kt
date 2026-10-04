@@ -39,6 +39,16 @@ class GestureTest {
         assertEquals(Gesture.CHECKMARK, GestureRecognizer.classify(stroke))
     }
 
+    @Test fun flatStartCheckmark() {
+        // "_/" — the way most people tick quickly with a thumb.
+        val stroke = line(Pt(0f, 100f), Pt(40f, 104f)) + line(Pt(40f, 104f), Pt(110f, 10f)).drop(1)
+        assertEquals(Gesture.CHECKMARK, GestureRecognizer.classify(stroke))
+    }
+
+    @Test fun downwardSwipeIsNotACheckmark() {
+        assertEquals(Gesture.UNKNOWN, GestureRecognizer.classify(line(Pt(0f, 0f), Pt(60f, 200f))))
+    }
+
     @Test fun circle() {
         val stroke = (0..36).map {
             val a = Math.toRadians(it * 10.0)

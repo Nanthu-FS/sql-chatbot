@@ -35,10 +35,19 @@ import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithCache
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Canvas
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageShader
+import androidx.compose.ui.graphics.ShaderBrush
+import androidx.compose.ui.graphics.TileMode
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -70,26 +79,31 @@ fun Modifier.hardShadow(t: SkinTokens): Modifier =
 fun Modifier.skinBorder(t: SkinTokens, color: Color = t.border): Modifier =
     if (t.borderWidth == 0.dp) this else border(t.borderWidth, color, t.shape())
 
-fun Modifier.skinBackdrop(t: SkinTokens): Modifier = background(t.background).drawBehind {
-    when (t.backdrop) {
-        Backdrop.PLAIN -> Unit
-        Backdrop.DOTS -> {
-            val step = 20.dp.toPx()
-            val dot = Color.Black.copy(alpha = 0.18f)
-            var y = step / 2
-            while (y < size.height) {
-                var x = step / 2
-                while (x < size.width) { drawCircle(dot, 1.3.dp.toPx(), Offset(x, y)); x += step }
-                y += step
-            }
+/**
+ * Background plus pattern. The pattern is rendered once into a small tile and repeated
+ * by a shader, so it costs one draw call per frame instead of hundreds of dots or lines.
+ */
+fun Modifier.skinBackdrop(t: SkinTokens): Modifier = background(t.background).drawWithCache {
+    val brush = when (t.backdrop) {
+        Backdrop.PLAIN -> null
+        Backdrop.DOTS -> tileBrush(20.dp.toPx()) { s ->
+            drawCircle(Color.Black.copy(alpha = 0.18f), 1.3.dp.toPx(), Offset(s / 2, s / 2))
         }
-        Backdrop.SCANLINES -> {
-            val step = 3.dp.toPx()
-            val line = Color.White.copy(alpha = 0.025f)
-            var y = 0f
-            while (y < size.height) { drawLine(line, Offset(0f, y), Offset(size.width, y)); y += step }
+        Backdrop.SCANLINES -> tileBrush(3.dp.toPx()) { s ->
+            drawLine(Color.White.copy(alpha = 0.025f), Offset(0f, 0f), Offset(s, 0f))
         }
     }
+    onDrawBehind { if (brush != null) drawRect(brush) }
+}
+
+private fun androidx.compose.ui.draw.CacheDrawScope.tileBrush(
+    sizePx: Float,
+    draw: androidx.compose.ui.graphics.drawscope.DrawScope.(Float) -> Unit,
+): ShaderBrush {
+    val px = sizePx.toInt().coerceAtLeast(1)
+    val tile = ImageBitmap(px, px)
+    CanvasDrawScope().draw(this, layoutDirection, Canvas(tile), Size(px.toFloat(), px.toFloat())) { draw(px.toFloat()) }
+    return ShaderBrush(ImageShader(tile, TileMode.Repeated, TileMode.Repeated))
 }
 
 private fun String.titleCase(t: SkinTokens) = if (t.upperCaseTitles) uppercase() else this
@@ -190,7 +204,8 @@ fun SkinCard(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val t = LocalSkin.current
-    val click = if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier
+    val press = rememberPress()
+    val click = if (onClick != null) Modifier.pressClick(press, role = null, onClick = onClick) else Modifier
     val contentColor = when (t.cardStyle) {
         CardStyle.RULED, CardStyle.PROMPT -> t.onBackground
         else -> t.onSurface
@@ -199,6 +214,7 @@ fun SkinCard(
         LocalContentColor provides contentColor,
         LocalTextStyle provides TextStyle(fontFamily = t.cardBody, fontSize = 15.sp, color = contentColor),
     ) {
+        val modifier = modifier.pressFeedback(press, 0.dp)
         when (t.cardStyle) {
             CardStyle.RULED -> Column(
                 modifier.fillMaxWidth()
@@ -278,14 +294,14 @@ fun SkinBanner(label: String, title: String, subtitle: String? = null, onClick: 
     val t = LocalSkin.current
     when (t.skin) {
         Skin.SWISS -> Column(
-            modifier.fillMaxWidth().background(t.accent).then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(14.dp),
+            modifier.fillMaxWidth().background(t.accent).then(if (onClick != null) Modifier.clickable(interactionSource = null, indication = null, onClick = onClick) else Modifier).padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
             SkinLabel(label, color = Color.White)
             Text(title, color = Color.White, fontWeight = FontWeight.SemiBold, fontSize = 17.sp)
             if (subtitle != null) Text(subtitle, color = Color.White, fontSize = 13.sp)
         }
-        Skin.TERMINAL -> Column(modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(onClick = onClick) else Modifier).padding(vertical = 4.dp)) {
+        Skin.TERMINAL -> Column(modifier.fillMaxWidth().then(if (onClick != null) Modifier.clickable(interactionSource = null, indication = null, onClick = onClick) else Modifier).padding(vertical = 4.dp)) {
             Text("! $title" + (subtitle?.let { "  ($it)" } ?: ""), color = Color(0xFFFF7A59))
         }
         Skin.RETRO -> SkinCard(modifier, title = label.lowercase().replaceFirstChar { it.uppercase() }, onClick = onClick, fill = t.highlight) {
@@ -337,13 +353,19 @@ fun SkinButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier,
         t.skin == Skin.SWISS && primary -> 0.dp
         else -> t.borderWidth
     }
+    val press = rememberPress()
+    val shadow = if (enabled) t.shadowOffset else 0.dp
     Box(
         modifier.heightIn(min = 48.dp)
-            .then(if (t.shadowOffset > 0.dp) Modifier.hardShadow(t.copy(corner = if (shape is RoundedCornerShape) 8.dp else 0.dp)) else Modifier)
+            .pressFeedback(press, shadow)
+            .then(
+                if (shadow > 0.dp && !press.pressed) Modifier.hardShadow(t.copy(corner = if (shape is RoundedCornerShape) 8.dp else 0.dp))
+                else Modifier,
+            )
             .background(bg, shape)
             .then(if (borderWidth > 0.dp) Modifier.border(borderWidth, borderColor, shape) else Modifier)
             .clip(shape)
-            .clickable(enabled = enabled, role = Role.Button, onClick = onClick)
+            .pressClick(press, enabled = enabled, onClick = onClick)
             .padding(horizontal = 16.dp),
         contentAlignment = Alignment.Center,
     ) {
@@ -373,13 +395,16 @@ fun SkinIconButton(icon: ImageVector, contentDescription: String, onClick: () ->
         else -> t.onBackground
     }
     val bordered = !primary && (t.skin == Skin.SWISS || t.skin == Skin.BRUTAL || t.skin == Skin.TERMINAL)
+    val press = rememberPress()
+    val shadow = if (t.skin == Skin.BRUTAL) 3.dp else 0.dp
     Box(
         modifier.size(48.dp)
-            .then(if (t.skin == Skin.BRUTAL) Modifier.hardShadow(t.copy(shadowOffset = 3.dp)) else Modifier)
+            .pressFeedback(press, shadow)
+            .then(if (shadow > 0.dp && !press.pressed) Modifier.hardShadow(t.copy(shadowOffset = shadow)) else Modifier)
             .background(bg, shape)
             .then(if (bordered) Modifier.border(t.borderWidth, t.border, shape) else Modifier)
             .clip(shape)
-            .clickable(role = Role.Button, onClickLabel = contentDescription, onClick = onClick),
+            .pressClick(press, label = contentDescription, onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
         Icon(icon, contentDescription = contentDescription, tint = fg, modifier = Modifier.size(22.dp))
@@ -464,10 +489,11 @@ fun SkinChip(text: String, onClick: () -> Unit, selected: Boolean = false) {
         t.skin == Skin.ROLODEX -> t.onSurface
         else -> t.onSurface
     }
+    val press = rememberPress()
     Box(
-        Modifier.heightIn(min = 40.dp).background(bg, shape)
+        Modifier.heightIn(min = 40.dp).pressFeedback(press, 0.dp).background(bg, shape)
             .then(if (t.borderWidth > 0.dp) Modifier.border(if (t.skin == Skin.BRUTAL) 2.dp else 1.dp, t.border, shape) else Modifier)
-            .clip(shape).clickable(role = Role.Button, onClick = onClick).padding(horizontal = 12.dp),
+            .clip(shape).pressClick(press, onClick = onClick).padding(horizontal = 12.dp),
         contentAlignment = Alignment.Center,
     ) {
         Text(text, color = fg, fontFamily = t.label, fontSize = 13.sp, fontWeight = FontWeight.Medium, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -489,7 +515,11 @@ fun SkinSegmented(options: List<String>, selected: Int, onSelect: (Int) -> Unit,
             Box(
                 Modifier.weight(1f).heightIn(min = 44.dp)
                     .background(if (on) t.accent else Color.Transparent)
-                    .clickable(role = Role.Tab) { onSelect(i) },
+                    .clickable(
+                        interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                        indication = null,
+                        role = Role.Tab,
+                    ) { onSelect(i) },
                 contentAlignment = Alignment.Center,
             ) {
                 Text(

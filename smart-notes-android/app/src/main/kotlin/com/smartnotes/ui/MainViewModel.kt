@@ -23,6 +23,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -92,7 +93,22 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun linkSuggestions(note: NoteEntity, body: String): List<ScoredNote> =
-        AutoLinker.suggest(note.toDoc().copy(body = body), notes.value.map { it.toDoc() })
+        AutoLinker.suggest(note.toDoc().copy(body = body), notes.value.filter { it.title.isNotBlank() }.map { it.toDoc() })
+
+    /** Called when the editor closes: drop notes that were never written in, title the rest. */
+    fun tidyOnLeave(noteId: Long) = viewModelScope.launch {
+        delay(700) // let the editor's debounced autosave land first
+        val note = repo.get(noteId) ?: return@launch
+        val emptyBody = note.body.lines().all { it.isBlank() || it.trim() == "- [ ]" || it.trim() == "##" }
+        when {
+            note.title.isBlank() && emptyBody -> repo.delete(note)
+            note.title.isBlank() -> {
+                val first = note.body.lineSequence().map { it.trim().trimStart('#', '-', '*', ' ').removePrefix("[ ] ").trim() }
+                    .firstOrNull { it.isNotEmpty() && !it.startsWith("{{") && !it.startsWith("```") }
+                if (first != null) repo.saveLayout(note.copy(title = first.take(48)))
+            }
+        }
+    }
 
     fun search(text: String): List<NoteEntity> {
         val byId = notes.value.associateBy { it.id }

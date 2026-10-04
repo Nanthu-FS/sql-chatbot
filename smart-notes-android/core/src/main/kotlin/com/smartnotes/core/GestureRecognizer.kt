@@ -36,15 +36,16 @@ object GestureRecognizer {
         val aspect = if (h == 0f) Float.MAX_VALUE else w / h
         if (closeGap < 0.3f * diag && pathLength > 2.2f * diag && aspect in 0.4f..2.5f) return Gesture.CIRCLE
 
-        // Checkmark: a short drop to the lowest point, then a longer rise to the right.
+        // Checkmark: the stroke bottoms out early or midway, then rises to the right and ends
+        // well above that low point. Real finger ticks vary a lot ("✓", "_/", a lazy "v"), so
+        // the opening drop may be tiny.
         val lowIdx = points.indices.maxBy { points[it].y }
         val low = points[lowIdx]
         val fraction = lowIdx.toFloat() / points.lastIndex
-        val drop = low.y - first.y
         val rise = low.y - last.y
-        val goesRight = last.x > first.x && last.x > low.x
-        if (fraction in 0.1f..0.65f && drop > 0.1f * h && rise > max(drop, 0.5f * h) * 1.1f && goesRight &&
-            abs(low.x - first.x) < w
+        val drop = low.y - first.y
+        if (fraction in 0.05f..0.75f && rise > 0.45f * h && rise >= drop * 0.8f &&
+            last.x > low.x && last.x - first.x > -0.2f * w
         ) return Gesture.CHECKMARK
 
         return Gesture.UNKNOWN
