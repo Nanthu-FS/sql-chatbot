@@ -1,6 +1,7 @@
 package com.genshincalc.app.ui
 
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
@@ -280,7 +281,12 @@ fun PieceEditorScreen(data: GameDataSet, draft: PieceDraft?, vm: CalcViewModel, 
     val p = draft.piece
     var confirmDelete by remember { mutableStateOf(false) }
     val set = data.artifactSetOrNull(p.setId)
-    BackScaffold(if (draft.isNew) "New artifact" else "Edit artifact", onBack = { vm.discardDraft(); nav.pop() }) { padding ->
+    val cancel = {
+        vm.discardDraft()
+        nav.pop()
+    }
+    BackHandler(onBack = cancel)
+    BackScaffold(if (draft.isNew) "New artifact" else "Edit artifact", onBack = cancel) { padding ->
         LazyColumn(
             Modifier.padding(padding).fillMaxSize().testTag("piece_editor"),
             contentPadding = PaddingValues(12.dp),
@@ -424,6 +430,7 @@ fun ScanResultsScreen(data: GameDataSet, team: Team, inventory: List<ArtifactPie
         vm.clearScan()
         nav.pop()
     }
+    BackHandler(onBack = close)
     val worn = wearers(data, team)
     val activeIndex = team.activeIndex
     val activeName = team.members.getOrNull(activeIndex)?.let { shortName(data.character(it.characterId).name) }

@@ -33,6 +33,8 @@ class MainActivity : ComponentActivity() {
     /** Screenshots shared to the app ("Share" → Teyvat DMG Calc) are scanned for artifacts. */
     fun importSharedImages(intent: Intent?) {
         if (intent == null || intent.type?.startsWith("image/") != true) return
+        // Reopened from recents: the shared images were already imported (and their read grant is gone).
+        if (intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
         val uris: List<Uri> = when (intent.action) {
             Intent.ACTION_SEND -> listOfNotNull(IntentCompat.getParcelableExtra(intent, Intent.EXTRA_STREAM, Uri::class.java))
             Intent.ACTION_SEND_MULTIPLE -> IntentCompat.getParcelableArrayListExtra(intent, Intent.EXTRA_STREAM, Uri::class.java).orEmpty()
