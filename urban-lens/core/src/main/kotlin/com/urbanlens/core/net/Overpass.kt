@@ -20,12 +20,17 @@ data class AreaData(val sites: List<ConstructionSite>, val places: List<Place>)
 
 /** OpenStreetMap data via the Overpass API. Free, no key; be gentle with request volume. */
 object Overpass {
-    /** Main server first, then public mirrors listed on the OpenStreetMap wiki. */
-    val ENDPOINTS = listOf(
-        "https://overpass-api.de/api/interpreter",
-        "https://overpass.private.coffee/api/interpreter",
-        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
-    )
+    const val MAIN = "https://overpass-api.de/api/interpreter"
+    const val MIRROR = "https://overpass.private.coffee/api/interpreter"
+
+    /** Every server we know of; see [ATTEMPTS] for the order they're tried in. */
+    val ENDPOINTS = listOf(MAIN, MIRROR)
+
+    /**
+     * Retry order. The main server is fast and its failures are usually brief rate limits, so it
+     * gets a second chance before the mirror (which can be slow, see LiveApiTest).
+     */
+    val ATTEMPTS = listOf(MAIN, MAIN, MIRROR)
 
     /**
      * Big crowd magnets (malls, stations, beaches...) and small everyday spots (cafés, schools...)

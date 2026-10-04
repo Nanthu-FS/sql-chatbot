@@ -57,7 +57,8 @@ class OkHttpHttp(private val client: OkHttpClient = defaultClient()) : Http {
 
         fun defaultClient(): OkHttpClient = OkHttpClient.Builder()
             .connectTimeout(15, TimeUnit.SECONDS)
-            .readTimeout(40, TimeUnit.SECONDS)
+            // Overpass queries carry a 25 s server-side timeout; don't wait much longer than that.
+            .readTimeout(30, TimeUnit.SECONDS)
             .addInterceptor(Interceptor { chain ->
                 chain.proceed(chain.request().newBuilder().header("User-Agent", USER_AGENT).build())
             })

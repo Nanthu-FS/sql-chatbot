@@ -82,13 +82,13 @@ class CityDataRepositoryTest {
     }
 
     @Test
-    fun rateLimitedRequestsRetryOnTheNextServer() = runTest {
+    fun rateLimitedRequestsRetryTheMainServerThenTheMirror() = runTest {
         val http = FakeOverpass(failures = 2)
         val repo = repo(http)
 
         repo.loadTile(repo.missingTiles(chennai).single())
 
-        assertEquals(Overpass.ENDPOINTS, http.endpoints)
+        assertEquals(listOf(Overpass.MAIN, Overpass.MAIN, Overpass.MIRROR), http.endpoints)
         assertFalse(repo.hasFailures(chennai))
     }
 

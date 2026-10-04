@@ -48,7 +48,8 @@ data class TileKey(val x: Int, val y: Int) {
 class CityDataRepository(
     private val http: Http,
     private val clock: () -> Long = System::currentTimeMillis,
-    private val retryDelaysMillis: List<Long> = listOf(2_000L, 6_000L),
+    /** Pause before each retry; one more attempt is made than there are delays. */
+    private val retryDelaysMillis: List<Long> = listOf(3_000L, 5_000L),
 ) {
     private class Cached<T>(val box: BoundingBox, val value: T, val atMillis: Long)
     private class Tile(val data: AreaData, val fetchedAtMillis: Long)
@@ -132,11 +133,11 @@ class CityDataRepository(
         return weather
     }
 
-    /** Tries each Overpass server in turn, backing off between attempts. */
+    /** Tries the Overpass servers in [Overpass.ATTEMPTS] order, backing off between attempts. */
     private suspend fun fetchArea(box: BoundingBox): AreaData {
         var lastError: Exception? = null
         for (attempt in 0..retryDelaysMillis.size) {
-            val endpoint = Overpass.ENDPOINTS[attempt % Overpass.ENDPOINTS.size]
+            val endpoint = Overpass.ATTEMPTS[attempt.coerceAtMost(Overpass.ATTEMPTS.lastIndex)]
             try {
                 return Overpass.parse(http.postForm(endpoint, mapOf("data" to Overpass.query(box))))
             } catch (e: CancellationException) {
