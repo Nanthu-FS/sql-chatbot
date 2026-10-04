@@ -1,5 +1,6 @@
 package com.genshincalc.core
 
+import com.genshincalc.core.calc.BaseStats
 import com.genshincalc.core.model.ArtifactBuild
 import com.genshincalc.core.model.CharacterData
 import com.genshincalc.core.model.Element
@@ -58,6 +59,13 @@ object Defaults {
         }
         val weaponId = defaultWeapons[c.weapon]?.takeIf { data.weaponOrNull(it) != null }
             ?: data.weaponsOfType(c.weapon).first().id
+        // CRIT DMG circlet when the ascension stat and weapon already give plenty of CRIT Rate.
+        val asc = BaseStats.character(data, c, 90, true)
+        val weaponBase = BaseStats.weapon(data, data.weapon(weaponId), WeaponBuild(weaponId, 90))
+        val baseCrit = 0.05 + 0.25 +
+            (if (asc.ascensionStat == Stat.CRIT_RATE) asc.ascensionValue else 0.0) +
+            (if (weaponBase.substat == Stat.CRIT_RATE) weaponBase.substatValue else 0.0)
+        val circlet = if (baseCrit + 0.311 > 0.80) Stat.CRIT_DMG else Stat.CRIT_RATE
         val substats = buildMap {
             put(Stat.CRIT_RATE, 0.25)
             put(Stat.CRIT_DMG, 0.50)
@@ -76,7 +84,7 @@ object Defaults {
                 set4 = defaultSets[c.element]?.takeIf { data.artifactSetOrNull(it) != null },
                 sands = sands,
                 goblet = c.element.dmgBonusStat,
-                circlet = Stat.CRIT_RATE,
+                circlet = circlet,
                 substats = substats,
             ),
         )
