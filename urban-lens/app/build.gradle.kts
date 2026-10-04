@@ -24,6 +24,12 @@ android {
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Sideloadable test build: debug-signed and limited to phone CPUs to keep the APK small.
+            // Use a real keystore before publishing anywhere.
+            signingConfig = signingConfigs.getByName("debug")
+            ndk {
+                abiFilters += listOf("arm64-v8a", "armeabi-v7a")
+            }
         }
     }
 
@@ -39,6 +45,10 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+        // Compressed native libraries make for a much smaller download.
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 }

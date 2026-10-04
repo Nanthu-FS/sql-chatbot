@@ -46,9 +46,12 @@ Requirements: JDK 17 and the Android SDK (API 35).
 ```bash
 ./gradlew :core:test          # unit tests
 ./gradlew :app:assembleDebug  # APK at app/build/outputs/apk/debug/
+./gradlew :app:assembleRelease  # smaller, R8-optimized APK for ARM phones
 ```
 
-CI (`.github/workflows/urban-lens-android.yml` at the repo root) runs both on every push that touches `urban-lens/`, uploads the debug APK as an artifact, and publishes it as the `urban-lens-debug` pre-release.
+The release build is signed with the debug key so it can be sideloaded for testing; set up a real keystore before publishing it anywhere.
+
+CI (`.github/workflows/urban-lens-android.yml` at the repo root) runs both on every push that touches `urban-lens/`, uploads the debug and release APKs as artifacts, and publishes both on the `urban-lens-debug` pre-release.
 
 ## Defaults
 

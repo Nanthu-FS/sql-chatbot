@@ -33,29 +33,33 @@ jobs:
       - name: Unit tests
         run: ./gradlew --no-daemon :core:test
 
-      - name: Build debug APK
-        run: ./gradlew --no-daemon :app:assembleDebug
+      - name: Build APKs
+        run: ./gradlew --no-daemon :app:assembleDebug :app:assembleRelease
 
-      - name: Upload APK artifact
+      - name: Upload APK artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: urban-lens-debug-apk
-          path: urban-lens/app/build/outputs/apk/debug/*.apk
+          name: urban-lens-apks
+          path: |
+            urban-lens/app/build/outputs/apk/debug/*.apk
+            urban-lens/app/build/outputs/apk/release/*.apk
 
-      # A rolling pre-release gives the APK a stable, public download link.
-      - name: Publish APK as a pre-release
+      # A rolling pre-release gives the APKs a stable, public download link.
+      - name: Publish APKs as a pre-release
         env:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: |
           TAG="urban-lens-debug"
+          cp app/build/outputs/apk/release/app-release.apk urban-lens.apk
           cp app/build/outputs/apk/debug/app-debug.apk urban-lens-debug.apk
+          ls -la urban-lens.apk urban-lens-debug.apk
           gh release delete "$TAG" --yes --cleanup-tag || true
-          gh release create "$TAG" urban-lens-debug.apk \
+          gh release create "$TAG" urban-lens.apk urban-lens-debug.apk \
             --prerelease \
             --target "$GITHUB_SHA" \
-            --title "Urban Lens debug build" \
-            --notes "Debug APK built from ${GITHUB_SHA::7} on ${GITHUB_REF_NAME}. Android 8.0+."
+            --title "Urban Lens test build" \
+            --notes "Built from ${GITHUB_SHA::7} on ${GITHUB_REF_NAME}. Android 8.0+. urban-lens.apk: optimized, for phones (ARM). urban-lens-debug.apk: unoptimized, all CPUs incl. emulators. Both are signed with a debug key for sideloading."
 
       - name: Upload test reports
         if: failure()
