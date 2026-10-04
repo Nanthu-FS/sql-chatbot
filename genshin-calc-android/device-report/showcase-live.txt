@@ -1,0 +1,2 @@
+--------- beginning of main
+10-04 11:02:41.653  3001  3418 I ShowcaseImportTest: LIVE showcase: error=null characters=[amber, bennett, ganyu, xingqiu] differences=[[], [], [], []]

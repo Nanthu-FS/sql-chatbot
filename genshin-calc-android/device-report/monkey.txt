@@ -78,7 +78,7 @@ data="0"
 :Sending Touch (ACTION_UP): 0:(1031.3828,765.8799)
 :Sending Touch (ACTION_DOWN): 0:(699.0,395.0)
 :Sending Touch (ACTION_UP): 0:(709.71387,418.08496)
-    //[calendar_time:2026-10-04 10:54:44.419  system_uptime:180788]
+    //[calendar_time:2026-10-04 11:03:19.112  system_uptime:131339]
     // Sending event #100
 :Sending Touch (ACTION_DOWN): 0:(756.0,216.0)
 :Sending Touch (ACTION_UP): 0:(740.61914,208.23535)
@@ -101,9 +101,9 @@ data="0"
 :Sending Trackball (ACTION_MOVE): 0:(-2.0,2.0)
 :Sending Trackball (ACTION_MOVE): 0:(2.0,4.0)
 :Sending Trackball (ACTION_MOVE): 0:(-3.0,2.0)
-    //[calendar_time:2026-10-04 10:54:50.123  system_uptime:186440]
+    //[calendar_time:2026-10-04 11:03:23.350  system_uptime:135563]
     // Sending event #200
-    //[calendar_time:2026-10-04 10:54:50.243  system_uptime:186561]
+    //[calendar_time:2026-10-04 11:03:23.470  system_uptime:135683]
     // Sending event #200
 :Sending Touch (ACTION_DOWN): 0:(626.0,1051.0)
 :Sending Touch (ACTION_UP): 0:(684.72754,1132.7217)
@@ -122,9 +122,9 @@ data="0"
 :Sending Touch (ACTION_UP): 0:(710.3467,302.06738)
 :Sending Touch (ACTION_DOWN): 0:(712.0,1344.0)
 :Sending Touch (ACTION_UP): 0:(623.0078,1290.7715)
-    //[calendar_time:2026-10-04 10:54:52.793  system_uptime:189112]
+    //[calendar_time:2026-10-04 11:03:25.868  system_uptime:138080]
     // Sending event #300
-    //[calendar_time:2026-10-04 10:54:52.915  system_uptime:189232]
+    //[calendar_time:2026-10-04 11:03:25.988  system_uptime:138201]
     // Sending event #300
 :Sending Trackball (ACTION_MOVE): 0:(3.0,0.0)
 :Sending Trackball (ACTION_MOVE): 0:(3.0,-3.0)
@@ -138,7 +138,7 @@ data="0"
 :Sending Touch (ACTION_UP): 0:(546.0117,0.0)
 :Sending Trackball (ACTION_MOVE): 0:(1.0,0.0)
 :Sending Trackball (ACTION_MOVE): 0:(-3.0,1.0)
-    //[calendar_time:2026-10-04 10:54:55.311  system_uptime:191628]
+    //[calendar_time:2026-10-04 11:03:29.035  system_uptime:141248]
     // Sending event #400
 :Sending Touch (ACTION_DOWN): 0:(461.0,469.0)
 :Sending Touch (ACTION_UP): 0:(456.6748,468.7998)
@@ -166,9 +166,9 @@ data="0"
 :Sending Trackball (ACTION_MOVE): 0:(4.0,-2.0)
 :Sending Touch (ACTION_DOWN): 0:(904.0,557.0)
 :Sending Touch (ACTION_UP): 0:(956.167,520.0498)
-    //[calendar_time:2026-10-04 10:54:58.503  system_uptime:194821]
+    //[calendar_time:2026-10-04 11:03:32.429  system_uptime:144642]
     // Sending event #500
-    //[calendar_time:2026-10-04 10:54:58.623  system_uptime:194941]
+    //[calendar_time:2026-10-04 11:03:32.550  system_uptime:144763]
     // Sending event #500
 :Sending Trackball (ACTION_MOVE): 0:(-1.0,-4.0)
 :Sending Trackball (ACTION_UP): 0:(0.0,0.0)
@@ -195,7 +195,7 @@ data="0"
 :Sending Touch (ACTION_DOWN): 0:(424.0,665.0)
 :Sending Touch (ACTION_UP): 0:(363.0957,606.15137)
 :Sending Trackball (ACTION_MOVE): 0:(1.0,-1.0)
-    //[calendar_time:2026-10-04 10:55:01.490  system_uptime:197808]
+    //[calendar_time:2026-10-04 11:03:35.649  system_uptime:147861]
     // Sending event #600
 :Sending Touch (ACTION_DOWN): 0:(119.0,1775.0)
 :Sending Touch (ACTION_UP): 0:(133.80469,1774.3818)
@@ -221,7 +221,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(482.0,1914.0)
 :Sending Touch (ACTION_UP): 0:(481.23438,1899.0225)
 :Sending Trackball (ACTION_MOVE): 0:(4.0,4.0)
-    //[calendar_time:2026-10-04 10:55:04.799  system_uptime:201117]
+    //[calendar_time:2026-10-04 11:03:39.566  system_uptime:151779]
     // Sending event #700
 :Sending Touch (ACTION_DOWN): 0:(855.0,1607.0)
 :Sending Touch (ACTION_UP): 0:(833.1377,1609.833)
@@ -239,7 +239,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Trackball (ACTION_MOVE): 0:(4.0,2.0)
 :Sending Trackball (ACTION_MOVE): 0:(2.0,3.0)
 :Sending Trackball (ACTION_MOVE): 0:(-4.0,-5.0)
-    //[calendar_time:2026-10-04 10:55:07.522  system_uptime:203839]
+    //[calendar_time:2026-10-04 11:03:42.294  system_uptime:154507]
     // Sending event #800
 :Sending Trackball (ACTION_UP): 0:(0.0,0.0)
 :Sending Touch (ACTION_DOWN): 0:(88.0,103.0)
@@ -261,9 +261,9 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_UP): 0:(839.0996,236.96094)
 :Sending Touch (ACTION_DOWN): 0:(781.0,1557.0)
 :Sending Touch (ACTION_UP): 0:(847.083,1497.8301)
-    //[calendar_time:2026-10-04 10:55:10.056  system_uptime:206373]
+    //[calendar_time:2026-10-04 11:03:45.553  system_uptime:157766]
     // Sending event #900
-    //[calendar_time:2026-10-04 10:55:10.176  system_uptime:206494]
+    //[calendar_time:2026-10-04 11:03:45.679  system_uptime:157892]
     // Sending event #900
 :Sending Touch (ACTION_DOWN): 0:(1023.0,209.0)
 :Sending Touch (ACTION_UP): 0:(1025.9697,138.27832)
@@ -286,7 +286,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_UP): 0:(504.4629,1660.206)
 :Sending Trackball (ACTION_MOVE): 0:(4.0,2.0)
 :Sending Touch (ACTION_DOWN): 0:(1053.0,1173.0)
-    //[calendar_time:2026-10-04 10:55:12.480  system_uptime:208797]
+    //[calendar_time:2026-10-04 11:03:48.035  system_uptime:160247]
     // Sending event #1000
 :Sending Touch (ACTION_UP): 0:(1001.499,1137.0527)
 :Sending Touch (ACTION_DOWN): 0:(876.0,889.0)
@@ -303,7 +303,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Trackball (ACTION_MOVE): 0:(-1.0,-3.0)
 :Sending Trackball (ACTION_MOVE): 0:(0.0,4.0)
 :Sending Trackball (ACTION_MOVE): 0:(-5.0,-1.0)
-    //[calendar_time:2026-10-04 10:55:14.516  system_uptime:210833]
+    //[calendar_time:2026-10-04 11:03:50.280  system_uptime:162492]
     // Sending event #1100
 :Sending Touch (ACTION_DOWN): 0:(664.0,76.0)
 :Sending Touch (ACTION_UP): 0:(667.6924,82.444336)
@@ -328,7 +328,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(567.0,2105.0)
 :Sending Touch (ACTION_UP): 0:(559.5254,2087.4424)
 :Sending Trackball (ACTION_MOVE): 0:(-1.0,2.0)
-    //[calendar_time:2026-10-04 10:55:17.099  system_uptime:213417]
+    //[calendar_time:2026-10-04 11:03:53.020  system_uptime:165233]
     // Sending event #1200
 :Sending Trackball (ACTION_MOVE): 0:(0.0,-3.0)
 :Sending Trackball (ACTION_MOVE): 0:(-4.0,-4.0)
@@ -351,7 +351,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(8.0,1167.0)
 :Sending Touch (ACTION_UP): 0:(0.0,1162.2441)
 :Sending Trackball (ACTION_MOVE): 0:(-2.0,3.0)
-    //[calendar_time:2026-10-04 10:55:18.910  system_uptime:215227]
+    //[calendar_time:2026-10-04 11:03:54.858  system_uptime:167071]
     // Sending event #1300
 :Sending Touch (ACTION_DOWN): 0:(449.0,469.0)
 :Sending Touch (ACTION_UP): 0:(458.43262,469.8203)
@@ -374,7 +374,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_UP): 0:(984.50586,1014.7588)
 :Sending Trackball (ACTION_MOVE): 0:(4.0,-3.0)
 :Sending Trackball (ACTION_MOVE): 0:(2.0,-5.0)
-    //[calendar_time:2026-10-04 10:55:21.538  system_uptime:217856]
+    //[calendar_time:2026-10-04 11:03:57.518  system_uptime:169731]
     // Sending event #1400
 :Sending Trackball (ACTION_MOVE): 0:(1.0,2.0)
 :Sending Touch (ACTION_DOWN): 0:(168.0,1897.0)
@@ -393,9 +393,9 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_UP): 0:(553.03613,1080.9473)
 :Sending Touch (ACTION_DOWN): 0:(971.0,836.0)
 :Sending Touch (ACTION_UP): 0:(969.1953,834.58496)
-    //[calendar_time:2026-10-04 10:55:23.451  system_uptime:219768]
+    //[calendar_time:2026-10-04 11:03:59.467  system_uptime:171680]
     // Sending event #1500
-    //[calendar_time:2026-10-04 10:55:23.571  system_uptime:219888]
+    //[calendar_time:2026-10-04 11:03:59.587  system_uptime:171800]
     // Sending event #1500
 :Sending Touch (ACTION_DOWN): 0:(331.0,77.0)
 :Sending Touch (ACTION_UP): 0:(328.54688,117.50488)
@@ -425,7 +425,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(145.0,1917.0)
 :Sending Touch (ACTION_UP): 0:(145.24219,1916.6719)
 :Sending Trackball (ACTION_MOVE): 0:(-4.0,-1.0)
-    //[calendar_time:2026-10-04 10:55:27.573  system_uptime:223890]
+    //[calendar_time:2026-10-04 11:04:03.396  system_uptime:175608]
     // Sending event #1600
 :Sending Touch (ACTION_DOWN): 0:(792.0,329.0)
 :Sending Touch (ACTION_UP): 0:(785.46387,328.48242)
@@ -447,9 +447,9 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_UP): 0:(813.7168,1737.7607)
 :Sending Touch (ACTION_DOWN): 0:(135.0,1731.0)
 :Sending Touch (ACTION_UP): 0:(108.59766,1749.6553)
-    //[calendar_time:2026-10-04 10:55:29.796  system_uptime:226113]
+    //[calendar_time:2026-10-04 11:04:05.643  system_uptime:177856]
     // Sending event #1700
-    //[calendar_time:2026-10-04 10:55:29.916  system_uptime:226233]
+    //[calendar_time:2026-10-04 11:04:05.763  system_uptime:177976]
     // Sending event #1700
 :Sending Touch (ACTION_DOWN): 0:(193.0,373.0)
 :Sending Touch (ACTION_UP): 0:(182.75488,378.5332)
@@ -473,7 +473,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(955.0,2067.0)
 :Sending Touch (ACTION_UP): 0:(955.32715,2064.13)
 :Sending Touch (ACTION_DOWN): 0:(973.0,1579.0)
-    //[calendar_time:2026-10-04 10:55:33.722  system_uptime:230039]
+    //[calendar_time:2026-10-04 11:04:09.520  system_uptime:181733]
     // Sending event #1800
 :Sending Touch (ACTION_UP): 0:(1007.6533,1668.0361)
 :Sending Touch (ACTION_DOWN): 0:(407.0,2121.0)
@@ -500,7 +500,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Trackball (ACTION_UP): 0:(0.0,0.0)
 :Sending Touch (ACTION_DOWN): 0:(1003.0,889.0)
 :Sending Touch (ACTION_UP): 0:(954.5205,830.26074)
-    //[calendar_time:2026-10-04 10:55:36.135  system_uptime:232453]
+    //[calendar_time:2026-10-04 11:04:11.962  system_uptime:184175]
     // Sending event #1900
 :Sending Trackball (ACTION_MOVE): 0:(-3.0,-4.0)
 :Sending Touch (ACTION_DOWN): 0:(551.0,1596.0)
@@ -522,7 +522,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(802.0,497.0)
 :Sending Touch (ACTION_UP): 0:(808.2334,499.55957)
 :Sending Trackball (ACTION_MOVE): 0:(-1.0,-2.0)
-    //[calendar_time:2026-10-04 10:55:37.992  system_uptime:234309]
+    //[calendar_time:2026-10-04 11:04:13.767  system_uptime:185980]
     // Sending event #2000
 :Sending Touch (ACTION_DOWN): 0:(183.0,18.0)
 :Sending Touch (ACTION_UP): 0:(183.40137,8.075195)
@@ -550,7 +550,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_UP): 0:(36.226562,552.57227)
 :Sending Touch (ACTION_DOWN): 0:(483.0,480.0)
 :Sending Touch (ACTION_UP): 0:(477.4619,486.13672)
-    //[calendar_time:2026-10-04 10:55:41.662  system_uptime:237979]
+    //[calendar_time:2026-10-04 11:04:17.299  system_uptime:189512]
     // Sending event #2100
 :Sending Flip keyboardOpen=true
 Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0: open failed: EACCES (Permission denied)
@@ -569,7 +569,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Trackball (ACTION_MOVE): 0:(3.0,-3.0)
 :Sending Trackball (ACTION_UP): 0:(0.0,0.0)
 :Sending Touch (ACTION_DOWN): 0:(1048.0,823.0)
-    //[calendar_time:2026-10-04 10:55:43.484  system_uptime:239801]
+    //[calendar_time:2026-10-04 11:04:19.136  system_uptime:191349]
     // Sending event #2200
 :Sending Touch (ACTION_UP): 0:(1036.6807,827.48926)
 :Sending Touch (ACTION_DOWN): 0:(592.0,58.0)
@@ -593,7 +593,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(584.0,1237.0)
 :Sending Touch (ACTION_UP): 0:(550.5254,1286.0771)
 :Sending Touch (ACTION_DOWN): 0:(956.0,1398.0)
-    //[calendar_time:2026-10-04 10:55:46.652  system_uptime:242970]
+    //[calendar_time:2026-10-04 11:04:22.330  system_uptime:194543]
     // Sending event #2300
 :Sending Touch (ACTION_UP): 0:(957.6465,1412.3506)
 :Sending Touch (ACTION_DOWN): 0:(839.0,263.0)
@@ -626,7 +626,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_UP): 0:(0.0,2152.1934)
 :Sending Trackball (ACTION_MOVE): 0:(-5.0,-5.0)
 :Sending Trackball (ACTION_MOVE): 0:(0.0,0.0)
-    //[calendar_time:2026-10-04 10:55:48.968  system_uptime:245285]
+    //[calendar_time:2026-10-04 11:04:24.627  system_uptime:196840]
     // Sending event #2400
 :Sending Touch (ACTION_DOWN): 0:(92.0,938.0)
 :Sending Touch (ACTION_UP): 0:(77.94238,941.749)
@@ -645,7 +645,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(475.0,1682.0)
 :Sending Touch (ACTION_UP): 0:(495.69336,1692.8672)
 :Sending Touch (ACTION_DOWN): 0:(787.0,791.0)
-    //[calendar_time:2026-10-04 10:55:51.235  system_uptime:247553]
+    //[calendar_time:2026-10-04 11:04:26.840  system_uptime:199053]
     // Sending event #2500
 :Sending Touch (ACTION_UP): 0:(784.51953,743.3906)
 :Sending Touch (ACTION_DOWN): 0:(965.0,970.0)
@@ -676,7 +676,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(268.0,462.0)
 :Sending Touch (ACTION_UP): 0:(268.34277,464.8662)
 :Sending Trackball (ACTION_MOVE): 0:(0.0,2.0)
-    //[calendar_time:2026-10-04 10:55:54.871  system_uptime:251192]
+    //[calendar_time:2026-10-04 11:04:30.463  system_uptime:202675]
     // Sending event #2600
 :Sending Trackball (ACTION_MOVE): 0:(-2.0,1.0)
 :Sending Touch (ACTION_DOWN): 0:(732.0,1089.0)
@@ -695,9 +695,9 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_UP): 0:(152.72363,474.0244)
 :Sending Touch (ACTION_DOWN): 0:(184.0,2092.0)
 :Sending Touch (ACTION_UP): 0:(161.92969,2168.2695)
-    //[calendar_time:2026-10-04 10:55:57.763  system_uptime:254081]
+    //[calendar_time:2026-10-04 11:04:33.415  system_uptime:205628]
     // Sending event #2700
-    //[calendar_time:2026-10-04 10:55:57.883  system_uptime:254201]
+    //[calendar_time:2026-10-04 11:04:33.536  system_uptime:205749]
     // Sending event #2700
 :Sending Touch (ACTION_DOWN): 0:(39.0,1674.0)
 :Sending Touch (ACTION_UP): 0:(42.4541,1675.0039)
@@ -718,7 +718,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(317.0,2042.0)
 :Sending Touch (ACTION_UP): 0:(309.11426,2042.3633)
 :Sending Trackball (ACTION_MOVE): 0:(-5.0,3.0)
-    //[calendar_time:2026-10-04 10:56:00.286  system_uptime:256603]
+    //[calendar_time:2026-10-04 11:04:35.936  system_uptime:208149]
     // Sending event #2800
 :Sending Trackball (ACTION_MOVE): 0:(2.0,4.0)
 :Sending Touch (ACTION_DOWN): 0:(1026.0,1082.0)
@@ -744,7 +744,7 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 :Sending Touch (ACTION_DOWN): 0:(1007.0,2134.0)
 :Sending Touch (ACTION_UP): 0:(995.3506,2131.0244)
 :Sending Trackball (ACTION_MOVE): 0:(4.0,0.0)
-    //[calendar_time:2026-10-04 10:56:03.153  system_uptime:259470]
+    //[calendar_time:2026-10-04 11:04:38.774  system_uptime:210987]
     // Sending event #2900
 :Sending Touch (ACTION_DOWN): 0:(1030.0,1578.0)
 :Sending Touch (ACTION_UP): 0:(1047.6729,1636.0645)
@@ -767,5 +767,5 @@ Got IOException performing flipjava.io.FileNotFoundException: /dev/input/event0:
 Events injected: 3000
 :Sending rotation degree=0, persist=false
 :Dropped: keys=0 pointers=0 trackballs=0 flips=7 rotations=0
-## Network stats: elapsed time=82973ms (0ms mobile, 0ms wifi, 82973ms not connected)
+## Network stats: elapsed time=83386ms (0ms mobile, 0ms wifi, 83386ms not connected)
 // Monkey finished
