@@ -208,6 +208,46 @@ EXTRA_HITS = {
     "emilie": [extra("SKILL", "a1-cleardew-cologne", "Cleardew Cologne DMG (A1)", "NONE", "DENDRO", [("ATK", 6.0)], asc=1)],
     "escoffier": [extra("SKILL", "c6-special-grade-frosty-parfait", "Special-Grade Frosty Parfait DMG (C6)", "SKILL", "CRYO",
                         [("ATK", 5.0)], cons=6)],
+    "mavuika": [
+        extra("SKILL", "c6-flamestrider-crash", "Flamestrider Crash DMG (C6)", "SKILL", "PYRO", [("ATK", 2.0)], cons=6),
+        extra("SKILL", "c6-scorching-ring", "Scorching Ring of Searing Radiance DMG (C6)", "SKILL", "PYRO", [("ATK", 5.0)], cons=6),
+    ],
+    "citlali": [extra("SKILL", "c4-spiritvessel-skull", "Obsidian Spiritvessel Skull DMG (C4)", "NONE", "CRYO", [("EM", 18.0)], cons=4)],
+    "chasca": [
+        extra("SKILL", "a4-burning-shadowhunt-shot", "Burning Shadowhunt Shot DMG (A4)", "CHARGED", "ANEMO", [("ATK", "param4")], asc=4),
+        extra("SKILL", "c2-shining-shell-aoe", "Shining Shell AoE DMG (C2)", "CHARGED", "ANEMO", [("ATK", 4.0)], cons=2),
+        extra("BURST", "c4-radiant-shell-aoe", "Radiant Soulseeker Shell AoE DMG (C4)", "CHARGED", "ANEMO", [("ATK", 4.0)], cons=4),
+    ],
+    "kinich": [extra("SKILL", "c6-cannon-bounce", "Scalespiker Cannon Bounce DMG (C6)", "SKILL", "DENDRO", [("ATK", 7.0)], cons=6)],
+    "kachina": [extra("SKILL", "c6-shield-break", "Shield Break DMG (C6)", "NONE", "GEO", [("DEF", 2.0)], cons=6)],
+    "ororon": [
+        extra("SKILL", "a1-hypersense", "Hypersense DMG (A1)", "NONE", "ELECTRO", [("ATK", 1.6)], asc=1),
+        extra("BURST", "c6-hypersense", "Burst Hypersense DMG (C6)", "NONE", "ELECTRO", [("ATK", 3.2)], cons=6),
+    ],
+    "ifa": [extra("SKILL", "c6-extra-tonicshot", "Additional Tonicshot DMG (C6, 50% chance)", "NORMAL", "ANEMO", [("ATK", 1.2)], cons=6)],
+    "ineffa": [
+        extra("SKILL", "a1-birgitta-additional", "Birgitta Additional Attack DMG (A1)", "NONE", "ELECTRO", [("ATK", 0.65)], asc=1,
+              special="LUNAR_CHARGED"),
+        extra("BURST", "c2-punishment-edict", "Punishment Edict DMG (C2)", "NONE", "ELECTRO", [("ATK", 3.0)], cons=2, special="LUNAR_CHARGED"),
+        extra("SKILL", "c6-thundercloud-strike", "Thundercloud Follow-up DMG (C6)", "NONE", "ELECTRO", [("ATK", 1.35)], cons=6,
+              special="LUNAR_CHARGED"),
+    ],
+    "flins": [extra("SKILL", "c2-additional", "Additional Lunar-Charged DMG (C2)", "NONE", "ELECTRO", [("ATK", 0.5)], cons=2,
+                    special="LUNAR_CHARGED")],
+    "lauma": [
+        extra("SKILL", "c6-sanctuary-lunar-bloom", "Frostgrove Sanctuary Lunar-Bloom DMG (C6)", "NONE", "DENDRO", [("EM", 1.85)], cons=6,
+              special="LUNAR_BLOOM"),
+        extra("NORMAL", "c6-pale-hymn-normal", "Pale Hymn Normal Attack DMG (C6)", "NORMAL", "DENDRO", [("EM", 1.5)], cons=6,
+              special="LUNAR_BLOOM"),
+    ],
+    "nefer": [
+        extra("SKILL", "c6-phantasm-2-lunar", "Phantasm Performance 2-Hit DMG (Nefer, C6 Lunar-Bloom)", "CHARGED", "DENDRO", [("EM", 0.85)],
+              cons=6, special="LUNAR_BLOOM"),
+        extra("SKILL", "c6-phantasm-end", "Phantasm Performance Final DMG (C6)", "CHARGED", "DENDRO", [("EM", 1.2)], cons=6,
+              special="LUNAR_BLOOM"),
+    ],
+    "aino": [extra("BURST", "c2-water-ball", "Additional Water Ball DMG (C2)", "BURST", "HYDRO", [("ATK", 0.25), ("EM", 1.0)], cons=2)],
+    "illuga": [extra("BURST", "c2-aedon", "Aedon DMG (C2)", "BURST", "GEO", [("EM", 4.0), ("DEF", 2.0)], cons=2)],
     "zhongli": [],
 }
 

@@ -76,7 +76,7 @@ fun BuffsTab(data: GameDataSet, team: Team, result: TeamResult?, index: Int, vm:
         val resonances = result.teamEffects.filter { it.unlocked }
         if (resonances.isNotEmpty()) {
             item {
-                SectionCard(title = "Elemental resonance") {
+                SectionCard(title = "Party effects") {
                     resonances.forEach { e -> EffectRow(e) { v -> vm.setTeamEffect(e.effect.id, v) } }
                 }
             }

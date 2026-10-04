@@ -170,15 +170,21 @@ internal class HitCalculator(
         val stats = m.final
         val mods = m.mods
         val reaction = special.reaction
+        // Only modifiers aimed at this specific hit apply: reaction DMG ignores Normal/Skill/... DMG bonuses.
+        fun specific(kind: HitModKind) = mods.hitMods(kind, ctx).filter { it.filter.hitIds != null }
         val resElement = reaction?.let { Formulas.transformativeResElement(it) } ?: ctx.element
         val reactionMult = reaction?.let { Formulas.lunarDirectMultiplier(it) } ?: 1.0
-        val bonus = reaction?.let { mods.reactionBonus[it] } ?: 0.0
+        var multiplier = 1.0
+        specific(HitModKind.MULTIPLIER).forEach { multiplier *= it.value }
+        val bonus = (reaction?.let { mods.reactionBonus[it] } ?: 0.0) + specific(HitModKind.DMG_BONUS).sumOf { it.value }
         val baseBonus = reaction?.let { mods.lunarBase[it] } ?: 0.0
         val elevate = reaction?.let { mods.lunarElevate[it] } ?: 0.0
-        val flat = reaction?.let { mods.reactionFlat[it] } ?: 0.0
-        val base = talentPart * reactionMult * (1 + Formulas.lunarEmBonus(stats.em) + bonus) * (1 + baseBonus) + flat
-        val critRate = stats.critRate + (reaction?.let { mods.reactionCritRate[it] } ?: 0.0)
-        val critDmg = stats.critDmg + (reaction?.let { mods.reactionCritDmg[it] } ?: 0.0)
+        val flat = (reaction?.let { mods.reactionFlat[it] } ?: 0.0) + specific(HitModKind.FLAT_DMG).sumOf { it.value }
+        val base = talentPart * multiplier * reactionMult * (1 + Formulas.lunarEmBonus(stats.em) + bonus) * (1 + baseBonus) + flat
+        val critRate = stats.critRate + (reaction?.let { mods.reactionCritRate[it] } ?: 0.0) +
+            specific(HitModKind.CRIT_RATE).sumOf { it.value }
+        val critDmg = stats.critDmg + (reaction?.let { mods.reactionCritDmg[it] } ?: 0.0) +
+            specific(HitModKind.CRIT_DMG).sumOf { it.value }
         val nonCrit = base * (1 + elevate) * Formulas.resMultiplier(enemyRes(resElement))
         return DamageNumbers(nonCrit, nonCrit * (1 + critDmg), nonCrit * Formulas.averageCritMultiplier(critRate, critDmg))
     }

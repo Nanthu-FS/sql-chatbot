@@ -49,6 +49,8 @@ enum class EffectSource(val display: String) {
     WEAPON("Weapon"),
     ARTIFACT("Artifact set"),
     RESONANCE("Elemental resonance"),
+    /** Party-wide mechanics such as Moonsign. */
+    PARTY("Party"),
     CUSTOM("Custom"),
 }
 
@@ -227,6 +229,9 @@ class EffectScope internal constructor(
 
     /** Highest value of [selector] across the party members' own stats. */
     fun teamMax(selector: (StatSheet) -> Double): Double = members.maxOf { selector(it.selfStats) }
+
+    /** Highest value of [selector] across party members (use [MemberState.selfStats] for their own stats); 0 if none. */
+    fun teamMaxOf(selector: (MemberState) -> Double): Double = members.maxOfOrNull(selector) ?: 0.0
 
     val isSelf: Boolean get() = owner === target
     val targetElement: Element get() = target.element

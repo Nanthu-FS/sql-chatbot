@@ -32,7 +32,7 @@ object GameEffects : EffectProvider {
         EffectTable("set", EffectSource.ARTIFACT).apply { artifactSetEffects() }.build()
     }
 
-    private val team: List<Effect> by lazy { resonanceEffects() }
+    private val team: List<Effect> by lazy { resonanceEffects() + moonsignEffects() }
 
     override fun characterEffects(characterId: String): List<Effect> = characters[characterId].orEmpty()
     override fun weaponEffects(weaponId: String): List<Effect> = weapons[weaponId].orEmpty()

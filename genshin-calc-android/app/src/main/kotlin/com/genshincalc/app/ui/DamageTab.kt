@@ -215,7 +215,7 @@ private fun BuffSummary(m: MemberResult, result: TeamResult, team: Team, data: G
         if (received.isEmpty()) EmptyNote("No buffs active.")
         received.forEach { e ->
             val owner = team.members.getOrNull(e.ownerIndex)?.let { data.character(it.characterId).name.substringBefore(" (") } ?: ""
-            Text("• ${e.effect.name}" + if (e.ownerIndex != m.index && e.effect.source != com.genshincalc.core.calc.EffectSource.RESONANCE) "  ($owner)" else "",
+            Text("• ${e.effect.name}" + if (e.ownerIndex != m.index && e.effect.source !in PARTY_SOURCES) "  ($owner)" else "",
                 style = MaterialTheme.typography.bodySmall)
         }
         val shred = result.resShred.filterValues { it != 0.0 }
@@ -274,3 +274,6 @@ private fun HitDetailDialog(hit: HitResult, m: MemberResult, reaction: Reaction?
         },
     )
 }
+
+/** Effects that belong to the whole party rather than to one member. */
+private val PARTY_SOURCES = setOf(com.genshincalc.core.calc.EffectSource.RESONANCE, com.genshincalc.core.calc.EffectSource.PARTY)
