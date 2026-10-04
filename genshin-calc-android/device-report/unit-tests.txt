@@ -1,7 +1,8 @@
-### Core unit tests: 32 run, 0 failed
+### Core unit tests: 37 run, 0 failed
 - com.genshincalc.core.ArtifactScanTest: 8 tests, 0 failed
 - com.genshincalc.core.BaseStatsTest: 6 tests, 0 failed
 - com.genshincalc.core.EffectsIntegrityTest: 4 tests, 0 failed
 - com.genshincalc.core.EngineTest: 5 tests, 0 failed
 - com.genshincalc.core.FormulasTest: 6 tests, 0 failed
 - com.genshincalc.core.LunarStellarTest: 3 tests, 0 failed
+- com.genshincalc.core.ShowcaseTest: 5 tests, 0 failed

@@ -1,7 +1,7 @@
 INSTRUMENTATION_STATUS: class=com.genshincalc.app.ArtifactImportTest
 INSTRUMENTATION_STATUS: current=1
 INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
-INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: numtests=3
 INSTRUMENTATION_STATUS: stream=
 com.genshincalc.app.ArtifactImportTest:
 INSTRUMENTATION_STATUS: test=scanScreenshotsAndEditArtifacts
@@ -9,30 +9,69 @@ INSTRUMENTATION_STATUS_CODE: 1
 INSTRUMENTATION_STATUS: class=com.genshincalc.app.ArtifactImportTest
 INSTRUMENTATION_STATUS: current=1
 INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
-INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: numtests=3
 INSTRUMENTATION_STATUS: stream=.
 INSTRUMENTATION_STATUS: test=scanScreenshotsAndEditArtifacts
 INSTRUMENTATION_STATUS_CODE: 0
-INSTRUMENTATION_STATUS: class=com.genshincalc.app.SmokeTest
+INSTRUMENTATION_STATUS: class=com.genshincalc.app.ShowcaseImportTest
 INSTRUMENTATION_STATUS: current=2
 INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
-INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stream=
+com.genshincalc.app.ShowcaseImportTest:
+INSTRUMENTATION_STATUS: test=importShowcaseByUid
+INSTRUMENTATION_STATUS_CODE: 1
+INSTRUMENTATION_STATUS: class=com.genshincalc.app.ShowcaseImportTest
+INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
+INSTRUMENTATION_STATUS: stack=androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 30000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:441)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:306)
+	at com.genshincalc.app.ShowcaseImportTest.waitForTag(ShowcaseImportTest.kt:55)
+	at com.genshincalc.app.ShowcaseImportTest.waitForTag$default(ShowcaseImportTest.kt:54)
+	at com.genshincalc.app.ShowcaseImportTest.importShowcaseByUid(ShowcaseImportTest.kt:73)
+
+INSTRUMENTATION_STATUS: stream=
+Error in importShowcaseByUid(com.genshincalc.app.ShowcaseImportTest):
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 30000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:441)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:306)
+	at com.genshincalc.app.ShowcaseImportTest.waitForTag(ShowcaseImportTest.kt:55)
+	at com.genshincalc.app.ShowcaseImportTest.waitForTag$default(ShowcaseImportTest.kt:54)
+	at com.genshincalc.app.ShowcaseImportTest.importShowcaseByUid(ShowcaseImportTest.kt:73)
+
+INSTRUMENTATION_STATUS: test=importShowcaseByUid
+INSTRUMENTATION_STATUS_CODE: -2
+INSTRUMENTATION_STATUS: class=com.genshincalc.app.SmokeTest
+INSTRUMENTATION_STATUS: current=3
+INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
+INSTRUMENTATION_STATUS: numtests=3
 INSTRUMENTATION_STATUS: stream=
 com.genshincalc.app.SmokeTest:
 INSTRUMENTATION_STATUS: test=walkThroughEveryScreen
 INSTRUMENTATION_STATUS_CODE: 1
 INSTRUMENTATION_STATUS: class=com.genshincalc.app.SmokeTest
-INSTRUMENTATION_STATUS: current=2
+INSTRUMENTATION_STATUS: current=3
 INSTRUMENTATION_STATUS: id=AndroidJUnitRunner
-INSTRUMENTATION_STATUS: numtests=2
+INSTRUMENTATION_STATUS: numtests=3
 INSTRUMENTATION_STATUS: stream=.
 INSTRUMENTATION_STATUS: test=walkThroughEveryScreen
 INSTRUMENTATION_STATUS_CODE: 0
 INSTRUMENTATION_RESULT: stream=
 
-Time: 85.735
+Time: 103.871
+There was 1 failure:
+1) importShowcaseByUid(com.genshincalc.app.ShowcaseImportTest)
+androidx.compose.ui.test.ComposeTimeoutException: Condition still not satisfied after 30000 ms
+	at androidx.compose.ui.test.AndroidComposeUiTestEnvironment$AndroidComposeUiTestImpl.waitUntil(ComposeUiTest.android.kt:441)
+	at androidx.compose.ui.test.junit4.AndroidComposeTestRule.waitUntil(AndroidComposeTestRule.android.kt:306)
+	at com.genshincalc.app.ShowcaseImportTest.waitForTag(ShowcaseImportTest.kt:55)
+	at com.genshincalc.app.ShowcaseImportTest.waitForTag$default(ShowcaseImportTest.kt:54)
+	at com.genshincalc.app.ShowcaseImportTest.importShowcaseByUid(ShowcaseImportTest.kt:73)
 
-OK (2 tests)
+FAILURES!!!
+Tests run: 3,  Failures: 1
 
 
 INSTRUMENTATION_CODE: -1
