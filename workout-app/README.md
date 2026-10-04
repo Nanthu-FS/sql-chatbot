@@ -26,9 +26,27 @@ python3 -m http.server 8000 --directory workout-app
 
 Then visit <http://localhost:8000>. To use it on your phone, open `http://<your-computer-ip>:8000` on the same Wi-Fi network and choose **Add to Home Screen**. Offline mode needs `localhost` or HTTPS.
 
+## Android app (APK)
+
+`android/` wraps the same files in a small native WebView app (minimum Android 7, package `io.github.nanthufs.tonnage`). In the Android app:
+
+- Data is saved to the app's own storage, and Android's backup service includes it.
+- **Export backup** opens Android's save dialog.
+- The screen stays on while today's workout is open.
+- The system back gesture closes sheets and steps back through screens.
+
+The build uses Ubuntu/Debian's packaged Android tools, so it needs no Android Studio or Gradle:
+
+```bash
+sudo apt-get install aapt apksigner zipalign dalvik-exchange android-sdk-platform-23 default-jdk-headless
+workout-app/android/build.sh   # → workout-app/android/build/tonnage.apk
+```
+
+The script creates a signing key at `~/.android/tonnage.keystore` on first run. Android installs an update over the existing app only when both are signed with the same key. With a different key, export a backup, uninstall, install the new APK, then import the backup.
+
 ## Data
 
-Everything is saved in the browser's local storage on that device: workouts, settings and the photo. Use **Profile → Export backup** to move your data to another device or browser.
+Everything is saved on the device: workouts, settings and the photo. The browser version uses local storage, and the Android app uses its own app storage. Use **Profile → Export backup** to move your data to another device or browser.
 
 ## Tests
 
@@ -46,3 +64,4 @@ node --test 'workout-app/tests/*.test.js'
 | `app.js` | Screens, storage, photo handling and interactions |
 | `sw.js`, `manifest.webmanifest`, `icons/` | Offline support and install icons |
 | `tests/` | Unit tests for `logic.js` |
+| `android/` | Android wrapper: manifest, `MainActivity.java`, launcher icons, `build.sh` |

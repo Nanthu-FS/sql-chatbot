@@ -2,3 +2,5 @@
 venv/
 __pycache__/
 *.pyc
+workout-app/android/build/
+*.keystore

@@ -4,13 +4,16 @@
  *
  * Data lives in localStorage. When the page runs inside a Claude artifact
  * viewer that grants the `db` capability, the same data is also kept in the
- * viewer's private account store so it follows them across devices.
+ * viewer's private account store so it follows them across devices. Inside the
+ * Android app (android/), a native bridge stores it in app files instead.
  */
 (function () {
   'use strict';
 
   const L = window.TonnageLogic;
   const FRAMED = (() => { try { return window.self !== window.top; } catch (e) { return true; } })();
+  // Bridge provided by the Android wrapper (android/src/.../MainActivity.java).
+  const NATIVE = window.TonnageAndroid && typeof window.TonnageAndroid.getItem === 'function' ? window.TonnageAndroid : null;
   const $ = (sel, root) => (root || document).querySelector(sel);
   const $$ = (sel, root) => Array.from((root || document).querySelectorAll(sel));
   const esc = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -98,21 +101,35 @@
 
     const meta = () => ({ v: 1, profile: S.profile, custom: S.custom, examples: S.examples, anchor: S.anchor });
 
+    // Device storage: app files through the Android bridge, otherwise localStorage.
+    const kv = {
+      get(k) {
+        try { const v = NATIVE ? NATIVE.getItem(k) : localStorage.getItem(k); return typeof v === 'string' ? v : null; } catch (e) { return null; }
+      },
+      set(k, v) {
+        try {
+          if (NATIVE) return NATIVE.setItem(k, v) !== false;
+          localStorage.setItem(k, v);
+          return true;
+        } catch (e) { return false; }
+      },
+      remove(k) {
+        try { if (NATIVE) NATIVE.removeItem(k); else localStorage.removeItem(k); } catch (e) { /* storage unavailable */ }
+      },
+    };
+
     function readLocal() {
-      let data = null, photo = null;
-      try { const raw = localStorage.getItem(KEY); data = raw ? JSON.parse(raw) : null; } catch (e) { data = null; }
-      try { photo = localStorage.getItem(PHOTO_KEY); } catch (e) { photo = null; }
-      return { data, photo };
+      let data = null;
+      try { const raw = kv.get(KEY); data = raw ? JSON.parse(raw) : null; } catch (e) { data = null; }
+      return { data, photo: kv.get(PHOTO_KEY) };
     }
     function writeLocal() {
-      try { localStorage.setItem(KEY, JSON.stringify(Object.assign(meta(), { workouts: S.workouts }))); return true; } catch (e) { return false; }
+      return kv.set(KEY, JSON.stringify(Object.assign(meta(), { workouts: S.workouts })));
     }
     function writeLocalPhoto() {
-      try {
-        if (S.photo) localStorage.setItem(PHOTO_KEY, S.photo);
-        else localStorage.removeItem(PHOTO_KEY);
-        return true;
-      } catch (e) { return false; }
+      if (S.photo) return kv.set(PHOTO_KEY, S.photo);
+      kv.remove(PHOTO_KEY);
+      return true;
     }
 
     // Account writes run one at a time, in order.
@@ -176,7 +193,8 @@
       },
       eraseAll(oldDates) {
         for (const [key, p] of pending) { clearTimeout(p.id); pending.delete(key); }
-        try { localStorage.removeItem(KEY); localStorage.removeItem(PHOTO_KEY); } catch (e) { /* storage unavailable */ }
+        kv.remove(KEY);
+        kv.remove(PHOTO_KEY);
         if (!remote) return;
         for (const d of oldDates) run(() => workoutRef(d).delete());
         run(() => photoRef().delete());
@@ -1032,6 +1050,10 @@
   // Keep the screen on while today's workout is open.
   let wakeLock = null;
   async function keepAwake(on) {
+    if (NATIVE) {
+      try { NATIVE.keepScreenOn(!!on); } catch (e) { /* older wrapper */ }
+      return;
+    }
     try {
       if (on && !wakeLock && navigator.wakeLock && document.visibilityState === 'visible') {
         wakeLock = await navigator.wakeLock.request('screen');
@@ -1305,9 +1327,15 @@
 
     export: () => {
       const backup = { app: 'tonnage', version: 1, exportedAt: new Date().toISOString(), profile: S.profile, custom: S.custom, examples: S.examples, anchor: S.anchor, workouts: S.workouts, photo: S.photo };
+      const filename = 'tonnage-backup-' + today() + '.json';
+      if (NATIVE) {
+        // Android opens its save dialog and reports the result with a native toast.
+        NATIVE.saveFile(filename, 'application/json', JSON.stringify(backup));
+        return;
+      }
       const a = document.createElement('a');
       a.href = URL.createObjectURL(new Blob([JSON.stringify(backup)], { type: 'application/json' }));
-      a.download = 'tonnage-backup-' + today() + '.json';
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1443,7 +1471,7 @@
       ready = true;
     }
 
-    if (!FRAMED && 'serviceWorker' in navigator && /^https?:$/.test(location.protocol) && $('link[rel="manifest"]')) {
+    if (!FRAMED && !NATIVE && 'serviceWorker' in navigator && /^https?:$/.test(location.protocol) && $('link[rel="manifest"]')) {
       navigator.serviceWorker.register('sw.js').catch(() => { /* offline support is optional */ });
     }
   }
