@@ -36,6 +36,8 @@ android {
     buildFeatures { compose = true }
 
     packaging {
+        // Compress the OCR native libraries in the APK (smaller download; extracted on install).
+        jniLibs { useLegacyPackaging = true }
         resources {
             excludes += setOf(
                 "/META-INF/{AL2.0,LGPL2.1}",
