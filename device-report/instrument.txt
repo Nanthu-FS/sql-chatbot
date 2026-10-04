@@ -71,7 +71,7 @@ INSTRUMENTATION_STATUS: test=searchSettingsClipsVoiceMeeting
 INSTRUMENTATION_STATUS_CODE: 0
 INSTRUMENTATION_RESULT: stream=
 
-Time: 81.078
+Time: 53.535
 
 OK (5 tests)
 
