@@ -233,6 +233,9 @@ class EffectScope internal constructor(
     /** Highest value of [selector] across party members (use [MemberState.selfStats] for their own stats); 0 if none. */
     fun teamMaxOf(selector: (MemberState) -> Double): Double = members.maxOfOrNull(selector) ?: 0.0
 
+    /** Sum of [selector] over party members. */
+    fun teamSumOf(selector: (MemberState) -> Double): Double = members.sumOf(selector)
+
     val isSelf: Boolean get() = owner === target
     val targetElement: Element get() = target.element
     val targetCharacterId: String get() = target.characterId
