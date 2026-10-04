@@ -86,3 +86,7 @@ The app opens at <http://localhost:8501>.
 - Credentials live only in your local `.env` and are never committed.
 - All LLM inference runs locally via Ollama — no third-party API keys required.
 - Connect with a least-privilege (ideally read-only) database user.
+
+## Also in this repo: Tonnage workout tracker
+
+[`workout-app/`](workout-app/) contains a standalone, mobile-first workout log for daily workouts, sets and total weight lifted, with your own photo as the cover. It needs no build step: open `workout-app/index.html` or see [its README](workout-app/README.md).
