@@ -1,6 +1,8 @@
 package com.genshincalc.core.calc
 
 import com.genshincalc.core.model.ArtifactBuild
+import com.genshincalc.core.model.ArtifactMode
+import com.genshincalc.core.model.ArtifactPiece
 import com.genshincalc.core.model.CharacterData
 import com.genshincalc.core.model.GameDataSet
 import com.genshincalc.core.model.ManualStats
@@ -74,8 +76,22 @@ object BaseStats {
     fun maxSubstatRoll(data: GameDataSet, stat: Stat, rarity: Int = 5): Double =
         data.curves.artifactSub[rarity.toString()]?.get(stat)?.lastOrNull() ?: 0.0
 
+    /** Main stat value of a single artifact. */
+    fun pieceMain(data: GameDataSet, piece: ArtifactPiece): Double {
+        val p = piece.normalized()
+        return artifactMain(data, p.mainStat, p.rarity, p.level)
+    }
+
     /** Adds the five main stats and the substats of [build] to [sheet]. */
     fun addArtifacts(data: GameDataSet, build: ArtifactBuild, sheet: StatSheet) {
+        if (build.mode == ArtifactMode.PIECES) {
+            for (piece in build.pieces.values) {
+                val p = piece.normalized()
+                sheet.add(p.mainStat, artifactMain(data, p.mainStat, p.rarity, p.level))
+                for ((stat, value) in p.substats) sheet.add(stat, value)
+            }
+            return
+        }
         val r = build.rarity
         val lvl = build.mainLevel.coerceIn(0, artifactMaxLevel(r))
         sheet.add(Stat.HP, artifactMain(data, Stat.HP, r, lvl))

@@ -64,11 +64,17 @@ data class ArtifactBuild(
     val mainLevel: Int = 20,
     /** Substat totals across all five pieces (fractions for percent stats). */
     val substats: Map<Stat, Double> = emptyMap(),
+    /** SUMMARY uses the fields above; PIECES uses [pieces] instead. */
+    val mode: ArtifactMode = ArtifactMode.SUMMARY,
+    /** Individually entered artifacts by slot (used in [ArtifactMode.PIECES]). */
+    val pieces: Map<ArtifactSlot, ArtifactPiece> = emptyMap(),
 ) {
     /** Set id -> number of pieces equipped. */
     fun pieceCounts(): Map<String, Int> {
         val counts = mutableMapOf<String, Int>()
-        if (set4 != null) {
+        if (mode == ArtifactMode.PIECES) {
+            pieces.values.mapNotNull { it.setId }.forEach { counts[it] = (counts[it] ?: 0) + 1 }
+        } else if (set4 != null) {
             counts[set4] = 4
         } else {
             listOfNotNull(set2a, set2b).forEach { counts[it] = (counts[it] ?: 0) + 2 }
