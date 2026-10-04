@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.AlertDialog
@@ -59,6 +60,9 @@ fun CalculatorScreen(data: GameDataSet, team: Team, result: TeamResult?, vm: Cal
             // The surrounding Scaffold already pads for the status bar.
             windowInsets = WindowInsets(0, 0, 0, 0),
             actions = {
+                IconButton(onClick = { nav.push(Route.ImportShowcase) }, modifier = Modifier.testTag("import_uid")) {
+                    Icon(Icons.Filled.AccountCircle, contentDescription = "Import characters from the game (UID)")
+                }
                 IconButton(onClick = { confirmReset = true }, modifier = Modifier.testTag("reset_team")) {
                     Icon(Icons.Filled.Refresh, contentDescription = "Reset to sample team")
                 }
@@ -82,6 +86,7 @@ fun CalculatorScreen(data: GameDataSet, team: Team, result: TeamResult?, vm: Cal
                 Text("Add a character to start", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(12.dp))
                 TextButton(onClick = { nav.push(Route.PickCharacter(null)) }) { Text("Add character") }
+                TextButton(onClick = { nav.push(Route.ImportShowcase) }) { Text("Import from game (UID)") }
             }
         } else {
             when (subTab) {

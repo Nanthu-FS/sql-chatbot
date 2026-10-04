@@ -1,0 +1,15 @@
+{
+ "playerInfo": {
+  "nickname": "Hidden",
+  "level": 55,
+  "worldLevel": 8,
+  "showAvatarInfoList": [
+   {
+    "avatarId": 10000046,
+    "level": 90
+   }
+  ]
+ },
+ "ttl": 60,
+ "uid": "800000002"
+}

@@ -17,6 +17,11 @@ import com.genshincalc.core.model.GameDataSet
 import com.genshincalc.core.model.MemberBuild
 import com.genshincalc.core.model.Team
 import com.genshincalc.core.model.WeaponBuild
+import com.genshincalc.core.showcase.Showcase
+import com.genshincalc.core.showcase.ShowcaseFormatException
+import com.genshincalc.core.showcase.ShowcaseIds
+import com.genshincalc.core.showcase.ShowcaseParser
+import com.genshincalc.core.showcase.StatDifference
 import com.genshincalc.core.text.ArtifactScanParser
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -59,6 +64,18 @@ data class ScanSession(val id: Int, val total: Int, val equipOn: String?, val it
     val running: Boolean get() = items.size < total
 }
 
+/** A player's in-game Character Showcase being imported. */
+data class ShowcaseState(
+    val uid: String = "",
+    val loading: Boolean = false,
+    val error: String? = null,
+    val showcase: Showcase? = null,
+    /** Indexes of the characters that go into the party (the first four by default). */
+    val selected: List<Int> = emptyList(),
+    /** Per character: where the calculated attribute screen differs from the game's. */
+    val differences: List<List<StatDifference>> = emptyList(),
+)
+
 /** Holds the party being calculated and recomputes damage whenever it changes. */
 class CalcViewModel(app: Application) : AndroidViewModel(app) {
     private val prefs = app.getSharedPreferences("calc", Context.MODE_PRIVATE)
@@ -84,6 +101,12 @@ class CalcViewModel(app: Application) : AndroidViewModel(app) {
     val scan: StateFlow<ScanSession?> = _scan.asStateFlow()
     private var scanJob: Job? = null
     private var scanCount = 0
+
+    private val _showcase = MutableStateFlow(ShowcaseState(uid = prefs.getString(KEY_UID, null).orEmpty()))
+    val showcase: StateFlow<ShowcaseState> = _showcase.asStateFlow()
+    private var showcaseJob: Job? = null
+    /** UID -> (expiry time, response); the service refreshes a showcase only every "ttl" seconds. */
+    private val showcaseCache = mutableMapOf<String, Pair<Long, String>>()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val result: StateFlow<TeamResult?> = combine(_data, _team) { d, t ->
@@ -298,6 +321,87 @@ class CalcViewModel(app: Application) : AndroidViewModel(app) {
 
     private fun newPieceId(): String = UUID.randomUUID().toString().replace("-", "").take(12)
 
+    /** Loads the Character Showcase of [uid] from Enka.Network; the result is in [showcase]. */
+    fun loadShowcase(uid: String) {
+        val clean = uid.trim()
+        if (!UID.matches(clean)) {
+            _showcase.value = ShowcaseState(uid = clean, error = "A UID has 9 or 10 digits (shown in the game's Profile screen).")
+            return
+        }
+        prefs.edit().putString(KEY_UID, clean).apply()
+        showcaseJob?.cancel()
+        _showcase.value = ShowcaseState(uid = clean, loading = true)
+        showcaseJob = viewModelScope.launch {
+            val text = try {
+                showcaseCache[clean]?.takeIf { it.first > System.currentTimeMillis() }?.second
+                    ?: ShowcaseClient.fetch(clean).also { body ->
+                        val ttl = TTL.find(body)?.groupValues?.get(1)?.toLongOrNull() ?: 60
+                        showcaseCache[clean] = System.currentTimeMillis() + ttl * 1000 to body
+                    }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _showcase.value = ShowcaseState(uid = clean, error = e.message ?: "Couldn't load the showcase.")
+                return@launch
+            }
+            readShowcase(clean, text)
+        }
+    }
+
+    /** Shows a showcase response without downloading it (used by tests). */
+    fun loadShowcaseJson(uid: String, text: String) {
+        showcaseJob?.cancel()
+        _showcase.value = ShowcaseState(uid = uid, loading = true)
+        showcaseJob = viewModelScope.launch { readShowcase(uid, text) }
+    }
+
+    private suspend fun readShowcase(uid: String, text: String) {
+        val d = _data.filterNotNull().first()
+        _showcase.value = withContext(Dispatchers.Default) {
+            try {
+                val s = ShowcaseParser.parse(text, d, ShowcaseIds.load()) { newPieceId() }
+                val differences = s.characters.map { c ->
+                    runCatching {
+                        val m = TeamCalculator(d, GameEffects).calculate(Team(listOf(c.build))).members[0]
+                        ShowcaseParser.compare(c.gameStats, m.screenStats, m.character.element)
+                    }.getOrDefault(emptyList())
+                }
+                ShowcaseState(uid = uid, showcase = s, selected = s.characters.indices.take(Team.MAX_SIZE), differences = differences)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: ShowcaseFormatException) {
+                ShowcaseState(uid = uid, error = e.message)
+            } catch (e: Exception) {
+                ShowcaseState(uid = uid, error = "Couldn't read the showcase (${e.message ?: e.javaClass.simpleName}).")
+            }
+        }
+    }
+
+    fun toggleShowcaseCharacter(index: Int) = _showcase.update { s ->
+        val selected = when {
+            index in s.selected -> s.selected - index
+            s.selected.size < Team.MAX_SIZE -> (s.selected + index).sorted()
+            else -> s.selected
+        }
+        s.copy(selected = selected)
+    }
+
+    /** Replaces the party with the selected showcase characters; their artifacts are added to My artifacts. */
+    fun applyShowcase() {
+        val s = _showcase.value
+        val chosen = s.selected.mapNotNull { s.showcase?.characters?.getOrNull(it) }
+        if (chosen.isEmpty()) return
+        val pieces = _inventory.value.toMutableList()
+        val members = chosen.map { c ->
+            val a = c.build.artifacts
+            // An artifact that is already in My artifacts keeps its entry.
+            val equipped = a.pieces.mapValues { (_, p) -> pieces.firstOrNull { sameArtifact(it, p) } ?: p.also { pieces += it } }
+            c.build.copy(artifacts = a.copy(pieces = equipped))
+        }
+        _inventory.value = pieces.also(::saveInventory)
+        updateTeam { it.copy(members = members, activeIndex = 0) }
+    }
+
     fun resetToSample() {
         val d = _data.value ?: return
         updateTeam { Defaults.sampleTeam(d) }
@@ -310,6 +414,9 @@ class CalcViewModel(app: Application) : AndroidViewModel(app) {
     companion object {
         private const val KEY_TEAM = "team_v1"
         private const val KEY_INVENTORY = "artifacts_v1"
+        private const val KEY_UID = "showcase_uid"
+        private val UID = Regex("^[0-9]{9,10}$")
+        private val TTL = Regex("\"ttl\"\\s*:\\s*(\\d+)")
         private val inventorySerializer = ListSerializer(ArtifactPiece.serializer())
     }
 }

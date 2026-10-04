@@ -52,6 +52,7 @@ sealed interface Route {
     data object EditPiece : Route
     data object PickPieceSet : Route
     data object ScanResults : Route
+    data object ImportShowcase : Route
 }
 
 enum class SetSlot { FOUR, TWO_A, TWO_B }
@@ -225,6 +226,10 @@ private fun RouteScreen(route: Route, data: com.genshincalc.core.model.GameDataS
             val inventory by vm.inventory.collectAsState()
             val scan by vm.scan.collectAsState()
             ScanResultsScreen(data, team, inventory, scan, vm, nav)
+        }
+        Route.ImportShowcase -> {
+            val showcase by vm.showcase.collectAsState()
+            ShowcaseScreen(data, showcase, vm, nav)
         }
     }
 }

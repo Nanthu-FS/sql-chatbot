@@ -12,11 +12,21 @@ android {
         applicationId = "com.genshincalc.app"
         minSdk = 26
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 2
+        versionName = "1.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         // Native text recognition (ML Kit) for phones and x86_64 emulators.
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
+    }
+
+    // A fixed debug key (not secret) so that each CI-built APK installs over the previous one.
+    signingConfigs {
+        getByName("debug") {
+            storeFile = file("debug.keystore")
+            storePassword = "android"
+            keyAlias = "androiddebugkey"
+            keyPassword = "android"
+        }
     }
 
     buildTypes {
@@ -34,6 +44,9 @@ android {
     kotlinOptions { jvmTarget = "17" }
 
     buildFeatures { compose = true }
+
+    // Instrumented tests read the showcase fixtures of the core unit tests.
+    sourceSets.getByName("androidTest").assets.srcDir("../core/src/test/resources")
 
     packaging {
         // Compress the OCR native libraries in the APK (smaller download; extracted on install).

@@ -13,10 +13,14 @@ adb logcat -c
 adb shell cmd package query-activities --brief -a android.intent.action.SEND -t image/png > "$OUT/share-targets.txt" 2>&1
 
 adb shell am instrument -w -r $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/instrument.txt" 2>&1
+adb logcat -d -s ShowcaseImportTest > "$OUT/showcase-live.txt" 2>&1
 adb exec-out run-as $PKG tar c files/screens > "$OUT/screens.tar" 2>/dev/null
 (cd "$OUT" && tar xf screens.tar && rm screens.tar) || true
 
-# Cold launch, then random input.
+# Cold launch, then random input - offline, so random taps can't send requests to the showcase service.
+adb shell cmd connectivity airplane-mode enable || true
+adb shell svc wifi disable || true
+adb shell svc data disable || true
 adb shell am force-stop $PKG
 adb shell am start -W -n $PKG/.MainActivity > "$OUT/launch.txt" 2>&1
 sleep 6
@@ -32,6 +36,8 @@ grep -E "INSTRUMENTATION_STATUS: (class|test)=|INSTRUMENTATION_STATUS_CODE|INSTR
 grep -A 30 "INSTRUMENTATION_STATUS: stack=" "$OUT/instrument.txt" | head -120
 echo "===== SHARE TARGET ====="
 grep "$PKG" "$OUT/share-targets.txt" || echo "not offered as a share target"
+echo "===== LIVE SHOWCASE ====="
+grep LIVE "$OUT/showcase-live.txt" || echo "no live showcase result"
 echo "===== CRASH BUFFER ====="
 head -120 "$OUT/crash.txt"
 echo "===== MONKEY ====="

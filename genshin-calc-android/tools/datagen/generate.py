@@ -31,6 +31,11 @@ GENSHIN_DB_VERSION = "5.2.14"
 GENSHIN_DB_URL = f"https://registry.npmjs.org/genshin-db/-/genshin-db-{GENSHIN_DB_VERSION}.tgz"
 GO_STATS_URL = ("https://raw.githubusercontent.com/frzyc/genshin-optimizer/master/"
                 "libs/gi/stats/src/allStat_gen.json")
+# Character skill ids of the Enka.Network showcase API (MIT).
+ENKA_AVATARS_URL = "https://raw.githubusercontent.com/EnkaNetwork/API-docs/master/store/gi/avatars.json"
+ENKA_ELEMENTS = {"Fire": "pyro", "Water": "hydro", "Wind": "anemo", "Electric": "electro", "Grass": "dendro",
+                 "Ice": "cryo", "Rock": "geo"}
+TRAVELER_AVATARS = {"10000005", "10000007"}
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 PROJECT = os.path.abspath(os.path.join(HERE, "..", ".."))
@@ -608,6 +613,29 @@ def build_enemies(gdb):
     return out
 
 
+def build_showcase_ids(gdb, enka, chars, weapons, sets):
+    """Game ids used by the in-game showcase (Enka.Network API) -> ids of this data set."""
+    en = gdb["en"]
+    char_ids = {c["id"] for c in chars}
+    by_avatar = {str(en["characters"][cid]["id"]): cid for cid in char_ids if cid in en["characters"]}
+    characters = {}
+    for key, a in sorted(enka.items()):
+        avatar, _, depot = key.partition("-")
+        if avatar in TRAVELER_AVATARS:
+            elem = ENKA_ELEMENTS.get(a.get("Element"))
+            cid = f"traveler{elem}" if depot and elem else None
+        else:
+            cid = None if depot else by_avatar.get(avatar)
+        if cid in char_ids and len(a.get("SkillOrder", [])) == 3:
+            characters[key] = {"id": cid, "skills": a["SkillOrder"]}
+    missing = sorted(char_ids - {v["id"] for v in characters.values()})
+    if missing:
+        print(f"showcase: no skill ids for {missing}", file=sys.stderr)
+    weapon_ids = {str(en["weapons"][w["id"]]["id"]): w["id"] for w in weapons if "id" in en["weapons"][w["id"]]}
+    set_ids = {str(en["artifacts"][a["id"]]["id"]): a["id"] for a in sets if "id" in en["artifacts"][a["id"]]}
+    return {"characters": characters, "weapons": dict(sorted(weapon_ids.items())), "sets": dict(sorted(set_ids.items()))}
+
+
 def write(name, data):
     path = os.path.join(OUT_DIR, name)
     with open(path, "w", encoding="utf-8") as f:
@@ -635,13 +663,20 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--cache", default=os.path.join(PROJECT, "build", "datagen-cache"))
     ap.add_argument("--report", default=None)
+    ap.add_argument("--only", choices=["showcase"], help="only regenerate this file")
     args = ap.parse_args()
     gdb, go = load_sources(args.cache)
+    enka = json.load(open(fetch(ENKA_AVATARS_URL, os.path.join(args.cache, "enka-avatars.json"))))
     os.makedirs(OUT_DIR, exist_ok=True)
     chars = build_characters(gdb)
+    weapons = build_weapons(gdb)
+    sets = build_artifacts(gdb)
+    write("showcase.json", build_showcase_ids(gdb, enka, chars, weapons, sets))
+    if args.only:
+        return
     write("characters.json", {"gameVersion": "7.1", "characters": chars})
-    write("weapons.json", {"weapons": build_weapons(gdb)})
-    write("artifacts.json", {"artifacts": build_artifacts(gdb)})
+    write("weapons.json", {"weapons": weapons})
+    write("artifacts.json", {"artifacts": sets})
     write("enemies.json", {"enemies": build_enemies(gdb)})
     write("curves.json", build_curves(gdb, go))
     if args.report:
