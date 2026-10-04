@@ -90,7 +90,8 @@ jobs:
           head -n 60 device-out/crash.txt >> "$GITHUB_STEP_SUMMARY" || true
 
       - name: Commit APK and device report
-        if: always()
+        # Failed runs still publish their report; cancelled (superseded) runs do not.
+        if: ${{ !cancelled() }}
         working-directory: .
         run: |
           mkdir -p genshin-calc-android/apk
