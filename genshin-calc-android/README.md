@@ -11,6 +11,11 @@ elemental reaction.
 - **Party calculator** – pick up to 4 characters; set level, constellation, talent levels, weapon + refinement,
   artifact sets (4pc or 2+2), main stats and substat totals — or type in the stats from the in-game attribute
   screen ("Character screen" mode).
+- **Your artifacts** – switch a character to *Individual pieces* and equip, edit or swap each of the five
+  artifacts (set, main stat, rarity, level, substats); everything is kept in **My artifacts**.
+- **Screenshot import** – pick screenshots of artifact details (Inventory › Artifacts or a character's Artifacts
+  page, game language English) or share them to the app; on-device text recognition (offline) reads the set,
+  piece, main stat, level, rarity and substats, flags anything doubtful, and adds/equips the artifacts.
 - **Every damage row** of every talent (Normal/Charged/Plunge, Skill, Burst, plus damage from passives and
   constellations), each shown as non-crit / crit / average, with Vaporize/Melt/Aggravate/Spread variants and a
   per-hit breakdown (base, DMG bonus, CRIT, DEF and RES multipliers).
@@ -36,8 +41,10 @@ Lunar / Stellar = Talent% × Stat × 3 / 1 / 1.6 × (1 + 6 × EM / (EM + 2000) +
 ```
 
 Unit tests (`core/src/test`) check base stats against in-game values, every formula, end-to-end hits computed by
-hand (Hu Tao, Kazuha/VV swirls, party buffs, Lunar-Charged with Moonsign, Stellar-Conduct), and that every kit,
-weapon and set references real damage rows and produces finite numbers.
+hand (Hu Tao, Kazuha/VV swirls, party buffs, Lunar-Charged with Moonsign, Stellar-Conduct), that every kit,
+weapon and set references real damage rows and produces finite numbers, and the artifact screenshot parser
+(OCR noise, inventory grids, rarity/level inference). On the emulator, rendered artifact screenshots go through
+the real text recognition and must come back as the exact artifacts.
 
 ## Data
 
@@ -66,4 +73,5 @@ The APK and the device report (screenshots, logs) are committed back to `apk/` a
   stack counters with sensible defaults — adjust them in the Buffs tab.
 - Lunar reactions are shown per triggering character; the game's multi-character weighting (highest + ½ second +
   1/12 rest) is not combined across characters.
+- Screenshot recognition reads the English UI only; check flagged values after a scan.
 - Hexerei-specific upgrades and a few random/proc weapon effects (e.g. extra AoE hits) are not modelled.

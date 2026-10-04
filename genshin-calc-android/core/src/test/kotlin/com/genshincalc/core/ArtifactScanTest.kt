@@ -155,6 +155,20 @@ class ArtifactScanTest {
         assertNull(scan.toPiece("x"))
     }
 
+    /** The app stores teams with encodeDefaults = false; pieces must survive the round trip. */
+    @Test
+    fun piecesSurviveJsonRoundTrip() {
+        val json = kotlinx.serialization.json.Json { ignoreUnknownKeys = true; encodeDefaults = false }
+        val pieces = mapOf(
+            ArtifactSlot.SANDS to ArtifactPiece("a", "emblemofseveredfate", ArtifactSlot.SANDS, Stat.ER, 5, 20, mapOf(Stat.CRIT_RATE to 0.039)),
+            ArtifactSlot.GOBLET to ArtifactPiece("b", null, ArtifactSlot.GOBLET, level = 16, rarity = 4),
+        )
+        val team = Team(listOf(MemberBuild("keqing", artifacts = ArtifactBuild(mode = ArtifactMode.PIECES, pieces = pieces))))
+        val back = json.decodeFromString(Team.serializer(), json.encodeToString(Team.serializer(), team))
+        assertEquals(team, back)
+        assertEquals(Stat.PYRO_DMG, back.members[0].artifacts.pieces[ArtifactSlot.GOBLET]!!.mainStat)
+    }
+
     @Test
     fun piecesModeStatsAndSets() {
         fun piece(slot: ArtifactSlot, main: Stat, subs: Map<Stat, Double>, set: String = "gladiatorsfinale") =

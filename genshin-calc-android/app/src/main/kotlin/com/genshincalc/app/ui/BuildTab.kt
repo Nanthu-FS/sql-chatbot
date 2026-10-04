@@ -32,6 +32,7 @@ import com.genshincalc.core.calc.MemberResult
 import com.genshincalc.core.calc.TeamResult
 import com.genshincalc.core.effects.GameEffects
 import com.genshincalc.core.model.ArtifactBuild
+import com.genshincalc.core.model.ArtifactMode
 import com.genshincalc.core.model.Element
 import com.genshincalc.core.model.GameDataSet
 import com.genshincalc.core.model.ManualStats
@@ -162,10 +163,10 @@ fun BuildTab(data: GameDataSet, team: Team, result: TeamResult?, index: Int, vm:
         // The weapon matters in both modes: its passive effects still apply to manual stats.
         item { WeaponCard(data, build, index, nav, ::update) }
         if (build.statMode == StatMode.BUILD) {
-            item { ArtifactCard(data, build, index, nav, ::update) }
+            item { ArtifactCard(data, build, index, vm, nav, ::update) }
             if (member != null) item { ScreenStatsCard(member) }
         } else {
-            item { SetOnlyCard(data, build, index, nav, ::update) }
+            item { SetOnlyCard(data, build, index, vm, nav, ::update) }
             item { ManualStatsCard(c.element, build.manualStats) { ms -> update { it.copy(manualStats = ms) } } }
         }
     }
@@ -250,17 +251,47 @@ private fun SetPickers(data: GameDataSet, build: MemberBuild, index: Int, nav: N
 }
 
 @Composable
-private fun SetOnlyCard(data: GameDataSet, build: MemberBuild, index: Int, nav: Nav, update: ((MemberBuild) -> MemberBuild) -> Unit) {
+private fun ArtifactModeChips(build: MemberBuild, index: Int, vm: CalcViewModel) {
+    val pieces = build.artifacts.mode == ArtifactMode.PIECES
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        FilterChip(selected = !pieces, onClick = { vm.setArtifactMode(index, ArtifactMode.SUMMARY) },
+            label = { Text("Quick totals") }, modifier = Modifier.testTag("art_quick"))
+        FilterChip(selected = pieces, onClick = { vm.setArtifactMode(index, ArtifactMode.PIECES) },
+            label = { Text("Individual pieces") }, modifier = Modifier.testTag("art_pieces"))
+    }
+    Spacer(Modifier.padding(4.dp))
+}
+
+@Composable
+private fun SetOnlyCard(data: GameDataSet, build: MemberBuild, index: Int, vm: CalcViewModel, nav: Nav, update: ((MemberBuild) -> MemberBuild) -> Unit) {
     SectionCard(title = "Artifact sets", subtitle = "Set effects that the character screen doesn't show still apply") {
-        SetPickers(data, build, index, nav, update)
+        ArtifactModeChips(build, index, vm)
+        if (build.artifacts.mode == ArtifactMode.PIECES) {
+            val bonuses = build.artifacts.pieceCounts().filterValues { it >= 2 }
+            Text(
+                "From equipped pieces: " + if (bonuses.isEmpty()) "no set bonus"
+                else bonuses.entries.joinToString(" + ") { (id, n) -> "${data.artifactSetOrNull(id)?.name ?: id} (${if (n >= 4) 4 else 2})" },
+                style = MaterialTheme.typography.bodySmall,
+            )
+        } else {
+            SetPickers(data, build, index, nav, update)
+        }
     }
 }
 
 @Composable
-private fun ArtifactCard(data: GameDataSet, build: MemberBuild, index: Int, nav: Nav, update: ((MemberBuild) -> MemberBuild) -> Unit) {
+private fun ArtifactCard(data: GameDataSet, build: MemberBuild, index: Int, vm: CalcViewModel, nav: Nav, update: ((MemberBuild) -> MemberBuild) -> Unit) {
+    if (build.artifacts.mode == ArtifactMode.PIECES) {
+        SectionCard(title = "Artifacts", subtitle = "Tap a slot to choose, edit or scan an artifact") {
+            ArtifactModeChips(build, index, vm)
+            PiecesSection(data, build, index, vm, nav)
+        }
+        return
+    }
     val a = build.artifacts
     fun set(transform: (ArtifactBuild) -> ArtifactBuild) = update { it.copy(artifacts = transform(it.artifacts)) }
     SectionCard(title = "Artifacts", subtitle = "5★ +20 main stats; enter substat totals of all five pieces") {
+        ArtifactModeChips(build, index, vm)
         SetPickers(data, build, index, nav, update)
         Spacer(Modifier.padding(4.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -9,6 +9,8 @@ mkdir -p "$OUT"
 adb install -r -g app/build/outputs/apk/debug/app-debug.apk
 adb install -r -g app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
 adb logcat -c
+# The app must be offered as a share target for screenshots.
+adb shell cmd package query-activities --brief -a android.intent.action.SEND -t image/png > "$OUT/share-targets.txt" 2>&1
 
 adb shell am instrument -w -r $PKG.test/androidx.test.runner.AndroidJUnitRunner > "$OUT/instrument.txt" 2>&1
 adb exec-out run-as $PKG tar c files/screens > "$OUT/screens.tar" 2>/dev/null
@@ -28,6 +30,8 @@ set +x
 echo "===== INSTRUMENTATION ====="
 grep -E "INSTRUMENTATION_STATUS: (class|test)=|INSTRUMENTATION_STATUS_CODE|INSTRUMENTATION_RESULT|INSTRUMENTATION_CODE|Tests run|^OK|FAILURES|Process crashed" "$OUT/instrument.txt"
 grep -A 30 "INSTRUMENTATION_STATUS: stack=" "$OUT/instrument.txt" | head -120
+echo "===== SHARE TARGET ====="
+grep "$PKG" "$OUT/share-targets.txt" || echo "not offered as a share target"
 echo "===== CRASH BUFFER ====="
 head -120 "$OUT/crash.txt"
 echo "===== MONKEY ====="

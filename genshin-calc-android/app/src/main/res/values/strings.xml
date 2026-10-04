@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Teyvat DMG Calc</string>
+    <string name="import_artifacts">Import artifacts</string>
 </resources>

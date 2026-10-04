@@ -19,6 +19,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -32,6 +33,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.genshincalc.app.CalcViewModel
+import com.genshincalc.core.model.ArtifactSlot
 import com.genshincalc.core.model.Reaction
 
 /** Screens shown on top of the two main tabs. */
@@ -44,6 +46,12 @@ sealed interface Route {
     data class PickWeapon(val memberIndex: Int) : Route
     data class PickSet(val memberIndex: Int, val slot: SetSlot) : Route
     data object PickEnemy : Route
+    data class PickPiece(val memberIndex: Int, val slot: ArtifactSlot) : Route
+    data object MyArtifacts : Route
+    /** Edits the view model's current draft artifact. */
+    data object EditPiece : Route
+    data object PickPieceSet : Route
+    data object ScanResults : Route
 }
 
 enum class SetSlot { FOUR, TWO_A, TWO_B }
@@ -56,6 +64,7 @@ fun App(vm: CalcViewModel) {
     val team by vm.team.collectAsState()
     val result by vm.result.collectAsState()
     val error by vm.error.collectAsState()
+    val scan by vm.scan.collectAsState()
 
     val gameData = data
     if (gameData == null) {
@@ -84,6 +93,12 @@ fun App(vm: CalcViewModel) {
         )
     }
     BackHandler(enabled = stack.isNotEmpty()) { nav.pop() }
+
+    // A screenshot import (photo picker or shared from another app) shows its progress and results.
+    val scanId = scan?.id
+    LaunchedEffect(scanId) {
+        if (scanId != null && Route.ScanResults !in stack) stack.add(Route.ScanResults)
+    }
 
     error?.let { message ->
         AlertDialog(
@@ -189,6 +204,27 @@ private fun RouteScreen(route: Route, data: com.genshincalc.core.model.GameDataS
         Route.PickEnemy -> EnemyPicker(data, onBack = nav.pop) { enemy ->
             vm.setEnemy { it.copy(enemyId = enemy.id, res = enemy.res) }
             nav.pop()
+        }
+        is Route.PickPiece -> {
+            val inventory by vm.inventory.collectAsState()
+            PickPieceScreen(data, team, inventory, route.memberIndex, route.slot, vm, nav)
+        }
+        Route.MyArtifacts -> {
+            val inventory by vm.inventory.collectAsState()
+            MyArtifactsScreen(data, team, inventory, vm, nav)
+        }
+        Route.EditPiece -> {
+            val draft by vm.draft.collectAsState()
+            PieceEditorScreen(data, draft, vm, nav)
+        }
+        Route.PickPieceSet -> SetPicker(data, onBack = nav.pop) { id ->
+            vm.updateDraft { it.copy(setId = id) }
+            nav.pop()
+        }
+        Route.ScanResults -> {
+            val inventory by vm.inventory.collectAsState()
+            val scan by vm.scan.collectAsState()
+            ScanResultsScreen(data, team, inventory, scan, vm, nav)
         }
     }
 }
