@@ -38,6 +38,8 @@ class EffectsIntegrityTest {
     @Test
     fun everyCharacterKitReferencesExistingHits() {
         val problems = mutableListOf<String>()
+        // Party-wide filters (e.g. "Plunging Attack shockwaves") may name other characters' hits.
+        val anyHit = data.characters.flatMap { ch -> ch.hits.map { it.id } }.toSet()
         for (c in data.characters) {
             val build = maxed(Defaults.build(data, c.id))
             val attempt = runCatching { calc.calculate(Team(listOf(build))) }
@@ -49,7 +51,8 @@ class EffectsIntegrityTest {
             val m = result.members[0]
             val ids = c.hits.map { it.id }.toSet()
             for (mod in m.debugHitMods) {
-                mod.filter.hitIds?.filter { it !in ids }?.forEach { problems += "${c.id}: '${mod.source}' references unknown hit '$it'" }
+                mod.filter.hitIds?.filter { it !in ids && it !in anyHit }
+                    ?.forEach { problems += "${c.id}: '${mod.source}' references unknown hit '$it'" }
             }
             m.debugElementOverrides.keys.filter { it !in ids }.forEach { problems += "${c.id}: unknown hit '$it' in element override" }
             for (h in m.hits) {

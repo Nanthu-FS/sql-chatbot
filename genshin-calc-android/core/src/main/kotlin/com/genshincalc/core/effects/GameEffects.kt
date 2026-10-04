@@ -15,6 +15,8 @@ object GameEffects : EffectProvider {
             fontaineKits()
             natlanKits()
             nodKraiKits()
+            snezhnayaKits()
+            travelerKits()
         }.build()
     }
 

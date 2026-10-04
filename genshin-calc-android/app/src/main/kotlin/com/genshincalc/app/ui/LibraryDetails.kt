@@ -261,7 +261,7 @@ fun ReactionDetailScreen(reaction: Reaction, nav: Nav) {
                     info.details.forEach { Text("• $it", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 4.dp)) }
                 }
             }
-            if (reaction != Reaction.LUNAR_BLOOM) {
+            if (reaction != Reaction.LUNAR_BLOOM && reaction != Reaction.STELLAR_CONDUCT) {
                 item {
                     val title = when (reaction.type) {
                         ReactionType.AMPLIFYING -> "Multiplier (strong direction, no bonus)"

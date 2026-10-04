@@ -325,4 +325,80 @@ internal fun EffectTable.liyueKits() {
         }
     }
 
+    this("yaoyao") {
+        effect("c1", "Adeptus' Tutelage", "Characters hit by exploding radishes gain 15% Dendro DMG Bonus.",
+            target = EffectTarget.TEAM, control = toggle(), requires = cons(1)) {
+            elementDmg(Element.DENDRO, 0.15)
+        }
+        effect("c4", "Winsome", "EM +0.3% of Max HP for 8s after her Skill or Burst (max 120).",
+            control = toggle(), phase = EffectPhase.CONVERSION, requires = cons(4)) {
+            stat(Stat.EM, (0.003 * targetStats.hp).coerceAtMost(120.0))
+        }
+    }
+
+    this("xianyun") {
+        effect("a1", "Galefeather Pursuit", "Party Plunging Attack CRIT Rate +4/6/8/10% with 1/2/3/4 Storm Pinions.",
+            target = EffectTarget.TEAM, control = stacks(4, 4, "Storm Pinion"), requires = A1) {
+            if (stacks > 0) critRate(0.02 + 0.02 * stacks, HitFilter.PLUNGE)
+        }
+        effect(
+            "a4", "Consider, the Adeptus in Her Realm", "Plunging Attack shockwave DMG +200% of Xianyun's ATK (max 9,000; C2: 400%, 18,000).",
+            target = EffectTarget.TEAM, control = toggle(), phase = EffectPhase.TEAM_STAT, requires = A4,
+        ) {
+            val (k, cap) = if (constellation >= 2) 4.0 to 18000.0 else 2.0 to 9000.0
+            flatDmg((k * ownerStats.atk).coerceAtMost(cap), PLUNGE_SHOCKWAVE)
+        }
+        effect("c2", "Aloof From the World", "ATK +20% for 15s after a Skyladder.", control = toggle(), requires = cons(2)) {
+            stat(Stat.ATK_PCT, 0.20)
+        }
+        effect("c6", "They Call Her Cloud Retainer", "Driftcloud Wave CRIT DMG +15/35/70% after 1/2/3 Skyladders.", requires = cons(6)) {
+            critDmg(0.15, HitFilter.hits("skill/driftcloud-wave-dmg-1"))
+            critDmg(0.35, HitFilter.hits("skill/driftcloud-wave-dmg-2"))
+            critDmg(0.70, HitFilter.hits("skill/driftcloud-wave-dmg-3"))
+        }
+    }
+
+    this("gaming") {
+        val cloudstrider = HitFilter.hits("skill/plunging-attack-charmed-cloudstrider-dmg")
+        effect("a4", "Air of Prosperity", "Charmed Cloudstrider DMG +20% while HP is at least 50%.", control = toggle(), requires = A4) {
+            dmgBonus(0.20, cloudstrider)
+        }
+        effect("c2", "Plum Blossoms Underfoot", "ATK +20% for 5s after overflowing healing.", control = toggle(false), requires = cons(2)) {
+            stat(Stat.ATK_PCT, 0.20)
+        }
+        effect("c6", "To Tame All Beasts", "Charmed Cloudstrider CRIT Rate +20%, CRIT DMG +40%.", requires = cons(6)) {
+            critRate(0.20, cloudstrider)
+            critDmg(0.40, cloudstrider)
+        }
+    }
+
+    this("lanyan") {
+        val ring = HitFilter.hits("skill/feathermoon-ring-dmg")
+        val absorbed = HitFilter.hits("skill/a1-absorbed-ring")
+        effect("absorb", "Elemental Absorption", "Element absorbed by the Swallow-Wisp Shield (Feathermoon Rings deal 50% extra DMG of it).",
+            control = ABSORB_CHOICE, requires = A1) {
+            convertElement(absorbedElement(), "skill/a1-absorbed-ring")
+            multiplier(0.50, absorbed)
+        }
+        effect("a4", "Skyfeather Evil-Subduing Charm", "Skill DMG +309% of EM; Burst DMG +774% of EM.", phase = EffectPhase.CONVERSION, requires = A4) {
+            val em = targetStats.em
+            flatDmg(3.09 * em, ring)
+            flatDmg(0.5 * 3.09 * em, absorbed)
+            flatDmg(7.74 * em, HitFilter(talents = setOf(TalentType.BURST)))
+        }
+        effect("c4", "With Drakefalcon's Blood-Pearls Adorned", "Party EM +60 for 12s after her Burst.",
+            target = EffectTarget.TEAM, control = toggle(), requires = cons(4)) {
+            stat(Stat.EM, 60.0)
+        }
+    }
 }
+
+/** Plunging Attack ground-impact (shockwave) DMG rows. */
+internal val PLUNGE_SHOCKWAVE = HitFilter(
+    categories = setOf(AttackCategory.PLUNGE),
+    hitIds = setOf(
+        "normal/low-plunge-dmg", "normal/high-plunge-dmg", "normal/fiery-passion-low-plunge-dmg", "normal/fiery-passion-high-plunge-dmg",
+        "skill/plunging-attack-charmed-cloudstrider-dmg", "skill/driftcloud-wave-dmg-1", "skill/driftcloud-wave-dmg-2",
+        "skill/driftcloud-wave-dmg-3", "burst/volcano-kablam-dmg",
+    ),
+)

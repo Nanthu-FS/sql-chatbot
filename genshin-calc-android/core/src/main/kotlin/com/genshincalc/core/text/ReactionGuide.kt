@@ -79,6 +79,18 @@ object ReactionGuide {
             listOf("Ignores DEF and can CRIT."),
         ),
         ReactionInfo(
+            Reaction.STELLAR_CONDUCT, listOf(Element.CRYO, Element.ELECTRO),
+            "Stellar teams (Snezhnaya): Superconduct becomes Stellar-Conduct; damage comes from talents that deal Stellar-Conduct DMG.",
+            "Talent% x Stat x (1 + 6 x EM / (EM + 2000) + Bonus) x (1 + Base DMG Bonus) x CRIT x RES",
+            listOf("Ignores DEF and can CRIT. RES of the hit's element applies."),
+        ),
+        ReactionInfo(
+            Reaction.STELLAR_SWIRL, listOf(Element.ANEMO, Element.CRYO),
+            "Stellar teams: Cryo Swirl becomes Stellar Swirl, which can CRIT and leaves Stellar Vortices.",
+            "0.75 x Level Multiplier x (1 + 6 x EM / (EM + 2000) + Bonus) x (1 + Base DMG Bonus) x CRIT x RES",
+            listOf("Ignores DEF. Vortex explosions deal 2x / 3x as Cryo DMG."),
+        ),
+        ReactionInfo(
             Reaction.CRYSTALLIZE, listOf(Element.GEO),
             "Geo + Pyro/Hydro/Electro/Cryo: a shard that grants a shield of the absorbed element.",
             "Shield HP = Shield Level Multiplier x (1 + 4.44 x EM / (EM + 1400))",
@@ -109,7 +121,7 @@ object ReactionGuide {
                     Formulas.levelMultiplier(level) * (if (reaction == Reaction.AGGRAVATE) 1.15 else 1.25) * (1 + Formulas.additiveEmBonus(em))
                 ReactionType.AMPLIFYING ->
                     (if (reaction == Reaction.VAPORIZE) 2.0 else 2.0) * (1 + Formulas.amplifyingEmBonus(em))
-                ReactionType.LUNAR ->
+                ReactionType.LUNAR, ReactionType.STELLAR ->
                     Formulas.levelMultiplier(level) * Formulas.transformativeMultiplier(reaction) *
                         (1 + Formulas.lunarEmBonus(em)) * Formulas.resMultiplier(0.1)
                 ReactionType.SHIELD -> Formulas.crystallizeLevelMultiplier(level) * (1 + Formulas.crystallizeEmBonus(em))

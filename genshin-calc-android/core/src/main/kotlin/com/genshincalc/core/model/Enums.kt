@@ -80,14 +80,16 @@ enum class SpecialDamage(val display: String) {
             LUNAR_CHARGED -> Reaction.LUNAR_CHARGED
             LUNAR_BLOOM -> Reaction.LUNAR_BLOOM
             LUNAR_CRYSTALLIZE -> Reaction.LUNAR_CRYSTALLIZE
-            else -> null
+            STELLAR_CONDUCT -> Reaction.STELLAR_CONDUCT
+            STELLAR_SWIRL -> Reaction.STELLAR_SWIRL
+            STELLAR -> null
         }
 }
 
 @Serializable
 enum class ScalingStat(val display: String) { ATK("ATK"), HP("Max HP"), DEF("DEF"), EM("Elemental Mastery") }
 
-enum class ReactionType { AMPLIFYING, ADDITIVE, TRANSFORMATIVE, LUNAR, SHIELD }
+enum class ReactionType { AMPLIFYING, ADDITIVE, TRANSFORMATIVE, LUNAR, STELLAR, SHIELD }
 
 @Serializable
 enum class Reaction(val display: String, val type: ReactionType) {
@@ -107,5 +109,7 @@ enum class Reaction(val display: String, val type: ReactionType) {
     LUNAR_CHARGED("Lunar-Charged", ReactionType.LUNAR),
     LUNAR_BLOOM("Lunar-Bloom", ReactionType.LUNAR),
     LUNAR_CRYSTALLIZE("Lunar-Crystallize", ReactionType.LUNAR),
+    STELLAR_CONDUCT("Stellar-Conduct", ReactionType.STELLAR),
+    STELLAR_SWIRL("Stellar Swirl", ReactionType.STELLAR),
     CRYSTALLIZE("Crystallize", ReactionType.SHIELD),
 }

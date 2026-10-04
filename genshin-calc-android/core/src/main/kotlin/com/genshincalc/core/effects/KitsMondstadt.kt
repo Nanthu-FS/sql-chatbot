@@ -290,4 +290,139 @@ internal fun EffectTable.mondstadtKits() {
             elementDmg(Element.HYDRO, 0.15)
         }
     }
+
+    this("dahlia") {
+        effect("c2", "Revelation of Mercy", "The shielded character gains 25% Shield Strength.",
+            target = EffectTarget.TEAM, control = toggle(), requires = cons(2)) {
+            stat(Stat.SHIELD_STRENGTH, 0.25)
+        }
+    }
+
+    this("durin") {
+        val darkness = HitFilter.hits("burst/principle-of-darkness-as-the-stars-smolder-dmg", "burst/dragon-of-dark-decay-dmg")
+        val dragons = HitFilter.hits("burst/dragon-of-white-flame-dmg", "burst/dragon-of-dark-decay-dmg")
+        effect(
+            "form", "Burst form",
+            "White Flame: Pyro RES -20% (A1); others gain +60% of Durin's ATK as DMG (C1); DEF -30% (C6). " +
+                "Dark Decay: Vaporize/Melt DMG +40% (A1); Durin's burst +150% of ATK (C1); +40% DEF ignore (C6).",
+            target = EffectTarget.TEAM,
+            control = choice("Principle of Purity (White Flame)", "Principle of Darkness (Dark Decay)"),
+            phase = EffectPhase.TEAM_STAT,
+        ) {
+            val a1 = owner.ascension >= 1
+            if (value == 0) {
+                if (a1) resShred(Element.PYRO, 0.20)
+                if (constellation >= 1 && !isSelf) flatDmg(0.60 * ownerStats.atk, ALL_TALENT_ATTACKS)
+                if (constellation >= 6) defReduction(0.30)
+            } else if (isSelf) {
+                if (a1) {
+                    reactionBonus(Reaction.VAPORIZE, 0.40)
+                    reactionBonus(Reaction.MELT, 0.40)
+                }
+                if (constellation >= 1) flatDmg(1.50 * ownerStats.atk, HitFilter(talents = setOf(TalentType.BURST)))
+                if (constellation >= 6) defIgnore(0.40, darkness)
+            }
+        }
+        effect("a4", "Primordial Fusion", "Dragon attacks deal +3% of their DMG per 100 ATK (max 75%).",
+            phase = EffectPhase.CONVERSION, requires = A4) {
+            multiplier(1 + (0.03 * targetStats.atk / 100).coerceAtMost(0.75), dragons)
+        }
+        effect("c2", "Unground Visions", "Party Pyro DMG +50% for 6s after Pyro reactions during the burst.",
+            target = EffectTarget.TEAM, control = toggle(), requires = cons(2)) {
+            elementDmg(Element.PYRO, 0.50)
+        }
+        effect("c4", "Emanare's Source", "Burst DMG +40%.", requires = cons(4)) {
+            dmgBonus(0.40, HitFilter(talents = setOf(TalentType.BURST)))
+        }
+        effect("c6", "Dual Birth", "Burst DMG ignores 30% DEF.", requires = cons(6)) {
+            defIgnore(0.30, HitFilter(talents = setOf(TalentType.BURST)))
+        }
+    }
+
+    this("lohen") {
+        val etched = HitFilter.hits("skill/etched-into-bone-and-soul-dmg")
+        val burst = HitFilter.hits("burst/skill-dmg")
+        effect("will", "Will to Win", "Etched Into Bone and Soul and burst DMG x(1 + 0.4% per Will to Win; max 100, 300 at C1).",
+            control = stacks(300, 100, "Will to Win", step = 20)) {
+            val will = stacks.coerceAtMost(if (constellation >= 1) 300 else 100)
+            multiplier(1 + param(TalentType.SKILL, "param18") * will, etched)
+            multiplier(1 + param(TalentType.BURST, "param2") * will, burst)
+        }
+        effect("p3", "High Spirits", "Unforeseen Strike Level +1 for 9s after the skill.", control = toggle()) {
+            talentLevel(TalentType.SKILL, 1)
+        }
+        effect("a4", "Flippant Masterpiece", "After a party Cryo reaction in Masterstroke: that character and Lohen gain 15% ATK.",
+            target = EffectTarget.TEAM, control = toggle(), requires = A4) {
+            stat(Stat.ATK_PCT, 0.15)
+        }
+        effect("c2", "In Flight, I Strike Whatever Flies", "Other party members gain 200 EM after Evilsbane Blade.",
+            target = EffectTarget.TEAM_OTHERS, control = toggle(), requires = cons(2)) {
+            stat(Stat.EM, 200.0)
+        }
+        effect("c6", "To Drown, to Sink, Unconscious", "Etched Into Bone and Soul and burst CRIT DMG +175%.", requires = cons(6)) {
+            critDmg(1.75, etched)
+            critDmg(1.75, burst)
+        }
+    }
+
+    this("prune") {
+        effect("element", "Elemental Conversion", "Element of the Banehunter Oathhammer (from the Swirl).", control = ABSORB_CHOICE, requires = A1) {
+            convertElement(absorbedElement(), "burst/a1-banehunter-oathhammer", "burst/c4-oathhammer-ricochet")
+        }
+        effect(
+            "a4", "Tolling Rally", "Other members' attacks deal +0.025% DMG per point of Prune's ATK above 2,000 (max 50%).",
+            target = EffectTarget.TEAM_OTHERS, control = toggle(), phase = EffectPhase.TEAM_STAT, requires = A4,
+        ) {
+            dmgBonus((0.00025 * (ownerStats.atk - 2000)).coerceIn(0.0, 0.50), ALL_TALENT_ATTACKS)
+        }
+        effect("c2", "Hunt the Witch", "ATK +10%, +5% per Oathhammer/Bell hit (max 40%).",
+            control = stacks(7, 7, "Stacks"), requires = cons(2)) {
+            if (stacks > 0) stat(Stat.ATK_PCT, 0.05 + 0.05 * stacks)
+        }
+        effect("c6", "And That's the Story!", "Prune and the active character gain 350 ATK after reactions.",
+            target = EffectTarget.TEAM, control = toggle(), requires = cons(6)) {
+            stat(Stat.ATK, 350.0)
+        }
+    }
+
+    this("varka") {
+        val sturm = HitFilter.hits(
+            "skill/sturm-und-drang-1-hit-dmg", "skill/sturm-und-drang-2-hit-dmg", "skill/sturm-und-drang-3-hit-dmg",
+            "skill/sturm-und-drang-4-hit-dmg", "skill/sturm-und-drang-5-hit-dmg", "skill/sturm-und-drang-charged-attack-dmg",
+            "skill/four-winds-ascension-dmg", "skill/azure-devour-dmg",
+        )
+        effect(
+            "a1", "Dawn Wind's March", "Anemo and one party element DMG +10% per 1,000 ATK (max 25%); Sturm und Drang attacks deal 140% DMG " +
+                "(2 Anemo or 2 of one element) or 220% (both).",
+            static = true, phase = EffectPhase.CONVERSION, requires = A1,
+        ) {
+            val bonus = (0.10 * targetStats.atk / 1000).coerceAtMost(0.25)
+            elementDmg(Element.ANEMO, bonus)
+            SWIRLABLE.firstOrNull { team.count(it) > 0 }?.let { elementDmg(it, bonus) }
+            val anemoPair = team.count(Element.ANEMO) >= 2
+            val otherPair = SWIRLABLE.any { team.count(it) >= 2 }
+            val mult = if (anemoPair && otherPair) 2.2 else if (anemoPair || otherPair) 1.4 else 1.0
+            if (mult > 1.0) multiplier(mult, sturm)
+        }
+        effect("a4", "Azure Fang's Oath", "Sturm und Drang attacks +7.5% DMG per stack (max 4); C6: +20% CRIT DMG per stack.",
+            control = stacks(4), requires = A4) {
+            dmgBonus(0.075 * stacks, sturm)
+            if (constellation >= 6) critDmg(0.20 * stacks, sturm)
+        }
+        effect("c1", "Lyrical Libation", "The next Four Winds' Ascension or Azure Devour deals 200% DMG.", control = toggle(), requires = cons(1)) {
+            multiplier(2.0, HitFilter.hits("skill/four-winds-ascension-dmg", "skill/azure-devour-dmg"))
+        }
+        effect("c4", "For None May Take From Us Our Freedom of Song", "Party Anemo and swirled element DMG +20% after Varka's Swirl.",
+            target = EffectTarget.TEAM, control = toggle(), requires = cons(4)) {
+            elementDmg(Element.ANEMO, 0.20)
+            SWIRLABLE.firstOrNull { team.count(it) > 0 }?.let { elementDmg(it, 0.20) }
+        }
+    }
 }
+
+/** Normal, Charged, Plunging Attacks, Elemental Skills and Bursts. */
+internal val ALL_TALENT_ATTACKS = HitFilter.of(
+    com.genshincalc.core.model.AttackCategory.NORMAL, com.genshincalc.core.model.AttackCategory.CHARGED,
+    com.genshincalc.core.model.AttackCategory.PLUNGE, com.genshincalc.core.model.AttackCategory.SKILL,
+    com.genshincalc.core.model.AttackCategory.BURST,
+)

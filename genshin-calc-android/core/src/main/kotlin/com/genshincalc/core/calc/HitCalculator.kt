@@ -7,6 +7,7 @@ import com.genshincalc.core.model.HitData
 import com.genshincalc.core.model.HitKind
 import com.genshincalc.core.model.HitPart
 import com.genshincalc.core.model.Reaction
+import com.genshincalc.core.model.ReactionType
 import com.genshincalc.core.model.ScalingStat
 import com.genshincalc.core.model.SpecialDamage
 import com.genshincalc.core.model.Stat
@@ -172,7 +173,8 @@ internal class HitCalculator(
         val reaction = special.reaction
         // Only modifiers aimed at this specific hit apply: reaction DMG ignores Normal/Skill/... DMG bonuses.
         fun specific(kind: HitModKind) = mods.hitMods(kind, ctx).filter { it.filter.hitIds != null }
-        val resElement = reaction?.let { Formulas.transformativeResElement(it) } ?: ctx.element
+        // Stellar DMG from a talent uses the RES of the hit's own element (Cryo for Odette, Anemo for Vesna).
+        val resElement = reaction?.takeIf { it.type == ReactionType.LUNAR }?.let { Formulas.transformativeResElement(it) } ?: ctx.element
         val reactionMult = reaction?.let { Formulas.lunarDirectMultiplier(it) } ?: 1.0
         var multiplier = 1.0
         specific(HitModKind.MULTIPLIER).forEach { multiplier *= it.value }
@@ -245,8 +247,11 @@ internal class HitCalculator(
             Element.DENDRO -> {
                 trans(Reaction.BLOOM); trans(Reaction.BURNING, note = "Per tick")
             }
-            Element.ANEMO -> for (e in listOf(Element.PYRO, Element.HYDRO, Element.ELECTRO, Element.CRYO)) {
-                trans(Reaction.SWIRL, e, note = "${e.display} Swirl")
+            Element.ANEMO -> {
+                for (e in listOf(Element.PYRO, Element.HYDRO, Element.ELECTRO, Element.CRYO)) {
+                    trans(Reaction.SWIRL, e, note = "${e.display} Swirl")
+                }
+                lunar(Reaction.STELLAR_SWIRL, "Cryo Swirl with a Stellar character (Vesna, Odette, Sandrone…) in the party")
             }
             Element.GEO -> {
                 val shield = Formulas.crystallizeLevelMultiplier(m.level) * (1 + Formulas.crystallizeEmBonus(stats.em)) *

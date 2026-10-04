@@ -81,6 +81,7 @@ object Formulas {
         Reaction.BURGEON -> 3.0
         Reaction.LUNAR_CHARGED -> 3.0
         Reaction.LUNAR_CRYSTALLIZE -> 1.6
+        Reaction.STELLAR_SWIRL -> 0.75
         else -> 0.0
     }
 
@@ -92,6 +93,7 @@ object Formulas {
         Reaction.SHATTERED -> Element.PHYSICAL
         Reaction.BLOOM, Reaction.HYPERBLOOM, Reaction.BURGEON, Reaction.LUNAR_BLOOM -> Element.DENDRO
         Reaction.LUNAR_CRYSTALLIZE -> Element.GEO
+        Reaction.STELLAR_CONDUCT -> Element.ELECTRO
         else -> Element.ANEMO
     }
 
