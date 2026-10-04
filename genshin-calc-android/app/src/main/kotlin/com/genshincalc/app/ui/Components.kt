@@ -195,16 +195,24 @@ fun NumberField(
 
 /** "- value +" control. */
 @Composable
-fun Stepper(label: String, value: Int, range: IntRange, onChange: (Int) -> Unit, modifier: Modifier = Modifier, valueText: String = value.toString()) {
+fun Stepper(
+    label: String,
+    value: Int,
+    range: IntRange,
+    onChange: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+    valueText: String = value.toString(),
+    step: Int = 1,
+) {
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Text(label, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Row(verticalAlignment = Alignment.CenterVertically) {
-            FilledTonalIconButton(onClick = { if (value > range.first) onChange(value - 1) }, modifier = Modifier.size(32.dp)) {
+            FilledTonalIconButton(onClick = { if (value > range.first) onChange((value - step).coerceAtLeast(range.first)) }, modifier = Modifier.size(32.dp)) {
                 Text("−", fontWeight = FontWeight.Bold)
             }
             Text(valueText, modifier = Modifier.widthIn(min = 36.dp).padding(horizontal = 6.dp), fontWeight = FontWeight.Bold,
                 style = MaterialTheme.typography.titleMedium, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
-            FilledTonalIconButton(onClick = { if (value < range.last) onChange(value + 1) }, modifier = Modifier.size(32.dp)) {
+            FilledTonalIconButton(onClick = { if (value < range.last) onChange((value + step).coerceAtMost(range.last)) }, modifier = Modifier.size(32.dp)) {
                 Text("+", fontWeight = FontWeight.Bold)
             }
         }

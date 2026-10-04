@@ -123,7 +123,7 @@ private fun EffectRow(applied: AppliedEffect, onValue: (Int) -> Unit) {
             }
         }
         when (val c = e.control) {
-            is EffectControl.Stacks -> Stepper(c.label, applied.value, 0..c.max, onValue, Modifier.padding(top = 4.dp))
+            is EffectControl.Stacks -> Stepper(c.label, applied.value, 0..c.max, onValue, Modifier.padding(top = 4.dp), step = c.step)
             is EffectControl.Choice -> Dropdown("Option", c.options.indices.toList(), applied.value, { c.options[it] }, onValue,
                 Modifier.fillMaxWidth().padding(top = 4.dp))
             else -> Unit
