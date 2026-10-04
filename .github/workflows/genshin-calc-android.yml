@@ -39,7 +39,7 @@ jobs:
         continue-on-error: true
         run: |
           mkdir -p core/build
-          code=$(curl -sS --max-time 30 -A "TeyvatDmgCalc-CI/1.0 (github.com/Nanthu-FS/sql-chatbot)" -w "%{http_code}" \
+          code=$(curl -sSL --max-time 30 -A "TeyvatDmgCalc-CI/1.0 (github.com/Nanthu-FS/sql-chatbot)" -w "%{http_code}" \
             -o core/build/showcase-sample.json "https://enka.network/api/uid/618285856/" || echo failed)
           echo "showcase sample: HTTP $code, $(wc -c < core/build/showcase-sample.json 2>/dev/null || echo 0) bytes"
           [ "$code" = "200" ] || rm -f core/build/showcase-sample.json
