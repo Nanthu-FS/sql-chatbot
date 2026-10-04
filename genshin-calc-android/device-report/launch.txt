@@ -2,6 +2,6 @@ Starting: Intent { cmp=com.genshincalc.app/.MainActivity }
 Status: ok
 LaunchState: COLD
 Activity: com.genshincalc.app/.MainActivity
-TotalTime: 1796
-WaitTime: 1802
+TotalTime: 1666
+WaitTime: 1668
 Complete

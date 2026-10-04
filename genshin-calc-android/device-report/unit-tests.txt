@@ -6,3 +6,8 @@
 - com.genshincalc.core.FormulasTest: 6 tests, 0 failed
 - com.genshincalc.core.LunarStellarTest: 3 tests, 0 failed
 - com.genshincalc.core.ShowcaseTest: 5 tests, 0 failed
+  - LIVE showcase: 4 characters, 0 unknown, details hidden=false
+  - LIVE amber Lv90 C6 TalentLevels(normal=10, skill=10, burst=10) WeaponBuild(weaponId=skywardharp, level=90, ascended=true, refinement=2) sets={bloodstainedchivalry=2, noblesseoblige=1, paleflame=2} warnings=[] stats match
+  - LIVE bennett Lv90 C6 TalentLevels(normal=6, skill=8, burst=10) WeaponBuild(weaponId=freedomsworn, level=90, ascended=true, refinement=1) sets={noblesseoblige=5} warnings=[] stats match
+  - LIVE ganyu Lv90 C0 TalentLevels(normal=9, skill=9, burst=9) WeaponBuild(weaponId=amosbow, level=90, ascended=true, refinement=3) sets={wandererstroupe=4, shimenawasreminiscence=1} warnings=[] stats match
+  - LIVE xingqiu Lv80 C6 TalentLevels(normal=2, skill=8, burst=8) WeaponBuild(weaponId=sacrificialsword, level=80, ascended=false, refinement=5) sets={emblemofseveredfate=2, wandererstroupe=2, tenacityofthemillelith=1} warnings=[] stats match
