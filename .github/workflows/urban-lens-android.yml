@@ -1,0 +1,65 @@
+name: Urban Lens Android
+
+on:
+  push:
+    paths:
+      - 'urban-lens/**'
+      - '.github/workflows/urban-lens-android.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: urban-lens-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: urban-lens
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Unit tests
+        run: ./gradlew --no-daemon :core:test
+
+      - name: Build debug APK
+        run: ./gradlew --no-daemon :app:assembleDebug
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: urban-lens-debug-apk
+          path: urban-lens/app/build/outputs/apk/debug/*.apk
+
+      # A rolling pre-release gives the APK a stable, public download link.
+      - name: Publish APK as a pre-release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TAG="urban-lens-debug"
+          cp app/build/outputs/apk/debug/app-debug.apk urban-lens-debug.apk
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" urban-lens-debug.apk \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Urban Lens debug build" \
+            --notes "Debug APK built from ${GITHUB_SHA::7} on ${GITHUB_REF_NAME}. Android 8.0+."
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: urban-lens-test-reports
+          path: urban-lens/**/build/reports/tests/

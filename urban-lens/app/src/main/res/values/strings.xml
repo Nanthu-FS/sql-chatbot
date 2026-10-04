@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Urban Lens</string>
+    <string name="alerts_channel_name">Air quality alerts</string>
+    <string name="alerts_channel_description">Alerts when the air at your saved places gets worse or better.</string>
+</resources>
