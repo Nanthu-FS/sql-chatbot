@@ -21,8 +21,12 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            // R8 + resource shrinking: Compose runs far smoother than in debug builds.
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            // Signed with the debug key so the APK can be sideloaded; use a real key for the Play Store.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 

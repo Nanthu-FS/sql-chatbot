@@ -95,19 +95,33 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun linkSuggestions(note: NoteEntity, body: String): List<ScoredNote> =
         AutoLinker.suggest(note.toDoc().copy(body = body), notes.value.filter { it.title.isNotBlank() }.map { it.toDoc() })
 
-    /** Called when the editor closes: drop notes that were never written in, title the rest. */
-    fun tidyOnLeave(noteId: Long) = viewModelScope.launch {
-        delay(700) // let the editor's debounced autosave land first
-        val note = repo.get(noteId) ?: return@launch
-        val emptyBody = note.body.lines().all { it.isBlank() || it.trim() == "- [ ]" || it.trim() == "##" }
-        when {
-            note.title.isBlank() && emptyBody -> repo.delete(note)
-            note.title.isBlank() -> {
-                val first = note.body.lineSequence().map { it.trim().trimStart('#', '-', '*', ' ').removePrefix("[ ] ").trim() }
-                    .firstOrNull { it.isNotEmpty() && !it.startsWith("{{") && !it.startsWith("```") }
-                if (first != null) repo.saveLayout(note.copy(title = first.take(48)))
+    /**
+     * Runs whenever the home screen appears (so no editor is open): deletes notes that were
+     * never written in and gives untitled notes a title from their first line of text.
+     */
+    fun tidyNotes() = viewModelScope.launch {
+        val startedAt = System.currentTimeMillis()
+        delay(500) // let the closing editor's final save land first
+        for (note in repo.all()) {
+            // Skip titled notes, and any note created after we started (e.g. "+" tapped just now).
+            if (note.title.isNotBlank() || note.createdAt >= startedAt) continue
+            val text = note.body.lineSequence().map(::plainText).filter { it.isNotEmpty() }.toList()
+            val hasContent = note.body.lineSequence().any { line ->
+                val l = line.trim()
+                l.startsWith("{{") || l.startsWith("```") || plainText(line).isNotEmpty()
+            }
+            when {
+                !hasContent -> repo.delete(note)
+                text.isNotEmpty() -> repo.saveLayout(note.copy(title = text.first().take(48)))
             }
         }
+    }
+
+    /** A line with markdown and block syntax removed: "- [ ] Call Sam" -> "Call Sam". */
+    private fun plainText(line: String): String {
+        val l = line.trim()
+        if (l.startsWith("{{") || l.startsWith("```")) return ""
+        return l.replace(Regex("^(#+|[-*]\\s*\\[[ xX]\\]|[-*])"), "").trim()
     }
 
     fun search(text: String): List<NoteEntity> {

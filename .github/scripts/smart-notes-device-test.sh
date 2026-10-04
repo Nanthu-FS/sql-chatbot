@@ -12,6 +12,10 @@ adb shell am instrument -w -r com.smartnotes.test/androidx.test.runner.AndroidJU
 adb exec-out run-as com.smartnotes tar c files/screens > "$OUT/screens.tar" 2>/dev/null
 (cd "$OUT" && tar xf screens.tar && rm screens.tar) || true
 
+# The shipped APK is the optimised release build: stress-test that one.
+adb install -r -g app/build/outputs/apk/release/app-release.apk
+adb shell dumpsys gfxinfo com.smartnotes reset > /dev/null
+
 # Cold launch, then random input.
 adb shell am force-stop com.smartnotes
 adb shell am start -W -n com.smartnotes/.ui.MainActivity > "$OUT/launch.txt" 2>&1

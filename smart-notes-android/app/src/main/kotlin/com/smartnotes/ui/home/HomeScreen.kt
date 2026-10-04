@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.Mic
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -63,6 +64,7 @@ fun HomeScreen(vm: MainViewModel, nav: NavController) {
     val resurfaced by vm.resurfaced.collectAsState()
     val meeting by vm.currentMeeting.collectAsState()
     var question by rememberSaveable { mutableStateOf("") }
+    LaunchedEffect(Unit) { vm.tidyNotes() }
     val submitSearch = {
         if (question.isNotBlank()) {
             nav.navigate(Routes.search(question))

@@ -31,7 +31,7 @@ jobs:
       - name: Build app and test APKs
         run: |
           chmod +x gradlew
-          ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest
+          ./gradlew :app:assembleDebug :app:assembleDebugAndroidTest :app:assembleRelease
 
       - name: Enable KVM
         working-directory: .

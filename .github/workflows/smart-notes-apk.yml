@@ -30,21 +30,22 @@ jobs:
       - name: Test and build debug APK
         run: |
           chmod +x gradlew
-          ./gradlew :core:test :app:assembleDebug --stacktrace
+          ./gradlew :core:test :app:assembleRelease --stacktrace
 
       - uses: actions/upload-artifact@v4
         with:
-          name: smart-notes-debug-apk
-          path: smart-notes-android/app/build/outputs/apk/debug/app-debug.apk
+          name: smart-notes-apk
+          path: smart-notes-android/app/build/outputs/apk/release/app-release.apk
 
       # Also commit the APK to the branch so it can be downloaded without opening Actions.
       - name: Commit APK
         run: |
           mkdir -p ../apk
-          cp app/build/outputs/apk/debug/app-debug.apk ../apk/smart-notes-debug.apk
+          git rm -q --ignore-unmatch ../apk/smart-notes-debug.apk
+          cp app/build/outputs/apk/release/app-release.apk ../apk/smart-notes.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add ../apk/smart-notes-debug.apk
-          git commit -m "Build Smart Notes debug APK [skip ci]"
+          git add ../apk/smart-notes.apk
+          git commit -m "Build Smart Notes APK [skip ci]"
           git pull --rebase origin "${GITHUB_REF_NAME}"
           git push origin "HEAD:${GITHUB_REF_NAME}"

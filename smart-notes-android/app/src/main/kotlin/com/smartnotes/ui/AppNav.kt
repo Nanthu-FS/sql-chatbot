@@ -11,10 +11,7 @@ import androidx.compose.material3.Snackbar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -76,18 +73,7 @@ fun AppNav(vm: MainViewModel, openNote: MutableStateFlow<Long?>) {
             popExitTransition = { ExitTransition.None },
         ) {
             composable(Routes.HOME) { HomeScreen(vm, nav) }
-            composable("note/{id}", idArg) { entry ->
-                val id = entry.arguments!!.getLong("id")
-                // When the note is closed (popped, not just covered by board/history), tidy it up.
-                DisposableEffect(entry) {
-                    val observer = LifecycleEventObserver { _, event ->
-                        if (event == Lifecycle.Event.ON_DESTROY) vm.tidyOnLeave(id)
-                    }
-                    entry.lifecycle.addObserver(observer)
-                    onDispose { entry.lifecycle.removeObserver(observer) }
-                }
-                EditorScreen(vm, nav, id)
-            }
+            composable("note/{id}", idArg) { EditorScreen(vm, nav, it.arguments!!.getLong("id")) }
             composable("board/{id}", idArg) { BoardScreen(vm, nav, it.arguments!!.getLong("id")) }
             composable("history/{id}", idArg) { TimeTravelScreen(vm, nav, it.arguments!!.getLong("id")) }
             composable("search?q={q}", listOf(navArgument("q") { type = NavType.StringType; defaultValue = "" })) {
