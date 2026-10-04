@@ -256,7 +256,7 @@ fun StatusChip(
 ) {
     val text = when {
         error != null -> error
-        loading -> "Loading live layers"
+        loading -> "Loading map data"
         zoomedOutTooFar -> "Zoom in to see crowds & construction"
         else -> return
     }

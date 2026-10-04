@@ -65,7 +65,8 @@ class MapRenderer(private val style: Style) {
             LineLayer(CROWD_LINE, CROWD).withProperties(
                 lineColor(toColor(get("color"))),
                 lineWidth(0.6f),
-                lineOpacity(0.35f),
+                // Quiet cells get faint outlines so a calm city doesn't look like a mesh.
+                lineOpacity(interpolate(linear(), get("level"), stop(0, 0.08f), stop(40, 0.3f), stop(100, 0.5f))),
             ),
         )
 

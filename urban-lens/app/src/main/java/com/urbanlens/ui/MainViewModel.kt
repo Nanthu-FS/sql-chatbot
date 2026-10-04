@@ -26,6 +26,7 @@ import com.urbanlens.core.routing.RouteObstacle
 import com.urbanlens.core.routing.RouteTag
 import com.urbanlens.core.routing.TravelMode
 import com.urbanlens.data.CameraSnapshot
+import com.urbanlens.data.LocationResult
 import com.urbanlens.data.MapLayer
 import com.urbanlens.data.SettingsStore
 import kotlinx.coroutines.CancellationException
@@ -42,10 +43,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import java.time.LocalDateTime
 import kotlin.math.ceil
 import kotlin.math.floor
@@ -53,6 +56,9 @@ import kotlin.math.max
 
 /** Where a tap landed on the map, if it hit one of our features. */
 data class MapHit(val kind: String, val id: String)
+
+/** The view the OpenStreetMap loader should cover; [nonce] changes to wake it (new view or retry). */
+private data class AreaRequest(val viewport: BoundingBox?, val nonce: Int)
 
 @OptIn(FlowPreview::class)
 class MainViewModel(application: Application) : AndroidViewModel(application) {
@@ -73,9 +79,11 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     @Volatile private var crowdModel = CrowdModel(emptyList())
 
     private val viewportFlow = MutableStateFlow<BoundingBox?>(null)
+    private val areaRequest = MutableStateFlow(AreaRequest(null, 0))
     private var derivedJob: Job? = null
     private var routeJob: Job? = null
     private var cameraRequestCounter = 0L
+    private var messageCounter = 0L
     private var initialLocateDone = false
 
     /** Where a newly created map should start. */
@@ -87,6 +95,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             viewportFlow.filterNotNull().debounce(450).collectLatest { refresh(it, force = false) }
         }
+        viewModelScope.launch { loadAreaForever() }
         viewModelScope.launch {
             container.reports.observe().collect { all ->
                 val now = System.currentTimeMillis()
@@ -117,10 +126,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         container.settings.saveCamera(camera)
         _state.update { it.copy(viewport = viewport, zoom = zoom) }
         viewportFlow.value = viewport
+        areaRequest.update { AreaRequest(viewport, it.nonce + 1) }
         rebuild()
     }
 
     fun retry() {
+        container.cityData.clearFailures()
+        areaRequest.update { it.copy(nonce = it.nonce + 1) }
         val viewport = _state.value.viewport ?: return
         viewModelScope.launch { refresh(viewport, force = true) }
     }
@@ -129,33 +141,71 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         it.copy(layers = if (layer in it.layers) it.layers - layer else it.layers + layer)
     }
 
+    /** Air quality and weather for the view. OpenStreetMap data has its own loader below. */
     private suspend fun refresh(viewport: BoundingBox, force: Boolean) = coroutineScope {
-        val tooWide = viewport.widthMeters > CityDataRepository.MAX_AREA_WIDTH_METERS
-        _state.update { it.copy(zoomedOutTooFar = tooWide, loadingAir = true, loadingArea = !tooWide) }
+        _state.update { it.copy(loadingAir = true) }
 
         val weatherPoint = _state.value.userLocation ?: viewport.center
         val airJob = async { attempt { container.cityData.air(viewport, force) } }
-        val areaJob = if (tooWide) null else async { attempt { container.cityData.area(viewport, force) } }
         val weatherJob = async { attempt { container.cityData.weather(weatherPoint, force) } }
 
         val air = airJob.await()
-        val area = areaJob?.await()
         val weather = weatherJob.await().getOrNull()
 
         air.onSuccess { airSamples = it }
-        area?.onSuccess {
-            osmSites = it.sites
-            places = it.places
-        }
         _state.update {
             it.copy(
                 loadingAir = false,
-                loadingArea = false,
                 airError = if (air.isFailure) "Air quality is unavailable right now" else null,
-                areaError = if (area?.isFailure == true) "Couldn't load OpenStreetMap data" else null,
                 weather = weather ?: it.weather,
             )
         }
+        rebuild()
+    }
+
+    /**
+     * Loads OpenStreetMap tiles for the current view, one request at a time. A request in flight
+     * is never cancelled by panning (the server does the work anyway); the next tile is simply
+     * picked for wherever the map is by then. Failed tiles are retried after a cooldown.
+     */
+    private suspend fun loadAreaForever() {
+        var published: BoundingBox? = null
+        while (true) {
+            val request = areaRequest.first { it.viewport != null }
+            val viewport = request.viewport ?: continue
+            if (viewport != published) {
+                publishArea(viewport)
+                published = viewport
+            }
+            if (viewport.widthMeters > CityDataRepository.MAX_AREA_WIDTH_METERS) {
+                _state.update { it.copy(zoomedOutTooFar = true, loadingArea = false, areaError = null) }
+                areaRequest.first { it.nonce != request.nonce }
+                continue
+            }
+            val box = viewport.expandedBy(AREA_MARGIN)
+            val next = container.cityData.missingTiles(box).firstOrNull()
+            if (next == null) {
+                val failed = container.cityData.hasFailures(box)
+                _state.update { it.copy(zoomedOutTooFar = false, loadingArea = false, areaError = if (failed) AREA_ERROR else null) }
+                // Wait for the map to move or a retry; wake up anyway to retry failed or stale tiles.
+                withTimeoutOrNull(CityDataRepository.FAILURE_COOLDOWN_MILLIS) { areaRequest.first { it.nonce != request.nonce } }
+                continue
+            }
+            _state.update { it.copy(zoomedOutTooFar = false, loadingArea = true) }
+            val result = attempt { container.cityData.loadTile(next) }
+            if (result.isSuccess) {
+                published = _state.value.viewport?.also { publishArea(it) }
+            } else {
+                _state.update { it.copy(areaError = AREA_ERROR) }
+            }
+        }
+    }
+
+    /** Shows everything cached around [viewport]: nearby tiles too, so edges don't pop. */
+    private fun publishArea(viewport: BoundingBox) {
+        val area = container.cityData.cachedArea(viewport.expandedBy(0.5))
+        osmSites = area.sites
+        places = area.places
         rebuild()
     }
 
@@ -432,7 +482,10 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         updateDraft { it.copy(saving = true) }
         viewModelScope.launch {
             attempt { container.reports.add(draft.type, draft.location, draft.note, draft.photoPath) }
-                .onSuccess { _state.update { it.copy(draft = null, message = "Thanks! ${draft.type.label} reported.") } }
+                .onSuccess {
+                    _state.update { it.copy(draft = null) }
+                    message("Thanks! ${draft.type.label} reported.")
+                }
                 .onFailure {
                     updateDraft { d -> d.copy(saving = false) }
                     message("Couldn't save the report")
@@ -449,7 +502,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun removeReport(id: Long) {
         viewModelScope.launch {
             attempt { container.reports.remove(id) }
-            _state.update { it.copy(selection = null, message = "Report removed") }
+            _state.update { it.copy(selection = null) }
+            message("Report removed")
         }
     }
 
@@ -500,12 +554,14 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (!initialLocateDone && hasLocationPermission()) locate(userInitiated = false)
     }
 
-    fun onLocationPermissionResult(granted: Boolean) {
-        if (granted) {
-            locate(userInitiated = false)
-        } else if (!initialLocateDone) {
-            initialLocateDone = true
-            message("Location is off, showing Chennai")
+    fun onLocationPermissionResult(granted: Boolean, userInitiated: Boolean) {
+        when {
+            granted -> locate(userInitiated)
+            userInitiated -> message("Location permission is off", MessageAction.APP_SETTINGS)
+            !initialLocateDone -> {
+                initialLocateDone = true
+                message("Location is off, showing Chennai")
+            }
         }
     }
 
@@ -513,14 +569,23 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         if (_state.value.locating) return
         _state.update { it.copy(locating = true) }
         viewModelScope.launch {
-            val here = attempt { container.location.current() }.getOrNull()
+            val result = attempt { container.location.current() }.getOrDefault(LocationResult.Unavailable)
+            val firstTry = !initialLocateDone
             initialLocateDone = true
-            _state.update { it.copy(locating = false, userLocation = here ?: it.userLocation) }
-            if (here == null) {
-                if (userInitiated) message("Couldn't get your location")
-            } else {
-                requestCamera { CameraRequest.MoveTo(here, max(_state.value.zoom, 14.5), it) }
-                rebuild()
+            _state.update { it.copy(locating = false) }
+            when (result) {
+                is LocationResult.Found -> {
+                    val here = result.location
+                    _state.update { it.copy(userLocation = here) }
+                    requestCamera { CameraRequest.MoveTo(here, max(_state.value.zoom, 14.5), it) }
+                    rebuild()
+                }
+                LocationResult.Disabled ->
+                    if (userInitiated || firstTry) message("Location is turned off", MessageAction.LOCATION_SETTINGS)
+                LocationResult.NoPermission ->
+                    if (userInitiated) message("Location permission is off", MessageAction.APP_SETTINGS)
+                LocationResult.Unavailable ->
+                    if (userInitiated) message("No location fix yet. Try again in a moment, ideally near a window.")
             }
         }
     }
@@ -530,9 +595,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun onCameraRequestHandled(id: Long) =
         _state.update { if (it.cameraRequest?.id == id) it.copy(cameraRequest = null) else it }
 
-    fun messageShown() = _state.update { it.copy(message = null) }
+    fun messageShown(id: Long) = _state.update { if (it.message?.id == id) it.copy(message = null) else it }
 
-    private fun message(text: String) = _state.update { it.copy(message = text) }
+    private fun message(text: String, action: MessageAction? = null) {
+        messageCounter++
+        val message = UiMessage(text, action, messageCounter)
+        _state.update { it.copy(message = message) }
+    }
 
     private fun requestCamera(build: (Long) -> CameraRequest) {
         cameraRequestCounter++
@@ -555,6 +624,8 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         const val KIND_ROUTE = "route"
 
         private const val MIN_VISIBLE_CROWD = 4
+        private const val AREA_MARGIN = 0.15
+        private const val AREA_ERROR = "OpenStreetMap is busy. Retrying shortly"
         private const val MAX_CROWD_GRID_WIDTH_METERS = 15_000.0
         private const val NEARBY_METERS = 400.0
         private val AIR_STEPS = doubleArrayOf(0.002, 0.004, 0.008, 0.016, 0.032, 0.064, 0.128, 0.256)

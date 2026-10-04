@@ -13,7 +13,9 @@ import kotlin.math.roundToInt
  * estimated from real places (OpenStreetMap) and typical hourly patterns for each kind of place,
  * plus a small deterministic per-place variation so the map feels alive but stays stable.
  */
-class CrowdModel(val places: List<Place>) {
+class CrowdModel(places: List<Place>) {
+    /** The places that generate crowds, with duplicate campus features merged. */
+    val places: List<Place> = mergeDuplicates(places)
 
     /** How busy [place] is at [time], 0..1. */
     fun busyness(place: Place, time: LocalDateTime): Double {
@@ -82,6 +84,27 @@ class CrowdModel(val places: List<Place>) {
     companion object {
         /** Raw density at which the level reaches ~63/100. */
         private const val DENSITY_SCALE = 6.0
+
+        /** Keeps one feature per hospital, campus, station... (see [PlaceCategory.mergeRadiusMeters]). */
+        fun mergeDuplicates(places: List<Place>): List<Place> {
+            val kept = mutableListOf<Place>()
+            for ((category, group) in places.groupBy { it.category }) {
+                val radius = category.mergeRadiusMeters
+                if (radius <= 0.0) {
+                    kept += group
+                    continue
+                }
+                val representatives = mutableListOf<Place>()
+                // Named features first, so the representative carries a useful name.
+                for (place in group.sortedWith(compareBy({ it.name == null }, { it.id }))) {
+                    if (representatives.none { GeoMath.approxDistanceMeters(it.location, place.location) < radius }) {
+                        representatives += place
+                    }
+                }
+                kept += representatives
+            }
+            return kept
+        }
 
         fun toLevel(density: Double): Int = (100 * (1 - exp(-density / DENSITY_SCALE))).roundToInt().coerceIn(0, 100)
 

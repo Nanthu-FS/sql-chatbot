@@ -74,6 +74,16 @@ data class ReportDraft(
     val saving: Boolean = false,
 )
 
+/** Something the user can do straight from a message. */
+enum class MessageAction(val label: String) {
+    APP_SETTINGS("Settings"),
+    LOCATION_SETTINGS("Turn on"),
+    RETRY("Retry"),
+}
+
+/** A one-off message for the snackbar; [id] keeps repeated texts distinct. */
+data class UiMessage(val text: String, val action: MessageAction? = null, val id: Long)
+
 sealed interface CameraRequest {
     val id: Long
 
@@ -108,7 +118,7 @@ data class UiState(
     val zoomedOutTooFar: Boolean = false,
     val areaError: String? = null,
     val airError: String? = null,
-    val message: String? = null,
+    val message: UiMessage? = null,
     val cameraRequest: CameraRequest? = null,
     val now: LocalDateTime = LocalDateTime.now(),
 )

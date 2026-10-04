@@ -62,6 +62,31 @@ class CrowdModelTest {
     }
 
     @Test
+    fun campusBuildingsCountOnce() {
+        val hospital = Place("osm:way/10", "General Hospital", PlaceCategory.HOSPITAL, here)
+        val wings = (1..6).map { i ->
+            Place("osm:way/1$i", null, PlaceCategory.HOSPITAL, GeoMath.offset(here, 20.0 * i, 15.0 * i))
+        }
+        val cafes = (1..3).map { i -> Place("osm:node/2$i", "Cafe $i", PlaceCategory.CAFE, GeoMath.offset(here, 10.0 * i, 0.0)) }
+        val merged = CrowdModel(listOf(hospital) + wings + cafes)
+        assertEquals(listOf("osm:way/10"), merged.places.filter { it.category == PlaceCategory.HOSPITAL }.map { it.id })
+        assertEquals(3, merged.places.count { it.category == PlaceCategory.CAFE })
+
+        val time = wednesday.atTime(10, 0)
+        assertEquals(
+            CrowdModel(listOf(hospital)).levelAt(here, time),
+            CrowdModel(listOf(hospital) + wings).levelAt(here, time),
+        )
+    }
+
+    @Test
+    fun hospitalsAreQuietInTheSmallHours() {
+        val hospital = Place("osm:way/10", "General Hospital", PlaceCategory.HOSPITAL, here)
+        val level = CrowdModel(listOf(hospital)).levelAt(here, wednesday.atTime(1, 45))
+        assertEquals(CrowdLevel.QUIET, CrowdLevel.of(level))
+    }
+
+    @Test
     fun crowdLevelBands() {
         assertEquals(CrowdLevel.QUIET, CrowdLevel.of(0))
         assertEquals(CrowdLevel.MODERATE, CrowdLevel.of(25))

@@ -10,22 +10,28 @@ import com.urbanlens.core.geo.Shape
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
+import java.io.IOException
+
+/** Overpass answered, but the query itself failed on the server (timeout, out of memory...). */
+class OverpassException(message: String) : IOException(message)
 
 /** Construction sites and crowd-drawing places inside an area, from OpenStreetMap. */
 data class AreaData(val sites: List<ConstructionSite>, val places: List<Place>)
 
 /** OpenStreetMap data via the Overpass API. Free, no key; be gentle with request volume. */
 object Overpass {
+    /** Main server first, then public mirrors listed on the OpenStreetMap wiki. */
     val ENDPOINTS = listOf(
         "https://overpass-api.de/api/interpreter",
         "https://overpass.private.coffee/api/interpreter",
+        "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     )
 
     /**
      * Big crowd magnets (malls, stations, beaches...) and small everyday spots (cafés, schools...)
      * get separate output limits so a dense city can't crowd the important places out.
      */
-    fun query(box: BoundingBox, maxSites: Int = 250, maxMajorPlaces: Int = 300, maxMinorPlaces: Int = 350): String {
+    fun query(box: BoundingBox, maxSites: Int = 250, maxMajorPlaces: Int = 500, maxMinorPlaces: Int = 500): String {
         val b = "${coord(box.south)},${coord(box.west)},${coord(box.north)},${coord(box.east)}"
         return """
             [out:json][timeout:25];
@@ -53,7 +59,9 @@ object Overpass {
     }
 
     fun parse(json: String): AreaData {
-        val root = Json.parseToJsonElement(json) as? JsonObject ?: return AreaData(emptyList(), emptyList())
+        val root = Json.parseToJsonElement(json) as? JsonObject ?: throw OverpassException("Unexpected Overpass response")
+        // Server-side failures still come back as HTTP 200, with partial data and a remark.
+        root.string("remark")?.takeIf { it.contains("error", ignoreCase = true) }?.let { throw OverpassException(it) }
         val sites = mutableListOf<ConstructionSite>()
         val places = mutableListOf<Place>()
         val seenPlaces = HashSet<String>()

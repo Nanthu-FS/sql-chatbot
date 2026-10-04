@@ -1,6 +1,10 @@
 package com.urbanlens.ui
 
 import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.provider.Settings
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -15,8 +19,12 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -29,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -60,23 +69,41 @@ fun MapScreen(vm: MainViewModel = viewModel()) {
     val layers = state.settings.layers
     val panelOpen = state.draft != null || state.route != null || state.selection != null
 
+    val context = LocalContext.current
     var askedForLocation by rememberSaveable { mutableStateOf(false) }
+    var askedFromButton by remember { mutableStateOf(false) }
     val locationPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { result ->
-        vm.onLocationPermissionResult(result.values.any { it })
+        vm.onLocationPermissionResult(result.values.any { it }, userInitiated = askedFromButton)
     }
+    val locationPermissions = arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION)
     LaunchedEffect(Unit) {
         if (vm.hasLocationPermission()) {
             vm.onScreenStarted()
         } else if (!askedForLocation) {
             askedForLocation = true
-            locationPermission.launch(arrayOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION))
+            askedFromButton = false
+            locationPermission.launch(locationPermissions)
         }
     }
 
     LaunchedEffect(state.message) {
         val message = state.message ?: return@LaunchedEffect
-        snackbar.showSnackbar(message)
-        vm.messageShown()
+        val result = snackbar.showSnackbar(
+            message = message.text,
+            actionLabel = message.action?.label,
+            duration = if (message.action != null) SnackbarDuration.Long else SnackbarDuration.Short,
+        )
+        if (result == SnackbarResult.ActionPerformed) {
+            when (message.action) {
+                MessageAction.APP_SETTINGS -> context.openSettings(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", context.packageName, null)),
+                )
+                MessageAction.LOCATION_SETTINGS -> context.openSettings(Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS))
+                MessageAction.RETRY -> vm.retry()
+                null -> Unit
+            }
+        }
+        vm.messageShown(message.id)
     }
 
     BackHandler(enabled = panelOpen) {
@@ -142,7 +169,14 @@ fun MapScreen(vm: MainViewModel = viewModel()) {
 
         MapControls(
             locating = state.locating,
-            onLocate = { vm.locate(userInitiated = true) },
+            onLocate = {
+                if (vm.hasLocationPermission()) {
+                    vm.locate(userInitiated = true)
+                } else {
+                    askedFromButton = true
+                    locationPermission.launch(locationPermissions)
+                }
+            },
             onZoomIn = mapState::zoomIn,
             onZoomOut = mapState::zoomOut,
             modifier = Modifier
@@ -159,6 +193,15 @@ fun MapScreen(vm: MainViewModel = viewModel()) {
                 .imePadding()
                 .padding(bottom = 12.dp),
         ) {
+            SnackbarHost(hostState = snackbar, modifier = Modifier.padding(horizontal = 12.dp)) { data ->
+                Snackbar(
+                    snackbarData = data,
+                    shape = RoundedCornerShape(14.dp),
+                    containerColor = UrbanColors.SurfaceHigh,
+                    contentColor = UrbanColors.Paper,
+                    actionColor = UrbanColors.Orange,
+                )
+            }
             val cardModifier = Modifier.padding(horizontal = 12.dp).fillMaxWidth()
             val draft = state.draft
             val route = state.route
@@ -210,14 +253,6 @@ fun MapScreen(vm: MainViewModel = viewModel()) {
             }
         }
 
-        SnackbarHost(
-            hostState = snackbar,
-            modifier = Modifier
-                .align(Alignment.TopCenter)
-                .statusBarsPadding()
-                .padding(top = 96.dp, start = 12.dp, end = 12.dp),
-        )
-
         if (state.showSettings) {
             SettingsSheet(
                 settings = state.settings,
@@ -234,4 +269,8 @@ fun MapScreen(vm: MainViewModel = viewModel()) {
             )
         }
     }
+}
+
+private fun Context.openSettings(intent: Intent) {
+    runCatching { startActivity(intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }
 }

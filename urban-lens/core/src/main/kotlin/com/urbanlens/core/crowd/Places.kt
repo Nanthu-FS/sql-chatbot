@@ -53,7 +53,7 @@ enum class PlaceCategory(
     ),
     HOSPITAL(
         "Hospital", 5.0, 150.0, 0.8,
-        doubleArrayOf(0.25, 0.2, 0.2, 0.2, 0.2, 0.25, 0.35, 0.5, 0.75, 0.9, 0.95, 0.9, 0.8, 0.7, 0.65, 0.6, 0.6, 0.65, 0.7, 0.65, 0.55, 0.45, 0.35, 0.3),
+        doubleArrayOf(0.18, 0.15, 0.15, 0.15, 0.15, 0.2, 0.3, 0.5, 0.75, 0.9, 0.95, 0.9, 0.8, 0.7, 0.65, 0.6, 0.6, 0.65, 0.7, 0.65, 0.55, 0.4, 0.3, 0.22),
     ),
     EDUCATION(
         "School / college", 6.0, 160.0, 0.2,
@@ -75,6 +75,22 @@ enum class PlaceCategory(
         "Stadium", 6.0, 250.0, 1.5,
         doubleArrayOf(0.02, 0.02, 0.0, 0.0, 0.0, 0.05, 0.15, 0.15, 0.1, 0.08, 0.08, 0.08, 0.08, 0.08, 0.08, 0.1, 0.15, 0.25, 0.3, 0.3, 0.25, 0.15, 0.05, 0.02),
     );
+
+    /**
+     * OpenStreetMap often maps one hospital, campus or station as several features (buildings,
+     * platforms, a node plus an outline). Features of this kind closer than this count once.
+     */
+    val mergeRadiusMeters: Double
+        get() = when (this) {
+            MALL, HOSPITAL, STADIUM -> 250.0
+            TRANSIT_STATION -> 300.0
+            EDUCATION, BUS_STATION -> 200.0
+            MARKET, PARK -> 150.0
+            BEACH -> 600.0
+            CINEMA, ATTRACTION -> 100.0
+            WORSHIP -> 60.0
+            CAFE, RESTAURANT, FAST_FOOD -> 0.0
+        }
 
     /** Typical busyness (0..1) at [hour] on a weekday. */
     fun weekdayBusyness(hour: Int): Double = weekday[hour.mod(24)]
