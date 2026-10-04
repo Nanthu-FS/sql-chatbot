@@ -27,7 +27,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Test and build debug APK
+      - name: Test and build release APK
         run: |
           chmod +x gradlew
           ./gradlew :core:test :app:assembleRelease --stacktrace
@@ -40,8 +40,8 @@ jobs:
       # Also commit the APK to the branch so it can be downloaded without opening Actions.
       - name: Commit APK
         run: |
-          mkdir -p ../apk
           git rm -q --ignore-unmatch ../apk/smart-notes-debug.apk
+          mkdir -p ../apk
           cp app/build/outputs/apk/release/app-release.apk ../apk/smart-notes.apk
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
