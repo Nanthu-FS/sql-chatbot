@@ -1,0 +1,40 @@
+name: Build Barcode Scanner APK
+
+on:
+  push:
+    paths:
+      - "barcode-scanner/**"
+      - ".github/workflows/barcode-scanner-apk.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: barcode-scanner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - name: Build debug APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: barcode-scanner-apk
+          path: barcode-scanner/app/build/outputs/apk/debug/app-debug.apk
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: barcode-scanner-build-${{ github.run_number }}
+          name: Barcode Scanner build ${{ github.run_number }}
+          target_commitish: ${{ github.sha }}
+          files: barcode-scanner/app/build/outputs/apk/debug/app-debug.apk
