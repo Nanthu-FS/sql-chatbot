@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">Barcode Scanner</string>
+    <string name="hint_point_camera">Point the camera at a barcode</string>
+    <string name="scan_again">Scan again</string>
+    <string name="copy">Copy</string>
+    <string name="open">Open</string>
+    <string name="copied">Copied to clipboard</string>
+    <string name="permission_denied">Camera permission is required to scan barcodes</string>
+    <string name="grant_permission">Grant permission</string>
+</resources>
