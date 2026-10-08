@@ -1,0 +1,488 @@
+{
+ "name": "Getting Started",
+ "glyph": "○",
+ "page": {
+  "title": "Getting Started",
+  "icon": "○",
+  "cover": "pattern:halftone",
+  "blocks": [
+   {
+    "type": "TEXT",
+    "text": "Everything here lives on this device. No accounts, no sync, no network."
+   },
+   {
+    "type": "CALLOUT",
+    "text": "Type / on an empty line to insert any block. Markdown works too: # heading, - list, [] to-do, > quote, --- divider.",
+    "props": {
+     "glyph": "◆"
+    }
+   },
+   {
+    "type": "TOC"
+   },
+   {
+    "type": "H1",
+    "text": "Text"
+   },
+   {
+    "type": "TEXT",
+    "content": [
+     {
+      "text": "Inline styles: "
+     },
+     {
+      "text": "bold",
+      "marks": [
+       "BOLD"
+      ]
+     },
+     {
+      "text": ", "
+     },
+     {
+      "text": "italic",
+      "marks": [
+       "ITALIC"
+      ]
+     },
+     {
+      "text": ", "
+     },
+     {
+      "text": "underline",
+      "marks": [
+       "UNDERLINE"
+      ]
+     },
+     {
+      "text": ", "
+     },
+     {
+      "text": "strike",
+      "marks": [
+       "STRIKE"
+      ]
+     },
+     {
+      "text": ", "
+     },
+     {
+      "text": "code",
+      "marks": [
+       "CODE"
+      ]
+     },
+     {
+      "text": " and a "
+     },
+     {
+      "text": "link",
+      "marks": [
+       "LINK"
+      ],
+      "data": {
+       "url": "https://developer.android.com"
+      }
+     },
+     {
+      "text": ". Today is "
+     },
+     {
+      "text": "@today",
+      "kind": "DATE_MENTION",
+      "data": {
+       "start": 0
+      }
+     },
+     {
+      "text": "."
+     }
+    ]
+   },
+   {
+    "type": "H2",
+    "text": "Lists"
+   },
+   {
+    "type": "BULLET",
+    "text": "A bulleted item",
+    "children": [
+     {
+      "type": "BULLET",
+      "text": "Nested with Tab, or the indent button"
+     }
+    ]
+   },
+   {
+    "type": "NUMBERED",
+    "text": "Numbers count themselves"
+   },
+   {
+    "type": "NUMBERED",
+    "text": "Second item"
+   },
+   {
+    "type": "TODO",
+    "text": "Check this off"
+   },
+   {
+    "type": "TODO",
+    "text": "Already done",
+    "props": {
+     "checked": true
+    }
+   },
+   {
+    "type": "TOGGLE",
+    "text": "A toggle hides its children",
+    "children": [
+     {
+      "type": "TEXT",
+      "text": "Hidden content lives here."
+     }
+    ]
+   },
+   {
+    "type": "QUOTE",
+    "text": "Make the simple path the default path."
+   },
+   {
+    "type": "DIVIDER"
+   },
+   {
+    "type": "H2",
+    "text": "Rich blocks"
+   },
+   {
+    "type": "CODE",
+    "text": "fun greet(name: String) = \"Hello, $name\"",
+    "props": {
+     "language": "kotlin"
+    }
+   },
+   {
+    "type": "TABLE",
+    "props": {
+     "table": {
+      "columns": [
+       {
+        "name": "Owner"
+       },
+       {
+        "name": "Due"
+       },
+       {
+        "name": "Status"
+       }
+      ],
+      "rows": [
+       [
+        "You",
+        "Today",
+        "Doing"
+       ],
+       [
+        "Team",
+        "Friday",
+        "Planned"
+       ]
+      ]
+     }
+    }
+   },
+   {
+    "type": "COLUMNS",
+    "children": [
+     {
+      "type": "COLUMN",
+      "children": [
+       {
+        "type": "H3",
+        "text": "Left column"
+       },
+       {
+        "type": "TEXT",
+        "text": "Columns sit side by side on wide screens."
+       }
+      ]
+     },
+     {
+      "type": "COLUMN",
+      "children": [
+       {
+        "type": "H3",
+        "text": "Right column"
+       },
+       {
+        "type": "TEXT",
+        "text": "On a phone in portrait they stack."
+       }
+      ]
+     }
+    ]
+   },
+   {
+    "type": "LINK_PREVIEW",
+    "props": {
+     "url": "https://developer.android.com",
+     "title": "Android Developers",
+     "description": "Typed by hand. This app never fetches the web."
+    }
+   },
+   {
+    "type": "IMAGE",
+    "props": {
+     "caption": [
+      {
+       "text": "Tap to add an image from your device"
+      }
+     ]
+    }
+   },
+   {
+    "type": "FILE"
+   },
+   {
+    "type": "H2",
+    "text": "Pages and databases"
+   },
+   {
+    "type": "CHILD_PAGE",
+    "page": {
+     "title": "A nested page",
+     "icon": "□",
+     "blocks": [
+      {
+       "type": "TEXT",
+       "text": "Pages hold pages. Open the drawer to see the tree."
+      }
+     ]
+    }
+   },
+   {
+    "type": "CHILD_DATABASE",
+    "page": {
+     "title": "Sample tasks",
+     "icon": "▦",
+     "database": {
+      "properties": [
+       {
+        "id": "title",
+        "name": "Name",
+        "type": "TITLE",
+        "isTitle": true
+       },
+       {
+        "id": "status",
+        "name": "Status",
+        "type": "STATUS",
+        "options": [
+         {
+          "id": "status_todo",
+          "name": "Not started",
+          "order": 0,
+          "group": "TODO"
+         },
+         {
+          "id": "status_doing",
+          "name": "In progress",
+          "order": 1,
+          "group": "IN_PROGRESS"
+         },
+         {
+          "id": "status_done",
+          "name": "Done",
+          "order": 2,
+          "group": "COMPLETE"
+         }
+        ]
+       },
+       {
+        "id": "due",
+        "name": "Due",
+        "type": "DATE"
+       },
+       {
+        "id": "priority",
+        "name": "Priority",
+        "type": "SELECT",
+        "options": [
+         {
+          "id": "p_high",
+          "name": "High",
+          "order": 0
+         },
+         {
+          "id": "p_med",
+          "name": "Medium",
+          "order": 1
+         },
+         {
+          "id": "p_low",
+          "name": "Low",
+          "order": 2
+         }
+        ]
+       },
+       {
+        "id": "points",
+        "name": "Points",
+        "type": "NUMBER"
+       },
+       {
+        "id": "days",
+        "name": "Days left",
+        "type": "FORMULA",
+        "config": {
+         "expression": "if(prop(\"Due\") == \"\", \"\", dateDiff(prop(\"Due\"), now(), \"days\"))"
+        }
+       }
+      ],
+      "views": [
+       {
+        "name": "All tasks",
+        "type": "TABLE"
+       },
+       {
+        "name": "Board",
+        "type": "BOARD",
+        "config": {
+         "groupBy": "status"
+        }
+       },
+       {
+        "name": "Calendar",
+        "type": "CALENDAR",
+        "config": {
+         "calendarPropertyId": "due"
+        }
+       },
+       {
+        "name": "List",
+        "type": "LIST"
+       },
+       {
+        "name": "Gallery",
+        "type": "GALLERY"
+       }
+      ],
+      "rows": [
+       {
+        "title": "Draft onboarding copy",
+        "icon": "▲",
+        "values": {
+         "status": {
+          "type": "select",
+          "optionId": "status_doing"
+         },
+         "due": {
+          "type": "date",
+          "start": "2026-10-12"
+         },
+         "priority": {
+          "type": "select",
+          "optionId": "p_high"
+         },
+         "points": {
+          "type": "number",
+          "value": 3
+         }
+        },
+        "blocks": [
+         {
+          "type": "TEXT",
+          "text": "Keep the first screen to one sentence."
+         },
+         {
+          "type": "TODO",
+          "text": "Review with the team"
+         }
+        ]
+       },
+       {
+        "title": "Backup format spec",
+        "values": {
+         "status": {
+          "type": "select",
+          "optionId": "status_todo"
+         },
+         "due": {
+          "type": "date",
+          "start": "2026-10-14"
+         },
+         "priority": {
+          "type": "select",
+          "optionId": "p_med"
+         },
+         "points": {
+          "type": "number",
+          "value": 5
+         }
+        }
+       },
+       {
+        "title": "Calendar week strip",
+        "values": {
+         "status": {
+          "type": "select",
+          "optionId": "status_doing"
+         },
+         "due": {
+          "type": "date",
+          "start": "2026-10-15"
+         },
+         "priority": {
+          "type": "select",
+          "optionId": "p_med"
+         },
+         "points": {
+          "type": "number",
+          "value": 2
+         }
+        }
+       },
+       {
+        "title": "Icon set review",
+        "values": {
+         "status": {
+          "type": "select",
+          "optionId": "status_done"
+         },
+         "due": {
+          "type": "date",
+          "start": "2026-10-08"
+         },
+         "priority": {
+          "type": "select",
+          "optionId": "p_low"
+         },
+         "points": {
+          "type": "number",
+          "value": 1
+         }
+        }
+       },
+       {
+        "title": "CSV import mapping",
+        "values": {
+         "status": {
+          "type": "select",
+          "optionId": "status_todo"
+         },
+         "priority": {
+          "type": "select",
+          "optionId": "p_low"
+         }
+        }
+       }
+      ]
+     }
+    }
+   },
+   {
+    "type": "TEXT",
+    "text": "Hover your S Pen over buttons and cards to see them react."
+   }
+  ]
+ }
+}

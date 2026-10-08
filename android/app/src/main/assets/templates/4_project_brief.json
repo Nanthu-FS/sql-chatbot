@@ -1,0 +1,89 @@
+{
+ "name": "Project brief",
+ "description": "Goal, scope, owners and timeline",
+ "glyph": "■",
+ "page": {
+  "title": "Project brief",
+  "icon": "■",
+  "cover": "pattern:rules",
+  "blocks": [
+   {
+    "type": "H2",
+    "text": "Goal"
+   },
+   {
+    "type": "TEXT",
+    "text": "What does success look like?"
+   },
+   {
+    "type": "H2",
+    "text": "Scope"
+   },
+   {
+    "type": "BULLET",
+    "text": "In scope"
+   },
+   {
+    "type": "BULLET",
+    "text": "Out of scope"
+   },
+   {
+    "type": "H2",
+    "text": "Timeline"
+   },
+   {
+    "type": "TABLE",
+    "props": {
+     "table": {
+      "columns": [
+       {
+        "name": "Milestone",
+        "width": 180
+       },
+       {
+        "name": "Owner"
+       },
+       {
+        "name": "Due"
+       },
+       {
+        "name": "Status"
+       }
+      ],
+      "rows": [
+       [
+        "Kickoff",
+        "",
+        "",
+        ""
+       ],
+       [
+        "First draft",
+        "",
+        "",
+        ""
+       ],
+       [
+        "Launch",
+        "",
+        "",
+        ""
+       ]
+      ]
+     }
+    }
+   },
+   {
+    "type": "H2",
+    "text": "Risks"
+   },
+   {
+    "type": "CALLOUT",
+    "text": "List the assumptions that would sink this project.",
+    "props": {
+     "glyph": "▲"
+    }
+   }
+  ]
+ }
+}

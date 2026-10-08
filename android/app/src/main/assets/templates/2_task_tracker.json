@@ -1,0 +1,92 @@
+{
+ "name": "Task tracker",
+ "description": "Status, due date and priority on a board",
+ "glyph": "▦",
+ "page": {
+  "title": "Task tracker",
+  "icon": "▦",
+  "database": {
+   "properties": [
+    {
+     "id": "title",
+     "name": "Name",
+     "type": "TITLE",
+     "isTitle": true
+    },
+    {
+     "id": "status",
+     "name": "Status",
+     "type": "STATUS",
+     "options": [
+      {
+       "id": "status_todo",
+       "name": "Not started",
+       "order": 0,
+       "group": "TODO"
+      },
+      {
+       "id": "status_doing",
+       "name": "In progress",
+       "order": 1,
+       "group": "IN_PROGRESS"
+      },
+      {
+       "id": "status_done",
+       "name": "Done",
+       "order": 2,
+       "group": "COMPLETE"
+      }
+     ]
+    },
+    {
+     "id": "due",
+     "name": "Due date",
+     "type": "DATE"
+    },
+    {
+     "id": "priority",
+     "name": "Priority",
+     "type": "SELECT",
+     "options": [
+      {
+       "id": "p_high",
+       "name": "High",
+       "order": 0
+      },
+      {
+       "id": "p_med",
+       "name": "Medium",
+       "order": 1
+      },
+      {
+       "id": "p_low",
+       "name": "Low",
+       "order": 2
+      }
+     ]
+    }
+   ],
+   "views": [
+    {
+     "name": "All tasks",
+     "type": "TABLE"
+    },
+    {
+     "name": "Board",
+     "type": "BOARD",
+     "config": {
+      "groupBy": "status"
+     }
+    },
+    {
+     "name": "Calendar",
+     "type": "CALENDAR",
+     "config": {
+      "calendarPropertyId": "due"
+     }
+    }
+   ],
+   "rows": []
+  }
+ }
+}

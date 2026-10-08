@@ -1,0 +1,83 @@
+{
+ "name": "Reading log",
+ "description": "Books with author, status and rating",
+ "glyph": "▤",
+ "page": {
+  "title": "Reading log",
+  "icon": "▤",
+  "database": {
+   "properties": [
+    {
+     "id": "title",
+     "name": "Title",
+     "type": "TITLE",
+     "isTitle": true
+    },
+    {
+     "id": "author",
+     "name": "Author",
+     "type": "TEXT"
+    },
+    {
+     "id": "status",
+     "name": "Status",
+     "type": "STATUS",
+     "options": [
+      {
+       "id": "r_want",
+       "name": "Want to read",
+       "order": 0,
+       "group": "TODO"
+      },
+      {
+       "id": "r_reading",
+       "name": "Reading",
+       "order": 1,
+       "group": "IN_PROGRESS"
+      },
+      {
+       "id": "r_done",
+       "name": "Finished",
+       "order": 2,
+       "group": "COMPLETE"
+      }
+     ]
+    },
+    {
+     "id": "rating",
+     "name": "Rating",
+     "type": "NUMBER",
+     "config": {
+      "decimals": 0
+     }
+    }
+   ],
+   "views": [
+    {
+     "name": "Shelf",
+     "type": "GALLERY"
+    },
+    {
+     "name": "Table",
+     "type": "TABLE",
+     "config": {
+      "sorts": [
+       {
+        "propertyId": "rating",
+        "direction": "DESC"
+       }
+      ]
+     }
+    },
+    {
+     "name": "By status",
+     "type": "BOARD",
+     "config": {
+      "groupBy": "status"
+     }
+    }
+   ],
+   "rows": []
+  }
+ }
+}

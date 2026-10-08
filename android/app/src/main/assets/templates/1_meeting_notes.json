@@ -1,0 +1,57 @@
+{
+ "name": "Meeting notes",
+ "description": "Date, agenda, action items and decisions",
+ "glyph": "◆",
+ "page": {
+  "title": "Meeting notes",
+  "icon": "◆",
+  "blocks": [
+   {
+    "type": "TEXT",
+    "content": [
+     {
+      "text": "Date: "
+     },
+     {
+      "text": "@today",
+      "kind": "DATE_MENTION",
+      "data": {
+       "start": 0
+      }
+     }
+    ]
+   },
+   {
+    "type": "H2",
+    "text": "Attendees"
+   },
+   {
+    "type": "BULLET"
+   },
+   {
+    "type": "H2",
+    "text": "Agenda"
+   },
+   {
+    "type": "NUMBERED"
+   },
+   {
+    "type": "H2",
+    "text": "Action items"
+   },
+   {
+    "type": "TODO"
+   },
+   {
+    "type": "TODO"
+   },
+   {
+    "type": "CALLOUT",
+    "text": "Decisions: ",
+    "props": {
+     "glyph": "●"
+    }
+   }
+  ]
+ }
+}
