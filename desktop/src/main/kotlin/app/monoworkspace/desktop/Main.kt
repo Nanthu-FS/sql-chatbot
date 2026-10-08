@@ -159,12 +159,18 @@ fun main() {
                     delay(60_000)
                 }
             }
+            val theme = resolveTheme(settings, systemDark)
+            // The native frame shows its own background while resizing; match the theme.
+            LaunchedEffect(theme.id) {
+                val bg = theme.main.background
+                window.background = java.awt.Color(bg.red, bg.green, bg.blue)
+            }
             DesktopRoot(
                 container = container,
                 keys = keys,
                 window = window,
                 initialPageId = initialPage,
-                theme = resolveTheme(settings, systemDark),
+                theme = theme,
                 ambient = settings.ambientEffects && focused,
                 reduceMotion = settings.reduceMotion || windowsReducedMotion,
                 locked = locked,
