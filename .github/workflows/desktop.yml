@@ -1,0 +1,126 @@
+name: Windows app
+
+on:
+  push:
+    paths:
+      - "desktop/**"
+      - "android/app/src/main/java/app/monoworkspace/model/**"
+      - "android/app/src/main/java/app/monoworkspace/core/**"
+      - "android/app/src/main/java/app/monoworkspace/engine/**"
+      - "android/app/src/main/java/app/monoworkspace/data/**"
+      - "android/app/src/main/assets/**"
+      - ".github/workflows/desktop.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: desktop-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Unit tests plus an offscreen render of the real UI; the PNGs are committed
+  # to desktop/docs/screenshots so the README always shows the current build.
+  screens:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Tests
+        run: |
+          set -o pipefail
+          chmod +x gradlew
+          ./gradlew --continue test 2>&1 | tee test.log
+
+      - name: Render screenshots
+        run: |
+          set -o pipefail
+          ./gradlew renderScreenshots 2>&1 | tee shots.log
+
+      - name: Error summary
+        if: failure()
+        run: |
+          grep -hE "^e: |error:|FAILED|Exception|Caused by" test.log shots.log 2>/dev/null | head -200 || true
+          grep -hA30 "Exception" shots.log 2>/dev/null | head -120 || true
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-test-reports
+          path: desktop/build/reports/tests/
+
+      - name: Commit screenshots
+        run: |
+          mkdir -p docs/screenshots
+          cp build/screenshots/*.png docs/screenshots/
+          cd ..
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add desktop/docs/screenshots
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Update desktop screenshots [skip ci]"
+          git pull --rebase origin "$GITHUB_REF_NAME" && git push origin "HEAD:$GITHUB_REF_NAME" || echo "Screenshots not pushed (branch moved on)"
+
+  windows:
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+        working-directory: desktop
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build installers
+        run: |
+          set -o pipefail
+          ./gradlew --continue packageMsi packageExe createDistributable 2>&1 | tee build.log
+
+      - name: Error summary
+        if: failure()
+        run: |
+          grep -hE "^e: |error:|FAILED|Exception|Caused by|What went wrong" -A3 build.log 2>/dev/null | head -200 || true
+
+      - name: Collect
+        run: |
+          mkdir -p dist
+          cp build/compose/binaries/main/msi/*.msi "dist/MonoWorkspace-1.0.0.msi"
+          cp build/compose/binaries/main/exe/*.exe "dist/MonoWorkspace-Setup-1.0.0.exe"
+          cd build/compose/binaries/main/app
+          7z a -tzip "$GITHUB_WORKSPACE/desktop/dist/MonoWorkspace-Portable.zip" "Mono Workspace" > /dev/null
+          ls -la "$GITHUB_WORKSPACE/desktop/dist"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: MonoWorkspace-windows
+          path: desktop/dist/
+
+      - name: Publish rolling release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="desktop-${GITHUB_REF_NAME//\//-}"
+          gh release delete "$TAG" --yes --cleanup-tag || true
+          gh release create "$TAG" dist/MonoWorkspace-Setup-1.0.0.exe dist/MonoWorkspace-1.0.0.msi dist/MonoWorkspace-Portable.zip \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Mono Workspace for Windows (${GITHUB_REF_NAME})" \
+            --notes "Built from ${GITHUB_SHA}. MonoWorkspace-Setup-1.0.0.exe installs per user with a Start menu entry; the MSI does the same; the portable zip runs Mono Workspace.exe without installing."
