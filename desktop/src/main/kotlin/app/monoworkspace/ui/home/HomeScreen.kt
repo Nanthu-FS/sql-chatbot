@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -139,7 +140,8 @@ fun HomeScreen() {
                 contentPadding = PaddingValues(bottom = 96.dp),
             ) {
                 item("hero") {
-                    Box(Modifier.padding(horizontal = margin).padding(top = Space.x3, bottom = Space.xl)) {
+                    // The ornament gets the full content width and at least 150dp of height, as ThemeFx promises.
+                    Box(Modifier.fillMaxWidth().padding(horizontal = margin).padding(top = Space.x3, bottom = Space.xl).heightIn(min = 150.dp)) {
                         if (!LocalReduceMotion.current) LocalTheme.current.fx.HeroOrnament(Modifier.matchParentSize())
                         Column {
                             KineticText(greeting(), MonoType.display.copy(fontSize = 64.sp, lineHeight = 68.sp))
