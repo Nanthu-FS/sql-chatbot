@@ -335,13 +335,14 @@ fun DatabaseScreen() {
 @Composable
 private fun ViewTab(view: DatabaseView, selected: Boolean, onClick: () -> Unit, onLongPress: () -> Unit) {
     val underline by animateFloatAsState(if (selected) 1f else 0f, monoTween(Motion.MEDIUM), label = "tab")
+    val underlineInk = MonoColors.Ink
     Row(
         Modifier
             .heightIn(min = 44.dp)
             .drawBehind {
                 if (underline > 0f) {
                     val w = size.width * underline
-                    drawRect(MonoColors.Ink, Offset((size.width - w) / 2f, size.height - 2.dp.toPx()), Size(w, 2.dp.toPx()))
+                    drawRect(underlineInk, Offset((size.width - w) / 2f, size.height - 2.dp.toPx()), Size(w, 2.dp.toPx()))
                 }
             }
             .inkClickable(onClick = onClick, onLongClick = onLongPress, showBar = false, role = Role.Tab)

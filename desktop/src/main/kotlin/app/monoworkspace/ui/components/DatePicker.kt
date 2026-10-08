@@ -117,12 +117,12 @@ fun MonthCalendar(
                                             Text(
                                                 "$dayNum",
                                                 style = MonoType.bodySmall.tnum().copy(
-                                                    color = if (isSel) MonoColors.White else if (dow >= 5) MonoColors.Secondary else MonoColors.Ink,
+                                                    color = if (isSel) MonoColors.OnInk else if (dow >= 5) MonoColors.Secondary else MonoColors.Ink,
                                                     fontWeight = if (date == today) FontWeight.Bold else FontWeight.Normal,
                                                 ),
                                             )
                                             if (date == today && !isSel) Box(Modifier.width(12.dp).height(1.dp).background(MonoColors.Ink))
-                                            else if (date in marks) Box(Modifier.width(4.dp).height(4.dp).background(if (isSel) MonoColors.White else MonoColors.Ink))
+                                            else if (date in marks) Box(Modifier.width(4.dp).height(4.dp).background(if (isSel) MonoColors.OnInk else MonoColors.Ink))
                                         }
                                     }
                                 }

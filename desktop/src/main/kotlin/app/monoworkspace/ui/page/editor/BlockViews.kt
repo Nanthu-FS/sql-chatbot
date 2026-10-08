@@ -163,6 +163,7 @@ class BlockDragState(private val list: LazyListState, private val blockIds: () -
     }
 }
 
+@Composable
 fun styleForBlock(b: Block): TextStyle = when (b.type) {
     BlockType.H1 -> MonoType.h1
     BlockType.H2 -> MonoType.h2
@@ -214,6 +215,7 @@ fun BlockRow(
     val gutter = if (wide) 48.dp else 24.dp
     val onDragState by rememberUpdatedState(drag)
 
+    val inkLine = MonoColors.Ink
     Box(
         modifier
             .zIndex(if (isDragging) 2f else 0f)
@@ -226,13 +228,13 @@ fun BlockRow(
             .hoverable(interaction)
             .drawBehind {
                 drawRect(tint)
-                if (bar > 0f) drawRect(MonoColors.Ink, Offset.Zero, Size(2.dp.toPx(), size.height * bar))
+                if (bar > 0f) drawRect(inkLine, Offset.Zero, Size(2.dp.toPx(), size.height * bar))
                 val rule = 2.dp.toPx()
-                if (dropHere) drawRect(MonoColors.Ink, Offset(0f, 0f), Size(size.width, rule))
-                if (dropAfter) drawRect(MonoColors.Ink, Offset(0f, size.height - rule), Size(size.width, rule))
+                if (dropHere) drawRect(inkLine, Offset(0f, 0f), Size(size.width, rule))
+                if (dropAfter) drawRect(inkLine, Offset(0f, size.height - rule), Size(size.width, rule))
                 if (highlight > 0f) {
                     val w = 1.dp.toPx()
-                    val c = MonoColors.Ink.copy(alpha = highlight)
+                    val c = inkLine.copy(alpha = highlight)
                     drawRect(c, Offset.Zero, Size(size.width, w))
                     drawRect(c, Offset(0f, size.height - w), Size(size.width, w))
                     drawRect(c, Offset.Zero, Size(w, size.height))

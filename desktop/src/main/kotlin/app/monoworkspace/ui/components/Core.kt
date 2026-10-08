@@ -1,5 +1,7 @@
 package app.monoworkspace.ui.components
 
+import androidx.compose.ui.draw.clip
+
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -118,13 +120,14 @@ fun Modifier.inkClickable(
     )
     val bar by animateFloatAsState(if (showBar && (active || selected)) 1f else 0f, spring(dampingRatio = 0.62f, stiffness = 520f), label = "bar")
     val secondary = rememberUpdatedState(onLongClick)
+    val barColor = MonoColors.Accent
     return this
         .drawBehind {
             drawRect(tint)
             // The bar grows from the vertical centre with a slight overshoot.
             if (bar > 0f) {
                 val h = size.height * bar.coerceAtMost(1.08f)
-                drawRect(MonoColors.Ink, Offset(0f, (size.height - h) / 2f), Size(2.dp.toPx(), h))
+                drawRect(barColor, Offset(0f, (size.height - h) / 2f), Size(2.dp.toPx(), h))
             }
         }
         .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
@@ -214,7 +217,7 @@ fun MonoIconButton(
                 },
                 tint = when {
                     !enabled -> MonoColors.Tertiary
-                    selected -> MonoColors.White
+                    selected -> MonoColors.OnInk
                     else -> tint
                 },
             )
@@ -228,7 +231,7 @@ fun Tooltip(text: String) {
     Text(
         text,
         Modifier.background(MonoColors.Ink).padding(horizontal = Space.s, vertical = Space.xs),
-        style = MonoType.caption.copy(color = MonoColors.White),
+        style = MonoType.caption.copy(color = MonoColors.OnInk),
     )
 }
 
@@ -257,30 +260,31 @@ fun MonoButton(
     val squash by animateFloatAsState(if (pressed && enabled) 0.96f else 1f, spring(dampingRatio = 0.5f, stiffness = 900f), label = "squash")
     val accent = if (destructive) MonoColors.Destructive else MonoColors.Ink
     val (base, fill, baseText, fillText) = when (style) {
-        MonoButtonStyle.Filled -> Quad(accent, MonoColors.White, MonoColors.White, accent)
-        MonoButtonStyle.Outlined -> Quad(Color.Transparent, accent, accent, MonoColors.White)
+        MonoButtonStyle.Filled -> Quad(accent, MonoColors.OnInk, MonoColors.OnInk, accent)
+        MonoButtonStyle.Outlined -> Quad(Color.Transparent, accent, accent, MonoColors.OnInk)
         MonoButtonStyle.Text -> Quad(Color.Transparent, MonoColors.Tint, accent, accent)
     }
     val contentColor = if (!enabled) MonoColors.Tertiary else lerp(baseText, fillText, wipe)
     val borderColor = if (!enabled) MonoColors.Hairline else accent
+    val disabledFill = MonoColors.Hairline
+    val radius = app.monoworkspace.ui.theme.MonoShapes.radius * 0.7f
+    val cornerPx = with(androidx.compose.ui.platform.LocalDensity.current) { radius.toPx() }
     Row(
         modifier
             .heightIn(min = height)
             .graphicsLayer { scaleX = squash; scaleY = squash }
+            .clip(androidx.compose.foundation.shape.RoundedCornerShape(radius))
             .onPointerEvent(PointerEventType.Enter) { e -> fromRight = e.changes.first().position.x > size.width / 2f }
             .then(if (enabled) Modifier.pointerHoverIcon(PointerIcon.Hand) else Modifier)
             .drawBehind {
-                drawRect(if (enabled) base else if (style == MonoButtonStyle.Filled) MonoColors.Hairline else Color.Transparent)
+                drawRect(if (enabled) base else if (style == MonoButtonStyle.Filled) disabledFill else Color.Transparent)
                 if (wipe > 0f) {
                     val w = size.width * wipe
                     drawRect(fill, Offset(if (fromRight) size.width - w else 0f, 0f), Size(w, size.height))
                 }
                 if (style != MonoButtonStyle.Text) {
                     val w = 1.dp.toPx()
-                    drawRect(borderColor, Offset.Zero, Size(size.width, w))
-                    drawRect(borderColor, Offset(0f, size.height - w), Size(size.width, w))
-                    drawRect(borderColor, Offset.Zero, Size(w, size.height))
-                    drawRect(borderColor, Offset(size.width - w, 0f), Size(w, size.height))
+                    drawRoundRect(borderColor, Offset(w / 2, w / 2), Size(size.width - w, size.height - w), androidx.compose.ui.geometry.CornerRadius(cornerPx), style = androidx.compose.ui.graphics.drawscope.Stroke(w))
                 }
             }
             .clickable(interactionSource = interaction, indication = null, enabled = enabled, role = Role.Button, onClick = onClick)

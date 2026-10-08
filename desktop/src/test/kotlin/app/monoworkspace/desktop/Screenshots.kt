@@ -13,6 +13,9 @@ import androidx.compose.ui.unit.Density
 import app.monoworkspace.AppContainer
 import app.monoworkspace.ui.common.KeyRouter
 import app.monoworkspace.ui.common.Navigator
+import app.monoworkspace.ui.theme.Themes
+import app.monoworkspace.ui.theme.fx.BurstKind
+import app.monoworkspace.ui.theme.fx.FxBus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -43,6 +46,7 @@ fun main(args: Array<String>) {
         val keys = KeyRouter()
         var navigator: Navigator? = null
         var locked by mutableStateOf(false)
+        var theme by mutableStateOf(Themes.Mono)
         val w = 1440
         val h = 900
         val scene = ImageComposeScene(w, h, Density(1f), coroutineContext = coroutineContext) {
@@ -51,6 +55,8 @@ fun main(args: Array<String>) {
                 keys = keys,
                 window = null,
                 initialPageId = null,
+                theme = theme,
+                ambient = true,
                 reduceMotion = false,
                 locked = locked,
                 onUnlocked = { locked = false },
@@ -118,6 +124,33 @@ fun main(args: Array<String>) {
         locked = true
         frames(900)
         shot("11-lock")
+        locked = false
+        frames(400)
+
+        // Every theme: Home at rest, a page, and a burst in flight.
+        for (t in Themes.all) {
+            theme = t
+            frames(900)
+            navigator?.openHome()
+            frames(1500)
+            shot("theme-${t.id}-home")
+            FxBus.fire(BurstKind.Create, Offset(720f, 450f))
+            frames(260)
+            shot("theme-${t.id}-burst")
+            frames(900)
+            tour?.let { navigator?.openPage(it) }
+            frames(1500)
+            shot("theme-${t.id}-page")
+        }
+        // A theme switch caught halfway through its reveal.
+        scene.sendPointerEvent(PointerEventType.Move, Offset(1100f, 300f))
+        theme = Themes.Citrus
+        frames(320)
+        shot("theme-reveal-mid")
+        frames(900)
+        navigator?.openSettings()
+        frames(1500)
+        shot("theme-settings")
 
         scene.close()
         container.database.save()

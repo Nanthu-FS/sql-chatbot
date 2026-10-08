@@ -107,7 +107,7 @@ private fun SlashRow(a: SlashAction, selected: Boolean, onClick: () -> Unit) {
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     val bg by animateColorAsState(if (selected) MonoColors.Ink else if (hovered) MonoColors.Tint else MonoColors.Background, monoTween(Motion.FAST), label = "slashBg")
-    val fg = if (selected) MonoColors.White else MonoColors.Ink
+    val fg = if (selected) MonoColors.OnInk else MonoColors.Ink
     Row(
         Modifier
             .fillMaxWidth()
@@ -185,7 +185,7 @@ private fun MarkButton(label: String, description: String, active: Boolean, enab
             .semantics { contentDescription = description },
         contentAlignment = Alignment.Center,
     ) {
-        Text(label, style = style.copy(color = if (active) MonoColors.White else if (enabled) MonoColors.Ink else MonoColors.Tertiary))
+        Text(label, style = style.copy(color = if (active) MonoColors.OnInk else if (enabled) MonoColors.Ink else MonoColors.Tertiary))
     }
 }
 

@@ -50,11 +50,11 @@ fun CoverArt(cover: String, modifier: Modifier = Modifier) {
         return
     }
     val pattern = cover.removePrefix(Covers.PATTERN_PREFIX)
-    Canvas(modifier.background(MonoColors.Background)) { drawPattern(pattern) }
+    val ink = MonoColors.Ink
+    Canvas(modifier.background(MonoColors.Background)) { drawPattern(pattern, ink) }
 }
 
-fun DrawScope.drawPattern(pattern: String) {
-    val ink = MonoColors.Ink
+fun DrawScope.drawPattern(pattern: String, ink: androidx.compose.ui.graphics.Color) {
     val w = size.width
     val h = size.height
     val unit = 12.dp.toPx()

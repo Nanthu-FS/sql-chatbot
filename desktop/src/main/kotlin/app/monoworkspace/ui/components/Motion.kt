@@ -102,7 +102,7 @@ fun ExpandingActionButton(
     modifier: Modifier = Modifier,
     idleColor: Color = MonoColors.Ink,
     activeColor: Color = MonoColors.Ink,
-    contentColor: Color = MonoColors.White,
+    contentColor: Color = MonoColors.OnInk,
     iconExit: IconExit = IconExit.Down,
     confirm: Boolean = false,
     size: Dp = 48.dp,
@@ -277,6 +277,8 @@ fun Modifier.hoverFocus(state: HoverFocusState, key: Any, interaction: MutableIn
     val tiltSpring = spring<Float>(dampingRatio = 0.6f, stiffness = 180f)
     val tiltX by animateFloatAsState(if (isFocused && !reduce) -ny * 9f else 0f, tiltSpring, label = "tiltX")
     val tiltY by animateFloatAsState(if (isFocused && !reduce) nx * 9f else 0f, tiltSpring, label = "tiltY")
+    val spot = MonoColors.Ink
+    val edge = MonoColors.Accent
     val glow by animateFloatAsState(if (isFocused && !reduce && pointer.isSpecified) 1f else 0f, monoTween(Motion.MEDIUM), label = "glow")
     this
         .zIndex(if (isFocused) 1f else 0f)
@@ -297,13 +299,13 @@ fun Modifier.hoverFocus(state: HoverFocusState, key: Any, interaction: MutableIn
             if (glow > 0f && pointer.isSpecified) {
                 drawRect(
                     Brush.radialGradient(
-                        listOf(MonoColors.Ink.copy(alpha = 0.09f * glow), Color.Transparent),
+                        listOf(spot.copy(alpha = 0.09f * glow), Color.Transparent),
                         center = pointer,
                         radius = size.maxDimension * 0.55f,
                     ),
                 )
                 // A 2dp ink edge sweeps in along the bottom while focused.
-                drawRect(MonoColors.Ink, Offset(0f, size.height - 2.dp.toPx()), Size(size.width * glow, 2.dp.toPx()))
+                drawRect(edge, Offset(0f, size.height - 2.dp.toPx()), Size(size.width * glow, 2.dp.toPx()))
             }
         }
 }

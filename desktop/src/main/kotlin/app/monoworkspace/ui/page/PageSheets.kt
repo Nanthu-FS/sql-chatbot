@@ -67,7 +67,7 @@ fun IconPickerSheet(current: String?, onDismiss: () -> Unit, onPick: (String?) -
                         .border(1.dp, MonoColors.Ink)
                         .inkClickable(onClick = { onPick(g) }, showBar = false),
                     contentAlignment = Alignment.Center,
-                ) { Text(g, style = MonoType.h3.copy(color = if (g == current) MonoColors.White else MonoColors.Ink)) }
+                ) { Text(g, style = MonoType.h3.copy(color = if (g == current) MonoColors.OnInk else MonoColors.Ink)) }
             }
         }
         Column(Modifier.padding(Space.l)) {

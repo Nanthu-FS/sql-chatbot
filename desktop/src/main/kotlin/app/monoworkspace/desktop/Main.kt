@@ -44,6 +44,11 @@ import app.monoworkspace.ui.lock.LockScreen
 import app.monoworkspace.ui.navigation.AppShell
 import app.monoworkspace.ui.theme.MonoColors
 import app.monoworkspace.ui.theme.MonoTheme
+import app.monoworkspace.ui.theme.ThemeRevealHost
+import app.monoworkspace.ui.theme.ThemeSpec
+import app.monoworkspace.ui.theme.WindowsAppearance
+import app.monoworkspace.ui.theme.fx.FxLayer
+import app.monoworkspace.ui.theme.resolveTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
@@ -70,6 +75,7 @@ fun main() {
     }
     val container = AppContainer(dataDir)
     val windowsReducedMotion = windowsAnimationsOff()
+    val windowsDarkAtStart = WindowsAppearance.isDark()
 
     // The search index lives in memory on desktop: build it, then keep the trash tidy.
     container.appScope.launch {
@@ -145,11 +151,21 @@ fun main() {
             }
 
             val scope = rememberCoroutineScope()
+            // Follow Windows' light/dark app mode: checked at start, on focus and every minute.
+            var systemDark by remember { mutableStateOf(windowsDarkAtStart) }
+            LaunchedEffect(focused) {
+                while (true) {
+                    systemDark = withContext(Dispatchers.IO) { WindowsAppearance.isDark() }
+                    delay(60_000)
+                }
+            }
             DesktopRoot(
                 container = container,
                 keys = keys,
                 window = window,
                 initialPageId = initialPage,
+                theme = resolveTheme(settings, systemDark),
+                ambient = settings.ambientEffects && focused,
                 reduceMotion = settings.reduceMotion || windowsReducedMotion,
                 locked = locked,
                 onUnlocked = { locked = false },
@@ -167,26 +183,31 @@ fun DesktopRoot(
     keys: KeyRouter,
     window: ComposeWindow?,
     initialPageId: String?,
+    theme: ThemeSpec,
     reduceMotion: Boolean,
+    ambient: Boolean,
     locked: Boolean,
     onUnlocked: () -> Unit,
     onLock: (() -> Unit)?,
     onTitle: (String) -> Unit,
     onNavigator: (Navigator) -> Unit = {},
 ) {
-    MonoTheme(reduceMotion = reduceMotion) {
-        BoxWithConstraints(Modifier.fillMaxSize().background(MonoColors.Background)) {
-            val w = maxWidth.value.toInt()
-            val layout = WindowLayout(if (w < 1000) LayoutMode.Landscape else LayoutMode.Tablet, w, maxHeight.value.toInt())
-            CompositionLocalProvider(
-                LocalAppContainer provides container,
-                LocalWindowLayout provides layout,
-                LocalKeyRouter provides keys,
-                LocalComposeWindow provides window,
-            ) {
-                Box(Modifier.fillMaxSize()) {
-                    AppShell(initialPageId = initialPageId, onTitle = onTitle, onLock = onLock, onNavigator = onNavigator)
-                    if (locked) LockScreen(check = container.settings::checkPin, onUnlocked = onUnlocked)
+    ThemeRevealHost(theme, reduceMotion) { shown ->
+        MonoTheme(shown, reduceMotion = reduceMotion, ambient = ambient) {
+            BoxWithConstraints(Modifier.fillMaxSize().background(MonoColors.Background)) {
+                val w = maxWidth.value.toInt()
+                val layout = WindowLayout(if (w < 1000) LayoutMode.Landscape else LayoutMode.Tablet, w, maxHeight.value.toInt())
+                CompositionLocalProvider(
+                    LocalAppContainer provides container,
+                    LocalWindowLayout provides layout,
+                    LocalKeyRouter provides keys,
+                    LocalComposeWindow provides window,
+                ) {
+                    Box(Modifier.fillMaxSize()) {
+                        AppShell(initialPageId = initialPageId, onTitle = onTitle, onLock = onLock, onNavigator = onNavigator)
+                        FxLayer()
+                        if (locked) LockScreen(check = container.settings::checkPin, onUnlocked = onUnlocked)
+                    }
                 }
             }
         }

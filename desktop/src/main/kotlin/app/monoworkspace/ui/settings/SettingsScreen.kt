@@ -1,6 +1,35 @@
 package app.monoworkspace.ui.settings
 
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.hoverable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.pointerHoverIcon
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import app.monoworkspace.ui.components.MonoSegmented
+import app.monoworkspace.ui.components.hoverFocus
+import app.monoworkspace.ui.components.rememberHoverFocusState
+import app.monoworkspace.ui.theme.CardSurface
+import app.monoworkspace.ui.theme.LocalTheme
+import app.monoworkspace.ui.theme.ProvideSurface
+import app.monoworkspace.ui.theme.SideSurface
+import app.monoworkspace.ui.theme.ThemeSpec
+import app.monoworkspace.ui.theme.Themes
+
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -75,6 +104,9 @@ class SettingsViewModel(private val c: AppContainer, @Suppress("unused") handle:
     fun enableLock(pin: String) = viewModelScope.launch { c.settings.enableLock(pin) }
     fun disableLock() = viewModelScope.launch { c.settings.disableLock() }
     fun setReduceMotion(on: Boolean) = viewModelScope.launch { c.settings.setReduceMotion(on) }
+    fun setThemeMode(mode: String) = viewModelScope.launch { c.settings.setThemeMode(mode) }
+    fun setAmbient(on: Boolean) = viewModelScope.launch { c.settings.setAmbientEffects(on) }
+    fun chooseTheme(t: ThemeSpec) = viewModelScope.launch { c.settings.chooseTheme(t.id, t.isDark) }
     val dataDir: File get() = c.dataDir
 
     fun storage(): StorageUsage = StorageUsage(c.database.sizeBytes(), c.export.mediaBytes())
@@ -151,10 +183,12 @@ fun SettingsScreen() {
             if (name != settings.workspaceName && name.isNotBlank()) {
                 app.monoworkspace.ui.components.MonoButton("Save name", { vm.setName(name); messenger.show("Workspace renamed") }, height = 40.dp)
             }
-            FormRow("Theme", caption = "Light only. Mono is black on white by design.") { LabelText("Fixed", color = MonoColors.Tertiary) }
             FormRow("Reduce motion", caption = "Turns off transitions, blur and spring effects. Also follows Windows' animation setting.") {
                 MonoSwitch(settings.reduceMotion, vm::setReduceMotion, label = "Reduce motion")
             }
+
+            SectionHeader("Appearance", Modifier.padding(top = Space.xl))
+            AppearanceSection(settings, vm)
 
             SectionHeader("Privacy", Modifier.padding(top = Space.xl))
             FormRow("App lock", caption = "PIN on start, after 5 minutes in the background, or with Ctrl+L") {
@@ -272,5 +306,111 @@ private fun PinSetupDialog(onDismiss: () -> Unit, onSet: (String) -> Unit) {
         Spacer(Modifier.height(Space.m))
         app.monoworkspace.ui.components.MonoTextField(confirm, { confirm = it.take(12) }, label = "Repeat PIN", password = true, imeDone = { if (valid && confirm == pin) onSet(pin) })
         if (error != null) Text(error, Modifier.padding(top = Space.s), style = MonoType.caption.copy(color = MonoColors.Destructive))
+    }
+}
+
+private val modes = listOf("system", "light", "dark")
+
+@Composable
+private fun AppearanceSection(settings: AppSettings, vm: SettingsViewModel) {
+    val current = LocalTheme.current
+    FormRow("Mode", caption = "Follow Windows switches between your light and dark theme with the system.") {
+        MonoSegmented(modes, settings.themeMode, { when (it) { "system" -> "Follow Windows"; "light" -> "Light"; else -> "Dark" } }, vm::setThemeMode)
+    }
+    Text(
+        "Pick a light and a dark theme. Each brings its own motion: backdrops, transitions, selection and celebrations.",
+        Modifier.padding(top = Space.m, bottom = Space.m),
+        style = MonoType.caption,
+    )
+    val focus = rememberHoverFocusState()
+    androidx.compose.foundation.layout.FlowRow(
+        horizontalArrangement = Arrangement.spacedBy(Space.m),
+        verticalArrangement = Arrangement.spacedBy(Space.m),
+    ) {
+        Themes.all.forEach { t ->
+            val inUse = if (t.isDark) settings.darkTheme == t.id else settings.lightTheme == t.id
+            ThemeCard(t, inUse = inUse, showing = current.id == t.id, focus = focus) { vm.chooseTheme(t) }
+        }
+    }
+    FormRow("Ambient effects", caption = "Looping backdrops and the pointer trail. They pause when the window is in the background.", modifier = Modifier.padding(top = Space.l)) {
+        MonoSwitch(settings.ambientEffects, vm::setAmbient, label = "Ambient effects")
+    }
+    FormRow("Reduce motion", caption = "Turns off transitions, blur, springs and all theme effects. Also follows Windows' animation setting.") {
+        MonoSwitch(settings.reduceMotion, vm::setReduceMotion, label = "Reduce motion")
+    }
+}
+
+/** A live miniature of [theme], drawn in the theme's own colors and fonts. */
+@Composable
+private fun ThemeCard(theme: ThemeSpec, inUse: Boolean, showing: Boolean, focus: app.monoworkspace.ui.components.HoverFocusState, onPick: () -> Unit) {
+    val interaction = remember { MutableInteractionSource() }
+    val outline = MonoColors.Ink
+    val ring by animateFloatAsState(if (showing) 1f else 0f, monoTween(Motion.MEDIUM), label = "ring")
+    Column(
+        Modifier
+            .width(212.dp)
+            .hoverable(interaction)
+            .hoverFocus(focus, theme.id, interaction)
+            .pointerHoverIcon(PointerIcon.Hand)
+            .clickable(interaction, null, onClick = onPick)
+            .drawBehind {
+                if (ring > 0f) {
+                    val inset = -5.dp.toPx()
+                    drawRect(outline.copy(alpha = ring), Offset(inset, inset), Size(size.width - inset * 2, size.height - inset * 2), style = Stroke(2.dp.toPx()))
+                }
+            },
+    ) {
+        CompositionLocalProvider(LocalTheme provides theme) {
+            ProvideSurface(theme.main) {
+                val shape = RoundedCornerShape(theme.radius)
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .height(128.dp)
+                        .clip(shape)
+                        .background(MonoColors.Background)
+                        .border(1.dp, MonoColors.Hairline, shape),
+                ) {
+                    // Sidebar strip with a selected row.
+                    SideSurface {
+                        Column(Modifier.width(52.dp).fillMaxHeight().background(theme.sideBrush).padding(top = 14.dp)) {
+                            repeat(4) { i ->
+                                Box(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .height(14.dp)
+                                        .background(if (i == 1) MonoColors.Tint else androidx.compose.ui.graphics.Color.Transparent)
+                                        .padding(horizontal = 8.dp, vertical = 5.dp),
+                                ) { Box(Modifier.fillMaxWidth(if (i == 1) 0.9f else 0.6f).fillMaxHeight().background(MonoColors.Secondary)) }
+                            }
+                        }
+                    }
+                    Column(Modifier.weight(1f).padding(10.dp)) {
+                        Text("Good evening.", style = MonoType.display.copy(fontSize = 19.sp, lineHeight = 21.sp), maxLines = 1)
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            Box(Modifier.size(34.dp, 22.dp).clip(RoundedCornerShape(theme.radius * 0.6f)).background(theme.hotBrush))
+                            CardSurface {
+                                repeat(2) {
+                                    Box(Modifier.size(34.dp, 22.dp).clip(RoundedCornerShape(theme.radius * 0.6f)).background(MonoColors.Background).border(1.dp, MonoColors.Hairline, RoundedCornerShape(theme.radius * 0.6f)))
+                                }
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+                            repeat(2) {
+                                Box(Modifier.size(48.dp, 34.dp).clip(RoundedCornerShape(theme.radius * 0.6f)).drawBehind { drawRect(theme.cover(size)) })
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth().padding(top = Space.s), verticalAlignment = Alignment.CenterVertically) {
+            Text(theme.name, Modifier.weight(1f), style = MonoType.bodySmall.copy(fontWeight = FontWeight.SemiBold))
+            Text(if (theme.isDark) "DARK" else "LIGHT", style = MonoType.label.copy(color = MonoColors.Tertiary, fontSize = 10.sp))
+        }
+        Text(theme.tagline, style = MonoType.caption, maxLines = 2)
+        if (inUse) Text(if (showing) "SHOWING NOW" else "IN USE FOR ${if (theme.isDark) "DARK" else "LIGHT"} MODE", Modifier.padding(top = 2.dp), style = MonoType.label.copy(fontSize = 10.sp))
     }
 }

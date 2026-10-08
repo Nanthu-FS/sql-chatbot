@@ -85,6 +85,10 @@ import app.monoworkspace.ui.settings.SettingsScreen
 import app.monoworkspace.ui.templates.NewSheet
 import app.monoworkspace.ui.templates.TemplatesSheet
 import app.monoworkspace.ui.theme.LocalReduceMotion
+import app.monoworkspace.ui.theme.LocalTheme
+import app.monoworkspace.ui.theme.SideSurface
+import app.monoworkspace.ui.theme.fx.BurstKind
+import app.monoworkspace.ui.theme.fx.FxBus
 import app.monoworkspace.ui.theme.MonoColors
 import app.monoworkspace.ui.theme.MonoIcons
 import app.monoworkspace.ui.trash.TrashScreen
@@ -198,7 +202,10 @@ fun AppShell(initialPageId: String?, onTitle: (String) -> Unit, onLock: (() -> U
         )
     }
 
-    fun newPage(parentId: String? = null) = shell.createPage(parentId) { navigator.openPage(it.id) }
+    fun newPage(parentId: String? = null) = shell.createPage(parentId) {
+        FxBus.fire(BurstKind.Create)
+        navigator.openPage(it.id)
+    }
 
     val commands = remember(collapsed, onLock) {
         listOfNotNull(
@@ -249,10 +256,14 @@ fun AppShell(initialPageId: String?, onTitle: (String) -> Unit, onLock: (() -> U
         onOpen = { navigator.openPage(it.id) },
         onToggle = shell::toggleExpanded,
         onAddChild = { p -> newPage(p.id) },
-        onFavorite = { p, fav -> shell.setFavorite(p.id, fav) },
+        onFavorite = { p, fav ->
+            if (fav) FxBus.fire(BurstKind.Favorite)
+            shell.setFavorite(p.id, fav)
+        },
         onMoveFavorite = { p, up -> shell.moveFavorite(p.id, up) },
         onMove = { sheet = ShellSheet.Move(it) },
         onTrashPage = { p ->
+            FxBus.fire(BurstKind.Delete)
             shell.trash(p.id) {
                 nav.dropPage(p.id)
                 messenger.show("Moved “${p.displayTitle}” to trash", "Undo") { shell.restore(p.id) }
@@ -282,6 +293,7 @@ fun AppShell(initialPageId: String?, onTitle: (String) -> Unit, onLock: (() -> U
         ) {
             Box(Modifier.fillMaxSize()) {
                 Row(Modifier.fillMaxSize()) {
+                    SideSurface {
                     AnimatedContent(
                         targetState = collapsed,
                         transitionSpec = {
@@ -301,7 +313,12 @@ fun AppShell(initialPageId: String?, onTitle: (String) -> Unit, onLock: (() -> U
                             }
                         }
                     }
-                    Box(Modifier.weight(1f).fillMaxHeight()) { DesktopNavHost(nav) }
+                    }
+                    Box(Modifier.weight(1f).fillMaxHeight().background(MonoColors.Background)) {
+                        val theme = LocalTheme.current
+                        if (!LocalReduceMotion.current) theme.fx.Backdrop(Modifier.fillMaxSize())
+                        DesktopNavHost(nav)
+                    }
                 }
                 MonoSnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter))
             }
@@ -311,12 +328,12 @@ fun AppShell(initialPageId: String?, onTitle: (String) -> Unit, onLock: (() -> U
             is ShellSheet.New -> NewSheet(
                 onDismiss = { sheet = null },
                 onNewPage = { sheet = null; newPage(s.parentId) },
-                onNewDatabase = { sheet = null; shell.createDatabase(s.parentId) { navigator.openPage(it.id) } },
+                onNewDatabase = { sheet = null; shell.createDatabase(s.parentId) { FxBus.fire(BurstKind.Create); navigator.openPage(it.id) } },
                 onFromTemplate = { sheet = ShellSheet.Templates(s.parentId) },
             )
             is ShellSheet.Templates -> TemplatesSheet(
                 onDismiss = { sheet = null },
-                onPick = { payload -> sheet = null; shell.fromTemplate(payload, s.parentId) { navigator.openPage(it.id) } },
+                onPick = { payload -> sheet = null; shell.fromTemplate(payload, s.parentId) { FxBus.fire(BurstKind.Create); navigator.openPage(it.id) } },
             )
             is ShellSheet.Move -> MonoBottomSheet(onDismiss = { sheet = null }, title = "Move “${s.page.displayTitle}” to") {
                 PagePickerList(state.tree, excludeSubtreeOf = s.page.id, onPick = { parent ->
@@ -337,6 +354,7 @@ fun AppShell(initialPageId: String?, onTitle: (String) -> Unit, onLock: (() -> U
 @Composable
 private fun DesktopNavHost(nav: NavController) {
     val reduce = LocalReduceMotion.current
+    val fx = LocalTheme.current.fx
     AnimatedContent(
         targetState = nav.current,
         contentKey = { it.id },
@@ -345,17 +363,10 @@ private fun DesktopNavHost(nav: NavController) {
                 fadeIn(tween(0)) togetherWith fadeOut(tween(0))
             } else {
                 val pop = nav.lastWasPop
-                val dir = if (pop) -1 else 1
-                (
-                    fadeIn(tween(220, delayMillis = 70)) +
-                        scaleIn(spring(dampingRatio = 0.82f, stiffness = 380f), initialScale = if (pop) 1.04f else 0.965f) +
-                        slideInHorizontally(spring(dampingRatio = 0.86f, stiffness = 420f)) { dir * it / 14 }
-                    ) togetherWith (
-                    fadeOut(tween(140)) + scaleOut(tween(260, easing = FastOutSlowInEasing), targetScale = if (pop) 0.965f else 1.03f)
-                    )
+                fx.enter(pop) togetherWith fx.exit(pop)
             }
         },
-        modifier = Modifier.fillMaxSize().background(MonoColors.Background),
+        modifier = Modifier.fillMaxSize(),
         label = "nav",
     ) { entry ->
         val blur by transition.animateDp(

@@ -1,5 +1,8 @@
 package app.monoworkspace.ui.components
 
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.expandVertically
@@ -106,14 +109,18 @@ fun MonoBottomSheet(
 @Composable
 fun PanelCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     val maxH = LocalOverlayMaxHeight.current
+    val shape = app.monoworkspace.ui.theme.MonoShapes.card
+    val square = app.monoworkspace.ui.theme.MonoShapes.radius == 0.dp
     Box(modifier.heightIn(max = maxH)) {
-        Box(Modifier.matchParentSize().padding(start = 6.dp, top = 6.dp).offset(6.dp, 6.dp).background(MonoColors.Ink))
+        if (square) Box(Modifier.matchParentSize().padding(start = 6.dp, top = 6.dp).offset(6.dp, 6.dp).background(MonoColors.Ink))
         Column(
             Modifier
                 .fillMaxWidth()
                 .heightIn(max = maxH - 6.dp)
+                .then(if (square) Modifier else Modifier.shadow(24.dp, shape, ambientColor = MonoColors.Scrim, spotColor = MonoColors.Scrim))
+                .clip(shape)
                 .background(MonoColors.Background)
-                .border(1.dp, MonoColors.Ink)
+                .border(1.dp, if (square) MonoColors.Ink else MonoColors.Rule, shape)
                 .clickable(interactionSource = remember { MutableInteractionSource() }, indication = null) {},
             content = content,
         )
@@ -184,13 +191,13 @@ fun MonoSnackbar(data: SnackbarData) {
             .padding(start = Space.l, end = Space.xs),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(data.visuals.message, Modifier.weight(1f).padding(vertical = Space.m), style = MonoType.bodySmall.copy(color = MonoColors.White))
+        Text(data.visuals.message, Modifier.weight(1f).padding(vertical = Space.m), style = MonoType.bodySmall.copy(color = MonoColors.OnInk))
         val action = data.visuals.actionLabel
         if (action != null) {
             Text(
                 action.uppercase(),
                 Modifier.clickable { data.performAction() }.padding(Space.m),
-                style = MonoType.label.copy(color = MonoColors.White, textDecoration = TextDecoration.Underline),
+                style = MonoType.label.copy(color = MonoColors.OnInk, textDecoration = TextDecoration.Underline),
             )
         }
     }
@@ -226,11 +233,13 @@ fun MonoMenu(expanded: Boolean, onDismiss: () -> Unit, items: List<MenuItem>, wi
             enter = fadeIn(tween(motionMs(Motion.FAST))) + expandVertically(tween(motionMs(Motion.FAST))),
             exit = fadeOut(tween(motionMs(Motion.FAST))) + shrinkVertically(tween(motionMs(Motion.FAST))),
         ) {
+            val shape = app.monoworkspace.ui.theme.MonoShapes.card
             Column(
                 Modifier
                     .width(width)
+                    .clip(shape)
                     .background(MonoColors.Background)
-                    .border(1.dp, MonoColors.Ink)
+                    .border(1.dp, MonoColors.Rule, shape)
                     .heightIn(max = 420.dp)
                     .verticalScroll(rememberScrollState()),
             ) {
@@ -316,7 +325,7 @@ fun ChipText(text: String, modifier: Modifier = Modifier, inverted: Boolean = fa
             .background(if (inverted) MonoColors.Ink else Color.Transparent)
             .border(1.dp, if (inverted) MonoColors.Ink else color)
             .padding(horizontal = 6.dp, vertical = 1.dp),
-        style = MonoType.caption.copy(color = if (inverted) MonoColors.White else color),
+        style = MonoType.caption.copy(color = if (inverted) MonoColors.OnInk else color),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
     )

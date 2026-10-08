@@ -28,6 +28,11 @@ data class AppSettings(
     val windowHeight: Int = 860,
     val windowMaximized: Boolean = false,
     val reduceMotion: Boolean = false,
+    /** "system" follows Windows' app mode; "light" or "dark" pins one. */
+    val themeMode: String = "system",
+    val lightTheme: String = "mono",
+    val darkTheme: String = "observatory",
+    val ambientEffects: Boolean = true,
 ) {
     companion object {
         const val DEFAULT_WORKSPACE_NAME = "My Workspace"
@@ -67,6 +72,18 @@ class SettingsRepository(private val dir: File) {
     suspend fun setSidebarCollapsed(collapsed: Boolean) = edit { it.copy(sidebarCollapsed = collapsed) }
     suspend fun setSeeded(seeded: Boolean) = edit { it.copy(seeded = seeded) }
     suspend fun setReduceMotion(on: Boolean) = edit { it.copy(reduceMotion = on) }
+    suspend fun setThemeMode(mode: String) = edit { it.copy(themeMode = mode) }
+    suspend fun setAmbientEffects(on: Boolean) = edit { it.copy(ambientEffects = on) }
+
+    /** Picks a theme for its kind; pinning the matching mode unless following Windows. */
+    suspend fun chooseTheme(id: String, dark: Boolean) = edit {
+        val pinned = when {
+            it.themeMode == "system" -> "system"
+            dark -> "dark"
+            else -> "light"
+        }
+        if (dark) it.copy(darkTheme = id, themeMode = pinned) else it.copy(lightTheme = id, themeMode = pinned)
+    }
     suspend fun setLastOpened(pageId: String?) = edit { it.copy(lastOpenedPageId = pageId) }
     suspend fun setWindow(width: Int, height: Int, maximized: Boolean) = edit {
         it.copy(windowWidth = width.coerceAtLeast(720), windowHeight = height.coerceAtLeast(520), windowMaximized = maximized)

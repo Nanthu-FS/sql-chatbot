@@ -54,7 +54,7 @@ import app.monoworkspace.ui.page.PageViewModel
 import app.monoworkspace.ui.theme.MonoColors
 
 /** Visual style for one span of inline content. */
-fun styleFor(span: Span): SpanStyle {
+fun styleFor(span: Span, codeBackground: androidx.compose.ui.graphics.Color): SpanStyle {
     val decorations = buildList {
         if (Mark.UNDERLINE in span.marks || Mark.LINK in span.marks || span.kind != SpanKind.TEXT) add(TextDecoration.Underline)
         if (Mark.STRIKE in span.marks) add(TextDecoration.LineThrough)
@@ -68,23 +68,23 @@ fun styleFor(span: Span): SpanStyle {
         fontStyle = if (Mark.ITALIC in span.marks) FontStyle.Italic else null,
         fontFamily = if (Mark.CODE in span.marks) FontFamily.Monospace else null,
         fontSize = if (Mark.CODE in span.marks) 0.9.em else androidx.compose.ui.unit.TextUnit.Unspecified,
-        background = if (Mark.CODE in span.marks) MonoColors.Tint else androidx.compose.ui.graphics.Color.Unspecified,
+        background = if (Mark.CODE in span.marks) codeBackground else androidx.compose.ui.graphics.Color.Unspecified,
         textDecoration = if (decorations.isEmpty()) null else TextDecoration.combine(decorations),
     )
 }
 
-fun styledText(spans: List<Span>): AnnotatedString = buildAnnotatedString {
-    for (s in spans) withStyle(styleFor(s)) { append(s.text) }
+fun styledText(spans: List<Span>, codeBackground: androidx.compose.ui.graphics.Color): AnnotatedString = buildAnnotatedString {
+    for (s in spans) withStyle(styleFor(s, codeBackground)) { append(s.text) }
 }
 
 /** Renders marks over the plain text in the field. Offsets map 1:1. */
-class SpanTransformation(private val spans: List<Span>) : VisualTransformation {
+class SpanTransformation(private val spans: List<Span>, private val codeBackground: androidx.compose.ui.graphics.Color) : VisualTransformation {
     override fun filter(text: AnnotatedString): TransformedText {
         if (RichText.plain(spans) != text.text) return TransformedText(text, OffsetMapping.Identity)
-        return TransformedText(styledText(spans), OffsetMapping.Identity)
+        return TransformedText(styledText(spans, codeBackground), OffsetMapping.Identity)
     }
 
-    override fun equals(other: Any?): Boolean = other is SpanTransformation && other.spans == spans
+    override fun equals(other: Any?): Boolean = other is SpanTransformation && other.spans == spans && other.codeBackground == codeBackground
     override fun hashCode(): Int = spans.hashCode()
 }
 
@@ -185,7 +185,7 @@ fun BlockTextField(
         keyboardOptions = KeyboardOptions(
             capitalization = if (block.type == BlockType.CODE) KeyboardCapitalization.None else KeyboardCapitalization.Sentences,
         ),
-        visualTransformation = if (block.type == BlockType.CODE) VisualTransformation.None else SpanTransformation(block.content),
+        visualTransformation = if (block.type == BlockType.CODE) VisualTransformation.None else SpanTransformation(block.content, MonoColors.Tint),
         decorationBox = { inner ->
             Box {
                 if (tfv.text.isEmpty()) {

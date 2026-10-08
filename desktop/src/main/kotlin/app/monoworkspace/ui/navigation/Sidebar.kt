@@ -1,5 +1,11 @@
 package app.monoworkspace.ui.navigation
 
+import androidx.compose.ui.graphics.drawscope.translate
+import app.monoworkspace.ui.theme.LocalSurface
+import app.monoworkspace.ui.theme.LocalTheme
+import app.monoworkspace.ui.theme.fx.drawSelectionScaled
+import app.monoworkspace.ui.theme.fx.rememberFxClock
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.spring
 import androidx.compose.runtime.CompositionLocalProvider
@@ -105,6 +111,9 @@ fun Modifier.slidingSelection(selected: Boolean): Modifier {
     val dy = remember { Animatable(0f) }
     val dh = remember { Animatable(0f) }
     val presence = remember { Animatable(if (selected) 1f else 0f) }
+    val fx = LocalTheme.current.fx
+    val surface = LocalSurface.current
+    val seconds = rememberFxClock(selected && fx.animatedSelection)
     var top by remember { mutableStateOf(Float.NaN) }
     var height by remember { mutableStateOf(0f) }
     LaunchedEffect(selected) {
@@ -137,9 +146,9 @@ fun Modifier.slidingSelection(selected: Boolean): Modifier {
         .drawBehind {
             if (presence.value > 0f) {
                 val h = (size.height + dh.value)
-                val y = dy.value
-                drawRect(MonoColors.Tint.copy(alpha = presence.value), Offset(0f, y), Size(size.width, h))
-                drawRect(MonoColors.Ink, Offset(0f, y + h * (1f - presence.value) / 2f), Size(3.dp.toPx(), h * presence.value))
+                translate(top = dy.value) {
+                    fx.drawSelectionScaled(this, presence.value, seconds.value, surface, androidx.compose.ui.geometry.Size(size.width, h))
+                }
             }
         }
 }
@@ -175,7 +184,7 @@ fun WorkspaceSidebar(
     val rows = remember(state.tree, expanded) { flattenTree(state.tree, expanded) }
     val sliding = remember { SlidingSelection() }
     CompositionLocalProvider(LocalSlidingSelection provides sliding) {
-    LazyColumn(modifier.fillMaxHeight().background(MonoColors.Background)) {
+    LazyColumn(modifier.fillMaxHeight().background(LocalTheme.current.sideBrush)) {
         item("header") {
             Row(Modifier.fillMaxWidth().padding(start = Space.l, end = Space.xs, top = Space.xl, bottom = Space.m), verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
@@ -319,7 +328,7 @@ private fun TreeItem(
 /** Collapsed sidebar: icons only. */
 @Composable
 fun SidebarRail(actions: SidebarActions, onExpand: () -> Unit, currentSection: String?, modifier: Modifier = Modifier) {
-    Column(modifier.fillMaxHeight().width(64.dp).background(MonoColors.Background), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(modifier.fillMaxHeight().width(64.dp).background(LocalTheme.current.sideBrush), horizontalAlignment = Alignment.CenterHorizontally) {
         Spacer(Modifier.height(Space.s))
         MonoIconButton(MonoIcons.Sidebar, "Expand sidebar", onExpand)
         SectionRule(Modifier.padding(vertical = Space.s))

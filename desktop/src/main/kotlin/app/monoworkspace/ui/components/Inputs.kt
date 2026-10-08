@@ -1,5 +1,8 @@
 package app.monoworkspace.ui.components
 
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInWindow
+
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.ui.input.key.Key
@@ -146,14 +149,19 @@ fun WarningChip(text: String, modifier: Modifier = Modifier) {
 /** Square checkbox; the check stroke draws itself in. */
 @Composable
 fun MonoCheckbox(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifier: Modifier = Modifier, size: Dp = 20.dp, label: String? = null) {
+    val center = remember { androidx.compose.runtime.mutableStateOf<androidx.compose.ui.geometry.Offset?>(null) }
     val progress by animateFloatAsState(if (checked) 1f else 0f, monoTween(Motion.MEDIUM), label = "check")
     val fill by animateColorAsState(if (checked) MonoColors.Ink else Color.Transparent, monoTween(Motion.FAST), label = "checkFill")
     val interaction = remember { MutableInteractionSource() }
     val hovered by interaction.collectIsHoveredAsState()
     Box(
-        modifier
+        modifier.onGloballyPositioned { c -> val p = c.positionInWindow(); center.value = androidx.compose.ui.geometry.Offset(p.x + c.size.width / 2f, p.y + c.size.height / 2f) }
             .then(
-                if (onCheckedChange != null) Modifier.minimumInteractiveComponentSize().clickable(interaction, null, role = Role.Checkbox) { onCheckedChange(!checked) }
+                if (onCheckedChange != null) Modifier.minimumInteractiveComponentSize().clickable(interaction, null, role = Role.Checkbox) {
+                    // Celebrate at the box itself, not wherever the pointer drifted.
+                    if (!checked) app.monoworkspace.ui.theme.fx.FxBus.fire(app.monoworkspace.ui.theme.fx.BurstKind.Complete, center.value)
+                    onCheckedChange(!checked)
+                }
                 else Modifier,
             )
             .semantics {
@@ -162,11 +170,14 @@ fun MonoCheckbox(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifi
             },
         contentAlignment = Alignment.Center,
     ) {
+        val tint = MonoColors.Tint
+        val ink = MonoColors.Ink
+        val onInk = MonoColors.OnInk
         Canvas(Modifier.size(size)) {
             val stroke = 1.dp.toPx()
             drawRect(fill)
-            if (hovered && !checked) drawRect(MonoColors.Tint)
-            drawRect(MonoColors.Ink, style = Stroke(stroke))
+            if (hovered && !checked) drawRect(tint)
+            drawRect(ink, style = Stroke(stroke))
             if (progress > 0f) {
                 val path = Path().apply {
                     moveTo(this@Canvas.size.width * 0.22f, this@Canvas.size.height * 0.52f)
@@ -176,7 +187,7 @@ fun MonoCheckbox(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifi
                 val measure = PathMeasure().apply { setPath(path, false) }
                 val partial = Path()
                 measure.getSegment(0f, measure.length * progress, partial, true)
-                drawPath(partial, MonoColors.White, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Square))
+                drawPath(partial, onInk, style = Stroke(width = 2.dp.toPx(), cap = StrokeCap.Square))
             }
         }
     }
@@ -187,7 +198,7 @@ fun MonoCheckbox(checked: Boolean, onCheckedChange: ((Boolean) -> Unit)?, modifi
 fun MonoSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, modifier: Modifier = Modifier, label: String? = null, enabled: Boolean = true) {
     val knob by animateDpAsState(if (checked) 22.dp else 2.dp, monoTween(Motion.MEDIUM), label = "knob")
     val track by animateColorAsState(if (checked) MonoColors.Ink else MonoColors.Background, monoTween(Motion.FAST), label = "track")
-    val knobColor by animateColorAsState(if (checked) MonoColors.White else MonoColors.Ink, monoTween(Motion.FAST), label = "knobColor")
+    val knobColor by animateColorAsState(if (checked) MonoColors.OnInk else MonoColors.Ink, monoTween(Motion.FAST), label = "knobColor")
     Box(
         modifier
             .minimumInteractiveComponentSize()
@@ -232,7 +243,7 @@ fun MonoChip(
         },
         monoTween(Motion.FAST), label = "chipBg",
     )
-    val fg by animateColorAsState(if (selected) MonoColors.White else if (enabled) MonoColors.Ink else MonoColors.Tertiary, monoTween(Motion.FAST), label = "chipFg")
+    val fg by animateColorAsState(if (selected) MonoColors.OnInk else if (enabled) MonoColors.Ink else MonoColors.Tertiary, monoTween(Motion.FAST), label = "chipFg")
     Row(
         modifier
             .heightIn(min = 36.dp)
@@ -310,7 +321,7 @@ fun <T> MonoSegmented(options: List<T>, selected: T, label: (T) -> String, onSel
                     .background(bg)
                     .clickable(role = Role.RadioButton) { onSelect(o) }
                     .padding(horizontal = Space.m, vertical = 6.dp),
-                style = MonoType.label.copy(color = if (on) MonoColors.White else MonoColors.Ink),
+                style = MonoType.label.copy(color = if (on) MonoColors.OnInk else MonoColors.Ink),
             )
         }
     }

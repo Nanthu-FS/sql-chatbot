@@ -1,5 +1,12 @@
 package app.monoworkspace.ui.home
 
+import androidx.compose.ui.draw.clip
+import app.monoworkspace.ui.theme.CardSurface
+import app.monoworkspace.ui.theme.HotSurface
+import app.monoworkspace.ui.theme.LocalReduceMotion
+import app.monoworkspace.ui.theme.LocalTheme
+import app.monoworkspace.ui.theme.MonoShapes
+
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
@@ -132,10 +139,13 @@ fun HomeScreen() {
                 contentPadding = PaddingValues(bottom = 96.dp),
             ) {
                 item("hero") {
-                    Column(Modifier.padding(horizontal = margin).padding(top = Space.x3, bottom = Space.xl)) {
-                        KineticText(greeting(), MonoType.display.copy(fontSize = 64.sp, lineHeight = 68.sp))
-                        Spacer(Modifier.height(Space.s))
-                        Text(Formats.longToday(), Modifier.staggerIn(entrance, 6), style = MonoType.body.tnum().copy(color = MonoColors.Secondary))
+                    Box(Modifier.padding(horizontal = margin).padding(top = Space.x3, bottom = Space.xl)) {
+                        if (!LocalReduceMotion.current) LocalTheme.current.fx.HeroOrnament(Modifier.matchParentSize())
+                        Column {
+                            KineticText(greeting(), MonoType.display.copy(fontSize = 64.sp, lineHeight = 68.sp))
+                            Spacer(Modifier.height(Space.s))
+                            Text(Formats.longToday(), Modifier.staggerIn(entrance, 6), style = MonoType.body.tnum().copy(color = MonoColors.Secondary))
+                        }
                     }
                 }
                 item("quick") {
@@ -208,20 +218,24 @@ private fun RecentCards(pages: List<Page>, entrance: Entrance, onOpen: (Page) ->
     ) {
         itemsIndexed(pages, key = { _, p -> p.id }) { i, p ->
             val interaction = remember { MutableInteractionSource() }
+            val theme = LocalTheme.current
+            val shape = MonoShapes.card
+            CardSurface {
             Column(
                 Modifier
                     .staggerIn(entrance, 4 + i)
                     .width(200.dp)
                     .hoverable(interaction)
                     .hoverFocus(focus, p.id, interaction)
+                    .clip(shape)
                     .background(MonoColors.Background)
-                    .border(1.dp, MonoColors.Ink)
+                    .border(1.dp, MonoColors.Rule, shape)
                     .inkClickable(onClick = { onOpen(p) }, showBar = false),
             ) {
-                Box(Modifier.fillMaxWidth().height(84.dp).background(MonoColors.Tint)) {
+                Box(Modifier.fillMaxWidth().height(84.dp).drawBehind { drawRect(theme.cover(size)) }) {
                     if (p.cover != null) CoverArt(p.cover, Modifier.fillMaxSize())
                     Box(
-                        Modifier.padding(Space.s).size(36.dp).background(MonoColors.Background).border(1.dp, MonoColors.Ink),
+                        Modifier.padding(Space.s).size(36.dp).clip(MonoShapes.small).background(MonoColors.Background).border(1.dp, MonoColors.Rule, MonoShapes.small),
                         contentAlignment = Alignment.Center,
                     ) { PageGlyph(p.icon, p.isDatabase, size = 20.dp) }
                 }
@@ -230,6 +244,7 @@ private fun RecentCards(pages: List<Page>, entrance: Entrance, onOpen: (Page) ->
                     Spacer(Modifier.height(Space.xs))
                     Text(Formats.relative(p.editedAt), style = MonoType.caption.tnum(), maxLines = 1)
                 }
+            }
             }
         }
     }
@@ -272,8 +287,13 @@ private fun greeting(): String {
 /** Four big square tiles; an ink fill rises from the bottom edge on hover. */
 @Composable
 private fun QuickActions(modifier: Modifier, onNewPage: () -> Unit, onNew: () -> Unit, onTemplates: () -> Unit, onSearch: () -> Unit) {
-    Row(modifier.fillMaxWidth().border(1.dp, MonoColors.Ink)) {
-        QuickTile(MonoIcons.Page, "New page", "Ctrl+N", Modifier.weight(1f), onNewPage)
+    val shape = MonoShapes.card
+    Row(modifier.fillMaxWidth().clip(shape).border(LocalTheme.current.ruleWidth, MonoColors.Rule, shape)) {
+        HotSurface {
+            Box(Modifier.weight(1f).background(LocalTheme.current.hotBrush)) {
+                QuickTile(MonoIcons.Page, "New page", "Ctrl+N", Modifier.fillMaxWidth(), onNewPage)
+            }
+        }
         VerticalRule()
         QuickTile(MonoIcons.Table, "Create…", "Ctrl+Shift+N", Modifier.weight(1f), onNew)
         VerticalRule()
@@ -289,13 +309,14 @@ private fun QuickTile(icon: androidx.compose.ui.graphics.vector.ImageVector, tit
     val hovered by interaction.collectIsHoveredAsState()
     val reduce = app.monoworkspace.ui.theme.LocalReduceMotion.current
     val fill by animateFloatAsState(if (hovered) 1f else 0f, if (reduce) tween(0) else spring(dampingRatio = 0.8f, stiffness = 320f), label = "tile")
-    val ink = androidx.compose.ui.graphics.lerp(MonoColors.Ink, MonoColors.White, fill)
+    val ink = androidx.compose.ui.graphics.lerp(MonoColors.Ink, MonoColors.OnInk, fill)
     val sub = androidx.compose.ui.graphics.lerp(MonoColors.Secondary, MonoColors.Hairline, fill)
+    val inkFill = MonoColors.Ink
     Column(
         modifier
             .height(112.dp)
             .hoverable(interaction)
-            .drawBehind { drawRect(MonoColors.Ink, androidx.compose.ui.geometry.Offset(0f, size.height * (1f - fill)), androidx.compose.ui.geometry.Size(size.width, size.height * fill)) }
+            .drawBehind { drawRect(inkFill, androidx.compose.ui.geometry.Offset(0f, size.height * (1f - fill)), androidx.compose.ui.geometry.Size(size.width, size.height * fill)) }
             .pointerHoverIcon(PointerIcon.Hand)
             .clickable(interaction, null, onClick = onClick)
             .padding(Space.l),

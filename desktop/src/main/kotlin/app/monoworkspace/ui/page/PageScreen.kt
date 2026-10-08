@@ -245,7 +245,10 @@ fun PageScreen() {
                     MonoIconButton(
                         if (page.isFavorite) MonoIcons.StarFilled else MonoIcons.Star,
                         if (page.isFavorite) "Remove from favorites" else "Add to favorites",
-                        { vm.setFavorite(!page.isFavorite) },
+                        {
+                            if (!page.isFavorite) app.monoworkspace.ui.theme.fx.FxBus.fire(app.monoworkspace.ui.theme.fx.BurstKind.Favorite)
+                            vm.setFavorite(!page.isFavorite)
+                        },
                     )
                     Box {
                         MonoIconButton(MonoIcons.More, "Page options", { menu = true })
@@ -427,6 +430,7 @@ fun PageScreen() {
                 sheet = null
                 val id = vm.pageId
                 val title = state.title.ifBlank { "Untitled" }
+                app.monoworkspace.ui.theme.fx.FxBus.fire(app.monoworkspace.ui.theme.fx.BurstKind.Delete)
                 vm.trashPage {
                     nav.back()
                     messenger.show("Moved “$title” to trash", "Undo") { scope.launch { container.pages.restore(id) } }

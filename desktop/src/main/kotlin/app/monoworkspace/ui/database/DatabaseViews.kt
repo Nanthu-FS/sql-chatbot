@@ -739,7 +739,7 @@ private fun WeekStrip(selected: LocalDate, onSelect: (LocalDate) -> Unit, byDay:
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    val fg = if (on) MonoColors.White else if (i >= 5) MonoColors.Secondary else MonoColors.Ink
+                    val fg = if (on) MonoColors.OnInk else if (i >= 5) MonoColors.Secondary else MonoColors.Ink
                     Text(day.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault()).uppercase(), style = MonoType.label.copy(color = fg))
                     Text("${day.dayOfMonth}", style = MonoType.body.tnum().copy(color = fg, fontWeight = if (day == LocalDate.now()) FontWeight.Bold else FontWeight.Normal))
                     Box(Modifier.padding(top = 4.dp).size(4.dp).background(if (byDay[day].isNullOrEmpty()) bg else fg))
@@ -801,7 +801,7 @@ private fun MonthGrid(selected: LocalDate, onSelect: (LocalDate) -> Unit, byDay:
                                 Text(
                                     "$n",
                                     style = MonoType.caption.tnum().copy(
-                                        color = if (date == LocalDate.now()) MonoColors.White else MonoColors.Ink,
+                                        color = if (date == LocalDate.now()) MonoColors.OnInk else MonoColors.Ink,
                                         fontWeight = if (date == LocalDate.now()) FontWeight.Bold else FontWeight.Normal,
                                     ),
                                     modifier = Modifier.background(if (date == LocalDate.now()) MonoColors.Ink else MonoColors.Background.copy(alpha = 0f)).padding(horizontal = 4.dp),

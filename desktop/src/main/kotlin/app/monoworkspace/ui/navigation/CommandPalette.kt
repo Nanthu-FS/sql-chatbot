@@ -195,7 +195,7 @@ private fun PaletteRow(c: Command, selected: Boolean, i: Int, reduce: Boolean, h
             scope.launch { appear.animateTo(1f, spring(dampingRatio = 0.75f, stiffness = 500f)) }
         }
     }
-    val ink = if (selected) MonoColors.White else MonoColors.Ink
+    val ink = if (selected) MonoColors.OnInk else MonoColors.Ink
     val sub = if (selected) MonoColors.Hairline else MonoColors.Secondary
     Row(
         Modifier
