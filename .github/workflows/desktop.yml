@@ -17,7 +17,7 @@ permissions:
 
 concurrency:
   group: desktop-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   # Unit tests plus an offscreen render of the real UI; the PNGs are committed

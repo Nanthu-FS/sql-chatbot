@@ -5,7 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.ImageComposeScene
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEvent
+import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.unit.Density
 import app.monoworkspace.AppContainer
@@ -23,6 +25,7 @@ import java.nio.file.Files
  * and writes PNGs, so CI can show what the build looks like mid-animation
  * and at rest. Run with `./gradlew renderScreenshots`.
  */
+@OptIn(androidx.compose.ui.InternalComposeUiApi::class)
 fun main(args: Array<String>) {
     val out = File(args.firstOrNull() ?: "build/screenshots").apply { mkdirs() }
     val data = Files.createTempDirectory("mono-shots").toFile()
@@ -70,12 +73,8 @@ fun main(args: Array<String>) {
             File(out, "$name.png").writeBytes(bytes)
             println("wrote $name.png")
         }
-        fun key(code: Int, ctrl: Boolean = false, shift: Boolean = false) {
-            var mods = 0
-            if (ctrl) mods = mods or java.awt.event.InputEvent.CTRL_DOWN_MASK
-            if (shift) mods = mods or java.awt.event.InputEvent.SHIFT_DOWN_MASK
-            val awt = java.awt.event.KeyEvent(java.awt.Canvas(), java.awt.event.KeyEvent.KEY_PRESSED, System.currentTimeMillis(), mods, code, java.awt.event.KeyEvent.CHAR_UNDEFINED)
-            keys.handle(KeyEvent(awt))
+        fun key(k: Key, ctrl: Boolean = false) {
+            keys.handle(KeyEvent(k, KeyEventType.KeyDown, isCtrlPressed = ctrl))
         }
 
         frames(120)
@@ -100,12 +99,12 @@ fun main(args: Array<String>) {
         frames(1600)
         shot("06-database")
 
-        key(java.awt.event.KeyEvent.VK_P, ctrl = true)
+        key(Key.P, ctrl = true)
         frames(110)
         shot("07-palette-opening")
         frames(900)
         shot("08-palette")
-        key(java.awt.event.KeyEvent.VK_ESCAPE)
+        key(Key.Escape)
         frames(500)
 
         navigator?.openSettings()
