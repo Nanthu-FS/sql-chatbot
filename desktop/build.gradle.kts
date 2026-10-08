@@ -9,7 +9,12 @@ plugins {
 }
 
 group = "app.monoworkspace"
-version = "1.0.0"
+
+// Every installer needs its own version: Windows Installer derives the product
+// code from it, so reinstalling the same version only opens an (empty)
+// maintenance mode instead of upgrading. CI passes 1.1.<run number>.
+val appVersion: String = System.getenv("MONO_VERSION")?.takeIf { it.matches(Regex("""\d+\.\d+\.\d+""")) } ?: "1.0.0"
+version = appVersion
 
 // The engine, models and repositories are shared with the Android app: one
 // source of truth for rich text, formulas, filters, export and data logic.
@@ -89,10 +94,11 @@ tasks.test {
 compose.desktop {
     application {
         mainClass = "app.monoworkspace.desktop.MainKt"
+        jvmArgs("-Dmono.version=$appVersion")
         nativeDistributions {
             targetFormats(TargetFormat.Msi, TargetFormat.Exe)
             packageName = "Mono Workspace"
-            packageVersion = "1.0.0"
+            packageVersion = appVersion
             description = "Local-only blocks, pages and databases"
             vendor = "Mono Workspace"
             copyright = "Mono Workspace"

@@ -90,6 +90,8 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - name: Build installers
+        env:
+          MONO_VERSION: 1.1.${{ github.run_number }}
         run: |
           set -o pipefail
           ./gradlew --continue packageMsi packageExe createDistributable 2>&1 | tee build.log
@@ -102,11 +104,64 @@ jobs:
       - name: Collect
         run: |
           mkdir -p dist
-          cp build/compose/binaries/main/msi/*.msi "dist/MonoWorkspace-1.0.0.msi"
-          cp build/compose/binaries/main/exe/*.exe "dist/MonoWorkspace-Setup-1.0.0.exe"
+          cp build/compose/binaries/main/msi/*.msi dist/MonoWorkspace.msi
+          cp build/compose/binaries/main/exe/*.exe dist/MonoWorkspace-Setup.exe
           cd build/compose/binaries/main/app
           7z a -tzip "$GITHUB_WORKSPACE/desktop/dist/MonoWorkspace-Portable.zip" "Mono Workspace" > /dev/null
           ls -la "$GITHUB_WORKSPACE/desktop/dist"
+
+      # Reproduce what users do: an older 1.0.0 install is upgraded by the new
+      # installer, then the installed app must start and save its workspace.
+      - name: Build a 1.0.0 installer for the upgrade test
+        env:
+          MONO_VERSION: 1.0.0
+        run: |
+          set -o pipefail
+          ./gradlew packageMsi 2>&1 | tail -5
+          mkdir -p test
+          cp build/compose/binaries/main/msi/*.msi test/old.msi
+
+      - name: Install, upgrade and launch
+        shell: pwsh
+        run: |
+          function Install($msi, $log) {
+            $p = Start-Process msiexec -ArgumentList "/i `"$msi`" /qn /l*v `"$log`"" -Wait -PassThru
+            return $p.ExitCode
+          }
+          function Installed() {
+            Get-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue |
+              Where-Object { $_.DisplayName -like "Mono Workspace*" } | Select-Object DisplayName, DisplayVersion
+          }
+          $old = Install "$pwd\test\old.msi" "$pwd\test\old.log"
+          "1.0.0 install exit code: $old"
+          if ($old -ne 0) { Get-Content test\old.log -Tail 80; exit 1 }
+          Installed | Format-Table | Out-String | Write-Host
+          $same = Install "$pwd\test\old.msi" "$pwd\test\same.log"
+          "Same-version reinstall exit code (the old failure mode): $same"
+          $new = Install "$pwd\dist\MonoWorkspace.msi" "$pwd\test\new.log"
+          "Upgrade exit code: $new"
+          if ($new -ne 0) { Select-String -Path test\new.log -Pattern "Return value 3" -Context 30,2 | Select-Object -First 2 | Out-String | Write-Host; exit 1 }
+          $entries = @(Installed)
+          $entries | Format-Table | Out-String | Write-Host
+          if ($entries.Count -ne 1 -or $entries[0].DisplayVersion -ne "1.1.${{ github.run_number }}") { "Expected exactly one install at 1.1.${{ github.run_number }}"; exit 1 }
+          $exe = Get-ChildItem $env:LOCALAPPDATA -Recurse -Filter "Mono Workspace.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) { "Installed app not found under LOCALAPPDATA"; exit 1 }
+          "Launching $($exe.FullName)"
+          $app = Start-Process $exe.FullName -PassThru
+          Start-Sleep -Seconds 25
+          if ($app.HasExited) { "The app exited early with code $($app.ExitCode)"; exit 1 }
+          $db = Join-Path $env:APPDATA "MonoWorkspace\db.json"
+          if (-not (Test-Path $db)) { "Workspace file was not written"; Get-ChildItem "$env:APPDATA\MonoWorkspace" -ErrorAction SilentlyContinue; exit 1 }
+          "App is running and saved its workspace ($((Get-Item $db).Length) bytes)"
+          Stop-Process -Id $app.Id -Force
+
+      - name: Upload install logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: install-logs
+          path: desktop/test/*.log
+          if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v4
         with:
@@ -119,7 +174,7 @@ jobs:
         run: |
           TAG="desktop-${GITHUB_REF_NAME//\//-}"
           gh release delete "$TAG" --yes --cleanup-tag || true
-          gh release create "$TAG" dist/MonoWorkspace-Setup-1.0.0.exe dist/MonoWorkspace-1.0.0.msi dist/MonoWorkspace-Portable.zip \
+          gh release create "$TAG" dist/MonoWorkspace-Setup.exe dist/MonoWorkspace.msi dist/MonoWorkspace-Portable.zip \
             --prerelease \
-            --title "Mono Workspace for Windows (${GITHUB_REF_NAME})" \
-            --notes "Built from ${GITHUB_SHA}. MonoWorkspace-Setup-1.0.0.exe installs per user with a Start menu entry; the MSI does the same; the portable zip runs Mono Workspace.exe without installing."
+            --title "Mono Workspace 1.1.${{ github.run_number }} for Windows" \
+            --notes "Version 1.1.${{ github.run_number }}, built from ${GITHUB_SHA}. MonoWorkspace-Setup.exe installs per user with a Start menu entry and upgrades any earlier version in place; the MSI does the same; the portable zip runs Mono Workspace.exe without installing."
