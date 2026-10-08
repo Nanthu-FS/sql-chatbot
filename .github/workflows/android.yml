@@ -43,7 +43,8 @@ jobs:
 
       - name: Error summary
         if: failure()
-        run: grep -hE "^e: |^w: \[ksp\]|error:|FAILED|Test.*FAILED|Exception" build.log test.log 2>/dev/null | grep -v "^\s*at " | head -300 || true
+        run: |
+          grep -hE "^e: |^w: \[ksp\]|error:|FAILED|Exception" build.log test.log 2>/dev/null | grep -vE "^\s+at " | head -300 || true
 
       - name: Collect APK
         run: |
