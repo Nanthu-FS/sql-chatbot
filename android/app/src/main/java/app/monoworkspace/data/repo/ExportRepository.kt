@@ -160,11 +160,29 @@ class ExportRepository(
     // ---------- JSON ----------
 
     suspend fun exportJson(out: OutputStream) = withContext(Dispatchers.IO) {
+        // Gather everything first; the JSON builders below are not suspending.
+        val workspace = settings.current().workspaceName
         val all = db.pages().all().filter { !it.isTrashed }
-        val dbs = db.databases().all()
+        val blocksByPage = all.associate { it.id to blocks.load(it.id) }
         val rowsByDb = all.filter { it.databaseId != null }.groupBy { it.databaseId!! }
+        data class DbExport(
+            val entity: DatabaseEntity,
+            val page: PageEntity,
+            val schema: app.monoworkspace.model.DatabaseSchema,
+            val views: List<ViewEntity>,
+            val rows: List<RowInput>,
+            val resolver: RowResolver,
+        )
+        val dbExports = db.databases().all().mapNotNull { d ->
+            val page = all.firstOrNull { it.id == d.pageId } ?: return@mapNotNull null
+            val model = d.toModel()
+            val values = db.values().forDatabase(d.id).toValueMap()
+            val inputs = rowsByDb[d.id].orEmpty().map { RowInput(it.id, it.title, it.icon, it.createdAt, it.editedAt, values[it.id].orEmpty(), orderKey = it.orderKey) }
+            val related = relatedFor(model.schema, d.id)
+            DbExport(d, page, model.schema, db.views().byDatabase(d.id), inputs, RowResolver(model.schema, inputs, related, ownDatabaseId = d.id))
+        }
         val root = buildJsonObject {
-            put("workspace", settings.current().workspaceName)
+            put("workspace", workspace)
             put("exportedAt", System.currentTimeMillis())
             putJsonArray("pages") {
                 for (p in all.filter { it.databaseId == null && !it.isDatabase }) {
@@ -175,26 +193,20 @@ class ExportRepository(
                         p.parentId?.let { put("parentId", it) }
                         put("createdAt", p.createdAt)
                         put("editedAt", p.editedAt)
-                        put("blocks", blocksJson(p.id))
+                        put("blocks", blocksJson(blocksByPage[p.id].orEmpty()))
                     }
                 }
             }
             putJsonArray("databases") {
-                for (d in dbs) {
-                    val page = all.firstOrNull { it.id == d.pageId } ?: continue
-                    val model = d.toModel()
-                    val values = db.values().forDatabase(d.id).toValueMap()
-                    val rows = rowsByDb[d.id].orEmpty()
-                    val inputs = rows.map { RowInput(it.id, it.title, it.icon, it.createdAt, it.editedAt, values[it.id].orEmpty(), orderKey = it.orderKey) }
-                    val resolver = RowResolver(model.schema, inputs, related = relatedFor(model.schema, d.id), ownDatabaseId = d.id)
+                for (x in dbExports) {
                     addJsonObject {
-                        put("id", d.id)
-                        put("pageId", page.id)
-                        put("title", page.title)
-                        page.parentId?.let { put("parentId", it) }
-                        put("schema", MonoJson.encodeToJsonElement(app.monoworkspace.model.DatabaseSchema.serializer(), model.schema))
+                        put("id", x.entity.id)
+                        put("pageId", x.page.id)
+                        put("title", x.page.title)
+                        x.page.parentId?.let { put("parentId", it) }
+                        put("schema", MonoJson.encodeToJsonElement(app.monoworkspace.model.DatabaseSchema.serializer(), x.schema))
                         putJsonArray("views") {
-                            db.views().byDatabase(d.id).forEach { v ->
+                            x.views.forEach { v ->
                                 addJsonObject {
                                     put("id", v.id)
                                     put("name", v.name)
@@ -203,15 +215,15 @@ class ExportRepository(
                             }
                         }
                         putJsonArray("rows") {
-                            for (r in inputs) {
+                            for (r in x.rows) {
                                 addJsonObject {
                                     put("id", r.id)
                                     putJsonObject("values") {
-                                        for (prop in model.schema.properties) {
-                                            put(prop.name, ValueFormat.export(resolver.cell(r, prop), prop))
+                                        for (prop in x.schema.properties) {
+                                            put(prop.name, ValueFormat.export(x.resolver.cell(r, prop), prop))
                                         }
                                     }
-                                    put("blocks", blocksJson(r.id))
+                                    put("blocks", blocksJson(blocksByPage[r.id].orEmpty()))
                                 }
                             }
                         }
@@ -225,18 +237,15 @@ class ExportRepository(
     private suspend fun relatedFor(schema: app.monoworkspace.model.DatabaseSchema, ownId: String): Map<String, RelatedDatabase> =
         databases.loadRelated(schema, ownId)
 
-    private suspend fun blocksJson(pageId: String): JsonArray {
-        val list = blocks.load(pageId)
-        return buildJsonArray {
-            for (b in list) {
-                addJsonObject {
-                    put("id", b.id)
-                    b.parentBlockId?.let { put("parentId", it) }
-                    put("type", b.type.name)
-                    put("text", b.text)
-                    put("content", MonoJson.encodeToJsonElement(kotlinx.serialization.builtins.ListSerializer(app.monoworkspace.model.Span.serializer()), b.content))
-                    put("props", MonoJson.encodeToJsonElement(app.monoworkspace.model.BlockProps.serializer(), b.props))
-                }
+    private fun blocksJson(list: List<app.monoworkspace.model.Block>): JsonArray = buildJsonArray {
+        for (b in list) {
+            addJsonObject {
+                put("id", b.id)
+                b.parentBlockId?.let { put("parentId", it) }
+                put("type", b.type.name)
+                put("text", b.text)
+                put("content", MonoJson.encodeToJsonElement(kotlinx.serialization.builtins.ListSerializer(app.monoworkspace.model.Span.serializer()), b.content))
+                put("props", MonoJson.encodeToJsonElement(app.monoworkspace.model.BlockProps.serializer(), b.props))
             }
         }
     }
