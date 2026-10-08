@@ -344,6 +344,6 @@ interface SearchDao {
     @Query("DELETE FROM search_fts")
     suspend fun clear()
 
-    @Query("SELECT * FROM search_fts WHERE search_fts MATCH :query LIMIT 300")
+    @Query("SELECT rowid, * FROM search_fts WHERE search_fts MATCH :query LIMIT 300")
     suspend fun match(query: String): List<SearchFts>
 }
