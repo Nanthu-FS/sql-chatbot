@@ -121,6 +121,5 @@ jobs:
           gh release delete "$TAG" --yes --cleanup-tag || true
           gh release create "$TAG" dist/MonoWorkspace-Setup-1.0.0.exe dist/MonoWorkspace-1.0.0.msi dist/MonoWorkspace-Portable.zip \
             --prerelease \
-            --target "$GITHUB_SHA" \
             --title "Mono Workspace for Windows (${GITHUB_REF_NAME})" \
             --notes "Built from ${GITHUB_SHA}. MonoWorkspace-Setup-1.0.0.exe installs per user with a Start menu entry; the MSI does the same; the portable zip runs Mono Workspace.exe without installing."
