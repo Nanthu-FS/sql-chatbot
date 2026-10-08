@@ -21,6 +21,28 @@ Rendered offscreen by CI from the real UI on every build (`./gradlew renderScree
 | ![Home](docs/screenshots/02-home.png) | ![Hover](docs/screenshots/03-home-hover.png) |
 | ![Page](docs/screenshots/05-page.png) | ![Database](docs/screenshots/06-database.png) |
 | ![Palette](docs/screenshots/08-palette.png) | ![Lock](docs/screenshots/11-lock.png) |
+| ![Indigo Sashiko](docs/screenshots/theme-indigo-home.png) | ![Citrus Slice](docs/screenshots/theme-citrus-home.png) |
+| ![Sumi Ink](docs/screenshots/theme-sumi-home.png) | ![Cyanotype](docs/screenshots/theme-cyanotype-home.png) |
+| ![Velvet Rose](docs/screenshots/theme-velvet-home.png) | ![Observatory](docs/screenshots/theme-observatory-home.png) |
+| ![Theme switch](docs/screenshots/theme-reveal-mid.png) | ![Appearance settings](docs/screenshots/theme-settings.png) |
+
+## Themes
+
+Seven themes, each with its own palette, type, corner radius and motion. Pick them in Settings › Appearance. "Follow Windows" switches between your chosen light and dark theme along with Windows' app mode.
+
+| Theme | Kind | Character |
+|---|---|---|
+| Mono | Light | The original black-on-white Swiss look. |
+| Indigo Sashiko | Light | Indigo cloth with white running stitches. |
+| Citrus Slice | Light | Lemon, lime and blood orange; bouncy. |
+| Sumi Ink | Light | Rice paper, ink wash, one vermilion seal. |
+| Cyanotype | Dark | Prussian-blue sun prints with botanical light. |
+| Velvet Rose | Dark | Aubergine velvet, rose-gold glow. |
+| Observatory | Dark | Night sky, orbit rings, star gold. |
+
+Each theme's motion pack (`ui/theme/fx/*Fx.kt`) supplies an ambient backdrop, a greeting ornament, the sidebar selection marker, celebrations for creating, starring, completing and trashing, screen transitions, the theme-switch reveal and an optional pointer trail. Ambient effects pause when the window is in the background and can be turned off in Settings; Reduce motion turns all of it off.
+
+Fonts: Inter, Hanken Grotesk, Newsreader, Nunito, Cormorant Garamond and Manrope, bundled under the SIL Open Font License 1.1.
 
 ## Keyboard
 

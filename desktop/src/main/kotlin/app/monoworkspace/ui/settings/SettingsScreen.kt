@@ -183,9 +183,6 @@ fun SettingsScreen() {
             if (name != settings.workspaceName && name.isNotBlank()) {
                 app.monoworkspace.ui.components.MonoButton("Save name", { vm.setName(name); messenger.show("Workspace renamed") }, height = 40.dp)
             }
-            FormRow("Reduce motion", caption = "Turns off transitions, blur and spring effects. Also follows Windows' animation setting.") {
-                MonoSwitch(settings.reduceMotion, vm::setReduceMotion, label = "Reduce motion")
-            }
 
             SectionHeader("Appearance", Modifier.padding(top = Space.xl))
             AppearanceSection(settings, vm)
