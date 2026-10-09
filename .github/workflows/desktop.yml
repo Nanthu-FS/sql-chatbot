@@ -129,23 +129,35 @@ jobs:
             return $p.ExitCode
           }
           function Installed() {
-            Get-ItemProperty HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\* -ErrorAction SilentlyContinue |
-              Where-Object { $_.DisplayName -like "Mono Workspace*" } | Select-Object DisplayName, DisplayVersion
+            $keys = @(
+              "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
+              "HKLM:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*",
+              "HKLM:\Software\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\*"
+            )
+            Get-ItemProperty $keys -ErrorAction SilentlyContinue |
+              Where-Object { $_.DisplayName -like "Mono Workspace*" } | Select-Object DisplayName, DisplayVersion, PSPath
           }
+          $want = "1.1.${{ github.run_number }}"
           $old = Install "$pwd\test\old.msi" "$pwd\test\old.log"
           "1.0.0 install exit code: $old"
           if ($old -ne 0) { Get-Content test\old.log -Tail 80; exit 1 }
-          Installed | Format-Table | Out-String | Write-Host
+          Installed | Format-List | Out-String | Write-Host
           $same = Install "$pwd\test\old.msi" "$pwd\test\same.log"
           "Same-version reinstall exit code (the old failure mode): $same"
           $new = Install "$pwd\dist\MonoWorkspace.msi" "$pwd\test\new.log"
           "Upgrade exit code: $new"
           if ($new -ne 0) { Select-String -Path test\new.log -Pattern "Return value 3" -Context 30,2 | Select-Object -First 2 | Out-String | Write-Host; exit 1 }
           $entries = @(Installed)
-          $entries | Format-Table | Out-String | Write-Host
-          if ($entries.Count -ne 1 -or $entries[0].DisplayVersion -ne "1.1.${{ github.run_number }}") { "Expected exactly one install at 1.1.${{ github.run_number }}"; exit 1 }
-          $exe = Get-ChildItem $env:LOCALAPPDATA -Recurse -Filter "Mono Workspace.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $exe) { "Installed app not found under LOCALAPPDATA"; exit 1 }
+          $entries | Format-List | Out-String | Write-Host
+          if ($entries.Count -gt 1) { "The old version was not removed by the upgrade"; exit 1 }
+          if ($entries.Count -eq 1 -and $entries[0].DisplayVersion -ne $want) { "Installed version is $($entries[0].DisplayVersion), expected $want"; exit 1 }
+          $exes = @(Get-ChildItem $env:LOCALAPPDATA, $env:ProgramFiles -Recurse -Filter "Mono Workspace.exe" -ErrorAction SilentlyContinue)
+          "Installed launchers: $($exes.FullName -join ', ')"
+          if ($exes.Count -ne 1) { "Expected exactly one installed launcher"; exit 1 }
+          $exe = $exes[0]
+          $cfg = Join-Path $exe.DirectoryName "app\Mono Workspace.cfg"
+          if (-not (Select-String -Path $cfg -Pattern "mono.version=$want" -SimpleMatch -Quiet)) { "Installed files are not version $want"; Get-Content $cfg; exit 1 }
+          "Installed files are version $want"
           "Launching $($exe.FullName)"
           $app = Start-Process $exe.FullName -PassThru
           Start-Sleep -Seconds 25
