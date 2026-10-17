@@ -8,15 +8,27 @@ import android.os.Build
 import android.os.Bundle
 import android.view.WindowInsets
 import android.view.WindowInsetsController
+import com.ditherfarm.engine.ApkAssets
+import com.ditherfarm.engine.AssetSource
+import com.ditherfarm.engine.GameView
+import com.ditherfarm.platform.Notifier
 
-class MainActivity : Activity() {
+class MainActivity : Activity(), Host {
     private lateinit var game: Game
+    private lateinit var view: GameView
+
+    override val assetSource: AssetSource by lazy { ApkAssets(assets) }
+    override val context: android.content.Context get() = this
+    override val density: Float get() = resources.displayMetrics.density
+    override val saveDir: java.io.File get() = filesDir
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.setDecorFitsSystemWindows(false)
+        Notifier.ensureChannel(this)
         game = Game(this)
-        setContentView(game.view)
+        view = GameView(this, game.engine) { _, _ -> }
+        setContentView(view)
         hideSystemBars()
         if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
             requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), REQ_NOTIFY)
@@ -37,6 +49,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        view.resetClock()
         game.onResume()
     }
 
@@ -50,7 +63,19 @@ class MainActivity : Activity() {
         super.onDestroy()
     }
 
-    fun requestExport() {
+    override fun scheduleReadyNotification(atEpochMs: Long, title: String, text: String) =
+        Notifier.schedule(this, atEpochMs, title, text)
+
+    override fun cancelReadyNotifications() = Notifier.cancel(this)
+
+    override fun writeDocument(uri: android.net.Uri, text: String) {
+        contentResolver.openOutputStream(uri, "wt")?.use { it.write(text.toByteArray()) }
+    }
+
+    override fun readDocument(uri: android.net.Uri): String? =
+        contentResolver.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) }
+
+    override fun requestExport() {
         val i = Intent(Intent.ACTION_CREATE_DOCUMENT)
             .addCategory(Intent.CATEGORY_OPENABLE)
             .setType("application/json")
@@ -59,7 +84,7 @@ class MainActivity : Activity() {
         startActivityForResult(i, REQ_EXPORT)
     }
 
-    fun requestImport() {
+    override fun requestImport() {
         val i = Intent(Intent.ACTION_OPEN_DOCUMENT)
             .addCategory(Intent.CATEGORY_OPENABLE)
             .setType("*/*")

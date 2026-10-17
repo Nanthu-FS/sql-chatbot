@@ -1,7 +1,5 @@
 package com.ditherfarm.platform
 
-import android.content.ContentResolver
-import android.net.Uri
 import java.io.File
 
 /**
@@ -28,11 +26,4 @@ class SaveStore(private val dir: File) {
     fun candidates(): List<String> = listOf(main, backup, tmp)
         .filter { it.exists() && it.length() > 0 }
         .mapNotNull { runCatching { it.readText() }.getOrNull() }
-
-    fun export(cr: ContentResolver, uri: Uri, json: String) {
-        cr.openOutputStream(uri, "wt")?.use { it.write(json.toByteArray()) } ?: error("cannot open $uri")
-    }
-
-    fun import(cr: ContentResolver, uri: Uri): String =
-        cr.openInputStream(uri)?.use { it.readBytes().toString(Charsets.UTF_8) } ?: error("cannot open $uri")
 }

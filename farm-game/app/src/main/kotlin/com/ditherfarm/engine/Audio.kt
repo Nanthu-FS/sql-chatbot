@@ -10,7 +10,7 @@ import android.os.VibratorManager
 import kotlin.random.Random
 
 /** Short chiptune effects loaded from the WAV files in assets/sfx. */
-class Sfx(am: AssetManager) {
+class Sfx(am: AssetManager?) {
     var enabled = true
     private val pool = SoundPool.Builder()
         .setMaxStreams(8)
@@ -21,8 +21,10 @@ class Sfx(am: AssetManager) {
     private val rnd = Random(3)
 
     init {
-        am.list("sfx")?.filter { it.endsWith(".wav") }?.forEach { f ->
-            runCatching { ids[f.removeSuffix(".wav")] = pool.load(am.openFd("sfx/$f"), 1) }
+        if (am != null) {
+            am.list("sfx")?.filter { it.endsWith(".wav") }?.forEach { f ->
+                runCatching { ids[f.removeSuffix(".wav")] = pool.load(am.openFd("sfx/$f"), 1) }
+            }
         }
     }
 
@@ -41,9 +43,9 @@ class Sfx(am: AssetManager) {
 }
 
 /** Tactile feedback with a user toggle. */
-class Haptics(ctx: Context) {
+class Haptics(ctx: Context?) {
     var enabled = true
-    private val vib: Vibrator? = runCatching {
+    private val vib: Vibrator? = if (ctx == null) null else runCatching {
         (ctx.getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as? VibratorManager)?.defaultVibrator
             ?: @Suppress("DEPRECATION") (ctx.getSystemService(Context.VIBRATOR_SERVICE) as? Vibrator)
     }.getOrNull()
