@@ -1,0 +1,53 @@
+# Dither Farm
+
+A cozy isometric pixel-art farming game for Android: tap to plant, water and harvest, chop wood in the Forest, dig ore in the Mine, craft tools, and build machines that automate the farm. It's a personal project with no ads and no in-app purchases.
+
+- **Native Android** (Kotlin, no engine): a custom Canvas renderer draws a small pixel buffer and scales it up by a whole number, so every art pixel stays a crisp square.
+- **All art and sound are generated from code**, under `Tools/ArtGen`.
+- Design: [`Docs/GAME_DESIGN.md`](Docs/GAME_DESIGN.md) · owner decisions: [`Docs/DECISIONS.md`](Docs/DECISIONS.md) · art rules: [`Docs/ART_SPEC.md`](Docs/ART_SPEC.md)
+
+## Get the APK
+Every push that touches `farm-game/` runs **Dither Farm APK** in GitHub Actions, which runs the unit and screenshot tests and builds a debug APK.
+1. Open the repository's **Actions** tab, then the latest **Dither Farm APK** run.
+2. Download the `dither-farm-debug-apk` artifact and unzip it.
+3. Copy `app-debug.apk` to your phone and open it. Allow "install unknown apps" for your file manager when Android asks.
+
+Requires Android 10 or newer.
+
+## Build locally
+With Android Studio (or the Android SDK and JDK 17):
+```sh
+cd farm-game
+./gradlew assembleDebug        # APK in app/build/outputs/apk/debug/
+./gradlew testDebugUnitTest    # rules tests + rendering smoke tests
+```
+
+Without the Android SDK, `Tools/jvm-check` compiles the app and runs its tests on a plain JVM, and can save screenshots of rendered screens (see its README).
+
+## Project layout
+```
+app/src/main/kotlin/com/ditherfarm/
+  engine/    renderer, iso math, camera, input, FX, lighting, weather, audio
+  game/      rules and data: crops, forest, mine, machines, market, saves (pure Kotlin, unit tested)
+  ui/        screens and the immediate-mode pixel UI
+  platform/  save files, notifications
+app/src/main/assets/
+  art/       generated sprites + manifest.json (pivots)
+  sfx/       generated chiptune WAVs
+  fonts/     Silkscreen (OFL)
+Tools/ArtGen/  sprite and sound generators
+Tools/jvm-check/  SDK-free compile, test and screenshot harness
+Docs/          design, decisions, art spec, contact sheets
+```
+
+## Regenerating art and sound
+```sh
+cd farm-game/Tools/ArtGen
+npm install
+node generate.mjs            # all sprites (or: node generate.mjs tiles ui crops_a ...)
+node sfx.mjs                 # all sound effects
+```
+Contact sheets for review are written to `Docs/sheets/`.
+
+## Credits
+See [`CREDITS.md`](CREDITS.md).
