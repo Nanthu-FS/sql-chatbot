@@ -59,6 +59,10 @@ class ScreenshotTest {
     }
 
     @Test fun demoDay() = demo("demo_day", 11f, "spring", Weather.Kind.CLEAR)
+
+    @Test fun demoOverview() = render("demo_overview", seconds = 1f) { game, t ->
+        if (t == 0f) game.engine.screen?.pinch(-1, 135f, 290f)
+    }
     @Test fun demoRainDusk() = demo("demo_dusk_rain", 18.6f, "summer", Weather.Kind.RAIN)
     @Test fun demoNight() = demo("demo_night", 23f, "fall", Weather.Kind.LEAVES)
     @Test fun demoWinter() = demo("demo_winter", 7f, "winter", Weather.Kind.SNOW)
