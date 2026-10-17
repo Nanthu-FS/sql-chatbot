@@ -114,6 +114,18 @@ export function rr(x, y, w, h, r) {
   return `<rect x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" rx="${f(r)}" ry="${f(r)}"`;
 }
 
+// Small builder that collects <defs> alongside drawing parts.
+export class Pic {
+  constructor() { this.defs = []; this.parts = []; }
+  lg(stops, x1 = 0, y1 = 0, x2 = 0, y2 = 1, units) { const id = uid('lg'); this.defs.push(lg(id, stops, x1, y1, x2, y2, units)); return `url(#${id})`; }
+  rg(stops, cx, cy, r, fx, fy, units) { const id = uid('rg'); this.defs.push(rg(id, stops, cx, cy, r, fx, fy, units)); return `url(#${id})`; }
+  shadow(dy, b, op) { const id = uid('ds'); this.defs.push(dropShadow(id, dy, b, op)); return `url(#${id})`; }
+  blur(sd) { const id = uid('bl'); this.defs.push(blur(id, sd)); return `url(#${id})`; }
+  clip(shape) { const id = uid('cp'); this.defs.push(`<clipPath id="${id}">${shape}</clipPath>`); return `url(#${id})`; }
+  add(...s) { this.parts.push(...s); return this; }
+  body() { return `<defs>${this.defs.join('')}</defs>${this.parts.join('')}`; }
+}
+
 // Asset container. body is SVG content in a w×h coordinate space.
 export function asset(name, w, h, body, meta = {}) {
   return { name, w, h, body, ...meta };
