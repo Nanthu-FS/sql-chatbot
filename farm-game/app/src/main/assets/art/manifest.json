@@ -1,4 +1,84 @@
 {
+ "deco/bush": {
+  "ax": 10,
+  "ay": 12
+ },
+ "deco/bush_berry": {
+  "ax": 10,
+  "ay": 12
+ },
+ "deco/butterfly_a": {
+  "ax": 3,
+  "ay": 3
+ },
+ "deco/butterfly_b": {
+  "ax": 3,
+  "ay": 3
+ },
+ "deco/fence_l": {
+  "ax": 19,
+  "ay": 9
+ },
+ "deco/fence_r": {
+  "ax": 2,
+  "ay": 9
+ },
+ "deco/flowers_blue": {
+  "ax": 6,
+  "ay": 8
+ },
+ "deco/flowers_pink": {
+  "ax": 6,
+  "ay": 8
+ },
+ "deco/flowers_purple": {
+  "ax": 6,
+  "ay": 8
+ },
+ "deco/flowers_red": {
+  "ax": 6,
+  "ay": 8
+ },
+ "deco/flowers_white": {
+  "ax": 6,
+  "ay": 8
+ },
+ "deco/lantern": {
+  "ax": 4,
+  "ay": 13
+ },
+ "deco/log": {
+  "ax": 10,
+  "ay": 8
+ },
+ "deco/mushrooms": {
+  "ax": 6,
+  "ay": 7
+ },
+ "deco/reeds": {
+  "ax": 7,
+  "ay": 8
+ },
+ "deco/rock": {
+  "ax": 7,
+  "ay": 7
+ },
+ "deco/rock_big": {
+  "ax": 10,
+  "ay": 10
+ },
+ "deco/stump": {
+  "ax": 8,
+  "ay": 10
+ },
+ "deco/tallgrass_a": {
+  "ax": 7,
+  "ay": 9
+ },
+ "deco/tallgrass_b": {
+  "ax": 7,
+  "ay": 9
+ },
  "tiles/cursor": {
   "ax": 16,
   "ay": 0
