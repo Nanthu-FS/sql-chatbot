@@ -14,3 +14,4 @@ Tools/ArtGen/node_modules
 Tools/jvm-check/.gradle/
 Tools/jvm-check/build/
 .kotlin/
+__pycache__/
