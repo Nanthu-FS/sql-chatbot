@@ -1,0 +1,12 @@
+{
+  "name": "farm-game-artgen",
+  "private": true,
+  "type": "module",
+  "description": "Generates the farm game's sprites (crops, world, UI, FX) and restyled game-icons.net glyphs.",
+  "scripts": {
+    "generate": "node generate.mjs"
+  },
+  "dependencies": {
+    "@resvg/resvg-js": "2.6.2"
+  }
+}
