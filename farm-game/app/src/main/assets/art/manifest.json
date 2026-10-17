@@ -94,5 +94,85 @@
  "items/wheat": {
   "ax": 9,
   "ay": 9
+ },
+ "tiles/cursor": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/cursor_bad": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/cursor_ok": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/forest_a": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/forest_b": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/grass_a": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/grass_b": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/grass_c": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/grass_d": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/grass_dark": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/mine_a": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/mine_b": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/path": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/quarry": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/shadow": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/soil_dry": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/soil_fert": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/soil_wet": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/water_a": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/water_b": {
+  "ax": 16,
+  "ay": 0
  }
 }
