@@ -15,7 +15,7 @@ import { buildAppIcon, buildMockup } from './lib/scenes.mjs';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
 const artDir = path.join(root, 'Assets/Art');
-const fontFile = path.join(artDir, 'Fonts/LilitaOne-Regular.ttf');
+const fontFile = path.join(here, 'fonts/LilitaOne-Regular.ttf');
 const only = process.argv[2];
 
 function render(svg, outW, file) {
