@@ -1,6 +1,6 @@
 // Hand-built crop art: 4 growth stages per crop plus a harvested-produce icon.
 // Stage canvases are 256×320 with the soil line at y=272 (pivot 0.5, 0.85).
-import { C, Pic, ol, leaf, blade, blobs, star, f, asset, mulberry32 } from './svg.mjs';
+import { C, Pic, ol, leaf, blade, blobs, star, f, asset, mulberry32, noInk } from './svg.mjs';
 
 const W = 256, H = 320, G = 272;
 
@@ -264,6 +264,17 @@ function itemPumpkin() {
   return asset('item_pumpkin', 256, 256, p.body(), { kind: 'item' });
 }
 
-export function buildCrops() {
-  return [...wheat(), ...carrot(), ...tomato(), ...pumpkin(), itemWheat(), itemCarrot(), itemTomato(), itemPumpkin()];
+const CROPS = ['wheat', 'carrot', 'tomato', 'pumpkin'];
+
+// Pixel sprites: stage canvases are 256x320 with the soil line at y=272.
+export function build() {
+  const stages = [...wheat(), ...carrot(), ...tomato(), ...pumpkin()].map((a) => ({
+    name: `crops/${a.name.replace('crop_', '')}`, asset: noInk(a), px: 32, pivot: [0.5, 272 / 320],
+  }));
+  const items = [itemWheat(), itemCarrot(), itemTomato(), itemPumpkin()];
+  const icons = items.flatMap((a, i) => [
+    { name: `items/${CROPS[i]}`, asset: noInk(a), px: 14, pivot: [0.5, 0.5] },
+    { name: `items_big/${CROPS[i]}`, asset: noInk(a), px: 28, pivot: [0.5, 0.5] },
+  ]);
+  return [...stages, ...icons];
 }

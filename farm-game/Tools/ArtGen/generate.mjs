@@ -1,68 +1,75 @@
-// Generates every sprite in Assets/Art from code.
-//   cd farm-game/Tools/ArtGen && npm install && npm run generate
+// Generates every sprite in app/src/main/assets/art.
+//   cd farm-game/Tools/ArtGen && npm install && node generate.mjs [group ...]
+//
+// Vector modules (lib/<group>.mjs) export build() -> [{ name, asset, px, pivot?, style? }]:
+//   name   output path under assets/art without .png, e.g. "crops/wheat_0"
+//   asset  vector art from svg.mjs asset(); drawn soft (no outlines) — the pixel pass adds them
+//   px     target sprite width in pixels before the 2px outline padding
+//   pivot  [fx, fy] fraction of the vector box placed on the draw position (default [0.5, 1])
+//   style  pixelize overrides: { outline: 'black'|'selout'|'none', flags: ['dither','shadow',...] }
+// Pixel modules (pixel/<group>.py) draw sprites pixel-by-pixel and print their pivots as JSON.
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { Resvg } from '@resvg/resvg-js';
-import { toSvg, place, C } from './lib/svg.mjs';
-import { buildIcons } from './lib/icons.mjs';
-import { buildCrops } from './lib/crops.mjs';
-import { buildWorld } from './lib/world.mjs';
-import { buildUi } from './lib/ui.mjs';
-import { buildFx } from './lib/fx.mjs';
-import { buildAppIcon, buildMockup } from './lib/scenes.mjs';
+import { toSvg } from './lib/svg.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
-const artDir = path.join(root, 'Assets/Art');
-const fontFile = path.join(here, 'fonts/LilitaOne-Regular.ttf');
-const only = process.argv[2];
+const artDir = path.join(root, 'app/src/main/assets/art');
+const sheetDir = path.join(root, 'Docs/sheets');
+const manifestFile = path.join(artDir, 'manifest.json');
+const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'artgen-'));
 
-function render(svg, outW, file) {
-  const png = new Resvg(svg, {
-    fitTo: { mode: 'width', value: outW },
-    font: { fontFiles: [fontFile], loadSystemFonts: false, defaultFontFamily: 'Lilita One' },
-  }).render().asPng();
-  fs.mkdirSync(path.dirname(file), { recursive: true });
-  fs.writeFileSync(file, png);
-}
+const VECTOR = fs.readdirSync(path.join(here, 'lib')).filter((f) => f.endsWith('.mjs') && f !== 'svg.mjs').map((f) => f.replace('.mjs', ''));
+const PIXEL = fs.existsSync(path.join(here, 'pixel')) ? fs.readdirSync(path.join(here, 'pixel')).filter((f) => f.endsWith('.py') && !f.startsWith('_')).map((f) => f.replace('.py', '')) : [];
+const wanted = process.argv.slice(2);
+const pick = (g) => wanted.length === 0 || wanted.includes(g);
 
-const groups = {
-  Icons: buildIcons(path.join(here, 'game-icons')),
-  Crops: buildCrops(),
-  World: buildWorld(),
-  UI: buildUi(),
-  FX: buildFx(),
-};
+const manifest = fs.existsSync(manifestFile) ? JSON.parse(fs.readFileSync(manifestFile, 'utf8')) : {};
+const DEFAULT_STYLE = { palette: 'endesga32', outline: 'black', flags: ['dither', 'shadow'], pad: 2 };
+const touched = new Set();
 
-let count = 0;
-for (const [dir, assets] of Object.entries(groups)) {
-  if (only && only !== dir) continue;
-  for (const a of assets) {
-    const outW = a.out ?? a.w;
-    render(toSvg(a), outW, path.join(artDir, dir, `${a.name}.png`));
-    count++;
+for (const group of VECTOR.filter(pick)) {
+  const mod = await import(path.join(here, 'lib', `${group}.mjs`));
+  if (typeof mod.build !== 'function') continue;
+  const sprites = mod.build();
+  const jobs = [];
+  for (const s of sprites) {
+    const style = { ...DEFAULT_STYLE, ...(s.style || {}) };
+    const w = s.px;
+    const h = Math.max(1, Math.round((w * s.asset.h) / s.asset.w));
+    const src = path.join(tmp, `${s.name.replaceAll('/', '__')}.png`);
+    const png = new Resvg(toSvg(s.asset), { fitTo: { mode: 'width', value: w } }).render().asPng();
+    fs.writeFileSync(src, png);
+    const out = path.join(artDir, `${s.name}.png`);
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    jobs.push({ src, out, ...style });
+    const [fx, fy] = s.pivot || [0.5, 1];
+    manifest[s.name] = { ax: Math.round(fx * w) + style.pad, ay: Math.round(fy * h) + style.pad };
+    touched.add(s.name.split('/')[0]);
   }
-  // Contact sheet per group for quick review (not imported by Unity: lives in Docs).
-  const cell = 200, cols = 6, rows = Math.ceil(assets.length / cols);
-  const cells = assets
-    .map((a, i) => {
-      const x = (i % cols) * cell, y = Math.floor(i / cols) * cell;
-      const s = Math.min((cell - 40) / a.w, (cell - 40) / a.h);
-      const w = a.w * s, h = a.h * s;
-      return `${place(a, x + (cell - w) / 2, y + 6 + (cell - 34 - h) / 2, w, h)}<text x="${x + cell / 2}" y="${y + cell - 8}" font-size="13" text-anchor="middle" fill="#fff">${a.name}</text>`;
-    })
-    .join('');
-  const sheet = `<svg xmlns="http://www.w3.org/2000/svg" width="${cols * cell}" height="${rows * cell}"><rect width="100%" height="100%" fill="#3d6b35"/>${cells}</svg>`;
-  render(sheet, cols * cell, path.join(root, 'Docs/sheets', `${dir}.png`));
+  const jobFile = path.join(tmp, `${group}.json`);
+  fs.writeFileSync(jobFile, JSON.stringify(jobs));
+  execFileSync('python3', ['-I', path.join(here, 'pixelize.py'), jobFile], { stdio: 'inherit' });
+  console.log(`${group}: ${sprites.length} sprites`);
 }
 
-if (!only || only === 'Scenes') {
-  const appIcon = buildAppIcon(groups);
-  render(toSvg(appIcon), 1024, path.join(artDir, 'AppIcon/app_icon.png'));
-  const mock = buildMockup(groups);
-  render(toSvg(mock), 1080, path.join(root, 'Docs/preview.png'));
-  count += 2;
+for (const group of PIXEL.filter(pick)) {
+  const out = execFileSync('python3', ['-I', path.join(here, 'pixel', `${group}.py`), artDir], { encoding: 'utf8' });
+  const pivots = JSON.parse(out);
+  Object.assign(manifest, pivots);
+  for (const k of Object.keys(pivots)) touched.add(k.split('/')[0]);
+  console.log(`${group}: ${Object.keys(pivots).length} sprites`);
 }
 
-console.log(`Rendered ${count} images.`);
+const sorted = Object.fromEntries(Object.entries(manifest).sort(([a], [b]) => a.localeCompare(b)));
+fs.writeFileSync(manifestFile, JSON.stringify(sorted, null, 1) + '\n');
+
+// Contact sheets (4x, nearest) for review; not shipped in the APK.
+for (const dir of touched) {
+  execFileSync('python3', ['-I', path.join(here, 'sheet.py'), path.join(artDir, dir), path.join(sheetDir, `${dir}.png`)], { stdio: 'inherit' });
+}
+fs.rmSync(tmp, { recursive: true, force: true });

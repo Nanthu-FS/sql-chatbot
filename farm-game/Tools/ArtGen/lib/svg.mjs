@@ -1,4 +1,5 @@
 // Shared SVG helpers, palette and seeded RNG for the art generator.
+import fs from 'node:fs';
 
 export const C = {
   ink: '#2a1a12',
@@ -138,4 +139,18 @@ export function toSvg(a, outW = a.w, outH = a.h) {
 // Place an asset inside another SVG (unique ids are global, so nesting is safe).
 export function place(a, x, y, w = a.w, h = a.h, extra = '') {
   return `<svg x="${f(x)}" y="${f(y)}" width="${f(w)}" height="${f(h)}" viewBox="0 0 ${a.w} ${a.h}" overflow="visible" ${extra}>${a.body}</svg>`;
+}
+
+// Silhouette paths of a game-icons.net glyph (CC BY 3.0, credit in CREDITS.md) in a 512 box.
+export function loadGlyph(name) {
+  const file = new URL(`../game-icons/${name}.svg`, import.meta.url);
+  const src = fs.readFileSync(file, 'utf8');
+  const ds = [...src.matchAll(/<path[^>]*\sd="([^"]+)"/g)].map((m) => m[1]).filter((d) => !/^M0 0h512v512H0z$/.test(d));
+  if (!ds.length) throw new Error(`no glyph paths in ${name}`);
+  return ds;
+}
+
+// Removes the vector ink outlines so the pixel pass can add its own 1px outline.
+export function noInk(a) {
+  return { ...a, body: a.body.replaceAll(`stroke="${C.ink}"`, 'stroke="none"').replaceAll(`fill="${C.ink}"`, 'fill="none"') };
 }
