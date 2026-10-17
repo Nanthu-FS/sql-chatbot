@@ -107,11 +107,35 @@
   "ax": 16,
   "ay": 0
  },
+ "tiles/fall_a": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/fall_b": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/fall_c": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/fall_d": {
+  "ax": 16,
+  "ay": 0
+ },
  "tiles/forest_a": {
   "ax": 16,
   "ay": 0
  },
  "tiles/forest_b": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/forest_fall": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/forest_winter": {
   "ax": 16,
   "ay": 0
  },
@@ -163,7 +187,27 @@
   "ax": 16,
   "ay": 0
  },
+ "tiles/soil_snow": {
+  "ax": 16,
+  "ay": 0
+ },
  "tiles/soil_wet": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/summer_a": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/summer_b": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/summer_c": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/summer_d": {
   "ax": 16,
   "ay": 0
  },
@@ -172,6 +216,22 @@
   "ay": 0
  },
  "tiles/water_b": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/winter_a": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/winter_b": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/winter_c": {
+  "ax": 16,
+  "ay": 0
+ },
+ "tiles/winter_d": {
   "ax": 16,
   "ay": 0
  },

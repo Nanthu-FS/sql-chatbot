@@ -6,6 +6,8 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
+import com.ditherfarm.engine.Weather
+import com.ditherfarm.ui.GridDemoScreen
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -51,6 +53,15 @@ class ScreenshotTest {
     }
 
     @Test fun boot() = render("boot")
+
+    private fun demo(name: String, hour: Float, season: String, weather: Weather.Kind) = render(name, seconds = 1f) { game, _ ->
+        (game.engine.screen as? GridDemoScreen)?.let { it.hour = hour; it.season = season; it.weather.kind = weather }
+    }
+
+    @Test fun demoDay() = demo("demo_day", 11f, "spring", Weather.Kind.CLEAR)
+    @Test fun demoRainDusk() = demo("demo_dusk_rain", 18.6f, "summer", Weather.Kind.RAIN)
+    @Test fun demoNight() = demo("demo_night", 23f, "fall", Weather.Kind.LEAVES)
+    @Test fun demoWinter() = demo("demo_winter", 7f, "winter", Weather.Kind.SNOW)
 
     companion object {
         /** app/src/main/assets, whether Gradle runs from the module dir or elsewhere. */
