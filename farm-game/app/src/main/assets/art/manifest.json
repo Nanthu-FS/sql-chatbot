@@ -174,5 +174,141 @@
  "tiles/water_b": {
   "ax": 16,
   "ay": 0
+ },
+ "ui/arrow_down": {
+  "ax": 2,
+  "ay": 2
+ },
+ "ui/arrow_up": {
+  "ax": 2,
+  "ay": 2
+ },
+ "ui/badge": {
+  "ax": 2,
+  "ay": 2
+ },
+ "ui/bar_bg": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/bar_blue": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/bar_gold": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/bar_green": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/bar_purple": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/bar_red": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_blue": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_blue_down": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_gold": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_gold_down": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_green": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_green_down": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_grey": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_grey_down": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_red": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_red_down": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_wood": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/btn_wood_down": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/bubble": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/bubble_tail": {
+  "ax": 3,
+  "ay": 0
+ },
+ "ui/dot": {
+  "ax": 1,
+  "ay": 1
+ },
+ "ui/panel": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/panel_dark": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/pill": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/slot": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/slot_sel": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/tab": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/tab_on": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/toggle_off": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/toggle_on": {
+  "ax": 0,
+  "ay": 0
+ },
+ "ui/x": {
+  "ax": 3,
+  "ay": 3
  }
 }
