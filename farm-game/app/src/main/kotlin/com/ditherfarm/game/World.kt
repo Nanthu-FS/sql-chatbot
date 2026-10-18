@@ -599,7 +599,7 @@ class World(val data: GameData, val state: GameState) {
         val pool = state.discovered.filter { id ->
             val item = data.items[id] ?: return@filter false
             item.price > 0 && item.storage != Storage.NONE && id !in NOT_ORDERED && !id.startsWith("mineral_") &&
-                item.category != "fixture" && (data.crops[id]?.let { it.unlockLevel <= state.level } ?: true)
+                item.category !in setOf("fixture", "rare", "seed", "mineral") && (data.crops[id]?.let { it.unlockLevel <= state.level } ?: true)
         }
         if (pool.isEmpty()) return null
         val l = state.level
