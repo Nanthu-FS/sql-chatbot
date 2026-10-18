@@ -1,0 +1,536 @@
+{
+ "_doc": "Mine (GAME_DESIGN \u00a79). respawnMinutes are REAL minutes. minPick: 0 wood..3 gold.",
+ "nodes": [
+  {
+   "id": "stone",
+   "hp": 2,
+   "minPick": 0,
+   "drops": {
+    "stone": [
+     1,
+     2
+    ]
+   },
+   "xp": 1,
+   "bonus": {
+    "geode": 0.02
+   }
+  },
+  {
+   "id": "coal_rock",
+   "hp": 3,
+   "minPick": 0,
+   "drops": {
+    "coal": [
+     1,
+     1
+    ]
+   },
+   "xp": 2,
+   "bonus": {
+    "coal": 0.3
+   }
+  },
+  {
+   "id": "copper_vein",
+   "hp": 4,
+   "minPick": 0,
+   "drops": {
+    "copper_ore": [
+     1,
+     2
+    ]
+   },
+   "xp": 3,
+   "bonus": {}
+  },
+  {
+   "id": "clay_bank",
+   "hp": 2,
+   "minPick": 0,
+   "drops": {
+    "clay": [
+     1,
+     2
+    ]
+   },
+   "xp": 1,
+   "bonus": {}
+  },
+  {
+   "id": "quartz_cluster",
+   "hp": 4,
+   "minPick": 0,
+   "drops": {
+    "quartz": [
+     1,
+     1
+    ]
+   },
+   "xp": 3,
+   "bonus": {
+    "quartz": 0.15
+   }
+  },
+  {
+   "id": "geode_rock",
+   "hp": 5,
+   "minPick": 1,
+   "drops": {
+    "geode": [
+     1,
+     1
+    ]
+   },
+   "xp": 4,
+   "bonus": {}
+  },
+  {
+   "id": "iron_vein",
+   "hp": 6,
+   "minPick": 1,
+   "drops": {
+    "iron_ore": [
+     1,
+     2
+    ]
+   },
+   "xp": 5,
+   "bonus": {}
+  },
+  {
+   "id": "amethyst_node",
+   "hp": 8,
+   "minPick": 1,
+   "drops": {
+    "amethyst": [
+     1,
+     1
+    ]
+   },
+   "xp": 8,
+   "bonus": {}
+  },
+  {
+   "id": "gold_vein",
+   "hp": 10,
+   "minPick": 2,
+   "drops": {
+    "gold_ore": [
+     1,
+     2
+    ]
+   },
+   "xp": 8,
+   "bonus": {}
+  },
+  {
+   "id": "emerald_node",
+   "hp": 10,
+   "minPick": 2,
+   "drops": {
+    "emerald": [
+     1,
+     1
+    ]
+   },
+   "xp": 12,
+   "bonus": {}
+  },
+  {
+   "id": "ruby_node",
+   "hp": 12,
+   "minPick": 2,
+   "drops": {
+    "ruby": [
+     1,
+     1
+    ]
+   },
+   "xp": 14,
+   "bonus": {}
+  },
+  {
+   "id": "diamond_node",
+   "hp": 14,
+   "minPick": 3,
+   "drops": {
+    "diamond": [
+     1,
+     1
+    ]
+   },
+   "xp": 25,
+   "bonus": {}
+  },
+  {
+   "id": "boulder",
+   "hp": 8,
+   "minPick": 1,
+   "drops": {
+    "iron_ore": [
+     3,
+     5
+    ]
+   },
+   "xp": 10,
+   "bonus": {}
+  },
+  {
+   "id": "rubble",
+   "hp": 2,
+   "minPick": 0,
+   "drops": {
+    "stone": [
+     0,
+     1
+    ]
+   },
+   "xp": 0,
+   "bonus": {}
+  },
+  {
+   "id": "crate",
+   "hp": 1,
+   "minPick": 0,
+   "drops": {},
+   "xp": 1,
+   "bonus": {}
+  },
+  {
+   "id": "glow_mushroom",
+   "hp": 1,
+   "minPick": 0,
+   "drops": {
+    "cave_mushroom": [
+     1,
+     1
+    ]
+   },
+   "xp": 1,
+   "bonus": {}
+  }
+ ],
+ "quarry": [
+  {
+   "level": 1,
+   "unlock": 3,
+   "cost": {},
+   "spots": 12,
+   "respawnMinutes": 20,
+   "weights": {
+    "stone": 60,
+    "coal_rock": 20,
+    "copper_vein": 10,
+    "clay_bank": 10
+   }
+  },
+  {
+   "level": 2,
+   "unlock": 8,
+   "cost": {
+    "coins": 300,
+    "plank": 20,
+    "stone": 30
+   },
+   "spots": 16,
+   "respawnMinutes": 17,
+   "weights": {
+    "stone": 50,
+    "coal_rock": 20,
+    "copper_vein": 10,
+    "clay_bank": 8,
+    "quartz_cluster": 8,
+    "geode_rock": 4
+   }
+  },
+  {
+   "level": 3,
+   "unlock": 14,
+   "cost": {
+    "coins": 1200,
+    "iron_bar": 8,
+    "stone": 40
+   },
+   "spots": 20,
+   "respawnMinutes": 14,
+   "weights": {
+    "stone": 42,
+    "coal_rock": 18,
+    "copper_vein": 10,
+    "clay_bank": 6,
+    "quartz_cluster": 8,
+    "iron_vein": 10,
+    "geode_rock": 6
+   }
+  }
+ ],
+ "bands": [
+  {
+   "band": 1,
+   "floors": [
+    1,
+    10
+   ],
+   "grid": 9,
+   "density": 0.45,
+   "dark": 0.0,
+   "geode": "geode",
+   "weights": {
+    "stone": 58,
+    "coal_rock": 15,
+    "copper_vein": 15,
+    "quartz_cluster": 5,
+    "iron_vein": 4,
+    "geode_rock": 3
+   }
+  },
+  {
+   "band": 2,
+   "floors": [
+    11,
+    20
+   ],
+   "grid": 10,
+   "density": 0.5,
+   "dark": 0.35,
+   "geode": "geode",
+   "weights": {
+    "stone": 45,
+    "coal_rock": 14,
+    "copper_vein": 10,
+    "quartz_cluster": 5,
+    "iron_vein": 16,
+    "amethyst_node": 4,
+    "gold_vein": 2,
+    "geode_rock": 4
+   }
+  },
+  {
+   "band": 3,
+   "floors": [
+    21,
+    30
+   ],
+   "grid": 11,
+   "density": 0.55,
+   "dark": 1.0,
+   "geode": "ember_geode",
+   "weights": {
+    "stone": 40,
+    "coal_rock": 14,
+    "quartz_cluster": 3,
+    "iron_vein": 18,
+    "amethyst_node": 3,
+    "gold_vein": 12,
+    "emerald_node": 3,
+    "ruby_node": 2,
+    "geode_rock": 5
+   }
+  },
+  {
+   "band": 4,
+   "floors": [
+    31,
+    40
+   ],
+   "grid": 12,
+   "density": 0.55,
+   "dark": 1.0,
+   "geode": "crystal_geode",
+   "weights": {
+    "stone": 35,
+    "coal_rock": 10,
+    "quartz_cluster": 5,
+    "iron_vein": 15,
+    "gold_vein": 18,
+    "emerald_node": 4,
+    "ruby_node": 4,
+    "diamond_node": 2,
+    "geode_rock": 7
+   }
+  }
+ ],
+ "minFloor": {
+  "iron_vein": 6,
+  "gold_vein": 16,
+  "ruby_node": 25
+ },
+ "gates": [
+  {
+   "floor": 10,
+   "level": 8,
+   "pick": 1,
+   "item": "lantern",
+   "chest": {
+    "coins": 300,
+    "torch": 6
+   }
+  },
+  {
+   "floor": 20,
+   "level": 14,
+   "pick": 2,
+   "chest": {
+    "coins": 800,
+    "ember_geode": 3
+   }
+  },
+  {
+   "floor": 30,
+   "level": 20,
+   "pick": 3,
+   "chest": {
+    "coins": 2000,
+    "crystal_geode": 3,
+    "gold_bar": 2
+   }
+  },
+  {
+   "floor": 40,
+   "level": 0,
+   "pick": 0,
+   "chest": {
+    "coins": 5000
+   }
+  }
+ ],
+ "minerals": {
+  "geode": [
+   "calcite",
+   "jasper",
+   "mica",
+   "agate",
+   "fluorite"
+  ],
+  "ember_geode": [
+   "obsidian",
+   "garnet",
+   "jet",
+   "fire_opal",
+   "sunstone"
+  ],
+  "crystal_geode": [
+   "moonstone",
+   "celestine",
+   "opal",
+   "star_sapphire",
+   "aurora_quartz"
+  ]
+ },
+ "geodes": {
+  "geode": {
+   "fee": 10,
+   "ore": [
+    0.4,
+    [
+     [
+      "copper_ore",
+      2,
+      4
+     ],
+     [
+      "iron_ore",
+      2,
+      4
+     ],
+     [
+      "coal",
+      2,
+      2
+     ]
+    ]
+   ],
+   "mineral": 0.5,
+   "gems": [
+    [
+     "quartz",
+     0.08,
+     2
+    ],
+    [
+     "amethyst",
+     0.02,
+     1
+    ]
+   ],
+   "prismatic": 0.0
+  },
+  "ember_geode": {
+   "fee": 25,
+   "ore": [
+    0.35,
+    [
+     [
+      "gold_ore",
+      2,
+      3
+     ],
+     [
+      "iron_ore",
+      3,
+      5
+     ]
+    ]
+   ],
+   "mineral": 0.55,
+   "gems": [
+    [
+     "emerald",
+     0.03,
+     1
+    ],
+    [
+     "ruby",
+     0.03,
+     1
+    ],
+    [
+     "amethyst",
+     0.035,
+     1
+    ]
+   ],
+   "prismatic": 0.005
+  },
+  "crystal_geode": {
+   "fee": 50,
+   "ore": [
+    0.31,
+    [
+     [
+      "gold_ore",
+      3,
+      4
+     ]
+    ]
+   ],
+   "mineral": 0.58,
+   "gems": [
+    [
+     "emerald",
+     0.04,
+     1
+    ],
+    [
+     "ruby",
+     0.035,
+     1
+    ],
+    [
+     "diamond",
+     0.025,
+     1
+    ]
+   ],
+   "prismatic": 0.01
+  }
+ },
+ "repair": {
+  "level": 4,
+  "cost": {
+   "coins": 100,
+   "wood": 25
+  }
+ }
+}

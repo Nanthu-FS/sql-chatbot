@@ -40,6 +40,14 @@ sealed class WorldEvent {
     data class TreePlanted(val spot: Int, val tree: String) : WorldEvent()
     data class ZoneUnlocked(val zone: String) : WorldEvent()
     data class BirdNest(val spot: Int, val item: String, val qty: Int) : WorldEvent()
+    data class Mined(val cell: Int, val quarry: Boolean, val node: String, val crit: Boolean, val hpLeft: Int) : WorldEvent()
+    data class RockBroken(val cell: Int, val quarry: Boolean, val node: String, val drops: Map<String, Int>, val xp: Int) : WorldEvent()
+    data class HollowKnock(val cell: Int, val onLadder: Boolean) : WorldEvent()
+    data class LadderFound(val cell: Int) : WorldEvent()
+    data class FloorEntered(val floor: Int) : WorldEvent()
+    data class StopUnlocked(val floor: Int) : WorldEvent()
+    data class GateOpened(val floor: Int, val chest: Map<String, Int>) : WorldEvent()
+    data class GeodeCracked(val geode: String, val out: Map<String, Int>) : WorldEvent()
 }
 
 /**
@@ -93,6 +101,7 @@ class World(val data: GameData, val state: GameState) {
         state.minutes = after.minutes
         tickOrders()
         tickMachines()
+        tickQuarry()
     }
 
     private fun grow(dt: Double) {

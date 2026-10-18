@@ -798,6 +798,111 @@
    "category": "fixture",
    "price": 0,
    "storage": "barn"
+  },
+  {
+   "id": "mineral_calcite",
+   "name": "Calcite",
+   "category": "mineral",
+   "price": 30,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_jasper",
+   "name": "Jasper",
+   "category": "mineral",
+   "price": 35,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_mica",
+   "name": "Mica",
+   "category": "mineral",
+   "price": 40,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_agate",
+   "name": "Agate",
+   "category": "mineral",
+   "price": 45,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_fluorite",
+   "name": "Fluorite",
+   "category": "mineral",
+   "price": 50,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_obsidian",
+   "name": "Obsidian",
+   "category": "mineral",
+   "price": 60,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_garnet",
+   "name": "Garnet",
+   "category": "mineral",
+   "price": 70,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_jet",
+   "name": "Jet",
+   "category": "mineral",
+   "price": 80,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_fire_opal",
+   "name": "Fire Opal",
+   "category": "mineral",
+   "price": 90,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_sunstone",
+   "name": "Sunstone",
+   "category": "mineral",
+   "price": 100,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_moonstone",
+   "name": "Moonstone",
+   "category": "mineral",
+   "price": 120,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_celestine",
+   "name": "Celestine",
+   "category": "mineral",
+   "price": 140,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_opal",
+   "name": "Opal",
+   "category": "mineral",
+   "price": 160,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_star_sapphire",
+   "name": "Star Sapphire",
+   "category": "mineral",
+   "price": 180,
+   "storage": "barn"
+  },
+  {
+   "id": "mineral_aurora_quartz",
+   "name": "Aurora Quartz",
+   "category": "mineral",
+   "price": 200,
+   "storage": "barn"
   }
  ]
 }

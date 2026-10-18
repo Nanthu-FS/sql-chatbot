@@ -127,6 +127,7 @@ class GameState(var seed: Long) {
     /** Tool id (axe, pickaxe, hoe, can, sickle) → tier 0 wood .. 3 gold. */
     val tools = HashMap<String, Int>()
     var forest = ForestState()
+    var mine = MineState()
 
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
@@ -154,6 +155,7 @@ class GameState(var seed: Long) {
         put("buildings", JSONArray().apply { buildings.values.forEach { put(it.toJson()) } })
         put("tools", JSONObject(tools as Map<*, *>))
         put("forest", forest.toJson())
+        put("mine", mine.toJson())
     }
 
     companion object {
@@ -188,6 +190,7 @@ class GameState(var seed: Long) {
             o.optJSONArray("buildings")?.objects()?.forEach { val b = BuildingState.fromJson(it); buildings[b.id] = b }
             o.optJSONObject("tools")?.toIntMap()?.forEach { (k, v) -> tools[k] = v }
             o.optJSONObject("forest")?.let { forest = ForestState.fromJson(it) }
+            o.optJSONObject("mine")?.let { mine = MineState.fromJson(it) }
         }
     }
 }

@@ -311,6 +311,21 @@
     "item": "coal",
     "tank": 20
    }
+  },
+  {
+   "id": "geode_anvil",
+   "name": "Geode Anvil",
+   "screen": "mine",
+   "unlock": 7,
+   "cost": {
+    "coins": 200,
+    "stone": 30,
+    "copper_bar": 2
+   },
+   "recipes": [],
+   "queue": 1,
+   "prebuilt": false,
+   "sprite": "buildings/geode_anvil"
   }
  ]
 }
