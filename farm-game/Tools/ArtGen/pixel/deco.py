@@ -171,10 +171,34 @@ def fence(direction):
     return im
 
 
+def snowy(body):
+    """Winter version: snow caps on every upward-facing edge, greens frosted to grey-green."""
+    im = body.copy()
+    px = im.load()
+    w, h = im.size
+    frost = {E["green"]: E["grey_l"], E["green_d"]: E["green_d"], E["green_dd"]: E["slate"]}
+    for y in range(h):
+        for x in range(w):
+            c = px[x, y]
+            if c[3] == 0:
+                continue
+            if y == 0 or px[x, y - 1][3] == 0:
+                px[x, y] = E["white"]
+                if y + 1 < h and px[x, y + 1][3] and (x + y) % 2 == 0:
+                    px[x, y + 1] = E["grey_l"]
+            elif c in frost and (x + y) % 3 == 0:
+                px[x, y] = frost[c]
+    return im
+
+
 def main():
     s = Sprites(sys.argv[1], "deco")
     save(s, "tallgrass_a", from_map(TALL_A, G))
     save(s, "tallgrass_b", from_map(TALL_B, G))
+    for name, rows, key in (("tallgrass_a", TALL_A, G), ("tallgrass_b", TALL_B, G), ("bush", BUSH, {**G, "r": "green"}),
+                            ("rock", ROCK, ROCK_KEY), ("rock_big", ROCK_BIG, ROCK_KEY), ("stump", STUMP, STUMP_KEY),
+                            ("log", LOG, {**STUMP_KEY, "r": "brown_l"}), ("reeds", REEDS, G)):
+        save(s, f"{name}_snow", snowy(from_map(rows, key)))
     save(s, "reeds", from_map(REEDS, G))
     for name, petal in (("red", "red"), ("white", "white"), ("pink", "pink"), ("blue", "cyan"), ("purple", "magenta")):
         save(s, f"flowers_{name}", from_map(FLOWERS, {**G, "p": petal}))

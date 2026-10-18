@@ -30,6 +30,7 @@ dependencies {
 
 tasks.test {
     maxHeapSize = "2g"
+    inputs.dir(app.resolve("main/assets"))
     systemProperty("robolectric.dependency.repo.url", "https://maven-central.storage-download.googleapis.com/maven2/")
     systemProperty("assets.dir", app.resolve("main/assets").absolutePath)
     // gradle test -Pshots writes 3x PNGs of each rendered screen to build/shots.

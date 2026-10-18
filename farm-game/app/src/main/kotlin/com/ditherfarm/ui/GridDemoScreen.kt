@@ -139,8 +139,11 @@ class GridDemoScreen(private val game: Game) : Screen() {
         // Everything standing, sorted by ground depth.
         data class D(val key: Float, val draw: () -> Unit)
         val list = ArrayList<D>(props.size + 32)
+        val winter = season == "winter"
         for (p in props) {
-            val sprite = if (p.sway && sin(time * 2.2f + p.x * 0.15f) > 0.3f) p.alt!! else p.sprite
+            if (winter && (p.sprite.startsWith("deco/flowers") || p.sprite == "deco/mushrooms")) continue
+            var sprite = if (p.sway && sin(time * 2.2f + p.x * 0.15f) > 0.3f) p.alt!! else p.sprite
+            if (winter && game.assets.has("${sprite}_snow")) sprite = "${sprite}_snow"
             list.add(D(p.y + p.x * 0.001f) { g.sprite(sprite, p.x, p.y) })
         }
         for (row in 0 until rows) for (col in 0 until cols) {

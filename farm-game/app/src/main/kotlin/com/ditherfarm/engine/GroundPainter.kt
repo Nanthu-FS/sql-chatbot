@@ -165,7 +165,8 @@ class GroundPainter(private val seed: Int = 7) {
                 3 -> intArrayOf(0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt(), 0xFFFFFFFF.toInt())
                 else -> intArrayOf(0xFF193C3E.toInt(), 0xFF265C42.toInt(), 0xFF3E8948.toInt(), 0xFF3E8948.toInt())
             }
-            Terrain.DIRT -> intArrayOf(0xFF3E2731.toInt(), 0xFF733E39.toInt(), 0xFFB86F50.toInt())
+            Terrain.DIRT -> if (season == 3) intArrayOf(0xFF733E39.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt(), 0xFFFFFFFF.toInt())
+            else intArrayOf(0xFF3E2731.toInt(), 0xFF733E39.toInt(), 0xFFB86F50.toInt())
             Terrain.PATH -> if (season == 3) intArrayOf(0xFF8B9BB4.toInt(), 0xFFC28569.toInt(), 0xFFE4A672.toInt())
             else intArrayOf(0xFFB86F50.toInt(), 0xFFC28569.toInt(), 0xFFE4A672.toInt(), 0xFFEAD4AA.toInt())
             Terrain.SAND -> intArrayOf(0xFFC28569.toInt(), 0xFFE4A672.toInt(), 0xFFEAD4AA.toInt())
