@@ -9,6 +9,7 @@ import com.ditherfarm.engine.Haptics
 import com.ditherfarm.engine.Sfx
 import com.ditherfarm.platform.SaveStore
 import com.ditherfarm.ui.GridDemoScreen
+import com.ditherfarm.ui.Ui
 
 /** Wires services to the engine. Game rules plug in here once designed. */
 class Game(val host: Host) {
@@ -19,6 +20,7 @@ class Game(val host: Host) {
     val sfx = Sfx(host.assetSource.assetManager)
     val haptics = Haptics(host.context)
     val store = SaveStore(host.saveDir)
+    val ui = Ui(gfx, sfx, haptics)
 
     init {
         engine.start(GridDemoScreen(this))

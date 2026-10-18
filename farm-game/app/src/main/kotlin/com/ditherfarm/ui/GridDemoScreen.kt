@@ -1,47 +1,33 @@
 package com.ditherfarm.ui
 
-import android.graphics.Bitmap
 import com.ditherfarm.Game
-import com.ditherfarm.engine.Camera
 import com.ditherfarm.engine.Gfx
-import com.ditherfarm.engine.GroundPainter
 import com.ditherfarm.engine.Iso
 import com.ditherfarm.engine.Lighting
 import com.ditherfarm.engine.Noise
-import com.ditherfarm.engine.Screen
 import com.ditherfarm.engine.Terrain
-import com.ditherfarm.engine.Weather
 import kotlin.math.sin
 
 /**
- * Engine and art smoke test: a painted island with a pond, path, raised plots,
- * fences, lanterns and swaying decorations, plus lighting and weather.
+ * Engine and art smoke test on top of [IsoMapScreen]: a painted island with a pond,
+ * path, raised plots, fences, lanterns, swaying decorations and a sample HUD.
  * Replaced by the real Farm screen.
  */
-class GridDemoScreen(private val game: Game) : Screen() {
-    private val cols = 16
-    private val rows = 16
-    private val cam = Camera()
-    private val pick = IntArray(2)
+class GridDemoScreen(game: Game) : IsoMapScreen(game, groundSeed = 21) {
+    override val cols = 16
+    override val rows = 16
+    var hourOverride = 10f
+    var season = "spring"
     private var selC = -1
     private var selR = -1
-    private val lighting = Lighting()
-    private val painter = GroundPainter(seed = 21)
-    private var ground: Bitmap? = null
-    private var groundSeason = -1
-    val weather = Weather()
-    var hour = 10f
-    var season = "spring"
-    private var time = 0f
-    private val lights = ArrayList<Lighting.Light>()
 
-    private class Prop(val sprite: String, val x: Float, val y: Float, val sway: Boolean = false, val alt: String? = null)
+    private class Prop(val sprite: String, val x: Float, val y: Float, val sway: Boolean = false)
     private val props = ArrayList<Prop>()
     private val lanterns = listOf(4 to 3, 9 to 8)
 
     private fun isPlot(c: Int, r: Int) = c in 5..8 && r in 4..7
 
-    private fun terrain(c: Int, r: Int): Terrain {
+    override fun terrain(c: Int, r: Int): Terrain {
         val dx = c - 12; val dy = r - 3
         return when {
             dx * dx + dy * dy <= 5 -> Terrain.WATER
@@ -53,31 +39,23 @@ class GridDemoScreen(private val game: Game) : Screen() {
         }
     }
 
-    private fun seasonIndex() = when (season) { "summer" -> 1; "fall" -> 2; "winter" -> 3; else -> 0 }
+    override fun seasonIndex() = when (season) { "summer" -> 1; "fall" -> 2; "winter" -> 3; else -> 0 }
+    override fun hour() = hourOverride
 
     override fun enter() {
-        cam.setBounds(Iso.bounds(cols, rows))
-        cam.setView(game.engine.w, game.engine.h, 20, 0)
-        val b = Iso.bounds(cols, rows)
-        cam.centerOn(Iso.x(7, 6).toFloat(), Iso.centerY(7, 6).toFloat())
+        super.enter()
+        centerOnTile(7, 6)
         weather.onThunder = { game.sfx.play("thunder") }
-        scatter()
-    }
-
-    private fun scatter() {
         props.clear()
         for (r in 0 until rows) for (c in 0 until cols) {
-            val t = terrain(c, r)
             if (isPlot(c, r) || (c to r) in lanterns) continue
             val roll = Noise.rand(c, r, 77)
-            val jx = (Noise.rand(c, r, 78) - 0.5f) * 14f
-            val jy = (Noise.rand(c, r, 79) - 0.5f) * 6f
-            val x = Iso.x(c, r) + jx
-            val y = Iso.centerY(c, r) + jy
-            val sprite = when (t) {
+            val x = Iso.x(c, r) + (Noise.rand(c, r, 78) - 0.5f) * 14f
+            val y = Iso.centerY(c, r) + (Noise.rand(c, r, 79) - 0.5f) * 6f
+            val sprite = when (terrain(c, r)) {
                 Terrain.GRASS -> when {
                     roll < 0.16f -> "deco/tallgrass_a"
-                    roll < 0.22f -> listOf("deco/flowers_red", "deco/flowers_white", "deco/flowers_pink", "deco/flowers_blue", "deco/flowers_purple")[(roll * 1000).toInt() % 5]
+                    roll < 0.22f -> listOf("red", "white", "pink", "blue", "purple").let { "deco/flowers_" + it[(roll * 1000).toInt() % 5] }
                     roll < 0.25f -> if (roll < 0.235f) "deco/bush_berry" else "deco/bush"
                     roll < 0.27f -> "deco/rock"
                     roll < 0.28f -> "deco/rock_big"
@@ -93,111 +71,82 @@ class GridDemoScreen(private val game: Game) : Screen() {
                 Terrain.SAND -> if (roll < 0.35f) "deco/reeds" else null
                 else -> null
             } ?: continue
-            props.add(Prop(sprite, x, y, sway = sprite == "deco/tallgrass_a", alt = "deco/tallgrass_b"))
+            props.add(Prop(sprite, x, y, sway = sprite == "deco/tallgrass_a"))
         }
         for ((c, r) in lanterns) props.add(Prop("deco/lantern", Iso.x(c, r).toFloat(), Iso.centerY(c, r).toFloat()))
-        // Fence along the plot yard's back edges.
         for (c in 4..9) props.add(Prop("deco/fence_r", Iso.x(c, 3).toFloat(), Iso.y(c, 3).toFloat()))
-        for (r in 3..8) props.add(Prop("deco/fence_l", Iso.x(4, r).toFloat() , Iso.y(4, r).toFloat()))
+        for (r in 3..8) props.add(Prop("deco/fence_l", Iso.x(4, r).toFloat(), Iso.y(4, r).toFloat()))
     }
 
-    override fun update(dt: Float) {
-        time += dt
-        cam.setView(game.engine.w, game.engine.h, 20 + game.engine.safeTop, 0)
-        cam.update(dt)
-        weather.update(dt, game.engine.w, game.engine.h)
+    override fun drawGroundLayer(g: Gfx) {
+        for (r in 0 until rows) for (c in 0 until cols) {
+            if (terrain(c, r) == Terrain.WATER) {
+                val phase = (time * 2f + c * 0.7f + r * 1.3f) % 3f
+                if (phase < 0.6f) g.rect(Iso.x(c, r) - 3 + (phase * 8).toInt(), Iso.centerY(c, r), Iso.x(c, r) + (phase * 8).toInt(), Iso.centerY(c, r) + 1, Gfx.WHITE)
+            }
+            if (isPlot(c, r)) g.sprite("tiles/shadow", Iso.x(c, r) + 2f, Iso.y(c, r) + 3f)
+        }
     }
 
-    override fun draw(g: Gfx) {
-        val c = g.canvas
-        val si = seasonIndex()
-        if (ground == null || groundSeason != si) {
-            ground?.recycle()
-            ground = painter.paint(cols, rows, si) { cc, rr -> terrain(cc, rr) }
-            groundSeason = si
-        }
-        c.save()
-        c.translate(-cam.snapX().toFloat(), -cam.snapY().toFloat())
-        c.scale(cam.zoom.toFloat(), cam.zoom.toFloat())
-        c.drawBitmap(ground!!, -painter.originX.toFloat(), 0f, g.paint)
-
-        // Water glints.
-        for (r in 0 until rows) for (cc in 0 until cols) if (terrain(cc, r) == Terrain.WATER) {
-            val phase = ((time * 2f + cc * 0.7f + r * 1.3f) % 3f)
-            if (phase < 0.6f) g.rect(Iso.x(cc, r) - 3 + (phase * 8).toInt(), Iso.centerY(cc, r), Iso.x(cc, r) + (phase * 8).toInt(), Iso.centerY(cc, r) + 1, 0xFFFFFFFF.toInt())
-        }
-
-        // Plots first (raised beds), with a soft shadow on their lower-right.
-        val crops = listOf("wheat", "carrot", "tomato", "pumpkin")
-        for (d in 0 until cols + rows - 1) for (col in 0 until cols) {
-            val row = d - col
-            if (row !in 0 until rows || !isPlot(col, row)) continue
-            val x = Iso.x(col, row).toFloat()
-            val y = Iso.y(col, row).toFloat()
-            g.sprite("tiles/shadow", x + 2, y + 3)
-        }
-        // Everything standing, sorted by ground depth.
-        data class D(val key: Float, val draw: () -> Unit)
-        val list = ArrayList<D>(props.size + 32)
+    override fun collect(list: DrawList) {
         val winter = season == "winter"
         for (p in props) {
             if (winter && (p.sprite.startsWith("deco/flowers") || p.sprite == "deco/mushrooms")) continue
-            var sprite = if (p.sway && sin(time * 2.2f + p.x * 0.15f) > 0.3f) p.alt!! else p.sprite
+            var sprite = if (p.sway && sin(time * 2.2f + p.x * 0.15f) > 0.3f) "deco/tallgrass_b" else p.sprite
             if (winter && game.assets.has("${sprite}_snow")) sprite = "${sprite}_snow"
-            list.add(D(p.y + p.x * 0.001f) { g.sprite(sprite, p.x, p.y) })
+            list.add(p.y + p.x * 0.001f) { game.gfx.sprite(sprite, p.x, p.y) }
         }
+        val crops = listOf("wheat", "carrot", "potato", "tomato", "corn", "strawberry", "pumpkin", "sunflower", "cabbage", "eggplant", "melon", "grapes")
         for (row in 0 until rows) for (col in 0 until cols) {
             if (!isPlot(col, row)) continue
             val x = Iso.x(col, row).toFloat()
             val y = Iso.y(col, row).toFloat()
             val soil = when {
-                season == "winter" -> "tiles/soil_snow"
+                winter -> "tiles/soil_snow"
                 (col + row) % 3 == 0 -> "tiles/soil_wet"
                 else -> "tiles/soil_dry"
             }
-            list.add(D(Iso.y(col, row).toFloat() + 0.5f) {
-                g.sprite(soil, x, y)
-                if (col == selC && row == selR) g.sprite("tiles/cursor_ok", x, y)
-                val crop = "crops/${crops[(col + row) % 4]}_${(col * 3 + row) % 4}"
-                if (season != "winter" && game.assets.has(crop)) g.sprite(crop, x, Iso.centerY(col, row).toFloat())
-            })
+            val crop = "crops/${crops[(col * 4 + row) % crops.size]}_${(col * 3 + row) % 4}"
+            list.add(y + 0.5f) {
+                game.gfx.sprite(soil, x, y)
+                if (col == selC && row == selR) game.gfx.sprite("tiles/cursor_ok", x, y)
+                if (!winter && game.assets.has(crop)) game.gfx.sprite(crop, x, Iso.centerY(col, row).toFloat())
+            }
         }
-        list.sortBy { it.key }
-        for (d in list) d.draw()
-
-        // Butterflies over the meadow.
-        if (season != "winter") for (i in 0 until 3) {
+        if (!winter) for (i in 0 until 3) {
             val bx = Iso.x(11, 10) + sin(time * 0.7f + i * 2f) * 40f + i * 10
             val by = Iso.y(11, 10) + sin(time * 1.1f + i) * 14f - 10 - i * 6
-            g.sprite(if (sin(time * 18f + i) > 0) "deco/butterfly_a" else "deco/butterfly_b", bx, by)
-        }
-        c.restore()
-
-        lights.clear()
-        for ((lc, lr) in lanterns) {
-            val bx = (Iso.x(lc, lr) - cam.x) * cam.zoom
-            val by = (Iso.centerY(lc, lr) - cam.y) * cam.zoom
-            lights.add(Lighting.Light(bx, by, 26 * cam.zoom))
-        }
-        lighting.apply(c, game.engine.w, game.engine.h, lighting.ambient(hour), lights, weather.flash)
-        weather.draw(g, game.engine.w, game.engine.h)
-
-        val top = game.engine.safeTop + 4
-        g.text("DITHER FARM", game.engine.w / 2, top, Gfx.GOLD, align = 0)
-        g.text("${season.uppercase()}  %02d:00".format(hour.toInt()), game.engine.w / 2, top + 11, Gfx.WHITE, align = 0)
-    }
-
-    override fun tap(x: Float, y: Float) {
-        Iso.pick(cam.toWorldX(x), cam.toWorldY(y), pick)
-        if (pick[0] in 0 until cols && pick[1] in 0 until rows) {
-            selC = pick[0]; selR = pick[1]
-            game.sfx.play("click")
-            game.haptics.tick()
+            list.add(by + 40f) { game.gfx.sprite(if (sin(time * 18f + i) > 0) "deco/butterfly_a" else "deco/butterfly_b", bx, by) }
         }
     }
 
-    override fun panStart() = cam.stop()
-    override fun pan(dx: Float, dy: Float) = cam.panBy(dx, dy)
-    override fun fling(vx: Float, vy: Float) = cam.fling(vx, vy)
-    override fun pinch(steps: Int, fx: Float, fy: Float) { cam.zoomAt(steps, fx, fy) }
+    override fun worldLights(out: MutableList<Lighting.Light>) {
+        for ((c, r) in lanterns) out.add(Lighting.Light(Iso.x(c, r).toFloat(), Iso.centerY(c, r).toFloat(), 26))
+    }
+
+    override fun drawHud(g: Gfx) {
+        val w = game.engine.w
+        val top = game.engine.safeTop + 3
+        ui.pill(3, top, 66)
+        g.sprite(if (game.assets.has("icons/coin")) "icons/coin" else "ui/dot", 12f, top + 6f)
+        g.text("1,250", 21, top + 2, Gfx.GOLD)
+        ui.pill(w - 92, top, 89)
+        g.text("${season.uppercase()} 3", w - 86, top + 2, Gfx.WHITE)
+        g.text("%02d:00".format(hourOverride.toInt()), w - 6, top + 2, Gfx.WHITE, align = 1)
+        val by = game.engine.h - game.engine.safeBottom - 40
+        ui.panel(2, by, w - 4, 38)
+        val labels = listOf("FARM", "WOODS", "MINE", "BAG")
+        labels.forEachIndexed { i, label ->
+            val bw = (w - 16) / labels.size
+            if (ui.button("nav$i", 8 + i * bw, by + 9, bw - 4, 20, label, style = if (i == 0) "gold" else "green")) game.sfx.play("swap")
+        }
+    }
+
+    override fun onTileTap(c: Int, r: Int) {
+        selC = c; selR = r
+        game.sfx.play("click")
+        game.haptics.tick()
+        fx.burst("deco/butterfly_a", Iso.x(c, r).toFloat(), Iso.centerY(c, r).toFloat(), 0)
+        fx.floatText("+1", Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat() - 10, Gfx.GOLD)
+    }
 }

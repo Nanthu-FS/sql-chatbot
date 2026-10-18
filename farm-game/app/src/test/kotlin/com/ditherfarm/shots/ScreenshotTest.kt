@@ -55,7 +55,7 @@ class ScreenshotTest {
     @Test fun boot() = render("boot")
 
     private fun demo(name: String, hour: Float, season: String, weather: Weather.Kind) = render(name, seconds = 1f) { game, _ ->
-        (game.engine.screen as? GridDemoScreen)?.let { it.hour = hour; it.season = season; it.weather.kind = weather }
+        (game.engine.screen as? GridDemoScreen)?.let { it.hourOverride = hour; it.season = season; it.weather.kind = weather }
     }
 
     @Test fun demoDay() = demo("demo_day", 11f, "spring", Weather.Kind.CLEAR)
