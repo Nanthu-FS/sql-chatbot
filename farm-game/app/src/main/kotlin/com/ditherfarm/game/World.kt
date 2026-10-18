@@ -62,6 +62,8 @@ sealed class WorldEvent {
     data class Rumble(val cell: Int) : WorldEvent()
     data class Braced(val cell: Int) : WorldEvent()
     data class CaveIn(val cell: Int) : WorldEvent()
+    data class HiveSmoked(val spot: Int, val seed: Boolean) : WorldEvent()
+    data class Stung(val spot: Int) : WorldEvent()
 }
 
 /**
@@ -120,6 +122,7 @@ class World(val data: GameData, val state: GameState) {
         tickQuarry()
         tickMine()
         tickSheds()
+        tickForestAuto()
         checkAchievements()
     }
 

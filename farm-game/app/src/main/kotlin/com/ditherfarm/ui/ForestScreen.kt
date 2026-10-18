@@ -20,6 +20,7 @@ import com.ditherfarm.game.chopBlocker
 import com.ditherfarm.game.collect
 import com.ditherfarm.game.collectBranch
 import com.ditherfarm.game.forage
+import com.ditherfarm.game.smokeHive
 import com.ditherfarm.game.forestSpots
 import com.ditherfarm.game.isBuilt
 import com.ditherfarm.game.jobProgress
@@ -76,6 +77,7 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         weather.onThunder = { game.sfx.play("thunder") }
         if (props.isEmpty()) scatter()
         hud.tip("forest", "Tap a tree to chop it. Each swing uses 2 energy. Hold to keep swinging.")
+        if (world.state.forest.hive >= 0) hud.tip("hive", "A wild beehive! Tap its tree to smoke the bees out for honey.")
     }
 
     fun recenter() = centerOnTile(ForestLayout.SIZE - 5, ForestLayout.SIZE - 5)
@@ -168,6 +170,12 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
                         if (stage == TreeStage.EMPTY) return@add
                         val sx = shake[sp.index]?.let { if (((it * 60).toInt() % 2) == 0) 1f else -1f } ?: 0f
                         g.sprite(treeSprite(tree, stage), x + sx, y)
+                        if (sp.index == world.state.forest.hive) {
+                            g.sprite(pick("trees/beehive", "icons/gift"), x + 6, y - 22)
+                            g.sprite("ui/bubble_tail", x, y - 66 + sin(time * 4f) * 2f)
+                            g.sprite("items/honey", x, y - 74 + sin(time * 4f) * 2f)
+                            if ((time * 3).toInt() % 2 == 0) g.rect((x + 10 + sin(time * 7f) * 5).toInt(), (y - 30 + sin(time * 5f) * 3).toInt(), (x + 11 + sin(time * 7f) * 5).toInt(), (y - 29 + sin(time * 5f) * 3).toInt(), Gfx.GOLD)
+                        }
                         if (st.damage > 0) {
                             val hp = world.treeHp(sp.index)
                             val w = 16
@@ -222,13 +230,21 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         when (sp.kind) {
             SpotKind.TREE -> {
                 val stage = world.treeStage(sp.index)
-                if (stage == TreeStage.EMPTY) plantHere(sp.index) else world.chop(sp.index)
+                when {
+                    sp.index == world.state.forest.hive -> chrome.confirm("WILD BEEHIVE", "Smoke the bees out for honey? Uses a torch, or 4 energy without one.", "SMOKE") { world.smokeHive() }
+                    stage == TreeStage.EMPTY -> plantHere(sp.index)
+                    else -> world.chop(sp.index)
+                }
             }
             SpotKind.BUSH, SpotKind.APPLE, SpotKind.MUSHROOM -> if (!world.forage(sp.index)) hud.toast("Nothing to pick yet")
             SpotKind.SLOT -> {
                 val def = slotMachine(sp.index) ?: return
                 when {
-                    world.isBuilt(def.id) -> if (world.trayCount(def.id) > 0) world.collect(def.id) else chrome.open(Chrome.Panel.MACHINE, def.id)
+                    world.isBuilt(def.id) -> when {
+                        world.trayCount(def.id) > 0 -> world.collect(def.id)
+                        def.id == "logging_hut" || def.id == "tree_nursery" -> chrome.open(Chrome.Panel.SHED, def.id)
+                        else -> chrome.open(Chrome.Panel.MACHINE, def.id)
+                    }
                     def.unlockLevel <= world.level -> chrome.open(Chrome.Panel.BUILD, def.id)
                     else -> hud.toast("${def.name} unlocks at level ${def.unlockLevel}")
                 }
@@ -306,6 +322,13 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
                 if (e.spot >= 0) { val (x, y) = center(e.spot); fx.floatText("+${e.qty}", x, y - 20, Gfx.WHITE, icon = "items/${e.item}") }
             }
             is WorldEvent.TreePlanted -> { val (x, y) = center(e.spot); game.sfx.play("plant"); fx.burst("fx/dust", x, y, 4, speed = 25f, gravity = 30f) }
+            is WorldEvent.HiveSmoked -> {
+                val (x, y) = center(e.spot)
+                game.sfx.play("pickup"); fx.burst("fx/dust", x + 6, y - 22, 8, speed = 20f, gravity = -20f, life = 1f)
+                fx.floatText("+3", x, y - 40, Gfx.GOLD, icon = "items/honey")
+                if (e.seed) hud.toast("The bees left a Wildflower Seed!")
+            }
+            is WorldEvent.Stung -> { game.sfx.play("error"); game.haptics.heavy(); fx.shake(2f); hud.toast("Ouch! Bees! -10 energy. Smoke hives first.") }
             is WorldEvent.BirdNest -> { game.sfx.play("gem"); hud.toast("Bird nest! +${e.qty} ${if (e.item == "coins") "coins" else world.data.name(e.item)}") }
             is WorldEvent.Blocked -> { game.sfx.play("error"); hud.toast(e.reason) }
             is WorldEvent.ZoneUnlocked -> invalidateGround()

@@ -15,6 +15,8 @@ import com.ditherfarm.game.chop
 import com.ditherfarm.game.enqueue
 import com.ditherfarm.game.enterFloor
 import com.ditherfarm.game.forestSpots
+import com.ditherfarm.game.treeStage
+import com.ditherfarm.game.zoneOpen
 import com.ditherfarm.game.mine
 import com.ditherfarm.game.mineFloor
 import com.ditherfarm.game.mineQuarry
@@ -334,6 +336,20 @@ class ScreenshotTest {
             g.engine.screen?.enter()
             val m = w.mine
             m.rumble = m.markers.first(); m.rumbleEnd = w.state.minutes + 1000; m.braceTaps = 1
+            w.events.clear()
+        })
+    }
+
+    @Test fun forestHive() {
+        render("forest_hive", seconds = 1f, setup = { g ->
+            toLevel(g, 6)
+            g.goTo(Nav.FOREST)
+            g.engine.screen?.enter()
+            val w = g.world
+            val host = w.forestSpots.filter { it.kind == com.ditherfarm.game.SpotKind.TREE && w.zoneOpen(it.zone) && w.treeStage(it.index) == com.ditherfarm.game.TreeStage.MATURE }
+                .minBy { kotlin.math.abs(it.c - 17) + kotlin.math.abs(it.r - 17) }
+            w.state.forest.hive = host.index
+            (g.engine.screen as com.ditherfarm.ui.ForestScreen).centerOnTile(host.c, host.r)
             w.events.clear()
         })
     }

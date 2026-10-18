@@ -56,6 +56,8 @@ import com.ditherfarm.game.pageClaimable
 import com.ditherfarm.game.pageEntries
 import com.ditherfarm.game.pageProgress
 import com.ditherfarm.game.target
+import com.ditherfarm.game.hutCap
+import com.ditherfarm.game.hutTier
 import com.ditherfarm.game.CART_DAILY_CAP
 import com.ditherfarm.game.CART_MAX_RULES
 import com.ditherfarm.game.CartRule
@@ -565,14 +567,25 @@ class Panels(private val game: Game, private val hud: Hud) {
     fun shed(id: String): Boolean {
         val def = world.data.buildings[id] ?: return false
         val planter = id == "planter_shed"
+        val forestry = id == "logging_hut" || id == "tree_nursery"
         val crops = world.data.crops.values.filter { it.unlockLevel <= world.level }.sortedBy { it.unlockLevel }
         val perRow = 6
         val seedRows = (crops.size + perRow - 1) / perRow
-        val ph = if (planter) 106 + (if (world.state.planterMode == PlanterMode.FILL) seedRows * 28 else 12) else 70
+        val ph = if (planter) 106 + (if (world.state.planterMode == PlanterMode.FILL) seedRows * 28 else 12) else if (forestry) 82 else 70
         val (x, y, pw, h) = frame(def.name.uppercase(), ph, pw = 220).toList()
         if (closeButton(x, y, pw)) return false
         val secs = world.shedSecondsLeft(id).toInt()
         g.text("NEXT RUN IN %d:%02d".format(secs / 60, secs % 60), x + 10, y + 24, Gfx.INK, outline = 0, shadow = false)
+        if (forestry) {
+            val hut = id == "logging_hut"
+            val cap = if (hut) world.hutCap() else 0
+            g.text(if (hut) "TRAY: ${world.trayCount(id)}/$cap" else "TRAY: ${world.trayCount(id)}", x + 10, y + 35, Gfx.INK, outline = 0, shadow = false)
+            val trees = when (world.hutTier()) { 1 -> "PINE, BIRCH"; 2 -> "PINE, BIRCH, OAK"; else -> "PINE, BIRCH, OAK, MAPLE" }
+            g.text(if (hut) "FELLS $trees" else "CLEARS STUMPS, PLANTS SEEDS", x + 10, y + 48, Gfx.GREY, outline = 0, shadow = false)
+            g.text(if (hut) "NEVER TOUCHES ANCIENT OR HIVE TREES" else "USES TREE SEEDS FROM THE BARN", x + 10, y + 60, Gfx.GREY, outline = 0, shadow = false)
+            if (world.trayCount(id) > 0 && ui.button("shed-collect", x + pw - 70, y + 30, 60, 16, "COLLECT", style = "gold")) world.collect(id)
+            return true
+        }
         g.text("LAST RUN: ${world.state.shedLast[id] ?: 0} PLOTS", x + 10, y + 35, Gfx.INK, outline = 0, shadow = false)
         val what = if (planter) "PLANTS" else "HARVESTS"
         g.text("$what $SHED_PLOTS PLOTS EVERY ${SHED_REAL_MINUTES.toInt()} MIN", x + 10, y + 48, Gfx.GREY, outline = 0, shadow = false)

@@ -47,9 +47,13 @@ class ForestState {
     val zones = LinkedHashSet<String>()
     /** Fallen branches lying on map tiles, packed as c * 1000 + r. */
     val branches = LinkedHashSet<Int>()
+    /** Spot with a wild beehive (-1 = none) and the day it leaves. */
+    var hive = -1
+    var hiveUntil = 0
 
     fun toJson() = JSONObject().apply {
         put("seeded", seeded)
+        put("hive", hive); put("hiveUntil", hiveUntil)
         put("spots", JSONArray().apply { spots.forEach { put(it.toJson()) } })
         put("zones", JSONArray(zones.toList()))
         put("branches", JSONArray(branches.toList()))
@@ -58,6 +62,7 @@ class ForestState {
     companion object {
         fun fromJson(o: JSONObject) = ForestState().apply {
             seeded = o.optBoolean("seeded")
+            hive = o.optInt("hive", -1); hiveUntil = o.optInt("hiveUntil")
             o.optJSONArray("spots")?.objects()?.forEach { spots.add(SpotState.fromJson(it)) }
             o.optJSONArray("zones")?.strings()?.let { zones.addAll(it) }
             o.optJSONArray("branches")?.let { a -> (0 until a.length()).forEach { branches.add(a.getInt(it)) } }
@@ -203,6 +208,7 @@ fun World.chopBlocker(i: Int): String? {
 fun World.chop(i: Int): Boolean {
     chopBlocker(i)?.let { events += WorldEvent.Blocked(it); return false }
     spendEnergy(SWING_ENERGY)
+    stingIfHive(i)
     val s = spot(i)
     val tier = toolTier(Tool.AXE)
     val rng = rng()
@@ -347,6 +353,7 @@ internal fun World.forestDawn(day: Int) {
             SpotKind.SLOT -> {}
         }
     }
+    hiveDawn(day, rng)
     // Fallen branches on free tiles of open zones.
     val spawn = if (state.weather.stormy) 4 else 2
     repeat(spawn) {

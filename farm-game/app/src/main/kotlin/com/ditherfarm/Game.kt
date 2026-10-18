@@ -88,6 +88,12 @@ class Game(val host: Host) {
         if (withered > 0) parts += "$withered withered"
         if (storms > 0) parts += "$storms storm${if (storms > 1) "s" else ""}"
         if (w.state.coins != coinsBefore) parts += "${w.state.coins - coinsBefore} coins"
+        val batches = w.events.count { it is WorldEvent.JobDone }
+        if (batches > 0) parts += "$batches machine batches done"
+        w.events.filterIsInstance<WorldEvent.CartSold>().takeIf { it.isNotEmpty() }?.let { s -> parts += "Market Cart sold ${s.sumOf { it.units }}" }
+        w.events.filterIsInstance<WorldEvent.ShedRan>().takeIf { it.isNotEmpty() }?.let { s -> parts += "sheds worked ${s.sumOf { it.plots }} plots" }
+        val hut = w.state.buildings["logging_hut"]?.tray?.values?.sum() ?: 0
+        if (hut > 0) parts += "Logging Hut has $hut items"
         awaySummary = if (parts.isEmpty()) null else parts.joinToString(" - ")
     }
 

@@ -411,6 +411,36 @@
     "tank": 20
    },
    "trayCap": 80
+  },
+  {
+   "id": "logging_hut",
+   "name": "Logging Hut",
+   "screen": "forest",
+   "unlock": 9,
+   "cost": {
+    "coins": 1500,
+    "plank": 30,
+    "stone": 10
+   },
+   "recipes": [],
+   "queue": 1,
+   "prebuilt": false,
+   "sprite": "buildings/logging_hut"
+  },
+  {
+   "id": "tree_nursery",
+   "name": "Tree Nursery",
+   "screen": "forest",
+   "unlock": 14,
+   "cost": {
+    "coins": 3500,
+    "plank": 25,
+    "gear": 6
+   },
+   "recipes": [],
+   "queue": 1,
+   "prebuilt": false,
+   "sprite": "buildings/tree_nursery"
   }
  ]
 }

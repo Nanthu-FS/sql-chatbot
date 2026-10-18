@@ -132,4 +132,49 @@ class MachinesForestTest {
         val json = w.state.toJson().toString()
         assertEquals(json, GameState.fromJson(JSONObject(json)).toJson().toString())
     }
+
+    private fun World.toLevel(l: Int) { gainXp(data.level(l).totalXp - state.xp); state.energy = 1000.0; state.coins += 100_000 }
+
+    @Test fun loggingHutFellsWhileAway() {
+        val w = fresh(); w.toLevel(9)
+        w.add("plank", 30); w.add("stone", 10)
+        assertTrue(w.build("logging_hut"))
+        w.catchUp(3 * 3600.0)
+        val wood = w.building("logging_hut").tray["wood"] ?: 0
+        assertTrue("hut wood $wood", wood > 0)
+        assertTrue("stops near its cap", w.trayCount("logging_hut") < w.hutCap() + 10)
+        assertTrue(w.state.stat("fells") > 0)
+        assertTrue(w.collect("logging_hut") > 0)
+    }
+
+    @Test fun nurseryReplantsFromBarnSeeds() {
+        val w = fresh(); w.toLevel(14)
+        w.add("plank", 25); w.add("gear", 6)
+        assertTrue(w.build("tree_nursery"))
+        val empty = w.forestSpots.first { it.kind == SpotKind.TREE && it.native == "pine" && w.zoneOpen(it.zone) }
+        w.spot(empty.index).apply { tree = null; stage = TreeStage.EMPTY; since = w.state.minutes }
+        w.forestSpots.filter { it.kind == SpotKind.TREE && w.treeStage(it.index) == TreeStage.STUMP }.forEach { w.spot(it.index).apply { tree = null; stage = TreeStage.EMPTY } }
+        w.add("pinecone", 1)
+        w.advance(11 * 60.0)
+        assertEquals(0, w.count("pinecone"))
+        assertTrue(w.state.stat("trees_planted") >= 1)
+    }
+
+    @Test fun beehiveSmokeOrSting() {
+        val w = fresh(); w.toLevel(6)
+        val host = w.forestSpots.first { it.kind == SpotKind.TREE && w.zoneOpen(it.zone) && w.treeStage(it.index) == TreeStage.MATURE }
+        w.state.forest.hive = host.index; w.state.forest.hiveUntil = w.time.dayIndex + HIVE_DAYS
+        w.add("torch", 1)
+        assertTrue(w.smokeHive())
+        assertEquals(0, w.count("torch"))
+        assertTrue(w.count("honey") >= 3)
+        assertEquals(-1, w.state.forest.hive)
+        // A second hive, chopped without smoke: stings.
+        w.state.forest.hive = host.index
+        w.state.tools["axe"] = 3
+        val energy = w.state.energy
+        w.chop(host.index)
+        assertEquals(energy - SWING_ENERGY - 10, w.state.energy, 0.01)
+        assertEquals(-1, w.state.forest.hive)
+    }
 }
