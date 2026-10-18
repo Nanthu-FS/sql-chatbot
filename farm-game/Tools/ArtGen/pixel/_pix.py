@@ -109,3 +109,50 @@ def finish(body, outline=True, shadow=True, pad=2):
                 if any((x + dx, y + dy) in on for dx, dy in ((0, 1), (0, -1), (1, 0), (-1, 0))):
                     out[x, y] = E["ink"]
     return res, pad
+
+
+# Crops are drawn on a large canvas and shrunk so buildings tower over the fields.
+CROP_SCALE = 0.68
+
+
+def _lum(c):
+    return 0.299 * c[0] + 0.587 * c[1] + 0.114 * c[2]
+
+
+def shrink(body, f):
+    """Palette-preserving downscale of an unfinished sprite body (no outline yet).
+
+    Each target pixel takes the area-weighted most common colour of the source pixels it
+    covers; darker colours get a small boost so thin separation lines survive. Pixels with
+    under 45% coverage stay transparent. Returns (image, sx, sy) where sx, sy map source
+    coordinates to target ones (x * sx)."""
+    w, h = body.size
+    tw, th = max(1, round(w * f)), max(1, round(h * f))
+    sx, sy = tw / w, th / h
+    src = body.load()
+    out = new(tw, th)
+    dst = out.load()
+    for ty in range(th):
+        y0, y1 = ty / sy, (ty + 1) / sy
+        for tx in range(tw):
+            x0, x1 = tx / sx, (tx + 1) / sx
+            weights = {}
+            cover = 0.0
+            for yy in range(int(y0), min(h, int(y1 + 0.999))):
+                oy = min(y1, yy + 1) - max(y0, yy)
+                if oy <= 0:
+                    continue
+                for xx in range(int(x0), min(w, int(x1 + 0.999))):
+                    ox = min(x1, xx + 1) - max(x0, xx)
+                    if ox <= 0:
+                        continue
+                    c = src[xx, yy]
+                    if c[3] == 0:
+                        continue
+                    a = ox * oy
+                    cover += a
+                    weights[c] = weights.get(c, 0.0) + a * (1.35 if _lum(c) < 70 else 1.0)
+            area = (x1 - x0) * (y1 - y0)
+            if weights and cover / area >= 0.45:
+                dst[tx, ty] = max(weights.items(), key=lambda kv: kv[1])[0]
+    return out, sx, sy

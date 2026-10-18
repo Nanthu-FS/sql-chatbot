@@ -49,5 +49,14 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 - The XP curve is shorter than the design table from level 4 on (`levels.json` is authoritative). A bot that checks in hourly, 8 times a day, reaches L5 on day 2, L10 by day 5 and about L18 after three weeks (`PacingTest`).
 - `ProgressionTest` checks that every item a building, recipe, tool, zone or gate needs can be obtained by the level it unlocks.
 
+## Playtest round 1 (owner feedback)
+- **World:** the farm grows to about a 40x40 tile world with a dense forest border (no floating-island edge), a river with a bridge, signposted roads to the Forest and Mine, a village edge with cottages and the order board, and an empty fenced pasture kept for animals.
+- **Fields:** land is bought as fenced field blocks (not single plots). Each block gets a name, a crop, a worker and a destination: Truck (sell) or Silo (keep).
+- **Workers:** named farmhands with their own look, shown as animated pixel people. A worker assigned to a field harvests ripe crops, replants the field's crop (Silo seeds first, then buys), waters and clears dead plots. Workers level 1 to 25 with coins, getting faster each level. Each eats crops from the Silo daily (1 per day at L1-9, 2 at L10-19, 3 at L20-25, cheapest first) and rests if there is nothing to eat.
+- **Harvester and truck:** workers stack the harvest in crates at the field edge. A harvester cart collects crates and loads the truck (Truck fields) or the Silo (Silo fields). The truck waits by the barn; tap it to send it off the map to sell its load, and it returns with the coins.
+- **Skills:** 1 skill point per level across five branches (Green Thumb, Woodsman, Miner, Trader, Tinkerer), plus craftable one-shot tonics. Respec at the Workbench for coins (price grows with level).
+- **Scale:** crops are redrawn smaller (about two thirds) so buildings tower over the fields.
+- **Audio:** sound effects vary in pitch and have variants; ambient loops (birds, wind, crickets, forest, mine drips); weather ambience (rain, thunder, snowy wind); lo-fi, very calm background music (replaces the earlier "SFX only"), with toggles.
+
 ## Later (not v1)
 - Farm animals.

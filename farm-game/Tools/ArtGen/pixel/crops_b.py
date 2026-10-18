@@ -1,4 +1,4 @@
-import os, sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from _pix import E, CLEAR, Sprites, bayer, finish, from_map, new, rng  # noqa: E401,E402
+import os, sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from _pix import E, CLEAR, CROP_SCALE, Sprites, bayer, finish, from_map, new, rng, shrink  # noqa: E401,E402
 """Crops B: pumpkin, sunflower, cabbage, eggplant, melon, grapes.
 
 Pixel-direct: plants are built from small shaded primitives (balls, leaves, lobed
@@ -352,8 +352,9 @@ def trim_save(S, name, cv, ax=None, ay=None):
     m = min(x0, cv.w - 1 - x1, ax - 0)
     body = cv.im.crop((m, y0, cv.w - m, y1 + 1))
     assert body.width <= 30 and body.height <= 38, (name, body.size)
+    body, sx, sy = shrink(body, CROP_SCALE)
     im, pad = finish(body)
-    S.save(name, im, ax - m + pad, ay - y0 + pad)
+    S.save(name, im, round((ax - m) * sx) + pad, round((ay - y0) * sy) + pad)
     return im
 
 

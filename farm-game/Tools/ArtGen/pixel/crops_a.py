@@ -8,7 +8,7 @@ Everything is drawn in Endesga-32 with checker dither between ramp steps, lit fr
 top-left, and finished with finish() (1px ink outline + hard drop shadow) like the tiles.
 """
 import os, sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # noqa: E401,E702
-from _pix import E, CLEAR, Sprites, new, from_map, finish  # noqa: E402
+from _pix import E, CLEAR, CROP_SCALE, Sprites, new, from_map, finish, shrink  # noqa: E402
 import json  # noqa: E402
 import math  # noqa: E402
 
@@ -305,8 +305,9 @@ def save_crop(sp, name, c):
     left, right = GXB - half, GXB + half
     body = c.im.crop((left, y0, right, y1))
     assert body.height <= 38 and body.width <= 30, (name, body.size)
+    body, sx, sy = shrink(body, CROP_SCALE)
     out, pad = finish(body)
-    sp.save(name, out, GXB - left + pad, GYB - y0 + pad)
+    sp.save(name, out, round((GXB - left) * sx) + pad, round((GYB - y0) * sy) + pad)
 
 
 # ---------------------------------------------------------------- wheat
