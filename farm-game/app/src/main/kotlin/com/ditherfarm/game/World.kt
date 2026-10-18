@@ -16,7 +16,7 @@ sealed class WorldEvent {
     data class Watered(val plot: Int) : WorldEvent()
     data class Ripened(val plot: Int) : WorldEvent()
     data class Cleared(val plot: Int) : WorldEvent()
-    data class PlotBought(val plot: Int, val price: Int) : WorldEvent()
+    data class BlockBought(val block: Int, val price: Int) : WorldEvent()
     data class XpGained(val amount: Int) : WorldEvent()
     data class LevelUp(val level: Int, val coins: Int) : WorldEvent()
     data class Blocked(val reason: String, val plot: Int = -1) : WorldEvent()
@@ -76,7 +76,11 @@ class World(val data: GameData, val state: GameState) {
     val time get() = GameTime(state.minutes)
     val level get() = state.level
 
-    init { syncGreenhouse() }
+    init {
+        migrateLayout()
+        syncGreenhouse()
+        while (state.fields.size < FieldLayout.BLOCKS) state.fields.add(FieldState())
+    }
 
     // ------------------------------------------------------------------ time
     /** Advances real time; returns false if nothing ran (dt <= 0). */
@@ -472,30 +476,6 @@ class World(val data: GameData, val state: GameState) {
         return true
     }
 
-    val plotCap get() = data.level(state.level).plotCap
-
-    /** Price of the next plot (k = owned + 1), or null when at the cap or the maximum. */
-    fun nextPlotPrice(): Int? {
-        val k = ownedPlots + 1
-        if (k > FieldLayout.FIELD || k > plotCap) return null
-        return niceRound(80 * 1.125.pow(k - 7))
-    }
-
-    fun buyPlot(i: Int): Boolean {
-        val price = nextPlotPrice()
-        val p = plot(i)
-        when {
-            p.owned -> return false
-            price == null -> { events += WorldEvent.Blocked("Level up to buy more land", i); return false }
-            state.coins < price -> { events += WorldEvent.Blocked("Not enough coins", i); return false }
-        }
-        state.coins -= price!!
-        p.owned = true
-        gainXp(max(1, price / 50))
-        events += WorldEvent.PlotBought(i, price)
-        return true
-    }
-
     // ---------------------------------------------------------------- market
     /** Deterministic ±30% daily swing per item (GAME_DESIGN §13). */
     fun dailyMult(item: String, day: Int): Double {
@@ -691,7 +671,7 @@ class World(val data: GameData, val state: GameState) {
             s.coins = 250
             s.energy = 100.0
             repeat(FieldLayout.TOTAL) { s.plots.add(PlotState(it)) }
-            for (i in 0 until 6) s.plots[i].owned = true
+            for (i in FieldLayout.plotsOf(0)) s.plots[i].owned = true
             for (i in 0 until 2) s.plots[i].apply { crop = "wheat"; growth = data.crop("wheat").growMinutes; cared = true }
             val w = World(data, s)
             mapOf(

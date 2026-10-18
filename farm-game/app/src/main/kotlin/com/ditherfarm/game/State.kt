@@ -136,6 +136,8 @@ class GameState(var seed: Long) {
     var mine = MineState()
     /** Field vertex → fixture item (sprinklers, scarecrows, lightning rods). */
     val fixtures = HashMap<Int, String>()
+    /** Per field block (A..H): crop to replant and harvest destination. */
+    val fields = ArrayList<FieldState>()
     var planterMode = PlanterMode.REPLANT
     var planterSeed: String? = null
     /** Shed id → game minute of its next run, plots handled last run, and whether it is blocked. */
@@ -189,6 +191,7 @@ class GameState(var seed: Long) {
         put("forest", forest.toJson())
         put("mine", mine.toJson())
         put("fixtures", JSONObject().apply { fixtures.forEach { (k, v) -> put(k.toString(), v) } })
+        put("fields", JSONArray().apply { fields.forEach { put(it.toJson()) } })
         put("planter", JSONObject().apply { put("mode", planterMode.name); planterSeed?.let { put("seed", it) } })
         put("shedNext", JSONObject(shedNext as Map<*, *>))
         put("shedLast", JSONObject(shedLast as Map<*, *>))
@@ -206,7 +209,7 @@ class GameState(var seed: Long) {
     }
 
     companion object {
-        const val VERSION = 1
+        const val VERSION = 2
 
         fun fromJson(o: JSONObject): GameState = GameState(o.getLong("seed")).apply {
             version = o.optInt("version", 1)
@@ -240,6 +243,7 @@ class GameState(var seed: Long) {
             o.optJSONObject("forest")?.let { forest = ForestState.fromJson(it) }
             o.optJSONObject("mine")?.let { mine = MineState.fromJson(it) }
             o.optJSONObject("fixtures")?.let { f -> f.keys().forEach { fixtures[it.toInt()] = f.getString(it) } }
+            o.optJSONArray("fields")?.objects()?.forEach { fields += FieldState.fromJson(it) }
             o.optJSONObject("planter")?.let { p ->
                 planterMode = PlanterMode.valueOf(p.optString("mode", "REPLANT")); planterSeed = if (p.has("seed")) p.getString("seed") else null
             }

@@ -34,6 +34,15 @@ class Camera {
 
     fun setBounds(b: IntArray) { bounds = b; clamp() }
 
+    /** When set, the whole view (centre cx, cy and half extents in world px) stays inside this diamond. */
+    private var diamond: FloatArray? = null
+
+    fun setDiamond(cx: Float, cy: Float, halfW: Float, halfH: Float) { diamond = floatArrayOf(cx, cy, halfW, halfH); clamp() }
+
+    /** Visible world rectangle size at the current zoom. */
+    val viewWidth get() = viewW / zoom.toFloat()
+    val viewHeight get() = viewH / zoom.toFloat()
+
     fun centerOn(wx: Float, wy: Float) {
         x = wx - viewW / (2f * zoom)
         y = wy - (viewH + topInset - bottomInset) / (2f * zoom)
@@ -86,6 +95,7 @@ class Camera {
     fun snapY() = (y * zoom).roundToInt()
 
     private fun clamp() {
+        diamond?.let { d -> clampDiamond(d); return }
         val visW = viewW / zoom.toFloat()
         val visH = (viewH - topInset - bottomInset) / zoom.toFloat()
         val slack = 48f
@@ -95,5 +105,22 @@ class Camera {
         val maxY = bounds[3] + slack - visH - topInset / zoom.toFloat()
         x = if (maxX < minX) (bounds[0] + bounds[2]) / 2f - visW / 2f else x.coerceIn(minX, maxX)
         y = if (maxY < minY) (bounds[1] + bounds[3]) / 2f - visH / 2f - topInset / zoom.toFloat() else y.coerceIn(minY, maxY)
+    }
+
+    /**
+     * Keeps every corner of the view inside the diamond: the view centre must lie in a
+     * smaller diamond shrunk by the view's half size, so it is pulled back toward the middle.
+     */
+    private fun clampDiamond(d: FloatArray) {
+        val a = viewWidth / 2f
+        val b = viewHeight / 2f
+        val k = 1f - a / d[2] - b / d[3]
+        if (k <= 0f) { x = d[0] - a; y = d[1] - b; return }
+        var dx = x + a - d[0]
+        var dy = y + b - d[1]
+        val s = abs(dx) / (k * d[2]) + abs(dy) / (k * d[3])
+        if (s > 1f) { dx /= s; dy /= s }
+        x = d[0] + dx - a
+        y = d[1] + dy - b
     }
 }

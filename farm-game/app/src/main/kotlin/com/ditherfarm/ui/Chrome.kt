@@ -21,7 +21,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD }
 
     var panel = Panel.NONE
         private set
@@ -128,6 +128,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.GIFT -> panels.gift()
             Panel.MERCHANT -> panels.merchant()
             Panel.CART -> panels.cart()
+            Panel.FIELD -> panels.field(target?.toIntOrNull() ?: return)
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {

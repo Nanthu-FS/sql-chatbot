@@ -11,6 +11,7 @@ import com.ditherfarm.game.Season
 import com.ditherfarm.game.Weather
 import com.ditherfarm.game.addCartRule
 import com.ditherfarm.game.build
+import com.ditherfarm.game.buyBlock
 import com.ditherfarm.game.chop
 import com.ditherfarm.game.enqueue
 import com.ditherfarm.game.enterFloor
@@ -52,13 +53,19 @@ class ScreenshotTest {
     }
 
     /** Builds a game, lets [setup] arrange it, runs frames for [seconds] and saves a PNG. */
-    private fun render(name: String, seconds: Float = 0.6f, setup: (Game) -> Unit = {}, drive: (Game, Float) -> Unit = { _, _ -> }): Game {
+    private fun render(
+        name: String, seconds: Float = 0.6f, setup: (Game) -> Unit = {}, drive: (Game, Float) -> Unit = { _, _ -> },
+        size: Pair<Int, Int> = 270 to 585, zoom: Int = 0,
+    ): Game {
         val game = Game(TestHost())
-        val w = 270
-        val h = 585
+        val (w, h) = size
         game.engine.resize(w, h)
         game.engine.screen?.enter()
         setup(game)
+        if (zoom > 0) (game.engine.screen as? com.ditherfarm.ui.IsoMapScreen)?.cam?.let { cam ->
+            cam.minZoom = zoom
+            cam.zoomAt(zoom - cam.zoom, w / 2f, h / 2f)
+        }
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
         val dt = 1f / 30f
@@ -73,7 +80,8 @@ class ScreenshotTest {
         }
         System.getProperty("shots.out")?.let { out ->
             File(out).mkdirs()
-            val big = Bitmap.createScaledBitmap(bmp, w * 3, h * 3, false)
+            val k = if (w > 600) 1 else 3
+            val big = Bitmap.createScaledBitmap(bmp, w * k, h * k, false)
             File(out, "$name.png").outputStream().use { big.compress(Bitmap.CompressFormat.PNG, 100, it) }
         }
         return game
@@ -237,12 +245,12 @@ class ScreenshotTest {
                 if (w.data.crops.containsKey(c)) w.plot(gh + k).apply { clear(); crop = c; growth = w.data.crop(c).growMinutes * (0.3 + k * 0.15) }
             }
             w.add("copper_sprinkler", 2); w.add("scarecrow", 1); w.add("lightning_rod", 1)
-            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(3, 3), "copper_sprinkler")
-            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(5, 3), "copper_sprinkler")
-            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(4, 2), "scarecrow")
-            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(4, 4), "lightning_rod")
+            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(0, 1, 1), "copper_sprinkler")
+            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(0, 3, 3), "copper_sprinkler")
+            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(0, 2, 0), "scarecrow")
+            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(0, 4, 2), "lightning_rod")
             w.events.clear()
-            g.farm.centerOnTile(3, 16)
+            g.farm.centerOnTile(com.ditherfarm.ui.FarmMap.GREENHOUSE.first + 2, com.ditherfarm.ui.FarmMap.GREENHOUSE.second + 1)
         })
     }
 
@@ -251,8 +259,9 @@ class ScreenshotTest {
             toLevel(g, 6)
             g.world.add("copper_sprinkler", 2)
             g.farm.startPlacing("copper_sprinkler")
-            val x = com.ditherfarm.engine.Iso.x(FarmScreen.FIELD_C0 + 4, FarmScreen.FIELD_R0 + 3).toFloat()
-            val y = com.ditherfarm.engine.Iso.y(FarmScreen.FIELD_C0 + 4, FarmScreen.FIELD_R0 + 3).toFloat()
+            val (bc, br) = com.ditherfarm.ui.FarmMap.BLOCKS[0]
+            val x = com.ditherfarm.engine.Iso.x(bc + 2, br + 2).toFloat()
+            val y = com.ditherfarm.engine.Iso.y(bc + 2, br + 2).toFloat()
             g.farm.onWorldTap(x, y)
         })
     }
@@ -352,5 +361,14 @@ class ScreenshotTest {
             (g.engine.screen as com.ditherfarm.ui.ForestScreen).centerOnTile(host.c, host.r)
             w.events.clear()
         })
+    }
+
+    @Test fun farmOverview() {
+        render("farm_overview", seconds = 0.3f, setup = { g ->
+            g.world.gainXp(g.world.data.level(12).totalXp); g.world.events.clear()
+            g.world.state.coins += 100_000
+            for (b in 1..4) g.world.buyBlock(b)
+            g.world.events.clear()
+        }, size = 1500 to 820, zoom = 1)
     }
 }

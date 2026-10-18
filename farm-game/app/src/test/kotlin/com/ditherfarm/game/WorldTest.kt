@@ -19,7 +19,7 @@ class WorldTest {
     @Test fun newGameMatchesStartingKit() {
         val w = fresh()
         assertEquals(250, w.state.coins)
-        assertEquals(6, w.ownedPlots)
+        assertEquals(FieldLayout.PER_BLOCK, w.ownedPlots)
         assertTrue(w.isReady(w.plot(0)) && w.isReady(w.plot(1)))
         assertEquals(12, w.count("seed_wheat"))
         assertEquals(3, w.state.orders.count { it.order != null })
@@ -134,16 +134,36 @@ class WorldTest {
         assertTrue(w.unitPrice("pumpkin") < first)
     }
 
-    @Test fun plotPricesFollowTheCurve() {
+    @Test fun fieldBlocksUnlockByLevelAndCost() {
         val w = fresh()
-        assertNull(w.nextPlotPrice()) // level 1 cap is 6 plots
-        w.gainXp(40) // level 2: cap 8
-        assertEquals(80, w.nextPlotPrice())
-        assertTrue(w.buyPlot(6))
-        assertEquals(90, w.nextPlotPrice())
-        w.state.coins = 100_000
-        assertTrue(w.buyPlot(7))
-        assertNull(w.nextPlotPrice()) // 8 owned = level 2 cap
+        assertTrue(w.blockOwned(0))
+        assertNotNull(w.blockBlocker(1)) // level 3
+        w.gainXp(w.data.level(3).totalXp - w.state.xp)
+        w.state.coins = 0
+        assertNotNull(w.blockBlocker(1)) // coins
+        w.state.coins = 10_000
+        assertTrue(w.buyBlock(1))
+        assertEquals(10_000 - FieldLayout.PRICE[1], w.state.coins)
+        assertEquals(2 * FieldLayout.PER_BLOCK, w.ownedPlots)
+        assertFalse(w.buyBlock(1))
+        assertNotNull(w.blockBlocker(2)) // level 5
+    }
+
+    @Test fun oldSavesMoveIntoBlocks() {
+        val w = fresh()
+        val json = w.state.toJson()
+        // Fake a version 1 save: 48 field plots + 12 greenhouse, 20 owned, a crop on old plot 17.
+        val plots = org.json.JSONArray()
+        for (i in 0 until 60) plots.put(PlotState(i).apply { owned = i < 20; if (i == 17) { crop = "carrot"; growth = 30.0 } }.toJson())
+        json.put("plots", plots).put("version", 1)
+        json.put("fixtures", org.json.JSONObject().put("5", "scarecrow"))
+        val back = World(w.data, GameState.fromJson(json))
+        assertEquals(FieldLayout.TOTAL, back.state.plots.size)
+        assertEquals(2 * FieldLayout.PER_BLOCK, back.ownedPlots)
+        assertEquals("carrot", back.plot(17).crop)
+        assertTrue(back.state.fixtures.isEmpty())
+        assertEquals(1, back.count("scarecrow"))
+        assertEquals(GameState.VERSION, back.state.version)
     }
 
     @Test fun energyRegeneratesOverNinetyMinutes() {

@@ -837,4 +837,30 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.text(if (log != null) "LAST SALE: ${log.units} ITEMS FOR ${log.coins} COINS" else "NO SALES YET", x + pw / 2, y + ph - 16, Gfx.INK, align = 0, outline = 0, shadow = false)
         return true
     }
+
+    // ------------------------------------------------------------------ field blocks
+    /** A field block's settings: the crop its farmhand replants and where the harvest goes. */
+    fun field(block: Int): Boolean {
+        val f = world.state.fields.getOrNull(block) ?: return false
+        val crops = world.data.crops.values.filter { it.unlockLevel <= world.level }.sortedBy { it.unlockLevel }
+        val per = 6
+        val rows = (crops.size + per - 1) / per
+        val (x, y, pw, ph) = frame("FIELD ${com.ditherfarm.game.FieldLayout.name(block)}", 104 + rows * 28, pw = 220).toList()
+        if (closeButton(x, y, pw)) return false
+        val plots = com.ditherfarm.game.FieldLayout.plotsOf(block)
+        val ripe = plots.count { world.isReady(world.plot(it)) }
+        val growing = plots.count { world.plot(it).crop != null } - ripe
+        g.text("$growing GROWING, $ripe RIPE", x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
+        g.text("CROP FOR THIS FIELD", x + 10, y + 36, Gfx.GREY, outline = 0, shadow = false)
+        crops.forEachIndexed { i, c ->
+            val sx = x + 12 + (i % per) * 33
+            val sy = y + 48 + (i / per) * 28
+            if (ui.slot("fcrop-${c.id}", sx, sy, icon(c.seedItem), -1, f.crop == c.id, 24)) f.crop = if (f.crop == c.id) null else c.id
+        }
+        val ty = y + 52 + rows * 28
+        g.text("HARVEST GOES TO", x + 10, ty, Gfx.GREY, outline = 0, shadow = false)
+        if (ui.button("fdest-truck", x + 10, ty + 12, 96, 16, "TRUCK (SELL)", style = if (f.toTruck) "gold" else "wood")) f.toTruck = true
+        if (ui.button("fdest-silo", x + pw - 106, ty + 12, 96, 16, "SILO (KEEP)", style = if (!f.toTruck) "gold" else "wood")) f.toTruck = false
+        return true
+    }
 }

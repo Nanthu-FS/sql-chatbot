@@ -46,12 +46,7 @@ class PacingTest {
         if (used(Storage.BARN) >= capacity(Storage.BARN)) for (k in state.inventory.keys.toList()) {
             if (data.item(baseId(k)).storage == Storage.BARN && count(k) > 30) sell(k, count(k) - 30)
         }
-        while (true) {
-            val price = nextPlotPrice() ?: break
-            if (state.coins < price * 2) break
-            val next = (0 until FieldLayout.FIELD).firstOrNull { !plot(it).owned } ?: break
-            buyPlot(next)
-        }
+        for (b in 0 until FieldLayout.BLOCKS) if (blockBlocker(b) == null && state.coins > FieldLayout.PRICE[b] * 2) buyBlock(b)
         // Spend energy on the forest and the quarry.
         if (level >= 2) for (sp in forestSpots) {
             if (state.energy < 30) break
@@ -87,7 +82,7 @@ class PacingTest {
     @Test fun playedSaveRoundTripsExactly() {
         val w = World.newGame(data, 9)
         repeat(3 * 8) { w.session(); w.advance(3600.0) }
-        w.state.fixtures[FieldLayout.vertex(2, 2)] = "scarecrow"
+        w.state.fixtures[FieldLayout.vertex(0, 2, 2)] = "scarecrow"
         w.state.cartRules += CartRule("wheat", 2, 15)
         val first = w.state.toJson().toString()
         val again = GameState.fromJson(org.json.JSONObject(first)).toJson().toString()

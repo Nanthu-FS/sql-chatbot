@@ -145,6 +145,10 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
         ui.endFrame()
     }
 
+    /** True if a world point is on screen (with [pad] world px of margin for tall sprites). */
+    fun inView(wx: Float, wy: Float, pad: Float = 40f): Boolean =
+        wx >= cam.x - pad && wx <= cam.x + cam.viewWidth + pad && wy >= cam.y - pad && wy <= cam.y + cam.viewHeight + pad * 2
+
     /** World pixel → buffer pixel, e.g. to anchor a HUD bubble over a tile. */
     fun toBufferX(wx: Float) = (wx - cam.x) * cam.zoom
     fun toBufferY(wy: Float) = (wy - cam.y) * cam.zoom

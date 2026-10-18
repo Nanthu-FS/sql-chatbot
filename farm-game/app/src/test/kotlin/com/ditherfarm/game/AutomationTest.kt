@@ -15,20 +15,21 @@ class AutomationTest {
     }
 
     /** Vertex at the top-left corner of field plot [plot]. */
-    private fun cornerOf(plot: Int): Int { val (c, r) = FieldLayout.cells[plot]; return FieldLayout.vertex(c, r) }
+    private fun cornerOf(plot: Int): Int { val (c, r) = FieldLayout.cell(plot); return FieldLayout.vertex(FieldLayout.blockOf(plot), c, r) }
 
     @Test fun layoutHasSixtyPlotsAndUniqueCells() {
         val w = fresh()
         assertEquals(FieldLayout.TOTAL, w.state.plots.size)
-        assertEquals(FieldLayout.FIELD, FieldLayout.cells.toSet().size)
-        assertEquals(6, w.ownedPlots)
+        assertEquals(FieldLayout.PER_BLOCK, (0 until FieldLayout.PER_BLOCK).map { FieldLayout.cell(it) }.toSet().size)
+        assertEquals(FieldLayout.PER_BLOCK, w.ownedPlots)
     }
 
     @Test fun copperSprinklerCoversFourPlots() {
-        val v = FieldLayout.vertex(4, 3)
+        val v = FieldLayout.vertex(0, 2, 2)
         val covered = (0 until FieldLayout.FIELD).filter { FieldLayout.covers(v, 1, it) }
         assertEquals(4, covered.size)
         assertEquals(16, (0 until FieldLayout.FIELD).count { FieldLayout.covers(v, 2, it) })
+        assertEquals("never reaches into the next block", 0, FieldLayout.plotsOf(1).count { FieldLayout.covers(v, 5, it) })
     }
 
     @Test fun sprinklerWatersAtPlantingAndAtDawn() {
@@ -50,12 +51,11 @@ class AutomationTest {
 
     @Test fun rodsAndScarecrowsProtectFromStorms() {
         val w = fresh(10)
-        for (i in 0 until FieldLayout.FIELD) w.plot(i).owned = true
-        // Rods and scarecrows over the whole field.
-        w.add("lightning_rod", 2); w.add("scarecrow", 4)
-        w.placeFixture(FieldLayout.vertex(2, 3), "lightning_rod"); w.placeFixture(FieldLayout.vertex(7, 3), "lightning_rod")
-        listOf(FieldLayout.vertex(2, 2), FieldLayout.vertex(6, 2), FieldLayout.vertex(2, 5), FieldLayout.vertex(6, 5)).forEach { w.placeFixture(it, "scarecrow") }
-        for (i in 0 until FieldLayout.FIELD) {
+        // One block, fully covered by a rod and a scarecrow at its centre.
+        w.add("lightning_rod", 1); w.add("scarecrow", 1)
+        w.placeFixture(FieldLayout.vertex(0, 2, 2), "lightning_rod")
+        w.placeFixture(FieldLayout.vertex(0, 1, 1), "scarecrow")
+        for (i in FieldLayout.plotsOf(0)) {
             assertTrue("rod $i", w.covered(i, FixtureKind.LIGHTNING))
             w.plot(i).apply { clear(); crop = "wheat"; growth = 10.0 }
         }
@@ -78,7 +78,7 @@ class AutomationTest {
         val offSeason = data.crops.values.first { w.time.season !in it.seasons && it.unlockLevel <= 12 }
         assertNotNull(w.plantBlocker(0, offSeason.id))
         assertTrue(w.plant(gh, offSeason.id))
-        assertEquals(6, w.ownedPlots)
+        assertEquals(FieldLayout.PER_BLOCK, w.ownedPlots)
     }
 
     @Test fun shedsHarvestAndReplant() {
@@ -99,11 +99,11 @@ class AutomationTest {
     @Test fun automationSurvivesSave() {
         val w = fresh(6)
         w.add("copper_sprinkler", 1)
-        w.placeFixture(FieldLayout.vertex(3, 3), "copper_sprinkler")
+        w.placeFixture(FieldLayout.vertex(0, 3, 3), "copper_sprinkler")
         w.state.planterMode = PlanterMode.FILL; w.state.planterSeed = "carrot"
         w.plot(0).lastCrop = "wheat"
         val back = GameState.fromJson(w.state.toJson())
-        assertEquals("copper_sprinkler", back.fixtures[FieldLayout.vertex(3, 3)])
+        assertEquals("copper_sprinkler", back.fixtures[FieldLayout.vertex(0, 3, 3)])
         assertEquals(PlanterMode.FILL, back.planterMode)
         assertEquals("carrot", back.planterSeed)
         assertEquals("wheat", back.plots[0].lastCrop)
