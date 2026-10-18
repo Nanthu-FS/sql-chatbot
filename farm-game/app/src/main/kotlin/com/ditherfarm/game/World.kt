@@ -435,6 +435,8 @@ class World(val data: GameData, val state: GameState) {
         if (p.battered) { if (q == Quality.NORMAL) qty = max(1, qty - 1) else q = Quality.entries[q.ordinal - 1] }
         val first = def.id !in state.discovered
         add(q.key(def.id), qty)
+        // Leaves and stalks for the Compost Bin.
+        if (rng().chance(0.15) && hasRoom("plant_scraps")) add("plant_scraps", 1)
         val xp = (ceil(def.xp * q.mult).toInt() + if (first) 10 else 0).let { if (auto) (it + 1) / 2 else it }
         p.harvests++
         state.bump("harvested", qty.toLong())
@@ -596,7 +598,8 @@ class World(val data: GameData, val state: GameState) {
         val villager = villagersUnlocked().filter { it.id !in busy }.let { if (it.isEmpty()) return null else it[rng.nextInt(it.size)] }
         val pool = state.discovered.filter { id ->
             val item = data.items[id] ?: return@filter false
-            item.price > 0 && item.storage != Storage.NONE && (data.crops[id]?.let { it.unlockLevel <= state.level } ?: true)
+            item.price > 0 && item.storage != Storage.NONE && id !in NOT_ORDERED && !id.startsWith("mineral_") &&
+                item.category != "fixture" && (data.crops[id]?.let { it.unlockLevel <= state.level } ?: true)
         }
         if (pool.isEmpty()) return null
         val l = state.level
@@ -679,6 +682,8 @@ class World(val data: GameData, val state: GameState) {
         const val OFFLINE_CAP_SECONDS = 24 * 3600.0
         const val PLOT_COUNT = FieldLayout.FIELD
         val HEARTS = intArrayOf(100, 250, 500, 850, 1300)
+        /** Rare finds and junk that villagers never ask for. */
+        val NOT_ORDERED = setOf("prismatic_shard", "golden_feather", "golden_acorn", "heartwood", "old_coin", "withered_crop", "plant_scraps", "diamond", "bird_nest")
 
         /** A fresh save with the starting kit (GAME_DESIGN §17). */
         fun newGame(data: GameData, seed: Long): World {

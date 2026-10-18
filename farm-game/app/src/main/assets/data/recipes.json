@@ -510,7 +510,7 @@
     "pumpkin_pie": 1
    },
    "minutes": 25,
-   "unlock": 11,
+   "unlock": 15,
    "fuel": 0.0
   },
   {
@@ -582,7 +582,7 @@
     "strawberry_jam": 1
    },
    "minutes": 30,
-   "unlock": 7,
+   "unlock": 9,
    "fuel": 0.0
   },
   {
@@ -595,7 +595,7 @@
     "melon_jam": 1
    },
    "minutes": 30,
-   "unlock": 7,
+   "unlock": 18,
    "fuel": 0.0
   },
   {
@@ -608,7 +608,7 @@
     "grapes_jam": 1
    },
    "minutes": 30,
-   "unlock": 7,
+   "unlock": 21,
    "fuel": 0.0
   },
   {
@@ -673,7 +673,7 @@
     "pumpkin_pickles": 1
    },
    "minutes": 30,
-   "unlock": 7,
+   "unlock": 15,
    "fuel": 0.0
   },
   {
@@ -699,7 +699,7 @@
     "eggplant_pickles": 1
    },
    "minutes": 30,
-   "unlock": 7,
+   "unlock": 13,
    "fuel": 0.0
   },
   {
@@ -762,7 +762,7 @@
     "melon_juice": 1
    },
    "minutes": 40,
-   "unlock": 10,
+   "unlock": 18,
    "fuel": 0.0
   },
   {
@@ -775,7 +775,7 @@
     "grapes_juice": 1
    },
    "minutes": 40,
-   "unlock": 10,
+   "unlock": 21,
    "fuel": 0.0
   },
   {
@@ -879,7 +879,7 @@
     "seed_sunflower": 2
    },
    "minutes": 8,
-   "unlock": 9,
+   "unlock": 11,
    "fuel": 0.0
   },
   {
@@ -892,7 +892,7 @@
     "seed_eggplant": 2
    },
    "minutes": 8,
-   "unlock": 9,
+   "unlock": 13,
    "fuel": 0.0
   },
   {
@@ -905,7 +905,7 @@
     "seed_pumpkin": 2
    },
    "minutes": 8,
-   "unlock": 9,
+   "unlock": 15,
    "fuel": 0.0
   },
   {
@@ -918,7 +918,7 @@
     "seed_melon": 2
    },
    "minutes": 8,
-   "unlock": 9,
+   "unlock": 18,
    "fuel": 0.0
   },
   {
@@ -931,7 +931,7 @@
     "seed_grapes": 2
    },
    "minutes": 8,
-   "unlock": 9,
+   "unlock": 21,
    "fuel": 0.0
   },
   {
