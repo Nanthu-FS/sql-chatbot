@@ -351,6 +351,286 @@
   "ax": 7,
   "ay": 9
  },
+ "icons_big/bag": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/bell": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/book": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/build": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/close": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/craft": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/export": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/fertilizer": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/festival": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/gift": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/harvest": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/import": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/info": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/market": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/menu": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/merchant": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/nav_farm": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/nav_forest": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/nav_mine": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/orders": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/seeds": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/sell": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/settings": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/shop": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/sound_off": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/sound_on": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/sprinkler": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/tool_axe": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/tool_hoe": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/tool_pickaxe": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/tool_scythe": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/tool_sickle": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/tool_water_can": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/trophy": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/vibrate": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons/bag": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/bell": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/book": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/build": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/close": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/craft": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/export": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/fertilizer": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/festival": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/gift": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/harvest": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/import": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/info": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/market": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/menu": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/merchant": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/nav_farm": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/nav_forest": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/nav_mine": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/orders": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/seeds": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/sell": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/settings": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/shop": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/sound_off": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/sound_on": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/sprinkler": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/tool_axe": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/tool_hoe": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/tool_pickaxe": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/tool_scythe": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/tool_sickle": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/tool_water_can": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/trophy": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/vibrate": {
+  "ax": 9,
+  "ay": 9
+ },
  "items_big/cabbage": {
   "ax": 16,
   "ay": 16
