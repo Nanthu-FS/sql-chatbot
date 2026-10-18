@@ -83,6 +83,8 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
 
     abstract fun drawHud(g: Gfx)
 
+    /** World-pixel tap before tile picking (e.g. corners between plots); return true if handled. */
+    open fun onWorldTap(wx: Float, wy: Float): Boolean = false
     open fun onTileTap(c: Int, r: Int) {}
     open fun onTileLongPress(c: Int, r: Int) {}
     open fun onTilePaint(c: Int, r: Int) {}
@@ -161,7 +163,10 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     override fun hudMove(x: Float, y: Float) = ui.pointerMove(x, y)
     override fun hudUp(x: Float, y: Float) = ui.pointerUp(x, y)
 
-    override fun tap(x: Float, y: Float) { if (tileAt(x, y)) onTileTap(pick[0], pick[1]) }
+    override fun tap(x: Float, y: Float) {
+        if (onWorldTap(cam.toWorldX(x), cam.toWorldY(y))) return
+        if (tileAt(x, y)) onTileTap(pick[0], pick[1])
+    }
     override fun longPress(x: Float, y: Float) {
         lastPaintC = Int.MIN_VALUE
         if (tileAt(x, y)) onTileLongPress(pick[0], pick[1])

@@ -7,6 +7,10 @@ import com.ditherfarm.engine.Iso
 import com.ditherfarm.engine.Lighting
 import com.ditherfarm.engine.Noise
 import com.ditherfarm.engine.Terrain
+import android.graphics.Paint
+import android.graphics.Path
+import com.ditherfarm.game.FieldLayout
+import com.ditherfarm.game.Fixture
 import com.ditherfarm.game.PlotState
 import com.ditherfarm.game.Quality
 import com.ditherfarm.game.Season
@@ -15,10 +19,16 @@ import com.ditherfarm.game.WorldEvent
 import com.ditherfarm.game.build
 import com.ditherfarm.game.buildingsOn
 import com.ditherfarm.game.collect
+import com.ditherfarm.game.fixtureAt
+import com.ditherfarm.game.greenhouseOpen
+import com.ditherfarm.game.pickUpFixture
+import com.ditherfarm.game.placeBlocker
+import com.ditherfarm.game.placeFixture
 import com.ditherfarm.game.isBuilt
 import com.ditherfarm.game.jobProgress
 import com.ditherfarm.game.trayCount
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import com.ditherfarm.engine.Weather as Sky
 
@@ -38,14 +48,9 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private val world get() = game.world
 
     // --- layout ---------------------------------------------------------------
-    /** Tile of each plot index; plots unlock from the centre of the field outward. */
-    private val plotTiles: List<Pair<Int, Int>> = run {
-        val cells = ArrayList<Pair<Int, Int>>()
-        for (r in FIELD_R0 until FIELD_R0 + FIELD_ROWS) for (c in FIELD_C0 until FIELD_C0 + FIELD_COLS) cells += c to r
-        val cc = FIELD_C0 + (FIELD_COLS - 1) / 2f
-        val cr = FIELD_R0 + (FIELD_ROWS - 1) / 2f
-        cells.sortedWith(compareBy({ (c, r) -> abs(c - cc) * 0.9f + abs(r - cr) }, { it.second }, { it.first }))
-    }
+    /** Tile of each plot index: the field (unlocking from its centre outward), then the greenhouse. */
+    private val plotTiles: List<Pair<Int, Int>> = FieldLayout.cells.map { (c, r) -> FIELD_C0 + c to FIELD_R0 + r } +
+        (0 until FieldLayout.GREENHOUSE).map { k -> GH_C0 + k % FieldLayout.GH_COLS to GH_R0 + k / FieldLayout.GH_COLS }
     private val plotAt = HashMap<Long, Int>().apply { plotTiles.forEachIndexed { i, (c, r) -> put(key(c, r), i) } }
 
     private enum class Building(val c: Int, val r: Int, val sprite: String, val label: String) {
@@ -60,7 +65,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     /** Fixed slots for farm machines, assigned in unlock order. */
     private val slotTiles = listOf(6 to 14, 8 to 15, 10 to 15, 12 to 15, 14 to 14, 17 to 11, 2 to 12, 12 to 3, 15 to 2, 6 to 3, 18 to 4, 2 to 3)
-    private val machines get() = world.buildingsOn("farm").filter { !it.prebuilt }
+    private val machines get() = world.buildingsOn("farm").filter { !it.prebuilt && it.id != "greenhouse" }
     private fun machineAt(c: Int, r: Int) = machines.withIndex().firstOrNull { (i, _) -> slotTiles.getOrNull(i) == (c to r) }?.value
 
     private class Prop(val sprite: String, val x: Float, val y: Float, val sway: Boolean)
@@ -75,6 +80,9 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private var infoTime = 0f
     private var flashPlot = -1
     private var flashTime = 0f
+    /** Fixture item being placed, and the corner picked by the first tap (the second tap confirms). */
+    private var placing: String? = null
+    private var placeVertex = -1
 
     private enum class Action { PLANT, WATER, HARVEST, CLEAR }
 
@@ -173,15 +181,118 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         plotTiles.forEachIndexed { i, (c, r) ->
             val p = world.plot(i)
             if (p.owned) g.sprite("tiles/shadow", Iso.x(c, r) + 2f, Iso.y(c, r) + 3f)
-            else if (i == world.ownedPlots && world.nextPlotPrice() != null) {
+            else if (FieldLayout.isGreenhouse(i)) {
+                if (world.level >= GREENHOUSE_LEVEL) g.sprite("tiles/cursor", Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat(), (sin(time * 3f) * 30 + 70).toInt())
+            } else if (i == world.ownedPlots && world.nextPlotPrice() != null) {
                 val pulse = (sin(time * 4f) * 40 + 120).toInt()
                 g.sprite("tiles/cursor", Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat(), pulse)
             }
+        }
+        drawPlacement(g)
+    }
+
+    private fun drawPlacement(g: Gfx) {
+        val item = placing ?: return
+        val fixture = Fixture.of(item) ?: return
+        val pulse = (sin(time * 5f) * 50 + 150).toInt()
+        if (placeVertex >= 0) {
+            for (i in 0 until FieldLayout.FIELD) if (FieldLayout.covers(placeVertex, fixture.radius, i)) {
+                val (c, r) = plotTiles[i]
+                g.sprite("tiles/cursor_ok", Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat(), pulse)
+            }
+        }
+        for (vr in 0 until FieldLayout.VROWS) for (vc in 0 until FieldLayout.VCOLS) {
+            if (world.state.fixtures.containsKey(FieldLayout.vertex(vc, vr))) continue
+            val x = Iso.x(FIELD_C0 + vc, FIELD_R0 + vr); val y = Iso.y(FIELD_C0 + vc, FIELD_R0 + vr)
+            g.rect(x - 1, y - 1, x + 1, y + 1, Gfx.WHITE)
+        }
+    }
+
+    private fun fixtureSprite(item: String): String = when {
+        game.assets.has("deco/$item") -> "deco/$item"
+        game.assets.has("items/$item") -> "items/$item"
+        else -> "icons/sprinkler"
+    }
+
+    private fun vertexPos(v: Int): Pair<Float, Float> {
+        val vc = v % FieldLayout.VCOLS; val vr = v / FieldLayout.VCOLS
+        return Iso.x(FIELD_C0 + vc, FIELD_R0 + vr).toFloat() to Iso.y(FIELD_C0 + vc, FIELD_R0 + vr).toFloat()
+    }
+
+    // --- greenhouse ----------------------------------------------------------------
+    private val glassFill = Paint().apply { isAntiAlias = false; style = Paint.Style.FILL; color = 0x3C2CE8F5 }
+    private val glassRoof = Paint().apply { isAntiAlias = false; style = Paint.Style.FILL; color = 0x50C0CBDC }
+    private val frame = Paint().apply { isAntiAlias = false; style = Paint.Style.STROKE; strokeWidth = 1f; color = 0xFFE8EEF4.toInt() }
+    private val post = Paint().apply { isAntiAlias = false; style = Paint.Style.STROKE; strokeWidth = 2f; color = 0xFF5A6988.toInt() }
+    private val path = Path()
+
+    private fun ghCorner(c: Int, r: Int) = floatArrayOf(Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat())
+
+    private fun quad(paint: Paint, vararg p: FloatArray, lift: FloatArray) {
+        path.reset()
+        p.forEachIndexed { k, v -> val y = v[1] - lift[k]; if (k == 0) path.moveTo(v[0], y) else path.lineTo(v[0], y) }
+        path.close()
+        game.gfx.canvas.drawPath(path, paint)
+    }
+
+    /** Glass walls and a gabled roof over the greenhouse plots; [front] picks the half drawn in front of the crops. */
+    private fun drawGreenhouse(front: Boolean) {
+        val c0 = GH_C0; val r0 = GH_R0; val c1 = GH_C0 + FieldLayout.GH_COLS; val r1 = GH_R0 + FieldLayout.GH_ROWS
+        val t = ghCorner(c0, r0); val rr = ghCorner(c1, r0); val b = ghCorner(c1, r1); val l = ghCorner(c0, r1)
+        val h = GH_WALL; val ridge = GH_WALL + 10f
+        val midBack = floatArrayOf((t[0] + l[0]) / 2, (t[1] + l[1]) / 2)
+        val midFront = floatArrayOf((rr[0] + b[0]) / 2, (rr[1] + b[1]) / 2)
+        val c = game.gfx.canvas
+        fun post(p: FloatArray) = c.drawLine(p[0], p[1], p[0], p[1] - h, this.post)
+        fun mullions(a: FloatArray, z: FloatArray, n: Int) {
+            for (k in 1 until n) {
+                val x = a[0] + (z[0] - a[0]) * k / n; val y = a[1] + (z[1] - a[1]) * k / n
+                c.drawLine(x, y, x, y - h, frame)
+            }
+        }
+        if (!front) {
+            quad(glassFill, l, t, t, l, lift = floatArrayOf(0f, 0f, h, h))
+            quad(glassFill, t, rr, rr, t, lift = floatArrayOf(0f, 0f, h, h))
+            quad(glassFill, l, t, midBack, lift = floatArrayOf(h, h, ridge))
+            quad(glassRoof, t, rr, midFront, midBack, lift = floatArrayOf(h, h, ridge, ridge))
+            mullions(l, t, FieldLayout.GH_ROWS); mullions(t, rr, FieldLayout.GH_COLS)
+            post(l); post(t); post(rr)
+        } else {
+            quad(glassFill, l, b, b, l, lift = floatArrayOf(0f, 0f, h, h))
+            quad(glassFill, b, rr, rr, b, lift = floatArrayOf(0f, 0f, h, h))
+            quad(glassFill, rr, b, midFront, lift = floatArrayOf(h, h, ridge))
+            quad(glassRoof, l, b, midFront, midBack, lift = floatArrayOf(h, h, ridge, ridge))
+            mullions(l, b, FieldLayout.GH_COLS); mullions(b, rr, FieldLayout.GH_ROWS)
+            post(b); post(l); post(rr)
+            c.drawLine(l[0], l[1] - h, b[0], b[1] - h, frame)
+            c.drawLine(b[0], b[1] - h, rr[0], rr[1] - h, frame)
+            c.drawLine(midBack[0], midBack[1] - ridge, midFront[0], midFront[1] - ridge, frame)
+            c.drawLine(l[0], l[1] - h, midBack[0], midBack[1] - ridge, frame)
+            c.drawLine(b[0], b[1] - h, midFront[0], midFront[1] - ridge, frame)
+            c.drawLine(rr[0], rr[1] - h, midFront[0], midFront[1] - ridge, frame)
         }
     }
 
     override fun collect(list: DrawList) {
         val winter = world.time.season == Season.WINTER
+        if (world.greenhouseOpen) {
+            list.add(Iso.y(GH_C0, GH_R0).toFloat()) { drawGreenhouse(front = false) }
+            list.add(Iso.y(GH_C0 + FieldLayout.GH_COLS, GH_R0 + FieldLayout.GH_ROWS) + 0.5f) { drawGreenhouse(front = true) }
+        } else if (world.level >= GREENHOUSE_LEVEL) {
+            val cx = (Iso.x(GH_C0, GH_R0) + Iso.x(GH_C0 + FieldLayout.GH_COLS, GH_R0 + FieldLayout.GH_ROWS)) / 2f
+            val cy = (Iso.y(GH_C0, GH_R0) + Iso.y(GH_C0 + FieldLayout.GH_COLS, GH_R0 + FieldLayout.GH_ROWS)) / 2f
+            list.add(cy) { game.gfx.sprite("icons_big/build", cx, cy - 10 + sin(time * 3f) * 1.5f, 220) }
+        }
+        for ((v, item) in world.state.fixtures) {
+            val (x, y) = vertexPos(v)
+            list.add(y + 0.4f) { game.gfx.sprite(fixtureSprite(item), x, y) }
+        }
+        placing?.let { item ->
+            if (placeVertex >= 0) {
+                val (x, y) = vertexPos(placeVertex)
+                list.add(y + 0.4f) { game.gfx.sprite(fixtureSprite(item), x, y, (sin(time * 6f) * 60 + 170).toInt()) }
+            }
+        }
         for (p in props) {
             if (winter && (p.sprite.startsWith("deco/flowers") || p.sprite == "deco/mushrooms")) continue
             if (isYardWorld(p.x, p.y)) continue
@@ -192,10 +303,16 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         for (b in Building.entries) {
             val x = Iso.x(b.c, b.r).toFloat()
             val y = Iso.centerY(b.c, b.r).toFloat()
+            val art = "buildings/" + b.name.lowercase()
             list.add(y) {
-                game.gfx.sprite("tiles/shadow", x, y - 6)
                 val bob = if (b == Building.ORDERS && world.state.orders.indices.any { world.canDeliver(it) }) sin(time * 6f) * 1.5f else 0f
-                game.gfx.sprite(b.sprite, x, y - 12 + bob)
+                if (game.assets.has(art)) {
+                    game.gfx.sprite(if (winter && game.assets.has("${art}_snow")) "${art}_snow" else art, x, y)
+                    if (bob != 0f) game.gfx.sprite("icons/ready", x + 10, y - 40 + bob)
+                } else {
+                    game.gfx.sprite("tiles/shadow", x, y - 6)
+                    game.gfx.sprite(b.sprite, x, y - 12 + bob)
+                }
             }
         }
         machines.forEachIndexed { i, def ->
@@ -262,7 +379,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         if (infoTime > 0 && infoPlot >= 0) drawInfo(g)
         chrome.drawTop()
         if (trayOpen && !chrome.isOpen) drawSeedTray(g)
-        chrome.drawBottom(tipLift = if (trayOpen) 2 * 34 + 22 else 0)
+        if (placing != null && !chrome.isOpen) drawPlaceBanner(g)
+        chrome.drawBottom(tipLift = if (trayOpen) 2 * 34 + 22 else if (placing != null) 34 else 0)
     }
 
     private fun drawSeedTray(g: Gfx) {
@@ -280,7 +398,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val sx = x0 + (i % perRow) * (size + 2)
             val sy = y + 16 + (i / perRow) * (size + 2)
             val locked = def.unlockLevel > world.level
-            val inSeason = !world.outOfSeason(def.id)
+            val inSeason = !world.outOfSeason(def.id) || FieldLayout.isGreenhouse(pendingPlant)
             if (ui.slot("seed-${def.id}", sx, sy, if (locked) null else "items_big/seed_${def.id}", -1, seed == def.id, size)) {
                 when {
                     locked -> hud.toast("Unlocks at level ${def.unlockLevel}")
@@ -297,6 +415,65 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 g.text(if (owned > 0) "x$owned" else "${def.seedPrice}c", sx + size - 2, sy + size - 9, if (owned > 0) Gfx.WHITE else Gfx.GOLD, align = 1)
             }
         }
+    }
+
+    private fun drawPlaceBanner(g: Gfx) {
+        val item = placing ?: return
+        val w = game.engine.w
+        val y = game.engine.h - game.engine.safeBottom - hud.bottomHeight - 34
+        ui.panel(2, y, w - 4, 30, dark = true)
+        g.sprite(fixtureSprite(item), 16f, y + 22f)
+        g.text("PLACE ${world.data.name(item).uppercase()}  x${world.count(item)}", 30, y + 5, Gfx.GOLD)
+        g.text(if (placeVertex < 0) "TAP A CORNER BETWEEN PLOTS" else "TAP AGAIN TO PLACE IT THERE", 30, y + 17, Gfx.WHITE)
+        if (ui.button("place-cancel", w - 22, y + 4, 16, 12, null, "ui/x", "red")) { placing = null; placeVertex = -1 }
+    }
+
+    /** Enters placement mode for a fixture item (sprinkler, scarecrow, lightning rod). */
+    fun startPlacing(item: String) {
+        placing = item
+        placeVertex = -1
+        trayOpen = false
+        recenter()
+        hud.tip("fixtures", "Fixtures stand on the corners between plots. The glow shows which plots they cover.")
+    }
+
+    /** Nearest field corner to a world point, or -1 if none is within [reach] pixels. */
+    private fun vertexAt(wx: Float, wy: Float, reach: Float): Int {
+        val fc = (wx / 16f + wy / 8f) / 2f
+        val fr = (wy / 8f - wx / 16f) / 2f
+        val vc = fc.roundToInt() - FIELD_C0
+        val vr = fr.roundToInt() - FIELD_R0
+        if (vc !in 0 until FieldLayout.VCOLS || vr !in 0 until FieldLayout.VROWS) return -1
+        val v = FieldLayout.vertex(vc, vr)
+        val (x, y) = vertexPos(v)
+        return if (abs(x - wx) / 2 + abs(y - wy) <= reach) v else -1
+    }
+
+    override fun onWorldTap(wx: Float, wy: Float): Boolean {
+        val item = placing
+        if (item != null) {
+            val v = vertexAt(wx, wy, 8f)
+            when {
+                v < 0 -> { hud.toast("Tap a corner between plots"); game.sfx.play("error") }
+                v == placeVertex -> {
+                    if (world.placeFixture(v, item)) {
+                        placeVertex = -1
+                        if (world.count(item) <= 0) placing = null
+                    }
+                }
+                else -> {
+                    world.placeBlocker(v, item)?.let { hud.toast(it); game.sfx.play("error") } ?: run { placeVertex = v; game.sfx.play("click", 0.5f) }
+                }
+            }
+            return true
+        }
+        val v = vertexAt(wx, wy, 4f)
+        val f = if (v >= 0) world.fixtureAt(v) else null
+        if (f != null) {
+            chrome.confirm("PICK UP?", "Put the ${world.data.name(f.item)} back in the Barn?", "PICK UP") { world.pickUpFixture(v) }
+            return true
+        }
+        return false
     }
 
     private var pendingPlant = -1
@@ -355,7 +532,11 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
         machineAt(c, r)?.let { def ->
             when {
-                world.isBuilt(def.id) -> if (world.trayCount(def.id) > 0) world.collect(def.id) else chrome.open(Chrome.Panel.MACHINE, def.id)
+                world.isBuilt(def.id) -> when {
+                    world.trayCount(def.id) > 0 -> world.collect(def.id)
+                    def.id.endsWith("_shed") -> chrome.open(Chrome.Panel.SHED, def.id)
+                    else -> chrome.open(Chrome.Panel.MACHINE, def.id)
+                }
                 def.unlockLevel <= world.level -> chrome.open(Chrome.Panel.BUILD, def.id)
             }
             return
@@ -363,6 +544,10 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         val i = plotAt[key(c, r)] ?: run { trayOpen = false; return }
         val p = world.plot(i)
         if (!p.owned) {
+            if (FieldLayout.isGreenhouse(i)) {
+                if (world.level >= GREENHOUSE_LEVEL) chrome.open(Chrome.Panel.BUILD, "greenhouse") else hud.toast("The Greenhouse unlocks at level $GREENHOUSE_LEVEL")
+                return
+            }
             if (i == world.ownedPlots) {
                 val price = world.nextPlotPrice()
                 if (price == null) hud.toast("Reach level ${world.level + 1} to buy more land")
@@ -408,6 +593,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "barn" -> chrome.open(Chrome.Panel.BARN); "market" -> chrome.open(Chrome.Panel.MARKET); "orders" -> chrome.open(Chrome.Panel.ORDERS)
             "settings" -> chrome.open(Chrome.Panel.SETTINGS); "workbench" -> chrome.open(Chrome.Panel.WORKBENCH)
             "tray" -> { trayOpen = true; seed = "carrot" }
+            "place" -> startPlacing("copper_sprinkler")
             else -> if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
             else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))
         }
@@ -416,6 +602,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     /** Closes the open panel or tray; false if nothing was open (back leaves the app). */
     fun closePanel(): Boolean {
         if (chrome.close()) return true
+        if (placing != null) { placing = null; placeVertex = -1; return true }
         if (trayOpen) { trayOpen = false; return true }
         return false
     }
@@ -427,6 +614,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     }
 
     override fun onWorldEvent(e: WorldEvent) {
+        if (e is WorldEvent.Built && e.building == "greenhouse") invalidateGround()
         if (chrome.onEvent(e)) return
         when (e) {
             is WorldEvent.Harvested -> {
@@ -466,6 +654,13 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 fx.shake(3f)
                 e.scorched.forEach { val (x, y) = plotCenter(it); fx.burst("fx/zap", x, y - 10, 4, speed = 40f) }
             }
+            is WorldEvent.FixturePlaced -> {
+                val (x, y) = vertexPos(e.vertex)
+                game.sfx.play("craft"); game.haptics.heavy()
+                fx.burst("fx/dust", x, y, 6, speed = 30f, gravity = 30f)
+                if (Fixture.of(e.item)?.kind == com.ditherfarm.game.FixtureKind.WATER) fx.burst("fx/drop", x, y - 6, 8, speed = 45f, gravity = 120f, life = 0.6f)
+            }
+            is WorldEvent.FixtureRemoved -> { game.sfx.play("pickup"); val (x, y) = vertexPos(e.vertex); fx.burst("fx/dust", x, y, 4, speed = 25f) }
             is WorldEvent.Sold -> {}
             is WorldEvent.Ate -> {}
             else -> {}
@@ -480,6 +675,11 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         const val FIELD_R0 = 6
         const val FIELD_COLS = 8
         const val FIELD_ROWS = 6
+        /** Greenhouse plots sit in a 4x3 block south-west of the field. */
+        const val GH_C0 = 1
+        const val GH_R0 = 15
+        const val GH_WALL = 22f
+        const val GREENHOUSE_LEVEL = 12
         private fun key(c: Int, r: Int) = c.toLong() shl 32 or (r.toLong() and 0xFFFFFFFF)
     }
 }

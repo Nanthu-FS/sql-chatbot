@@ -17,9 +17,11 @@ import com.ditherfarm.game.forestSpots
 import com.ditherfarm.game.mine
 import com.ditherfarm.game.mineFloor
 import com.ditherfarm.game.mineQuarry
+import com.ditherfarm.game.placeFixture
 import com.ditherfarm.game.placeTorch
 import com.ditherfarm.game.repairMine
 import com.ditherfarm.ui.Chrome
+import com.ditherfarm.ui.FarmScreen
 import com.ditherfarm.ui.MineScreen
 import com.ditherfarm.ui.Nav
 import org.junit.Assert.assertTrue
@@ -215,6 +217,52 @@ class ScreenshotTest {
             g.goTo(Nav.MINE)
             g.engine.screen?.enter()
             (g.engine.screen as MineScreen).chrome.open(Chrome.Panel.ELEVATOR)
+        })
+    }
+
+    @Test fun farmAutomation() {
+        render("farm_automation", seconds = 1f, setup = { g ->
+            toLevel(g, 18)
+            val w = g.world
+            w.state.coins += 100_000
+            w.add("plank", 200); w.add("stone", 100); w.add("iron_bar", 60); w.add("glass", 30); w.add("copper_bar", 10); w.add("cooking_oil", 10); w.add("brick", 10)
+            w.build("greenhouse"); w.build("harvest_shed"); w.build("planter_shed")
+            for (i in 0 until 20) w.plot(i).owned = true
+            val gh = com.ditherfarm.game.FieldLayout.FIELD
+            listOf("pumpkin", "tomato", "strawberry", "corn", "melon", "carrot").forEachIndexed { k, c ->
+                if (w.data.crops.containsKey(c)) w.plot(gh + k).apply { clear(); crop = c; growth = w.data.crop(c).growMinutes * (0.3 + k * 0.15) }
+            }
+            w.add("copper_sprinkler", 2); w.add("scarecrow", 1); w.add("lightning_rod", 1)
+            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(3, 3), "copper_sprinkler")
+            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(5, 3), "copper_sprinkler")
+            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(4, 2), "scarecrow")
+            w.placeFixture(com.ditherfarm.game.FieldLayout.vertex(4, 4), "lightning_rod")
+            w.events.clear()
+            g.farm.centerOnTile(3, 16)
+        })
+    }
+
+    @Test fun farmPlacing() {
+        render("farm_placing", seconds = 0.6f, setup = { g ->
+            toLevel(g, 6)
+            g.world.add("copper_sprinkler", 2)
+            g.farm.startPlacing("copper_sprinkler")
+            val x = com.ditherfarm.engine.Iso.x(FarmScreen.FIELD_C0 + 4, FarmScreen.FIELD_R0 + 3).toFloat()
+            val y = com.ditherfarm.engine.Iso.y(FarmScreen.FIELD_C0 + 4, FarmScreen.FIELD_R0 + 3).toFloat()
+            g.farm.onWorldTap(x, y)
+        })
+    }
+
+    @Test fun shedPanel() {
+        render("panel_shed", setup = { g ->
+            toLevel(g, 18)
+            val w = g.world
+            w.state.coins += 10_000
+            w.add("plank", 50); w.add("iron_bar", 30); w.add("brick", 10); w.add("cooking_oil", 5); w.add("seed_carrot", 12)
+            w.build("planter_shed")
+            w.state.planterMode = com.ditherfarm.game.PlanterMode.FILL; w.state.planterSeed = "carrot"
+            w.events.clear()
+            g.farm.chrome.open(Chrome.Panel.SHED, "planter_shed")
         })
     }
 }

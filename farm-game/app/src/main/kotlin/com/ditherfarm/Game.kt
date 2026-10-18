@@ -139,6 +139,12 @@ class Game(val host: Host) {
         else -> false
     }
 
+    /** Starts placing a fixture item on the farm field. */
+    fun startPlacing(item: String) {
+        if (engine.screen !== farm) goTo(Nav.FARM)
+        farm.startPlacing(item)
+    }
+
     fun goTo(nav: Nav) {
         val to = when (nav) {
             Nav.FARM -> farm

@@ -15,7 +15,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val ui get() = game.ui
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED }
 
     var panel = Panel.NONE
         private set
@@ -27,6 +27,8 @@ class Chrome(private val game: Game, private val here: Nav) {
     private var onConfirm: (() -> Unit)? = null
 
     val isOpen get() = panel != Panel.NONE
+
+    init { panels.onPlace = { item -> panel = Panel.NONE; game.startPlacing(item) } }
 
     fun open(p: Panel, target: String? = null) {
         panels.reset()
@@ -82,6 +84,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.CONFIRM -> drawConfirm()
             Panel.GEODES -> panels.geodes()
             Panel.ELEVATOR -> panels.elevator()
+            Panel.SHED -> panels.shed(target ?: return)
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -122,6 +125,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.JobDone -> game.sfx.play("machine_done")
             is WorldEvent.ToolUpgraded -> { game.sfx.play("unlock"); hud.toast("New ${world.data.tools.names[e.tier]} ${e.tool}!") }
             is WorldEvent.Built -> { game.sfx.play("craft"); game.haptics.heavy(); hud.toast("${world.data.buildings[e.building]?.name} built!") }
+            is WorldEvent.ShedRan -> hud.toast(if (e.shed == "harvest_shed") "Harvest Shed picked ${e.plots} plots" else "Planter Shed sowed ${e.plots} plots")
             is WorldEvent.Collected -> { game.sfx.play("pickup"); game.haptics.tick() }
             is WorldEvent.ZoneUnlocked -> { game.sfx.play("unlock"); hud.toast("A new part of the forest is open!") }
             is WorldEvent.DayStarted -> if (e.day > 0) hud.toast("Day ${world.time.dayOfSeason} - ${e.weather.name.lowercase().replaceFirstChar { it.uppercase() }}")

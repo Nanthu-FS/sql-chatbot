@@ -23,6 +23,11 @@ import com.ditherfarm.game.secondsLeft
 import com.ditherfarm.game.toolTier
 import com.ditherfarm.game.trayCount
 import com.ditherfarm.game.baseId
+import com.ditherfarm.game.Fixture
+import com.ditherfarm.game.PlanterMode
+import com.ditherfarm.game.SHED_PLOTS
+import com.ditherfarm.game.SHED_REAL_MINUTES
+import com.ditherfarm.game.shedSecondsLeft
 import com.ditherfarm.game.crackBlocker
 import com.ditherfarm.game.crackGeode
 import com.ditherfarm.game.elevatorStops
@@ -37,6 +42,8 @@ class Panels(private val game: Game, private val hud: Hud) {
 
     private var barnTab = 0
     private var benchTab = 0
+    /** Called with a fixture item when the player taps PLACE in the Barn. */
+    var onPlace: ((String) -> Unit)? = null
     private var selected: String? = null
     private var confirmNewGame = 0
 
@@ -138,6 +145,10 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (ui.button("sell-1", bx, y + 34, 44, 18, "SELL 1", style = "gold")) {
                 if (world.sell(key, 1) > 0) game.sfx.play("coin")
             }
+        }
+        if (Fixture.of(baseId(key)) != null) {
+            bx -= 52
+            if (ui.button("place", bx, y + 34, 48, 18, "PLACE", style = "green")) onPlace?.invoke(baseId(key))
         }
         if (world.foodEnergy(key) > 0) {
             bx -= 44
@@ -500,6 +511,39 @@ class Panels(private val game: Game, private val hud: Hud) {
             else -> "YOU REACHED THE BOTTOM!"
         }
         g.text(note.take(34), x + pw / 2, y + ph - 16, Gfx.INK, align = 0, outline = 0, shadow = false)
+        return true
+    }
+
+    // ------------------------------------------------------------------ sheds
+    /** Harvest or Planter Shed status; the Planter Shed also picks Replant or Fill. */
+    fun shed(id: String): Boolean {
+        val def = world.data.buildings[id] ?: return false
+        val planter = id == "planter_shed"
+        val crops = world.data.crops.values.filter { it.unlockLevel <= world.level }.sortedBy { it.unlockLevel }
+        val perRow = 6
+        val seedRows = (crops.size + perRow - 1) / perRow
+        val ph = if (planter) 106 + (if (world.state.planterMode == PlanterMode.FILL) seedRows * 28 else 12) else 70
+        val (x, y, pw, h) = frame(def.name.uppercase(), ph, pw = 220).toList()
+        if (closeButton(x, y, pw)) return false
+        val secs = world.shedSecondsLeft(id).toInt()
+        g.text("NEXT RUN IN %d:%02d".format(secs / 60, secs % 60), x + 10, y + 24, Gfx.INK, outline = 0, shadow = false)
+        g.text("LAST RUN: ${world.state.shedLast[id] ?: 0} PLOTS", x + 10, y + 35, Gfx.INK, outline = 0, shadow = false)
+        val what = if (planter) "PLANTS" else "HARVESTS"
+        g.text("$what $SHED_PLOTS PLOTS EVERY ${SHED_REAL_MINUTES.toInt()} MIN", x + 10, y + 48, Gfx.GREY, outline = 0, shadow = false)
+        if (world.state.shedBlocked[id] == true) g.text("SILO FULL!", x + pw - 10, y + 24, Gfx.RED, align = 1, outline = 0, shadow = false)
+        if (!planter) return true
+        val mode = ui.tabs("planter-mode", x + 8, y + 62, pw - 16, listOf("REPLANT", "FILL"), world.state.planterMode.ordinal)
+        world.state.planterMode = PlanterMode.entries[mode]
+        if (world.state.planterMode == PlanterMode.REPLANT) {
+            g.text("REPLANTS WHAT GREW THERE LAST", x + pw / 2, y + 84, Gfx.INK, align = 0, outline = 0, shadow = false)
+        } else {
+            crops.forEachIndexed { i, c ->
+                val sx = x + 12 + (i % perRow) * 33
+                val sy = y + 82 + (i / perRow) * 28
+                if (ui.slot("pseed-${c.id}", sx, sy, icon(c.seedItem), world.count(c.seedItem), world.state.planterSeed == c.id, 24)) world.state.planterSeed = c.id
+            }
+        }
+        g.text("USES SEEDS FROM THE SILO", x + pw / 2, y + h - 12, Gfx.GREY, align = 0, outline = 0, shadow = false)
         return true
     }
 }
