@@ -33,7 +33,7 @@ android {
 
     // Pixel art PNGs are already tiny; keep aapt from re-crunching them.
     androidResources {
-        noCompress += listOf("png", "wav", "ttf")
+        noCompress += listOf("png", "wav", "ttf", "ogg")
     }
     testOptions {
         unitTests.isReturnDefaultValues = true

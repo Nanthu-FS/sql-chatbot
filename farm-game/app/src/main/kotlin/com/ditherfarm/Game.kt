@@ -7,6 +7,8 @@ import com.ditherfarm.engine.Gfx
 import com.ditherfarm.engine.GestureRouter
 import com.ditherfarm.engine.Haptics
 import com.ditherfarm.engine.Sfx
+import com.ditherfarm.engine.Soundscape
+import com.ditherfarm.game.Weather
 import com.ditherfarm.game.GameData
 import com.ditherfarm.game.GameState
 import com.ditherfarm.game.World
@@ -36,6 +38,7 @@ class Game(val host: Host) {
     val engine = Engine(gfx, router)
     val sfx = Sfx(host.assetSource.assetManager)
     val haptics = Haptics(host.context)
+    val soundscape = Soundscape(host.assetSource.assetManager)
     val store = SaveStore(host.saveDir)
     val ui = Ui(gfx, sfx, haptics)
     val data = GameData.load { host.assetSource.open("data/$it").bufferedReader().use { r -> r.readText() } }
@@ -100,6 +103,7 @@ class Game(val host: Host) {
     private fun tick(dt: Float) {
         if (paused) return
         world.advance(dt.toDouble())
+        updateSoundscape(dt)
         if (world.events.isNotEmpty()) {
             val listener = engine.screen as? WorldListener
             val batch = ArrayList(world.events)
@@ -110,9 +114,38 @@ class Game(val host: Host) {
         if (sinceSave > AUTOSAVE_SECONDS) save()
     }
 
+    /** Music and ambience follow the screen, the hour, the season and the weather. */
+    private fun updateSoundscape(dt: Float) {
+        val t = world.time
+        val night = t.hour >= 20f || t.hour < 5f
+        val underground = engine.screen === mine && world.state.mine.floor > 0
+        val track = when {
+            underground -> "mine"
+            night -> "night"
+            engine.screen === forest -> "forest"
+            else -> "farm_" + t.season.name.lowercase()
+        }
+        val bed = when {
+            underground -> "mine"
+            night -> "night"
+            engine.screen === forest -> "forest"
+            else -> "day"
+        }
+        val weather = if (underground) null else when (world.state.weather) {
+            Weather.RAIN -> "rain"
+            Weather.STORM -> "storm"
+            Weather.SNOW, Weather.BLIZZARD -> "snow"
+            Weather.SUNNY -> null
+        }
+        soundscape.set(track, bed, weather)
+        soundscape.update(dt)
+    }
+
     fun applySettings() {
         sfx.enabled = world.state.sfx
         haptics.enabled = world.state.haptics
+        soundscape.musicOn = world.state.music
+        soundscape.ambienceOn = world.state.ambience
     }
 
     fun save() {
@@ -126,11 +159,13 @@ class Game(val host: Host) {
         val away = (host.nowMs() - world.state.lastSavedMs) / 1000.0
         if (paused && world.state.lastSavedMs > 0 && away > 5) catchUpSummary(world, away)
         paused = false
+        soundscape.resume()
     }
 
     fun onPause() {
         save()
         paused = true
+        soundscape.pause()
         if (world.state.notifications) {
             world.secondsUntilNextCrop()?.let { s ->
                 if (s > 30) host.scheduleReadyNotification(host.nowMs() + (s * 1000).toLong(), "Dither Farm", "Your crops are ready to harvest!")
@@ -141,6 +176,7 @@ class Game(val host: Host) {
     fun onDestroy() {
         save()
         sfx.release()
+        soundscape.release()
     }
 
     /** Back button: closes the open panel first, then returns to the farm. */

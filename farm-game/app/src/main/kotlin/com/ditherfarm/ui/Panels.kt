@@ -277,7 +277,7 @@ class Panels(private val game: Game, private val hud: Hud) {
 
     // -------------------------------------------------------------- settings
     fun settings(): Boolean {
-        val (x, y, pw, ph) = frame("SETTINGS", 186).toList()
+        val (x, y, pw, ph) = frame("SETTINGS", 226).toList()
         if (closeButton(x, y, pw)) return false
         val s = world.state
         fun row(i: Int, icon: String, label: String, on: Boolean): Boolean {
@@ -289,7 +289,9 @@ class Panels(private val game: Game, private val hud: Hud) {
         if (row(0, "icons/sound_on", "SOUND", s.sfx)) { s.sfx = !s.sfx; game.applySettings() }
         if (row(1, "icons/vibrate", "VIBRATION", s.haptics)) { s.haptics = !s.haptics; game.applySettings() }
         if (row(2, "icons/bell", "NOTIFICATIONS", s.notifications)) s.notifications = !s.notifications
-        val by = y + 96
+        if (row(3, "icons/sound_on", "MUSIC", s.music)) { s.music = !s.music; game.applySettings() }
+        if (row(4, "icons/weather_cloudy", "AMBIENCE", s.ambience)) { s.ambience = !s.ambience; game.applySettings() }
+        val by = y + 136
         if (ui.button("export", x + 10, by, (pw - 26) / 2, 18, "EXPORT", "icons/export", "blue")) game.host.requestExport()
         if (ui.button("import", x + 16 + (pw - 26) / 2, by, (pw - 26) / 2, 18, "IMPORT", "icons/import", "blue")) game.host.requestImport()
         val label = when (confirmNewGame) { 0 -> "NEW FARM"; 1 -> "SURE? TAP AGAIN"; else -> "REALLY? LAST TAP" }

@@ -126,6 +126,8 @@ class GameState(var seed: Long) {
     var sfx = true
     var haptics = true
     var notifications = true
+    var music = true
+    var ambience = true
 
     val buildings = LinkedHashMap<String, BuildingState>()
     /** Tool id (axe, pickaxe, hoe, can, sickle) → tier 0 wood .. 3 gold. */
@@ -181,7 +183,7 @@ class GameState(var seed: Long) {
         put("stats", JSONObject(stats as Map<*, *>))
         put("tips", JSONArray(tips.toList()))
         put("rngCounter", rngCounter)
-        put("settings", JSONObject().put("sfx", sfx).put("haptics", haptics).put("notifications", notifications))
+        put("settings", JSONObject().put("sfx", sfx).put("haptics", haptics).put("notifications", notifications).put("music", music).put("ambience", ambience))
         put("buildings", JSONArray().apply { buildings.values.forEach { put(it.toJson()) } })
         put("tools", JSONObject(tools as Map<*, *>))
         put("forest", forest.toJson())
@@ -231,6 +233,7 @@ class GameState(var seed: Long) {
             rngCounter = o.optLong("rngCounter")
             o.optJSONObject("settings")?.let {
                 sfx = it.optBoolean("sfx", true); haptics = it.optBoolean("haptics", true); notifications = it.optBoolean("notifications", true)
+                music = it.optBoolean("music", true); ambience = it.optBoolean("ambience", true)
             }
             o.optJSONArray("buildings")?.objects()?.forEach { val b = BuildingState.fromJson(it); buildings[b.id] = b }
             o.optJSONObject("tools")?.toIntMap()?.forEach { (k, v) -> tools[k] = v }

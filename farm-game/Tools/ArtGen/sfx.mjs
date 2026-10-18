@@ -117,6 +117,49 @@ const SOUNDS = {
   pickup: () => render([tone({ f0: 700, f1: 1400, dur: 0.05, vol: 0.25, duty: 0.25, r: 0.02 })]),
 };
 
+// Extra takes of the most frequent sounds (name_2, name_3) so repeats don't grate; the
+// game picks one at random each time, on top of a pitch and volume wobble.
+const VARIANTS = {
+  harvest: [
+    () => render(arp([74, 77, 81, 86], 0.05, { vol: 0.35, duty: 0.5, r: 0.06 })),
+    () => render(arp([71, 76, 79, 83], 0.045, { wave: 'tri', vol: 0.45, r: 0.07 })),
+  ],
+  chop: [
+    () => lowpass(render([tone({ f0: 210, f1: 100, dur: 0.06, wave: 'tri', vol: 1 }), tone({ wave: 'noise', dur: 0.06, vol: 0.55, crush: 4 })]), 0.45),
+    () => lowpass(render([tone({ f0: 160, f1: 80, dur: 0.08, wave: 'tri', vol: 1 }), tone({ wave: 'noise', dur: 0.04, vol: 0.7, crush: 6 })]), 0.35),
+  ],
+  mine: [
+    () => render([tone({ f0: 2100, f1: 1700, dur: 0.03, vol: 0.3, duty: 0.2, r: 0.05 }), tone({ wave: 'noise', dur: 0.05, vol: 0.4, crush: 3 }), tone({ f0: 150, f1: 80, dur: 0.06, wave: 'tri', vol: 0.6 })]),
+    () => render([tone({ f0: 1700, f1: 1300, dur: 0.035, vol: 0.35, duty: 0.25, r: 0.03 }), tone({ wave: 'noise', dur: 0.035, vol: 0.45, crush: 2 }), tone({ f0: 180, f1: 100, dur: 0.05, wave: 'tri', vol: 0.6 })]),
+  ],
+  plant: [
+    () => render([tone({ f0: 300, f1: 600, dur: 0.05, wave: 'tri', vol: 0.8, r: 0.05 }), tone({ wave: 'noise', dur: 0.025, vol: 0.2, r: 0.01, crush: 4 })]),
+    () => render([tone({ f0: 230, f1: 460, dur: 0.07, wave: 'tri', vol: 0.8, r: 0.06 }), tone({ wave: 'noise', dur: 0.02, vol: 0.25, r: 0.01, crush: 2 })]),
+  ],
+  water: [
+    () => lowpass(render([tone({ wave: 'noise', dur: 0.15, vol: 0.6, r: 0.1, crush: 2 }), tone({ f0: 1300, f1: 800, dur: 0.04, wave: 'tri', vol: 0.3, start: 0.09 })]), 0.3),
+    () => lowpass(render([tone({ wave: 'noise', dur: 0.2, vol: 0.55, r: 0.14, crush: 3 }), tone({ f0: 1900, f1: 1100, dur: 0.035, wave: 'tri', vol: 0.25, start: 0.15 }), tone({ f0: 1600, f1: 950, dur: 0.035, wave: 'tri', vol: 0.2, start: 0.24 })]), 0.4),
+  ],
+  pickup: [
+    () => render([tone({ f0: 800, f1: 1600, dur: 0.045, vol: 0.25, duty: 0.25, r: 0.02 })]),
+    () => render([tone({ f0: 600, f1: 1200, dur: 0.055, wave: 'tri', vol: 0.4, r: 0.03 })]),
+  ],
+  coin: [
+    () => render([tone({ f0: note(84), dur: 0.06, vol: 0.35, duty: 0.5, r: 0.01 }), tone({ f0: note(89), dur: 0.18, vol: 0.35, start: 0.06, r: 0.12 })]),
+    () => render([tone({ f0: note(81), dur: 0.05, vol: 0.35, duty: 0.25, r: 0.01 }), tone({ f0: note(88), dur: 0.2, vol: 0.3, start: 0.05, r: 0.14 })]),
+  ],
+  click: [
+    () => render([tone({ f0: 1250, f1: 1000, dur: 0.025, vol: 0.35, duty: 0.25, r: 0.01 })]),
+    () => render([tone({ f0: 1550, f1: 1200, dur: 0.02, vol: 0.3, duty: 0.3, r: 0.01 })]),
+  ],
+  rock_break: [
+    () => lowpass(render([tone({ wave: 'noise', dur: 0.2, vol: 0.8, crush: 5, r: 0.14 }), tone({ f0: 120, f1: 55, dur: 0.17, wave: 'tri', vol: 0.8 })]), 0.45),
+    () => lowpass(render([tone({ wave: 'noise', dur: 0.25, vol: 0.8, crush: 3, r: 0.1 }), tone({ f0: 160, f1: 70, dur: 0.13, wave: 'tri', vol: 0.8 })]), 0.55),
+  ],
+};
+
 fs.mkdirSync(out, { recursive: true });
 for (const [name, make] of Object.entries(SOUNDS)) wav(name, make());
-console.log(`wrote ${Object.keys(SOUNDS).length} sounds to ${out}`);
+let extra = 0;
+for (const [name, takes] of Object.entries(VARIANTS)) takes.forEach((make, i) => { wav(`${name}_${i + 2}`, make()); extra++; });
+console.log(`wrote ${Object.keys(SOUNDS).length} sounds and ${extra} variants to ${out}`);

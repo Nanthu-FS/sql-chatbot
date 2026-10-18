@@ -52,7 +52,8 @@ Docs/          design, decisions, art spec, contact sheets
 cd farm-game/Tools/ArtGen
 npm install
 node generate.mjs            # all sprites (or: node generate.mjs tiles ui crops_a ...)
-node sfx.mjs                 # all sound effects
+node sfx.mjs                 # all sound effects (+ variants)
+node music.mjs               # lo-fi music and ambience loops (needs ffmpeg)
 ```
 Contact sheets for review are written to `Docs/sheets/`.
 
