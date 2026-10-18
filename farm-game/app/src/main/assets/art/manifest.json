@@ -1,4 +1,8 @@
 {
+ "buildings/bakery_oven": {
+  "ax": 14,
+  "ay": 43
+ },
  "buildings/barn": {
   "ax": 32,
   "ay": 51
@@ -7,13 +11,37 @@
   "ax": 32,
   "ay": 51
  },
+ "buildings/beehive": {
+  "ax": 19,
+  "ay": 25
+ },
+ "buildings/compost_bin": {
+  "ax": 15,
+  "ay": 21
+ },
+ "buildings/fruit_press": {
+  "ax": 12,
+  "ay": 33
+ },
+ "buildings/harvest_shed": {
+  "ax": 16,
+  "ay": 26
+ },
  "buildings/market": {
   "ax": 20,
   "ay": 37
  },
+ "buildings/market_cart": {
+  "ax": 14,
+  "ay": 32
+ },
  "buildings/market_snow": {
   "ax": 20,
   "ay": 37
+ },
+ "buildings/oil_press": {
+  "ax": 16,
+  "ay": 31
  },
  "buildings/orders": {
   "ax": 17,
@@ -22,6 +50,18 @@
  "buildings/orders_snow": {
   "ax": 17,
   "ay": 36
+ },
+ "buildings/planter_shed": {
+  "ax": 15,
+  "ay": 26
+ },
+ "buildings/preserves_jar": {
+  "ax": 13,
+  "ay": 37
+ },
+ "buildings/seed_maker": {
+  "ax": 13,
+  "ay": 31
  },
  "buildings/silo": {
   "ax": 16,
@@ -38,6 +78,10 @@
  "buildings/well_snow": {
   "ax": 15,
   "ay": 29
+ },
+ "buildings/windmill": {
+  "ax": 18,
+  "ay": 54
  },
  "buildings/workbench": {
   "ax": 18,
