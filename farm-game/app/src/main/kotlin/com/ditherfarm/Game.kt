@@ -66,8 +66,14 @@ class Game(val host: Host) {
             if (state.lastSavedMs > 0 && away > 5) catchUpSummary(w, away)
             return w
         }
-        return World.newGame(data, host.nowMs())
+        return fresh()
     }
+
+    /** A new farm; the first login gift comes tomorrow. */
+    private fun fresh() = World.newGame(data, host.nowMs()).also { it.state.giftDay = today() }
+
+    /** The device's calendar day (epoch days, local time zone) for the login gift. */
+    fun today(): Long = java.time.Instant.ofEpochMilli(host.nowMs()).atZone(java.time.ZoneId.systemDefault()).toLocalDate().toEpochDay()
 
     private fun catchUpSummary(w: World, seconds: Double) {
         val coinsBefore = w.state.coins
@@ -187,7 +193,7 @@ class Game(val host: Host) {
 
     /** Starts over with a fresh farm (settings menu, confirmed twice). */
     fun newGame() {
-        world = World.newGame(data, host.nowMs())
+        world = fresh()
         applySettings()
         save()
     }

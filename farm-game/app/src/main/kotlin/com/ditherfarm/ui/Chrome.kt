@@ -3,6 +3,11 @@ package com.ditherfarm.ui
 import com.ditherfarm.Game
 import com.ditherfarm.engine.Gfx
 import com.ditherfarm.game.WorldEvent
+import com.ditherfarm.game.claimableCount
+import com.ditherfarm.game.festival
+import com.ditherfarm.game.festivalClaimable
+import com.ditherfarm.game.giftReady
+import com.ditherfarm.game.merchantHere
 
 /**
  * Everything around the map that every screen shares: the HUD, the nav bar, the modal
@@ -13,9 +18,10 @@ class Chrome(private val game: Game, private val here: Nav) {
     val hud = Hud(game)
     val panels = Panels(game, hud)
     private val ui get() = game.ui
+    private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT }
 
     var panel = Panel.NONE
         private set
@@ -53,8 +59,27 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     fun update(dt: Float) = hud.update(dt)
 
-    /** HUD top bar; call before drawing screen-specific overlays. */
-    fun drawTop() = hud.drawTop()
+    private var giftShown = false
+
+    /** HUD top bar plus the goals button; call before drawing screen-specific overlays. */
+    fun drawTop() {
+        hud.drawTop()
+        val w = game.engine.w
+        val y = game.engine.safeTop + 18
+        val festival = world.festival() != null
+        val x = 190
+        ui.pill(x, y, w - x - 2, 14)
+        val goalsClick = ui.clickable("hud-goals", x, y, w - x - 2, 14)
+        g.sprite("icons/trophy", x + 9f, y + 7f)
+        val n = world.claimableCount() + if (world.festivalClaimable()) 1 else 0
+        if (n > 0) {
+            g.sprite("ui/badge", x + 17f, y + 3f)
+            g.text(n.coerceAtMost(9).toString(), x + 17, y - 1, Gfx.WHITE, align = 0, shadow = false)
+        }
+        if (festival) g.sprite("icons/festival", x + 30f, y + 7f)
+        if (world.merchantHere()) g.sprite("icons/merchant", x + if (festival) 46f else 30f, y + 7f)
+        if (goalsClick) open(Panel.GOALS)
+    }
 
     /** Nav bar, panels and overlays. [tipLift] raises tips above screen trays. */
     fun drawBottom(tipLift: Int = 0) {
@@ -73,7 +98,11 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     private fun drawPanel() {
         val keep = when (panel) {
-            Panel.NONE -> { if (levelUps.isNotEmpty()) panel = Panel.LEVEL_UP; true }
+            Panel.NONE -> {
+                if (levelUps.isNotEmpty()) panel = Panel.LEVEL_UP
+                else if (!giftShown && world.giftReady(game.today())) { giftShown = true; open(Panel.GIFT) }
+                true
+            }
             Panel.BARN -> panels.barn()
             Panel.MARKET -> panels.market()
             Panel.ORDERS -> panels.orders()
@@ -85,6 +114,9 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.GEODES -> panels.geodes()
             Panel.ELEVATOR -> panels.elevator()
             Panel.SHED -> panels.shed(target ?: return)
+            Panel.GOALS -> panels.goals()
+            Panel.GIFT -> panels.gift()
+            Panel.MERCHANT -> panels.merchant()
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -125,6 +157,10 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.JobDone -> game.sfx.play("machine_done")
             is WorldEvent.ToolUpgraded -> { game.sfx.play("unlock"); hud.toast("New ${world.data.tools.names[e.tier]} ${e.tool}!") }
             is WorldEvent.Built -> { game.sfx.play("craft"); game.haptics.heavy(); hud.toast("${world.data.buildings[e.building]?.name} built!") }
+            is WorldEvent.AchievementReady -> { game.sfx.play("unlock"); hud.toast("Goal reached: ${world.data.goals.achievements.firstOrNull { it.id == e.id }?.name}!") }
+            is WorldEvent.AchievementClaimed, is WorldEvent.PageClaimed, is WorldEvent.GiftClaimed, is WorldEvent.FestivalWon -> { game.sfx.play("coin"); game.haptics.heavy() }
+            is WorldEvent.FestivalStarted -> { game.sfx.play("order"); hud.toast("The ${e.name} has begun!") }
+            is WorldEvent.Bought -> { game.sfx.play("buy"); game.haptics.tick() }
             is WorldEvent.ShedRan -> hud.toast(if (e.shed == "harvest_shed") "Harvest Shed picked ${e.plots} plots" else "Planter Shed sowed ${e.plots} plots")
             is WorldEvent.Collected -> { game.sfx.play("pickup"); game.haptics.tick() }
             is WorldEvent.ZoneUnlocked -> { game.sfx.play("unlock"); hud.toast("A new part of the forest is open!") }

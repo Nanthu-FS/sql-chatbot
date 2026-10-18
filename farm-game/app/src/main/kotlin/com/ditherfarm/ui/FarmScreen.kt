@@ -21,6 +21,7 @@ import com.ditherfarm.game.buildingsOn
 import com.ditherfarm.game.collect
 import com.ditherfarm.game.fixtureAt
 import com.ditherfarm.game.greenhouseOpen
+import com.ditherfarm.game.merchantHere
 import com.ditherfarm.game.pickUpFixture
 import com.ditherfarm.game.placeBlocker
 import com.ditherfarm.game.placeFixture
@@ -283,6 +284,15 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val cy = (Iso.y(GH_C0, GH_R0) + Iso.y(GH_C0 + FieldLayout.GH_COLS, GH_R0 + FieldLayout.GH_ROWS)) / 2f
             list.add(cy) { game.gfx.sprite("icons_big/build", cx, cy - 10 + sin(time * 3f) * 1.5f, 220) }
         }
+        if (world.merchantHere()) {
+            val (mc, mr) = MERCHANT_TILE
+            val x = Iso.x(mc, mr).toFloat(); val y = Iso.centerY(mc, mr).toFloat()
+            list.add(y) {
+                if (game.assets.has("buildings/merchant_cart")) game.gfx.sprite("buildings/merchant_cart", x, y)
+                else { game.gfx.sprite("tiles/shadow", x, y - 6); game.gfx.sprite("icons_big/merchant", x, y - 12) }
+                game.gfx.sprite("icons/coin", x + 10, y - 34 + sin(time * 4f) * 2f)
+            }
+        }
         for ((v, item) in world.state.fixtures) {
             val (x, y) = vertexPos(v)
             list.add(y + 0.4f) { game.gfx.sprite(fixtureSprite(item), x, y) }
@@ -530,6 +540,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             }
             return
         }
+        if ((c to r) == MERCHANT_TILE && world.merchantHere()) { chrome.open(Chrome.Panel.MERCHANT); return }
         machineAt(c, r)?.let { def ->
             when {
                 world.isBuilt(def.id) -> when {
@@ -594,6 +605,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "settings" -> chrome.open(Chrome.Panel.SETTINGS); "workbench" -> chrome.open(Chrome.Panel.WORKBENCH)
             "tray" -> { trayOpen = true; seed = "carrot" }
             "place" -> startPlacing("copper_sprinkler")
+            "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT)
             else -> if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
             else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))
         }
@@ -680,6 +692,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         const val GH_R0 = 15
         const val GH_WALL = 22f
         const val GREENHOUSE_LEVEL = 12
+        val MERCHANT_TILE = 18 to 12
         private fun key(c: Int, r: Int) = c.toLong() shl 32 or (r.toLong() and 0xFFFFFFFF)
     }
 }

@@ -265,4 +265,43 @@ class ScreenshotTest {
             g.farm.chrome.open(Chrome.Panel.SHED, "planter_shed")
         })
     }
+
+    @Test fun goalsPanel() {
+        render("panel_goals", setup = { g ->
+            g.world.harvest(0); g.world.harvest(1)
+            g.world.advance(1.0); g.world.events.clear()
+            g.farm.showPanel("goals")
+        })
+    }
+
+    @Test fun bookPanel() {
+        render("panel_book", setup = { g ->
+            listOf("wheat", "carrot", "potato", "tomato").forEach { g.world.add(it, 1) }
+            g.world.events.clear()
+            g.farm.showPanel("goals")
+            g.farm.chrome.panels.goalsTab = 1
+        })
+    }
+
+    @Test fun eventsPanel() {
+        render("panel_events", setup = { g ->
+            toLevel(g, 10)
+            g.world.advance(com.ditherfarm.game.Time.gameMinutesToRealSeconds(7 * 1440.0 + 60))
+            g.world.events.clear()
+            g.farm.showPanel("goals")
+            g.farm.chrome.panels.goalsTab = 2
+        })
+    }
+
+    @Test fun giftPanel() { render("panel_gift", setup = { g -> g.world.state.giftDay = g.today() - 1; g.world.state.giftStreak = 2 }) }
+
+    @Test fun merchantPanel() {
+        render("panel_merchant", setup = { g ->
+            toLevel(g, 10)
+            val day = 6
+            g.world.advance(com.ditherfarm.game.Time.gameMinutesToRealSeconds(day * 1440.0 + 60))
+            g.world.events.clear()
+            g.farm.showPanel("merchant")
+        })
+    }
 }

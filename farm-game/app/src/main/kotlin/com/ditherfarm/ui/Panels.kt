@@ -28,6 +28,34 @@ import com.ditherfarm.game.PlanterMode
 import com.ditherfarm.game.SHED_PLOTS
 import com.ditherfarm.game.SHED_REAL_MINUTES
 import com.ditherfarm.game.shedSecondsLeft
+import com.ditherfarm.game.AchievementDef
+import com.ditherfarm.game.FESTIVALS
+import com.ditherfarm.game.FESTIVAL_DAYS
+import com.ditherfarm.game.MERCHANT_LEVEL
+import com.ditherfarm.game.Season
+import com.ditherfarm.game.buyFromMerchant
+import com.ditherfarm.game.claimAchievement
+import com.ditherfarm.game.claimFestival
+import com.ditherfarm.game.claimGift
+import com.ditherfarm.game.claimPage
+import com.ditherfarm.game.claimable
+import com.ditherfarm.game.claimedTiers
+import com.ditherfarm.game.entryFound
+import com.ditherfarm.game.festival
+import com.ditherfarm.game.festivalClaimable
+import com.ditherfarm.game.festivalHandIn
+import com.ditherfarm.game.festivalItems
+import com.ditherfarm.game.festivalProgress
+import com.ditherfarm.game.giftFor
+import com.ditherfarm.game.giftStreakDay
+import com.ditherfarm.game.merchantBought
+import com.ditherfarm.game.merchantHere
+import com.ditherfarm.game.merchantStock
+import com.ditherfarm.game.metric
+import com.ditherfarm.game.pageClaimable
+import com.ditherfarm.game.pageEntries
+import com.ditherfarm.game.pageProgress
+import com.ditherfarm.game.target
 import com.ditherfarm.game.crackBlocker
 import com.ditherfarm.game.crackGeode
 import com.ditherfarm.game.elevatorStops
@@ -544,6 +572,193 @@ class Panels(private val game: Game, private val hud: Hud) {
             }
         }
         g.text("USES SEEDS FROM THE SILO", x + pw / 2, y + h - 12, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        return true
+    }
+
+    // ------------------------------------------------------------------ goals
+    /** Open tab of the goals panel: 0 goals, 1 book, 2 events. */
+    var goalsTab = 0
+    private var bookPage = 0
+
+    private val maxPanelH get() = game.engine.h - game.engine.safeTop - game.engine.safeBottom - hud.topHeight - hud.bottomHeight - 12
+
+    /** Achievements, the collection book and events (festival, merchant, login streak). */
+    fun goals(): Boolean {
+        val (x, y, pw, ph) = frame("GOALS", maxPanelH).toList()
+        if (closeButton(x, y, pw)) return false
+        goalsTab = ui.tabs("goal-tabs", x + 8, y + 22, pw - 16, listOf("GOALS", "BOOK", "EVENTS"), goalsTab)
+        val top = y + 42
+        when (goalsTab) {
+            0 -> achievementList(x, top, pw, y + ph - 8 - top)
+            1 -> book(x, top, pw, y + ph - 8 - top)
+            else -> eventsTab(x, top, pw)
+        }
+        return true
+    }
+
+    private fun roman(n: Int) = listOf("", "I", "II", "III", "IV", "V").getOrElse(n) { "$n" }
+
+    private fun achievementList(x: Int, top: Int, pw: Int, listH: Int) {
+        val list = world.data.goals.achievements.sortedWith(compareBy<AchievementDef>(
+            { if (world.claimable(it)) 0 else if (world.claimedTiers(it.id) < it.tiers.size) 1 else 2 }, { it.name },
+        ))
+        val rowH = 34
+        val off = ui.scroll("ach-list", x + 6, top, pw - 12, listH, list.size * rowH)
+        val c = g.canvas
+        c.save(); c.clipRect(x + 6, top, x + pw - 6, top + listH)
+        list.forEachIndexed { i, a ->
+            val ry = top + i * rowH - off
+            if (ry + rowH < top || ry > top + listH) return@forEachIndexed
+            val tier = world.claimedTiers(a.id)
+            val done = tier >= a.tiers.size
+            val shown = minOf(tier, a.tiers.size - 1)
+            g.rect(x + 8, ry + rowH - 1, x + pw - 8, ry + rowH, 0xFFC28569.toInt())
+            g.sprite("icons/trophy", (x + 18).toFloat(), (ry + 12).toFloat(), if (done || world.claimable(a)) 255 else 110)
+            val title = a.name.uppercase() + if (a.tiers.size > 1) " " + roman(shown + 1) else ""
+            g.text(title, x + 30, ry + 3, Gfx.INK, outline = 0, shadow = false)
+            g.text(a.desc.uppercase().take(30), x + 30, ry + 13, Gfx.GREY, outline = 0, shadow = false)
+            val target = world.target(a, shown)
+            val have = minOf(world.metric(a.metric), target)
+            val bw = pw - 110
+            ui.bar(x + 30, ry + 23, bw, if (done) 1f else have.toFloat() / target, if (done) "gold" else "green", 6)
+            g.text("${Ui.compact(have.toInt())}/${Ui.compact(target.toInt())}", x + 34 + bw, ry + 22, Gfx.INK, outline = 0, shadow = false)
+            val t = a.tiers[shown]
+            when {
+                done -> g.sprite("icons/check", (x + pw - 22).toFloat(), (ry + 14).toFloat())
+                world.claimable(a) -> if (ui.button("claim-${a.id}", x + pw - 58, ry + 4, 48, 16, "CLAIM", style = "gold")) world.claimAchievement(a.id)
+                else -> {}
+            }
+            if (!done) {
+                val reward = if (t.coins > 0) "${Ui.compact(t.coins)}c" else if (t.xp > 0) "${t.xp}XP" else "GIFT"
+                g.text(reward, x + pw - 12, ry + 22, 0xFF3E8948.toInt(), align = 1, outline = 0, shadow = false)
+            }
+        }
+        c.restore()
+    }
+
+    private fun entryIcon(entry: String): String =
+        if (entry.startsWith("villager:")) entry.removePrefix("villager:").let { if (game.assets.has("portraits/$it")) "portraits/$it" else "icons/heart" } else icon(entry)
+
+    private fun book(x: Int, top: Int, pw: Int, h: Int) {
+        val pages = world.data.goals.pages
+        val bw = (pw - 20) / 3
+        pages.forEachIndexed { i, p ->
+            val bx = x + 10 + (i % 3) * bw
+            val by = top + (i / 3) * 20
+            val (have, all) = world.pageProgress(p)
+            val style = when { i == bookPage -> "gold"; world.pageClaimable(p) -> "green"; p.id in world.state.pagesClaimed -> "grey"; else -> "wood" }
+            if (ui.button("page-${p.id}", bx, by, bw - 4, 18, "${p.name.uppercase().take(7)} $have/$all", style = style)) bookPage = i
+        }
+        val p = pages.getOrNull(bookPage) ?: return
+        val entries = world.pageEntries(p)
+        val gy = top + 44
+        val per = (pw - 20) / 22
+        entries.forEachIndexed { i, e ->
+            val sx = x + 10 + (i % per) * 22
+            val sy = gy + (i / per) * 22
+            val found = world.entryFound(e)
+            if (ui.slot("entry-$e", sx, sy, if (found) entryIcon(e) else null, -1, false, 20) && found) {
+                hud.toast(if (e.startsWith("villager:")) world.data.villagers.firstOrNull { "villager:${it.id}" == e }?.name ?: e else world.data.name(e))
+            }
+            if (!found) g.text("?", sx + 10, sy + 6, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        }
+        val by = top + h - 40
+        g.text("PAGE REWARD: ${p.bonusText.uppercase()}", x + pw / 2, by, Gfx.INK, align = 0, outline = 0, shadow = false)
+        g.text("+${Ui.compact(p.coins)} COINS", x + pw / 2, by + 10, 0xFF3E8948.toInt(), align = 0, outline = 0, shadow = false)
+        when {
+            p.id in world.state.pagesClaimed -> g.text("CLAIMED", x + pw / 2, by + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            world.pageClaimable(p) -> if (ui.button("claim-page", x + pw / 2 - 30, by + 20, 60, 16, "CLAIM", style = "gold")) world.claimPage(p.id)
+            else -> {}
+        }
+    }
+
+    private fun eventsTab(x: Int, top: Int, pw: Int) {
+        var y = top
+        val f = world.festival()
+        g.sprite("icons/festival", (x + 18).toFloat(), (y + 8).toFloat())
+        if (f != null) {
+            g.text(f.name.uppercase() + " TODAY!", x + 30, y + 2, Gfx.INK, outline = 0, shadow = false)
+            g.text(f.goal.uppercase(), x + 30, y + 13, Gfx.GREY, outline = 0, shadow = false)
+            val have = world.festivalProgress()
+            ui.bar(x + 30, y + 24, pw - 100, have.toFloat() / f.target, "gold", 6)
+            g.text("$have/${f.target}", x + pw - 66, y + 23, Gfx.INK, outline = 0, shadow = false)
+            y += 34
+            if (world.festivalItems().isNotEmpty() && have < f.target) {
+                if (ui.button("fest-hand", x + 30, y, 70, 16, "HAND IN", style = "green")) world.festivalHandIn()
+            }
+            when {
+                world.festivalClaimable() -> if (ui.button("fest-claim", x + pw - 80, y, 70, 16, "CLAIM", style = "gold")) world.claimFestival()
+                have >= f.target -> g.text("WON!", x + pw - 45, y + 4, 0xFF3E8948.toInt(), align = 0, outline = 0, shadow = false)
+                else -> {}
+            }
+            y += 24
+        } else {
+            val next = FESTIVALS.first { it.season == if (world.time.dayOfSeason < FESTIVAL_DAYS.first) world.time.season else Season.entries[(world.time.season.ordinal + 1) % 4] }
+            g.text("NEXT FESTIVAL: ${next.name.uppercase()}", x + 30, y + 2, Gfx.INK, outline = 0, shadow = false)
+            g.text("${next.season.label.uppercase()} ${FESTIVAL_DAYS.first}-${FESTIVAL_DAYS.last}: ${next.goal.uppercase()}".take(36), x + 30, y + 13, Gfx.GREY, outline = 0, shadow = false)
+            y += 30
+        }
+        g.rect(x + 8, y, x + pw - 8, y + 1, 0xFFC28569.toInt())
+        y += 6
+        g.sprite("icons/merchant", (x + 18).toFloat(), (y + 8).toFloat())
+        g.text("TRAVELING MERCHANT", x + 30, y + 2, Gfx.INK, outline = 0, shadow = false)
+        val note = when {
+            world.level < MERCHANT_LEVEL -> "VISITS FROM LEVEL $MERCHANT_LEVEL"
+            world.merchantHere() -> "HERE TODAY! HIS CART IS BY THE MARKET"
+            else -> "NEXT VISIT IN ${6 - world.time.dayIndex % 7} DAYS"
+        }
+        g.text(note, x + 30, y + 13, Gfx.GREY, outline = 0, shadow = false)
+        y += 30
+        g.rect(x + 8, y, x + pw - 8, y + 1, 0xFFC28569.toInt())
+        y += 6
+        g.sprite("icons/gift", (x + 18).toFloat(), (y + 8).toFloat())
+        g.text("DAILY GIFT STREAK: ${world.state.giftStreak} DAYS", x + 30, y + 2, Gfx.INK, outline = 0, shadow = false)
+        g.text("COME BACK EVERY DAY. DAY 7 IS BIGGER!", x + 30, y + 13, Gfx.GREY, outline = 0, shadow = false)
+    }
+
+    /** The daily login gift popup. */
+    fun gift(): Boolean {
+        val today = game.today()
+        val day = world.giftStreakDay(today)
+        val (coins, xp, items) = world.giftFor(day)
+        val pw = 220
+        val ph = 118
+        val w = game.engine.w
+        val x = (w - pw) / 2
+        val y = game.engine.h / 2 - ph / 2
+        ui.modal(x, y, pw, ph)
+        ui.panel(x, y, pw, ph)
+        g.sprite("icons_big/gift", (w / 2).toFloat(), (y + 20).toFloat())
+        g.text("DAILY GIFT - DAY $day", w / 2, y + 36, Gfx.GOLD, align = 0)
+        for (d in 1..7) {
+            val bx = x + 12 + (d - 1) * 28
+            g.slice9(if (d == day) "ui/slot_sel" else "ui/slot", bx, y + 50, bx + 24, y + 70, 4)
+            g.text("$d", bx + 12, y + 56, if (d < day) Gfx.GREY else Gfx.WHITE, align = 0)
+            if (d < day) g.sprite("icons/check", bx + 18f, y + 54f)
+        }
+        val reward = "+$coins COINS  +$xp XP" + items.entries.joinToString("") { (k, v) -> "  +$v ${world.data.name(k).uppercase()}" }
+        g.text(reward.take(36), w / 2, y + 76, Gfx.INK, align = 0, outline = 0, shadow = false)
+        if (ui.button("gift-claim", w / 2 - 30, y + ph - 24, 60, 16, "CLAIM", style = "gold")) { world.claimGift(today); return false }
+        return true
+    }
+
+    /** The traveling merchant's six offers for today. */
+    fun merchant(): Boolean {
+        val stock = world.merchantStock()
+        if (stock.isEmpty()) { hud.toast("The merchant has moved on"); return false }
+        val (x, y, pw, ph) = frame("TRAVELING MERCHANT", 34 + 3 * 40).toList()
+        if (closeButton(x, y, pw)) return false
+        val cw = (pw - 20) / 2
+        stock.forEachIndexed { i, o ->
+            val cx = x + 10 + (i % 2) * cw
+            val cy = y + 24 + (i / 2) * 40
+            ui.slot("offer-$i", cx, cy, icon(o.item, big = true), o.qty, false, 32)
+            g.text(world.data.name(o.item).uppercase().take(12), cx + 36, cy + 2, Gfx.INK, outline = 0, shadow = false)
+            g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
+            g.text(Ui.compact(o.price), cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
+            if (world.merchantBought(i)) g.text("SOLD", cx + cw - 30, cy + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            else if (ui.button("buy-$i", cx + cw - 48, cy + 20, 40, 14, "BUY", style = if (world.state.coins >= o.price) "green" else "grey")) world.buyFromMerchant(i)
+        }
         return true
     }
 }
