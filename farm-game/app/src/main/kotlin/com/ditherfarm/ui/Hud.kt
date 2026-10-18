@@ -112,17 +112,20 @@ class Hud(private val game: Game) {
     fun drawOverlays(tipVisible: Boolean = true, tipLift: Int = 0) {
         val w = game.engine.w
         val h = game.engine.h
+        val tip = tipText
+        val tipLines = if (tip != null && tipVisible) wrap(tip, w - 40) else emptyList()
+        val tipH = if (tipLines.isEmpty()) 0 else 12 + tipLines.size * 10 + 6
+        // Toasts sit just above the nav bar (and above any tip), clear of HUD chips and panel titles.
         toastText?.let { text ->
             if (toastTime > 0) {
                 val tw = g.textWidth(text) + 14
-                val y = game.engine.safeTop + topHeight + 6
+                val y = h - game.engine.safeBottom - bottomHeight - tipLift - tipH - 18
                 ui.pill(w / 2 - tw / 2, y, tw, 14)
                 g.text(text, w / 2, y + 3, Gfx.WHITE, align = 0)
             }
         }
-        val tip = tipText
         if (tip != null && tipVisible) {
-            val lines = wrap(tip, w - 40)
+            val lines = tipLines
             val bh = 12 + lines.size * 10
             val y = h - game.engine.safeBottom - bottomHeight - bh - 6 - tipLift
             g.slice9("ui/bubble", 10, y, w - 10, y + bh, 5)

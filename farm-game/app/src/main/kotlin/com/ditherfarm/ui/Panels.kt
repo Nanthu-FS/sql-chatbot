@@ -571,7 +571,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val crops = world.data.crops.values.filter { it.unlockLevel <= world.level }.sortedBy { it.unlockLevel }
         val perRow = 6
         val seedRows = (crops.size + perRow - 1) / perRow
-        val ph = if (planter) 106 + (if (world.state.planterMode == PlanterMode.FILL) seedRows * 28 else 12) else if (forestry) 82 else 70
+        val ph = if (planter) 116 + (if (world.state.planterMode == PlanterMode.FILL) seedRows * 28 else 12) else if (forestry) 82 else 70
         val (x, y, pw, h) = frame(def.name.uppercase(), ph, pw = 220).toList()
         if (closeButton(x, y, pw)) return false
         val secs = world.shedSecondsLeft(id).toInt()
@@ -602,7 +602,7 @@ class Panels(private val game: Game, private val hud: Hud) {
                 if (ui.slot("pseed-${c.id}", sx, sy, icon(c.seedItem), world.count(c.seedItem), world.state.planterSeed == c.id, 24)) world.state.planterSeed = c.id
             }
         }
-        g.text("USES SEEDS FROM THE SILO", x + pw / 2, y + h - 12, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        g.text("USES SEEDS FROM THE SILO", x + pw / 2, y + h - 16, Gfx.GREY, align = 0, outline = 0, shadow = false)
         return true
     }
 
