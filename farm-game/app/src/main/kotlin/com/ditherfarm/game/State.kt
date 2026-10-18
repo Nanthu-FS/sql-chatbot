@@ -140,6 +140,21 @@ class GameState(var seed: Long) {
     val shedNext = HashMap<String, Double>()
     val shedLast = HashMap<String, Int>()
     val shedBlocked = HashMap<String, Boolean>()
+    /** Achievement id → tiers claimed; "id#tier" keys already announced; claimed collection pages. */
+    val achievements = HashMap<String, Int>()
+    val achievementsSeen = HashSet<String>()
+    val pagesClaimed = LinkedHashSet<String>()
+    /** Login gift: device day last claimed and the running streak. */
+    var giftDay = -1L
+    var giftStreak = 0
+    /** Merchant purchases (offer slots) on [merchantDay]. */
+    var merchantDay = -1
+    val merchantBought = HashSet<Int>()
+    /** Current festival ("year-SEASON"), its hand-in count and starting counter, and festivals won. */
+    var festivalKey = ""
+    var festivalProgress = 0
+    var festivalBase = 0L
+    val festivalsClaimed = HashSet<String>()
 
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
@@ -172,6 +187,15 @@ class GameState(var seed: Long) {
         put("planter", JSONObject().apply { put("mode", planterMode.name); planterSeed?.let { put("seed", it) } })
         put("shedNext", JSONObject(shedNext as Map<*, *>))
         put("shedLast", JSONObject(shedLast as Map<*, *>))
+        put("achievements", JSONObject(achievements as Map<*, *>))
+        put("achievementsSeen", JSONArray(achievementsSeen.toList()))
+        put("pagesClaimed", JSONArray(pagesClaimed.toList()))
+        put("events", JSONObject().apply {
+            put("giftDay", giftDay); put("giftStreak", giftStreak); put("merchantDay", merchantDay)
+            put("merchantBought", JSONArray(merchantBought.toList()))
+            put("festivalKey", festivalKey); put("festivalProgress", festivalProgress); put("festivalBase", festivalBase)
+            put("festivalsClaimed", JSONArray(festivalsClaimed.toList()))
+        })
     }
 
     companion object {
@@ -213,6 +237,15 @@ class GameState(var seed: Long) {
             }
             o.optJSONObject("shedNext")?.let { m -> m.keys().forEach { shedNext[it] = m.getDouble(it) } }
             o.optJSONObject("shedLast")?.toIntMap()?.forEach { (k, v) -> shedLast[k] = v }
+            o.optJSONObject("achievements")?.toIntMap()?.forEach { (k, v) -> achievements[k] = v }
+            o.optJSONArray("achievementsSeen")?.strings()?.let { achievementsSeen.addAll(it) }
+            o.optJSONArray("pagesClaimed")?.strings()?.let { pagesClaimed.addAll(it) }
+            o.optJSONObject("events")?.let { e ->
+                giftDay = e.optLong("giftDay", -1); giftStreak = e.optInt("giftStreak"); merchantDay = e.optInt("merchantDay", -1)
+                e.optJSONArray("merchantBought")?.let { a -> (0 until a.length()).forEach { merchantBought += a.getInt(it) } }
+                festivalKey = e.optString("festivalKey"); festivalProgress = e.optInt("festivalProgress"); festivalBase = e.optLong("festivalBase")
+                e.optJSONArray("festivalsClaimed")?.strings()?.let { festivalsClaimed.addAll(it) }
+            }
         }
     }
 }

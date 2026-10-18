@@ -81,6 +81,7 @@ class GameData(
     val zones: List<ZoneDef> = emptyList(),
     val tools: ToolTiers = ToolTiers(listOf(1, 2, 3, 6), listOf(0.05, 0.08, 0.12, 0.15), listOf("Wood", "Stone", "Iron", "Gold")),
     val mine: MineData = MineData.EMPTY,
+    val goals: GoalsData = GoalsData.EMPTY,
 ) {
     val maxLevel get() = levels.size
     val forestLayout: List<ForestSpot> by lazy { ForestLayout.build(zones) }
@@ -155,7 +156,7 @@ class GameData(
                 (0 until t.getJSONArray("crit").length()).map { t.getJSONArray("crit").getDouble(it) },
                 t.getJSONArray("names").strings(),
             )
-            return GameData(crops, items, levels, tiers("barn"), tiers("silo"), villagers, buildings, recipes, trees, zones, tools, MineData.parse(read("mine.json")))
+            return GameData(crops, items, levels, tiers("barn"), tiers("silo"), villagers, buildings, recipes, trees, zones, tools, MineData.parse(read("mine.json")), GoalsData.parse(read("goals.json")))
         }
     }
 }

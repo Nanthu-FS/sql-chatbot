@@ -235,6 +235,7 @@ private fun World.fell(i: Int, rng: Rng) {
             s.damage = 0
             s.since = state.minutes
             state.bump("fells")
+            state.bump("fell_${s.tree}")
             val xp = def?.xp ?: 1
             events += WorldEvent.Felled(i, s.tree ?: "", drops, xp)
             gainXp(xp)
@@ -270,6 +271,7 @@ private fun World.openBirdNest(i: Int, rng: Rng) {
         else -> "amethyst" to 1
     }
     if (item == "coins") state.coins += qty else add(item, qty)
+    state.bump("bird_nests")
     events += WorldEvent.BirdNest(i, item, qty)
 }
 
@@ -285,6 +287,7 @@ fun World.plantTree(i: Int, seedItem: String): Boolean {
     val mult = when (time.season) { Season.SPRING -> 0.8; Season.WINTER -> 1.33; else -> 1.0 }
     s.tree = def.id; s.stage = TreeStage.SAPLING; s.damage = 0; s.plantedAt = state.minutes
     s.growMinutes = Time.realSecondsToGameMinutes(def.growMinutes * 60 * mult)
+    state.bump("trees_planted")
     events += WorldEvent.TreePlanted(i, def.id)
     gainXp(1)
     return true

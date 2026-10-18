@@ -73,7 +73,7 @@ fun World.building(id: String): BuildingState = state.buildings.getOrPut(id) {
     BuildingState(id).also { it.built = data.buildings[id]?.prebuilt == true }
 }
 
-fun World.isBuilt(id: String) = building(id).built
+fun World.isBuilt(id: String) = state.buildings[id]?.built ?: (data.buildings[id]?.prebuilt == true)
 
 fun World.buildingsOn(screen: String) = data.buildings.values.filter { it.screen == screen }.sortedBy { it.unlockLevel }
 
@@ -128,6 +128,9 @@ fun World.recipeBlocker(r: RecipeDef): String? {
     }
 }
 
+/** Game minutes a batch takes (the Goods page makes machines 5% faster). */
+fun World.jobMinutes(r: RecipeDef) = r.gameMinutes * if (hasBonus("machine_speed")) 0.95 else 1.0
+
 /** Queues one batch: takes inputs (and fuel) now, schedules after the last queued job. */
 fun World.enqueue(recipeId: String): Boolean {
     val r = data.recipes[recipeId] ?: return false
@@ -137,7 +140,7 @@ fun World.enqueue(recipeId: String): Boolean {
     r.inputs.forEach { (k, v) -> if (k == "#crop") takeAnyCrops(v) else removeAny(k, v) }
     b.fuel -= r.fuel
     val start = max(state.minutes, b.jobs.lastOrNull()?.end ?: 0.0)
-    b.jobs += Job(r.id, start, start + r.gameMinutes)
+    b.jobs += Job(r.id, start, start + jobMinutes(r))
     events += WorldEvent.JobQueued(r.building, r.id)
     return true
 }
@@ -187,7 +190,7 @@ internal fun World.tickMachines() {
         val def = data.buildings[b.id] ?: continue
         if (b.built && b.jobs.isEmpty() && b.tray.values.sum() < 3) {
             val auto = def.recipes.mapNotNull { data.recipes[it] }.firstOrNull { it.inputs.isEmpty() && it.unlockLevel <= state.level }
-            if (auto != null) b.jobs += Job(auto.id, state.minutes, state.minutes + auto.gameMinutes)
+            if (auto != null) b.jobs += Job(auto.id, state.minutes, state.minutes + jobMinutes(auto))
         }
     }
 }

@@ -412,7 +412,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             } else {
                 if (!inSeason) g.sprite("icons/cross", (sx + size - 6).toFloat(), (sy + 6).toFloat())
                 val owned = world.count(def.seedItem)
-                g.text(if (owned > 0) "x$owned" else "${def.seedPrice}c", sx + size - 2, sy + size - 9, if (owned > 0) Gfx.WHITE else Gfx.GOLD, align = 1)
+                g.text(if (owned > 0) "x$owned" else "${world.seedPrice(def.id)}c", sx + size - 2, sy + size - 9, if (owned > 0) Gfx.WHITE else Gfx.GOLD, align = 1)
             }
         }
     }

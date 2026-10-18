@@ -51,6 +51,13 @@ sealed class WorldEvent {
     data class FixturePlaced(val vertex: Int, val item: String) : WorldEvent()
     data class FixtureRemoved(val vertex: Int, val item: String) : WorldEvent()
     data class ShedRan(val shed: String, val plots: Int) : WorldEvent()
+    data class AchievementReady(val id: String) : WorldEvent()
+    data class AchievementClaimed(val id: String, val tier: Int, val coins: Int) : WorldEvent()
+    data class PageClaimed(val id: String, val coins: Int) : WorldEvent()
+    data class GiftClaimed(val day: Int, val coins: Int) : WorldEvent()
+    data class Bought(val item: String, val qty: Int, val price: Int) : WorldEvent()
+    data class FestivalStarted(val name: String) : WorldEvent()
+    data class FestivalWon(val name: String) : WorldEvent()
 }
 
 /**
@@ -108,6 +115,7 @@ class World(val data: GameData, val state: GameState) {
         tickMachines()
         tickQuarry()
         tickSheds()
+        checkAchievements()
     }
 
     private fun grow(dt: Double) {
@@ -145,12 +153,13 @@ class World(val data: GameData, val state: GameState) {
         for (p in state.plots) p.watered = p.crop != null && ((state.weather.waters && !FieldLayout.isGreenhouse(p.index)) || covered(p.index, FixtureKind.WATER))
         for (k in state.glut.keys.toList()) state.glut[k] = state.glut[k]!! * 0.5
         forestDawn(day)
+        festivalDawn()
         events += WorldEvent.DayStarted(day, state.weather)
     }
 
     /** Weather for a day, seeded so reloading never re-rolls (GAME_DESIGN §2). */
     fun rollWeather(day: Int): Weather {
-        if (day < 3) return Weather.SUNNY
+        if (day < 3 || isFestivalDay(GameTime(day.toDouble() * Time.MINUTES_PER_DAY))) return Weather.SUNNY
         val season = GameTime(day.toDouble() * Time.MINUTES_PER_DAY).season
         val r = Rng.forDay(state.seed, day, 11).nextDouble()
         val (pWet, pStorm) = when (season) {
@@ -182,13 +191,14 @@ class World(val data: GameData, val state: GameState) {
             if (p.growth < def.growMinutes && rng.chance(0.15)) { p.battered = true; battered += p.index }
         }
         state.bump("storms")
+        if (planted.size >= 12 && scorched.isEmpty() && battered.isEmpty()) state.bump("storm_safe")
         events += WorldEvent.Storm(scorched.map { it.index }, battered)
     }
 
     internal fun rng(): Rng = Rng(state.seed xor (state.rngCounter++ * 0x9E3779B97F4A7C15uL.toLong()))
 
     // ---------------------------------------------------------------- energy
-    val maxEnergy get() = data.level(state.level).maxEnergy
+    val maxEnergy get() = data.level(state.level).maxEnergy + if (hasBonus("max_energy")) 10 else 0
 
     private fun regenEnergy(realSeconds: Double) {
         val max = maxEnergy.toDouble()
@@ -204,7 +214,7 @@ class World(val data: GameData, val state: GameState) {
     /** Energy an item restores when eaten (0 = not edible). */
     fun foodEnergy(key: String): Int {
         val crop = data.crops[baseId(key)] ?: return 0
-        return (crop.energy * Quality.of(key).mult).roundToInt()
+        return (crop.energy * Quality.of(key).mult * if (hasBonus("dish_energy")) 1.1 else 1.0).roundToInt()
     }
 
     fun eat(key: String): Boolean {
@@ -213,6 +223,7 @@ class World(val data: GameData, val state: GameState) {
         if (state.energy + e > maxEnergy) { events += WorldEvent.Blocked("Not hungry"); return false }
         remove(key, 1)
         state.energy += e
+        state.bump("eaten")
         events += WorldEvent.Ate(key, e)
         return true
     }
@@ -348,15 +359,21 @@ class World(val data: GameData, val state: GameState) {
             !p.empty -> "Plot is busy"
             def.unlockLevel > state.level -> "Unlocks at level ${def.unlockLevel}"
             time.season !in def.seasons && !FieldLayout.isGreenhouse(i) -> "Not in season"
-            count(def.seedItem) <= 0 && state.coins < def.seedPrice -> "Not enough coins"
+            count(def.seedItem) <= 0 && state.coins < seedPrice(cropId) -> "Not enough coins"
             else -> null
         }
+    }
+
+    /** Coins for one seed bought at planting time (the Crops page takes 10% off). */
+    fun seedPrice(cropId: String): Int {
+        val base = data.crop(cropId).seedPrice
+        return if (hasBonus("seed_discount")) max(1, (base * 0.9).toInt()) else base
     }
 
     fun plant(i: Int, cropId: String): Boolean {
         plantBlocker(i, cropId)?.let { events += WorldEvent.Blocked(it, i); return false }
         val def = data.crop(cropId)
-        if (count(def.seedItem) > 0) remove(def.seedItem, 1) else state.coins -= def.seedPrice
+        if (count(def.seedItem) > 0) remove(def.seedItem, 1) else state.coins -= seedPrice(cropId)
         val p = plot(i)
         p.clear()
         p.crop = cropId
@@ -404,6 +421,7 @@ class World(val data: GameData, val state: GameState) {
         p.harvests++
         state.bump("harvested", qty.toLong())
         state.bump("harvest_${def.id}", qty.toLong())
+        if (q == Quality.GOLD) state.bump("harvest_gold", qty.toLong())
         if (def.regrows) {
             p.growth = (def.growHours - def.regrowHours) * 60
             p.cared = false; p.battered = false
@@ -482,12 +500,15 @@ class World(val data: GameData, val state: GameState) {
         return max(0.50, 1 - 0.25 * max(0.0, glut - t) / t)
     }
 
+    /** Collection page bonus: ores sell for 5% more once the Mine page is complete. */
+    private fun bonusMult(id: String) = if (id.endsWith("_ore") && hasBonus("ore_price")) 1.05 else 1.0
+
     /** Current sell price of one unit of [key] (quality included). */
     fun unitPrice(key: String): Int {
         val id = baseId(key)
         val base = data.item(id).price
         if (base <= 0) return 0
-        return max(1, (base * dailyMult(id, time.dayIndex) * seasonMult(id) * Quality.of(key).mult * supplyMult(id)).roundToInt())
+        return max(1, (base * dailyMult(id, time.dayIndex) * seasonMult(id) * Quality.of(key).mult * supplyMult(id) * bonusMult(id)).roundToInt())
     }
 
     /** -1 falling, 0 flat, 1 rising versus yesterday. */
@@ -507,7 +528,7 @@ class World(val data: GameData, val state: GameState) {
         if (base <= 0) return 0
         var total = 0
         for (n in 0 until qty) {
-            total += max(1, (base * dailyMult(id, time.dayIndex) * seasonMult(id) * Quality.of(key).mult * supplyMult(id, n * base.toDouble())).roundToInt())
+            total += max(1, (base * dailyMult(id, time.dayIndex) * seasonMult(id) * Quality.of(key).mult * supplyMult(id, n * base.toDouble()) * bonusMult(id)).roundToInt())
         }
         return total
     }
@@ -520,6 +541,9 @@ class World(val data: GameData, val state: GameState) {
         remove(key, n)
         val id = baseId(key)
         state.glut[id] = (state.glut[id] ?: 0.0) + n * data.item(id).price
+        if (n >= 20 && percentOfBase(id) >= 120) state.bump("wizard_sales")
+        if (data.crops[id]?.let { time.season !in it.seasons } == true) state.bump("out_season_sales")
+        if (data.crops.containsKey(id)) state.bump("crops_sold", n.toLong())
         state.coins += coins
         state.bump("coins_earned", coins.toLong())
         events += WorldEvent.Sold(key, n, coins)
@@ -533,7 +557,7 @@ class World(val data: GameData, val state: GameState) {
         while (state.orders.size < want) state.orders.add(OrderSlot().apply { nextAt = state.minutes })
     }
 
-    private fun orderDelayMinutes() = Time.realSecondsToGameMinutes(if (state.level < 5) 120.0 else 300.0)
+    private fun orderDelayMinutes() = Time.realSecondsToGameMinutes((if (state.level < 5) 120.0 else 300.0) - if (hasBonus("order_speed")) 60.0 else 0.0)
 
     private fun tickOrders() {
         ensureOrderSlots()
@@ -608,6 +632,7 @@ class World(val data: GameData, val state: GameState) {
         s.order = null
         s.nextAt = state.minutes + orderDelayMinutes()
         state.bump("orders")
+        state.bump("coins_earned", o.coins.toLong())
         events += WorldEvent.OrderDelivered(slot, o.coins, o.xp)
         gainXp(o.xp)
         return true
