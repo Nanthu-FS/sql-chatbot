@@ -1,0 +1,247 @@
+{
+ "_doc": "Forest (GAME_DESIGN \u00a78). growMinutes are REAL minutes (season multipliers apply). minAxe: 0 wood,1 stone,2 iron,3 gold.",
+ "trees": [
+  {
+   "id": "pine",
+   "minAxe": 0,
+   "hp": 5,
+   "wood": [
+    2,
+    3
+   ],
+   "hardwood": [
+    0,
+    0
+   ],
+   "growMinutes": 30,
+   "xp": 2,
+   "seed": "pinecone",
+   "seedChance": 0.25,
+   "extras": [
+    {
+     "item": "resin",
+     "chance": 0.3
+    },
+    {
+     "item": "amber",
+     "chance": 0.02
+    }
+   ]
+  },
+  {
+   "id": "birch",
+   "minAxe": 0,
+   "hp": 6,
+   "wood": [
+    2,
+    4
+   ],
+   "hardwood": [
+    0,
+    0
+   ],
+   "growMinutes": 40,
+   "xp": 3,
+   "seed": "birch_seed",
+   "seedChance": 0.25,
+   "extras": [
+    {
+     "item": "sap",
+     "chance": 0.2
+    }
+   ]
+  },
+  {
+   "id": "oak",
+   "minAxe": 1,
+   "hp": 12,
+   "wood": [
+    2,
+    3
+   ],
+   "hardwood": [
+    1,
+    2
+   ],
+   "growMinutes": 80,
+   "xp": 6,
+   "seed": "acorn",
+   "seedChance": 0.3,
+   "extras": [
+    {
+     "item": "wild_mushroom",
+     "chance": 0.1
+    }
+   ]
+  },
+  {
+   "id": "maple",
+   "minAxe": 2,
+   "hp": 20,
+   "wood": [
+    2,
+    2
+   ],
+   "hardwood": [
+    2,
+    3
+   ],
+   "growMinutes": 120,
+   "xp": 10,
+   "seed": "maple_seed",
+   "seedChance": 0.3,
+   "extras": [
+    {
+     "item": "sap",
+     "chance": 1.0
+    },
+    {
+     "item": "sap",
+     "chance": 0.5
+    }
+   ]
+  },
+  {
+   "id": "ancient_oak",
+   "minAxe": 3,
+   "hp": 60,
+   "wood": [
+    8,
+    8
+   ],
+   "hardwood": [
+    6,
+    6
+   ],
+   "growMinutes": 280,
+   "xp": 40,
+   "seed": "golden_acorn",
+   "seedChance": 0.15,
+   "extras": [
+    {
+     "item": "heartwood",
+     "chance": 1.0
+    },
+    {
+     "item": "heartwood",
+     "chance": 0.25
+    },
+    {
+     "item": "petrified_wood",
+     "chance": 0.1
+    }
+   ]
+  }
+ ],
+ "zones": [
+  {
+   "id": "A",
+   "name": "Edge Grove",
+   "unlock": 2,
+   "cost": {},
+   "trees": {
+    "pine": 6,
+    "birch": 4,
+    "oak": 2
+   },
+   "bushes": 2,
+   "apples": 2,
+   "mushrooms": 3,
+   "slots": 2
+  },
+  {
+   "id": "B",
+   "name": "Birch Hollow",
+   "unlock": 6,
+   "cost": {
+    "coins": 800,
+    "wood": 20
+   },
+   "trees": {
+    "birch": 7,
+    "pine": 3,
+    "oak": 2
+   },
+   "bushes": 1,
+   "apples": 0,
+   "mushrooms": 3,
+   "slots": 2
+  },
+  {
+   "id": "C",
+   "name": "Maple Ridge",
+   "unlock": 12,
+   "cost": {
+    "coins": 4000,
+    "plank": 30,
+    "iron_bar": 5
+   },
+   "trees": {
+    "maple": 6,
+    "oak": 4
+   },
+   "bushes": 0,
+   "apples": 1,
+   "mushrooms": 0,
+   "slots": 1
+  },
+  {
+   "id": "D",
+   "name": "Mushroom Glade",
+   "unlock": 16,
+   "cost": {
+    "coins": 9000,
+    "plank": 40,
+    "hardwood": 10
+   },
+   "trees": {
+    "oak": 5,
+    "birch": 3,
+    "maple": 2
+   },
+   "bushes": 0,
+   "apples": 0,
+   "mushrooms": 6,
+   "slots": 1
+  },
+  {
+   "id": "E",
+   "name": "Ancient Heart",
+   "unlock": 24,
+   "cost": {
+    "coins": 25000,
+    "beam": 10,
+    "gold_bar": 5,
+    "gear": 3
+   },
+   "trees": {
+    "ancient_oak": 3,
+    "maple": 4
+   },
+   "bushes": 0,
+   "apples": 0,
+   "mushrooms": 0,
+   "slots": 1
+  }
+ ],
+ "tools": {
+  "damage": [
+   1,
+   2,
+   3,
+   6
+  ],
+  "crit": [
+   0.05,
+   0.08,
+   0.12,
+   0.15
+  ],
+  "names": [
+   "Wood",
+   "Stone",
+   "Iron",
+   "Gold"
+  ]
+ }
+}

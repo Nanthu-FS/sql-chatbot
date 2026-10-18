@@ -28,6 +28,18 @@ sealed class WorldEvent {
     data class Sold(val key: String, val qty: Int, val coins: Int) : WorldEvent()
     data class Ate(val key: String, val energy: Int) : WorldEvent()
     data class Discovered(val item: String) : WorldEvent()
+    data class Built(val building: String) : WorldEvent()
+    data class JobQueued(val building: String, val recipe: String) : WorldEvent()
+    data class JobDone(val building: String, val recipe: String) : WorldEvent()
+    data class Collected(val building: String, val qty: Int) : WorldEvent()
+    data class ToolUpgraded(val tool: String, val tier: Int) : WorldEvent()
+    data class Chopped(val spot: Int, val damage: Int, val crit: Boolean, val hpLeft: Int) : WorldEvent()
+    data class Felled(val spot: Int, val tree: String, val drops: Map<String, Int>, val xp: Int) : WorldEvent()
+    data class StumpCleared(val spot: Int) : WorldEvent()
+    data class Foraged(val spot: Int, val item: String, val qty: Int) : WorldEvent()
+    data class TreePlanted(val spot: Int, val tree: String) : WorldEvent()
+    data class ZoneUnlocked(val zone: String) : WorldEvent()
+    data class BirdNest(val spot: Int, val item: String, val qty: Int) : WorldEvent()
 }
 
 /**
@@ -80,6 +92,7 @@ class World(val data: GameData, val state: GameState) {
         grow(after.minutes - state.minutes)
         state.minutes = after.minutes
         tickOrders()
+        tickMachines()
     }
 
     private fun grow(dt: Double) {
@@ -115,6 +128,7 @@ class World(val data: GameData, val state: GameState) {
         state.forecast = rollWeather(day + 1)
         for (p in state.plots) p.watered = p.crop != null && state.weather.waters
         for (k in state.glut.keys.toList()) state.glut[k] = state.glut[k]!! * 0.5
+        forestDawn(day)
         events += WorldEvent.DayStarted(day, state.weather)
     }
 
@@ -153,7 +167,7 @@ class World(val data: GameData, val state: GameState) {
         events += WorldEvent.Storm(scorched.map { it.index }, battered)
     }
 
-    private fun rng(): Rng = Rng(state.seed xor (state.rngCounter++ * 0x9E3779B97F4A7C15uL.toLong()))
+    internal fun rng(): Rng = Rng(state.seed xor (state.rngCounter++ * 0x9E3779B97F4A7C15uL.toLong()))
 
     // ---------------------------------------------------------------- energy
     val maxEnergy get() = data.level(state.level).maxEnergy
@@ -196,6 +210,7 @@ class World(val data: GameData, val state: GameState) {
             state.coins += reward
             state.energy = maxEnergy.toDouble()
             ensureOrderSlots()
+            autoOpenZones()
             events += WorldEvent.LevelUp(state.level, reward)
         }
     }

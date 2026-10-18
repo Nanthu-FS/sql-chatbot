@@ -1,0 +1,316 @@
+{
+ "_doc": "Buildings (GAME_DESIGN \u00a711). screen: farm/forest/mine. cost.coins is coins. queue = max queued batches. prebuilt buildings exist from the start.",
+ "buildings": [
+  {
+   "id": "workbench",
+   "name": "Workbench",
+   "screen": "farm",
+   "unlock": 1,
+   "cost": {},
+   "recipes": [
+    "wb_plank",
+    "wb_rope",
+    "wb_nails",
+    "wb_gear",
+    "wb_torch",
+    "wb_lantern",
+    "wb_support_beam",
+    "wb_rope_ladder",
+    "wb_quality_fertilizer",
+    "wb_scarecrow",
+    "wb_lightning_rod",
+    "tool_hoe_1",
+    "tool_hoe_2",
+    "tool_hoe_3",
+    "tool_axe_1",
+    "tool_axe_2",
+    "tool_axe_3",
+    "tool_pickaxe_1",
+    "tool_pickaxe_2",
+    "tool_pickaxe_3",
+    "tool_sickle_1",
+    "tool_sickle_2",
+    "tool_sickle_3",
+    "tool_can_1",
+    "tool_can_2",
+    "tool_can_3"
+   ],
+   "queue": 1,
+   "prebuilt": true,
+   "sprite": "buildings/workbench"
+  },
+  {
+   "id": "windmill",
+   "name": "Windmill",
+   "screen": "farm",
+   "unlock": 2,
+   "cost": {
+    "coins": 150,
+    "wood": 15,
+    "wheat": 10
+   },
+   "recipes": [
+    "flour",
+    "cornmeal"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/windmill"
+  },
+  {
+   "id": "compost_bin",
+   "name": "Compost Bin",
+   "screen": "farm",
+   "unlock": 3,
+   "cost": {
+    "coins": 100,
+    "wood": 10,
+    "plank": 4
+   },
+   "recipes": [
+    "compost_crops",
+    "compost_scraps"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/compost_bin"
+  },
+  {
+   "id": "bakery_oven",
+   "name": "Bakery Oven",
+   "screen": "farm",
+   "unlock": 4,
+   "cost": {
+    "coins": 300,
+    "plank": 10,
+    "stone": 25
+   },
+   "recipes": [
+    "bread",
+    "roast_veggies",
+    "cornbread",
+    "strawberry_tart",
+    "pumpkin_pie",
+    "pancakes",
+    "veggie_stew",
+    "potato_chips",
+    "ratatouille"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/bakery_oven"
+  },
+  {
+   "id": "preserves_jar",
+   "name": "Preserves Jar",
+   "screen": "farm",
+   "unlock": 7,
+   "cost": {
+    "coins": 200,
+    "plank": 4,
+    "glass": 2,
+    "copper_bar": 1
+   },
+   "recipes": [
+    "strawberry_jam",
+    "melon_jam",
+    "grapes_jam",
+    "carrot_pickles",
+    "potato_pickles",
+    "tomato_pickles",
+    "corn_pickles",
+    "pumpkin_pickles",
+    "cabbage_pickles",
+    "eggplant_pickles"
+   ],
+   "queue": 1,
+   "prebuilt": false,
+   "sprite": "buildings/preserves_jar"
+  },
+  {
+   "id": "beehive",
+   "name": "Beehive",
+   "screen": "farm",
+   "unlock": 8,
+   "cost": {
+    "coins": 250,
+    "plank": 12,
+    "wheat": 6,
+    "copper_bar": 1
+   },
+   "recipes": [
+    "honey"
+   ],
+   "queue": 1,
+   "prebuilt": false,
+   "sprite": "buildings/beehive"
+  },
+  {
+   "id": "fruit_press",
+   "name": "Fruit Press",
+   "screen": "farm",
+   "unlock": 10,
+   "cost": {
+    "coins": 800,
+    "plank": 20,
+    "copper_bar": 5,
+    "iron_bar": 3
+   },
+   "recipes": [
+    "carrot_juice",
+    "tomato_juice",
+    "strawberry_juice",
+    "melon_juice",
+    "grapes_juice"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/fruit_press"
+  },
+  {
+   "id": "seed_maker",
+   "name": "Seed Maker",
+   "screen": "farm",
+   "unlock": 9,
+   "cost": {
+    "coins": 400,
+    "plank": 6,
+    "copper_bar": 2,
+    "iron_bar": 2
+   },
+   "recipes": [
+    "seeds_wheat",
+    "seeds_carrot",
+    "seeds_corn",
+    "seeds_potato",
+    "seeds_cabbage",
+    "seeds_tomato",
+    "seeds_strawberry",
+    "seeds_sunflower",
+    "seeds_eggplant",
+    "seeds_pumpkin",
+    "seeds_melon",
+    "seeds_grapes"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/seed_maker"
+  },
+  {
+   "id": "oil_press",
+   "name": "Oil Press",
+   "screen": "farm",
+   "unlock": 14,
+   "cost": {
+    "coins": 1500,
+    "plank": 12,
+    "brick": 10,
+    "iron_bar": 6
+   },
+   "recipes": [
+    "oil_sunflower",
+    "oil_corn"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/oil_press"
+  },
+  {
+   "id": "sawmill",
+   "name": "Sawmill",
+   "screen": "forest",
+   "unlock": 3,
+   "cost": {
+    "coins": 200,
+    "wood": 25,
+    "stone": 10
+   },
+   "recipes": [
+    "saw_plank",
+    "saw_beam"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/sawmill"
+  },
+  {
+   "id": "wood_chipper",
+   "name": "Wood Chipper",
+   "screen": "forest",
+   "unlock": 7,
+   "cost": {
+    "coins": 700,
+    "plank": 12,
+    "stone": 8
+   },
+   "recipes": [
+    "mulch"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/wood_chipper"
+  },
+  {
+   "id": "charcoal_kiln",
+   "name": "Charcoal Kiln",
+   "screen": "forest",
+   "unlock": 9,
+   "cost": {
+    "coins": 500,
+    "stone": 30,
+    "brick": 15,
+    "wood": 10
+   },
+   "recipes": [
+    "charcoal"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/charcoal_kiln"
+  },
+  {
+   "id": "syrup_kettle",
+   "name": "Syrup Kettle",
+   "screen": "forest",
+   "unlock": 13,
+   "cost": {
+    "coins": 3000,
+    "plank": 15,
+    "iron_bar": 4
+   },
+   "recipes": [
+    "maple_syrup"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/syrup_kettle"
+  },
+  {
+   "id": "furnace",
+   "name": "Furnace",
+   "screen": "mine",
+   "unlock": 5,
+   "cost": {
+    "coins": 400,
+    "stone": 30,
+    "clay": 10,
+    "plank": 6,
+    "coal": 5
+   },
+   "recipes": [
+    "copper_bar",
+    "brick",
+    "iron_bar",
+    "glass",
+    "gold_bar"
+   ],
+   "queue": 3,
+   "prebuilt": false,
+   "sprite": "buildings/furnace",
+   "fuel": {
+    "item": "coal",
+    "tank": 20
+   }
+  }
+ ]
+}

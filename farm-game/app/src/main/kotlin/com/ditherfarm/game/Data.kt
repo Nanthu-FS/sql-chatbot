@@ -40,6 +40,34 @@ class StorageTier(val level: Int, val capacity: Int, val unlockLevel: Int, val c
 
 class VillagerDef(val id: String, val name: String, val role: String, val unlockLevel: Int, val favorites: Set<String>)
 
+class TreeDef(
+    val id: String,
+    val minAxe: Int,
+    val hp: Int,
+    val wood: IntRange,
+    val hardwood: IntRange,
+    /** Real minutes from sapling to mature (before the season multiplier). */
+    val growMinutes: Double,
+    val xp: Int,
+    val seed: String,
+    val seedChance: Double,
+    val extras: List<Pair<String, Double>>,
+)
+
+class ZoneDef(
+    val id: String,
+    val name: String,
+    val unlockLevel: Int,
+    val cost: Map<String, Int>,
+    val trees: Map<String, Int>,
+    val bushes: Int,
+    val apples: Int,
+    val mushrooms: Int,
+    val slots: Int,
+)
+
+class ToolTiers(val damage: List<Int>, val crit: List<Double>, val names: List<String>)
+
 class GameData(
     val crops: Map<String, CropDef>,
     val items: Map<String, ItemDef>,
@@ -47,8 +75,14 @@ class GameData(
     val barn: List<StorageTier>,
     val silo: List<StorageTier>,
     val villagers: List<VillagerDef>,
+    val buildings: Map<String, BuildingDef> = emptyMap(),
+    val recipes: Map<String, RecipeDef> = emptyMap(),
+    val trees: Map<String, TreeDef> = emptyMap(),
+    val zones: List<ZoneDef> = emptyList(),
+    val tools: ToolTiers = ToolTiers(listOf(1, 2, 3, 6), listOf(0.05, 0.08, 0.12, 0.15), listOf("Wood", "Stone", "Iron", "Gold")),
 ) {
     val maxLevel get() = levels.size
+    val forestLayout: List<ForestSpot> by lazy { ForestLayout.build(zones) }
     fun level(l: Int): LevelDef = levels[(l - 1).coerceIn(0, levels.size - 1)]
     fun item(id: String): ItemDef = items[id] ?: ItemDef(id, id, "unknown", 0, Storage.BARN)
     fun crop(id: String): CropDef = crops[id] ?: error("unknown crop $id")
@@ -84,7 +118,43 @@ class GameData(
             val villagers = JSONObject(read("villagers.json")).getJSONArray("villagers").objects().map { o ->
                 VillagerDef(o.getString("id"), o.getString("name"), o.getString("role"), o.getInt("unlock"), o.getJSONArray("favorites").strings().toSet())
             }
-            return GameData(crops, items, levels, tiers("barn"), tiers("silo"), villagers)
+            val buildings = JSONObject(read("buildings.json")).getJSONArray("buildings").objects().map { o ->
+                BuildingDef(
+                    o.getString("id"), o.getString("name"), o.getString("screen"), o.getInt("unlock"),
+                    o.getJSONObject("cost").toIntMap(), o.getJSONArray("recipes").strings(), o.optInt("queue", 3),
+                    o.optBoolean("prebuilt"), o.optString("sprite", "buildings/" + o.getString("id")),
+                    o.optJSONObject("fuel")?.optInt("tank", 0) ?: 0,
+                )
+            }.associateBy { it.id }
+            val recipes = JSONObject(read("recipes.json")).getJSONArray("recipes").objects().map { o ->
+                RecipeDef(
+                    o.getString("id"), o.getString("building"), o.getJSONObject("inputs").toIntMap(), o.getJSONObject("outputs").toIntMap(),
+                    o.getDouble("minutes"), o.getInt("unlock"), o.optInt("coins", 0), o.optDouble("fuel", 0.0),
+                    if (o.has("name")) o.getString("name") else null,
+                )
+            }.associateBy { it.id }
+            val forest = JSONObject(read("forest.json"))
+            fun range(a: JSONArray) = a.getInt(0)..a.getInt(1)
+            val trees = forest.getJSONArray("trees").objects().map { o ->
+                TreeDef(
+                    o.getString("id"), o.getInt("minAxe"), o.getInt("hp"), range(o.getJSONArray("wood")), range(o.getJSONArray("hardwood")),
+                    o.getDouble("growMinutes"), o.getInt("xp"), o.getString("seed"), o.getDouble("seedChance"),
+                    o.getJSONArray("extras").objects().map { it.getString("item") to it.getDouble("chance") },
+                )
+            }.associateBy { it.id }
+            val zones = forest.getJSONArray("zones").objects().map { o ->
+                ZoneDef(
+                    o.getString("id"), o.getString("name"), o.getInt("unlock"), o.getJSONObject("cost").toIntMap(),
+                    o.getJSONObject("trees").toIntMap(), o.getInt("bushes"), o.getInt("apples"), o.getInt("mushrooms"), o.getInt("slots"),
+                )
+            }
+            val t = forest.getJSONObject("tools")
+            val tools = ToolTiers(
+                (0 until t.getJSONArray("damage").length()).map { t.getJSONArray("damage").getInt(it) },
+                (0 until t.getJSONArray("crit").length()).map { t.getJSONArray("crit").getDouble(it) },
+                t.getJSONArray("names").strings(),
+            )
+            return GameData(crops, items, levels, tiers("barn"), tiers("silo"), villagers, buildings, recipes, trees, zones, tools)
         }
     }
 }

@@ -494,6 +494,11 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             is WorldEvent.Sold -> {}
             is WorldEvent.Ate -> {}
             is WorldEvent.Discovered -> hud.toast("New item: ${world.data.name(e.item)}!")
+            is WorldEvent.JobDone -> game.sfx.play("machine_done")
+            is WorldEvent.ToolUpgraded -> { game.sfx.play("unlock"); hud.toast("New ${world.data.tools.names[e.tier]} ${e.tool}!") }
+            is WorldEvent.Built -> { game.sfx.play("craft"); game.haptics.heavy() }
+            is WorldEvent.ZoneUnlocked -> hud.toast("The forest has opened up!")
+            else -> {}
         }
     }
 

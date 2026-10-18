@@ -784,6 +784,20 @@
    "category": "fertilizer",
    "price": 20,
    "storage": "barn"
+  },
+  {
+   "id": "scarecrow",
+   "name": "Scarecrow",
+   "category": "fixture",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "lightning_rod",
+   "name": "Lightning Rod",
+   "category": "fixture",
+   "price": 0,
+   "storage": "barn"
   }
  ]
 }

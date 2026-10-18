@@ -1,0 +1,1098 @@
+{
+ "_doc": "Recipes (GAME_DESIGN \u00a710.2, \u00a712). minutes are REAL minutes. inputs '#crop' = any crops. outputs '@tool:<tool>' = sets that tool's tier. coins = extra coin cost. fuel = coal units.",
+ "recipes": [
+  {
+   "id": "wb_plank",
+   "building": "workbench",
+   "inputs": {
+    "wood": 3
+   },
+   "outputs": {
+    "plank": 1
+   },
+   "minutes": 0.5,
+   "unlock": 1,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_rope",
+   "building": "workbench",
+   "inputs": {
+    "fibre": 3
+   },
+   "outputs": {
+    "rope": 1
+   },
+   "minutes": 0.5,
+   "unlock": 3,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_nails",
+   "building": "workbench",
+   "inputs": {
+    "copper_bar": 1
+   },
+   "outputs": {
+    "nails": 4
+   },
+   "minutes": 0.5,
+   "unlock": 5,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_gear",
+   "building": "workbench",
+   "inputs": {
+    "iron_bar": 1,
+    "copper_bar": 1
+   },
+   "outputs": {
+    "gear": 2
+   },
+   "minutes": 2,
+   "unlock": 10,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_torch",
+   "building": "workbench",
+   "inputs": {
+    "wood": 1,
+    "resin": 1
+   },
+   "outputs": {
+    "torch": 3
+   },
+   "minutes": 2,
+   "unlock": 6,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_lantern",
+   "building": "workbench",
+   "inputs": {
+    "copper_bar": 2,
+    "quartz": 1,
+    "coal": 2
+   },
+   "outputs": {
+    "lantern": 1
+   },
+   "minutes": 5,
+   "unlock": 8,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_support_beam",
+   "building": "workbench",
+   "inputs": {
+    "plank": 2
+   },
+   "outputs": {
+    "support_beam": 1
+   },
+   "minutes": 3,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_rope_ladder",
+   "building": "workbench",
+   "inputs": {
+    "stone": 10,
+    "plank": 1
+   },
+   "outputs": {
+    "rope_ladder": 1
+   },
+   "minutes": 5,
+   "unlock": 12,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_quality_fertilizer",
+   "building": "workbench",
+   "inputs": {
+    "basic_fertilizer": 2,
+    "coal": 1
+   },
+   "outputs": {
+    "quality_fertilizer": 1
+   },
+   "minutes": 2,
+   "unlock": 14,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_scarecrow",
+   "building": "workbench",
+   "inputs": {
+    "wood": 10,
+    "wheat": 2
+   },
+   "outputs": {
+    "scarecrow": 1
+   },
+   "minutes": 3,
+   "unlock": 5,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_lightning_rod",
+   "building": "workbench",
+   "inputs": {
+    "copper_bar": 4,
+    "iron_bar": 1,
+    "stone": 10
+   },
+   "outputs": {
+    "lightning_rod": 1
+   },
+   "minutes": 10,
+   "unlock": 5,
+   "fuel": 0.0
+  },
+  {
+   "id": "tool_hoe_1",
+   "building": "workbench",
+   "inputs": {
+    "wood": 6,
+    "stone": 10
+   },
+   "outputs": {
+    "@tool:hoe": 1
+   },
+   "minutes": 1,
+   "unlock": 4,
+   "fuel": 0.0,
+   "coins": 40
+  },
+  {
+   "id": "tool_hoe_2",
+   "building": "workbench",
+   "inputs": {
+    "iron_bar": 3,
+    "plank": 3,
+    "nails": 6
+   },
+   "outputs": {
+    "@tool:hoe": 2
+   },
+   "minutes": 15,
+   "unlock": 10,
+   "fuel": 0.0,
+   "coins": 300
+  },
+  {
+   "id": "tool_hoe_3",
+   "building": "workbench",
+   "inputs": {
+    "gold_bar": 3,
+    "iron_bar": 2,
+    "hardwood": 3
+   },
+   "outputs": {
+    "@tool:hoe": 3
+   },
+   "minutes": 45,
+   "unlock": 18,
+   "fuel": 0.0,
+   "coins": 1200
+  },
+  {
+   "id": "tool_axe_1",
+   "building": "workbench",
+   "inputs": {
+    "wood": 8,
+    "stone": 15
+   },
+   "outputs": {
+    "@tool:axe": 1
+   },
+   "minutes": 2,
+   "unlock": 4,
+   "fuel": 0.0,
+   "coins": 50
+  },
+  {
+   "id": "tool_axe_2",
+   "building": "workbench",
+   "inputs": {
+    "iron_bar": 5,
+    "plank": 4,
+    "hardwood": 2
+   },
+   "outputs": {
+    "@tool:axe": 2
+   },
+   "minutes": 15,
+   "unlock": 10,
+   "fuel": 0.0,
+   "coins": 400
+  },
+  {
+   "id": "tool_axe_3",
+   "building": "workbench",
+   "inputs": {
+    "gold_bar": 4,
+    "iron_bar": 3,
+    "hardwood": 5
+   },
+   "outputs": {
+    "@tool:axe": 3
+   },
+   "minutes": 45,
+   "unlock": 18,
+   "fuel": 0.0,
+   "coins": 1500
+  },
+  {
+   "id": "tool_pickaxe_1",
+   "building": "workbench",
+   "inputs": {
+    "wood": 10,
+    "stone": 12
+   },
+   "outputs": {
+    "@tool:pickaxe": 1
+   },
+   "minutes": 2,
+   "unlock": 4,
+   "fuel": 0.0,
+   "coins": 50
+  },
+  {
+   "id": "tool_pickaxe_2",
+   "building": "workbench",
+   "inputs": {
+    "iron_bar": 5,
+    "plank": 4,
+    "hardwood": 2
+   },
+   "outputs": {
+    "@tool:pickaxe": 2
+   },
+   "minutes": 15,
+   "unlock": 10,
+   "fuel": 0.0,
+   "coins": 400
+  },
+  {
+   "id": "tool_pickaxe_3",
+   "building": "workbench",
+   "inputs": {
+    "gold_bar": 4,
+    "iron_bar": 3,
+    "hardwood": 5
+   },
+   "outputs": {
+    "@tool:pickaxe": 3
+   },
+   "minutes": 45,
+   "unlock": 18,
+   "fuel": 0.0,
+   "coins": 1500
+  },
+  {
+   "id": "tool_sickle_1",
+   "building": "workbench",
+   "inputs": {
+    "wood": 5,
+    "stone": 8,
+    "rope": 2
+   },
+   "outputs": {
+    "@tool:sickle": 1
+   },
+   "minutes": 2,
+   "unlock": 4,
+   "fuel": 0.0,
+   "coins": 60
+  },
+  {
+   "id": "tool_sickle_2",
+   "building": "workbench",
+   "inputs": {
+    "iron_bar": 3,
+    "plank": 3,
+    "rope": 4
+   },
+   "outputs": {
+    "@tool:sickle": 2
+   },
+   "minutes": 20,
+   "unlock": 10,
+   "fuel": 0.0,
+   "coins": 350
+  },
+  {
+   "id": "tool_sickle_3",
+   "building": "workbench",
+   "inputs": {
+    "gold_bar": 3,
+    "iron_bar": 2,
+    "rope": 6,
+    "hardwood": 3
+   },
+   "outputs": {
+    "@tool:sickle": 3
+   },
+   "minutes": 60,
+   "unlock": 18,
+   "fuel": 0.0,
+   "coins": 1500
+  },
+  {
+   "id": "tool_can_1",
+   "building": "workbench",
+   "inputs": {
+    "plank": 4,
+    "copper_bar": 2
+   },
+   "outputs": {
+    "@tool:can": 1
+   },
+   "minutes": 3,
+   "unlock": 4,
+   "fuel": 0.0,
+   "coins": 80
+  },
+  {
+   "id": "tool_can_2",
+   "building": "workbench",
+   "inputs": {
+    "iron_bar": 4,
+    "copper_bar": 2,
+    "nails": 6
+   },
+   "outputs": {
+    "@tool:can": 2
+   },
+   "minutes": 20,
+   "unlock": 10,
+   "fuel": 0.0,
+   "coins": 400
+  },
+  {
+   "id": "tool_can_3",
+   "building": "workbench",
+   "inputs": {
+    "gold_bar": 3,
+    "iron_bar": 3,
+    "gear": 2
+   },
+   "outputs": {
+    "@tool:can": 3
+   },
+   "minutes": 60,
+   "unlock": 18,
+   "fuel": 0.0,
+   "coins": 1500
+  },
+  {
+   "id": "flour",
+   "building": "windmill",
+   "inputs": {
+    "wheat": 2
+   },
+   "outputs": {
+    "flour": 1
+   },
+   "minutes": 4,
+   "unlock": 2,
+   "fuel": 0.0
+  },
+  {
+   "id": "cornmeal",
+   "building": "windmill",
+   "inputs": {
+    "corn": 2
+   },
+   "outputs": {
+    "cornmeal": 1
+   },
+   "minutes": 6,
+   "unlock": 5,
+   "fuel": 0.0
+  },
+  {
+   "id": "compost_crops",
+   "building": "compost_bin",
+   "inputs": {
+    "#crop": 5
+   },
+   "outputs": {
+    "basic_fertilizer": 2
+   },
+   "minutes": 30,
+   "unlock": 3,
+   "fuel": 0.0,
+   "name": "Compost (5 crops)"
+  },
+  {
+   "id": "compost_scraps",
+   "building": "compost_bin",
+   "inputs": {
+    "plant_scraps": 10
+   },
+   "outputs": {
+    "basic_fertilizer": 2
+   },
+   "minutes": 30,
+   "unlock": 3,
+   "fuel": 0.0,
+   "name": "Compost (scraps)"
+  },
+  {
+   "id": "bread",
+   "building": "bakery_oven",
+   "inputs": {
+    "flour": 2
+   },
+   "outputs": {
+    "bread": 1
+   },
+   "minutes": 8,
+   "unlock": 4,
+   "fuel": 0.0
+  },
+  {
+   "id": "roast_veggies",
+   "building": "bakery_oven",
+   "inputs": {
+    "potato": 1,
+    "carrot": 1
+   },
+   "outputs": {
+    "roast_veggies": 1
+   },
+   "minutes": 6,
+   "unlock": 5,
+   "fuel": 0.0
+  },
+  {
+   "id": "cornbread",
+   "building": "bakery_oven",
+   "inputs": {
+    "cornmeal": 2
+   },
+   "outputs": {
+    "cornbread": 1
+   },
+   "minutes": 10,
+   "unlock": 6,
+   "fuel": 0.0
+  },
+  {
+   "id": "strawberry_tart",
+   "building": "bakery_oven",
+   "inputs": {
+    "flour": 1,
+    "strawberry_jam": 1
+   },
+   "outputs": {
+    "strawberry_tart": 1
+   },
+   "minutes": 15,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "pumpkin_pie",
+   "building": "bakery_oven",
+   "inputs": {
+    "flour": 1,
+    "pumpkin": 1,
+    "honey": 1
+   },
+   "outputs": {
+    "pumpkin_pie": 1
+   },
+   "minutes": 25,
+   "unlock": 11,
+   "fuel": 0.0
+  },
+  {
+   "id": "pancakes",
+   "building": "bakery_oven",
+   "inputs": {
+    "flour": 2,
+    "maple_syrup": 1
+   },
+   "outputs": {
+    "pancakes": 1
+   },
+   "minutes": 12,
+   "unlock": 12,
+   "fuel": 0.0
+  },
+  {
+   "id": "veggie_stew",
+   "building": "bakery_oven",
+   "inputs": {
+    "cabbage": 1,
+    "carrot": 1,
+    "potato": 1,
+    "tomato": 1
+   },
+   "outputs": {
+    "veggie_stew": 1
+   },
+   "minutes": 20,
+   "unlock": 13,
+   "fuel": 0.0
+  },
+  {
+   "id": "potato_chips",
+   "building": "bakery_oven",
+   "inputs": {
+    "potato": 2,
+    "cooking_oil": 1
+   },
+   "outputs": {
+    "potato_chips": 1
+   },
+   "minutes": 10,
+   "unlock": 15,
+   "fuel": 0.0
+  },
+  {
+   "id": "ratatouille",
+   "building": "bakery_oven",
+   "inputs": {
+    "eggplant": 1,
+    "tomato": 1,
+    "cooking_oil": 1
+   },
+   "outputs": {
+    "ratatouille": 1
+   },
+   "minutes": 18,
+   "unlock": 16,
+   "fuel": 0.0
+  },
+  {
+   "id": "strawberry_jam",
+   "building": "preserves_jar",
+   "inputs": {
+    "strawberry": 2
+   },
+   "outputs": {
+    "strawberry_jam": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "melon_jam",
+   "building": "preserves_jar",
+   "inputs": {
+    "melon": 2
+   },
+   "outputs": {
+    "melon_jam": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "grapes_jam",
+   "building": "preserves_jar",
+   "inputs": {
+    "grapes": 2
+   },
+   "outputs": {
+    "grapes_jam": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "carrot_pickles",
+   "building": "preserves_jar",
+   "inputs": {
+    "carrot": 2
+   },
+   "outputs": {
+    "carrot_pickles": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "potato_pickles",
+   "building": "preserves_jar",
+   "inputs": {
+    "potato": 2
+   },
+   "outputs": {
+    "potato_pickles": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "tomato_pickles",
+   "building": "preserves_jar",
+   "inputs": {
+    "tomato": 2
+   },
+   "outputs": {
+    "tomato_pickles": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "corn_pickles",
+   "building": "preserves_jar",
+   "inputs": {
+    "corn": 2
+   },
+   "outputs": {
+    "corn_pickles": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "pumpkin_pickles",
+   "building": "preserves_jar",
+   "inputs": {
+    "pumpkin": 2
+   },
+   "outputs": {
+    "pumpkin_pickles": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "cabbage_pickles",
+   "building": "preserves_jar",
+   "inputs": {
+    "cabbage": 2
+   },
+   "outputs": {
+    "cabbage_pickles": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "eggplant_pickles",
+   "building": "preserves_jar",
+   "inputs": {
+    "eggplant": 2
+   },
+   "outputs": {
+    "eggplant_pickles": 1
+   },
+   "minutes": 30,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "honey",
+   "building": "beehive",
+   "inputs": {},
+   "outputs": {
+    "honey": 1
+   },
+   "minutes": 40,
+   "unlock": 8,
+   "fuel": 0.0
+  },
+  {
+   "id": "carrot_juice",
+   "building": "fruit_press",
+   "inputs": {
+    "carrot": 3
+   },
+   "outputs": {
+    "carrot_juice": 1
+   },
+   "minutes": 40,
+   "unlock": 10,
+   "fuel": 0.0
+  },
+  {
+   "id": "tomato_juice",
+   "building": "fruit_press",
+   "inputs": {
+    "tomato": 3
+   },
+   "outputs": {
+    "tomato_juice": 1
+   },
+   "minutes": 40,
+   "unlock": 10,
+   "fuel": 0.0
+  },
+  {
+   "id": "strawberry_juice",
+   "building": "fruit_press",
+   "inputs": {
+    "strawberry": 3
+   },
+   "outputs": {
+    "strawberry_juice": 1
+   },
+   "minutes": 40,
+   "unlock": 10,
+   "fuel": 0.0
+  },
+  {
+   "id": "melon_juice",
+   "building": "fruit_press",
+   "inputs": {
+    "melon": 3
+   },
+   "outputs": {
+    "melon_juice": 1
+   },
+   "minutes": 40,
+   "unlock": 10,
+   "fuel": 0.0
+  },
+  {
+   "id": "grapes_juice",
+   "building": "fruit_press",
+   "inputs": {
+    "grapes": 3
+   },
+   "outputs": {
+    "grapes_juice": 1
+   },
+   "minutes": 40,
+   "unlock": 10,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_wheat",
+   "building": "seed_maker",
+   "inputs": {
+    "wheat": 1
+   },
+   "outputs": {
+    "seed_wheat": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_carrot",
+   "building": "seed_maker",
+   "inputs": {
+    "carrot": 1
+   },
+   "outputs": {
+    "seed_carrot": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_corn",
+   "building": "seed_maker",
+   "inputs": {
+    "corn": 1
+   },
+   "outputs": {
+    "seed_corn": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_potato",
+   "building": "seed_maker",
+   "inputs": {
+    "potato": 1
+   },
+   "outputs": {
+    "seed_potato": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_cabbage",
+   "building": "seed_maker",
+   "inputs": {
+    "cabbage": 1
+   },
+   "outputs": {
+    "seed_cabbage": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_tomato",
+   "building": "seed_maker",
+   "inputs": {
+    "tomato": 1
+   },
+   "outputs": {
+    "seed_tomato": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_strawberry",
+   "building": "seed_maker",
+   "inputs": {
+    "strawberry": 1
+   },
+   "outputs": {
+    "seed_strawberry": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_sunflower",
+   "building": "seed_maker",
+   "inputs": {
+    "sunflower": 1
+   },
+   "outputs": {
+    "seed_sunflower": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_eggplant",
+   "building": "seed_maker",
+   "inputs": {
+    "eggplant": 1
+   },
+   "outputs": {
+    "seed_eggplant": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_pumpkin",
+   "building": "seed_maker",
+   "inputs": {
+    "pumpkin": 1
+   },
+   "outputs": {
+    "seed_pumpkin": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_melon",
+   "building": "seed_maker",
+   "inputs": {
+    "melon": 1
+   },
+   "outputs": {
+    "seed_melon": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "seeds_grapes",
+   "building": "seed_maker",
+   "inputs": {
+    "grapes": 1
+   },
+   "outputs": {
+    "seed_grapes": 2
+   },
+   "minutes": 8,
+   "unlock": 9,
+   "fuel": 0.0
+  },
+  {
+   "id": "oil_sunflower",
+   "building": "oil_press",
+   "inputs": {
+    "sunflower": 3
+   },
+   "outputs": {
+    "cooking_oil": 2
+   },
+   "minutes": 20,
+   "unlock": 14,
+   "fuel": 0.0
+  },
+  {
+   "id": "oil_corn",
+   "building": "oil_press",
+   "inputs": {
+    "corn": 5
+   },
+   "outputs": {
+    "cooking_oil": 2
+   },
+   "minutes": 30,
+   "unlock": 14,
+   "fuel": 0.0
+  },
+  {
+   "id": "saw_plank",
+   "building": "sawmill",
+   "inputs": {
+    "wood": 2
+   },
+   "outputs": {
+    "plank": 1
+   },
+   "minutes": 1,
+   "unlock": 3,
+   "fuel": 0.0,
+   "name": "Plank"
+  },
+  {
+   "id": "saw_beam",
+   "building": "sawmill",
+   "inputs": {
+    "hardwood": 2
+   },
+   "outputs": {
+    "beam": 1
+   },
+   "minutes": 8,
+   "unlock": 10,
+   "fuel": 0.0,
+   "name": "Beam"
+  },
+  {
+   "id": "mulch",
+   "building": "wood_chipper",
+   "inputs": {
+    "wood": 2
+   },
+   "outputs": {
+    "mulch": 3
+   },
+   "minutes": 5,
+   "unlock": 7,
+   "fuel": 0.0
+  },
+  {
+   "id": "charcoal",
+   "building": "charcoal_kiln",
+   "inputs": {
+    "wood": 5
+   },
+   "outputs": {
+    "coal": 2
+   },
+   "minutes": 20,
+   "unlock": 9,
+   "fuel": 0.0,
+   "name": "Coal"
+  },
+  {
+   "id": "maple_syrup",
+   "building": "syrup_kettle",
+   "inputs": {
+    "sap": 3,
+    "wood": 1
+   },
+   "outputs": {
+    "maple_syrup": 1
+   },
+   "minutes": 15,
+   "unlock": 13,
+   "fuel": 0.0
+  },
+  {
+   "id": "copper_bar",
+   "building": "furnace",
+   "inputs": {
+    "copper_ore": 3
+   },
+   "outputs": {
+    "copper_bar": 1
+   },
+   "minutes": 3,
+   "unlock": 5,
+   "fuel": 0.5
+  },
+  {
+   "id": "brick",
+   "building": "furnace",
+   "inputs": {
+    "clay": 2
+   },
+   "outputs": {
+    "brick": 1
+   },
+   "minutes": 2,
+   "unlock": 5,
+   "fuel": 0.33
+  },
+  {
+   "id": "iron_bar",
+   "building": "furnace",
+   "inputs": {
+    "iron_ore": 3
+   },
+   "outputs": {
+    "iron_bar": 1
+   },
+   "minutes": 6,
+   "unlock": 6,
+   "fuel": 1.0
+  },
+  {
+   "id": "glass",
+   "building": "furnace",
+   "inputs": {
+    "quartz": 1
+   },
+   "outputs": {
+    "glass": 2
+   },
+   "minutes": 3,
+   "unlock": 6,
+   "fuel": 0.5
+  },
+  {
+   "id": "gold_bar",
+   "building": "furnace",
+   "inputs": {
+    "gold_ore": 3
+   },
+   "outputs": {
+    "gold_bar": 1
+   },
+   "minutes": 10,
+   "unlock": 15,
+   "fuel": 1.7
+  }
+ ]
+}

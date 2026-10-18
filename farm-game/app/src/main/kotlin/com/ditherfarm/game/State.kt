@@ -123,6 +123,11 @@ class GameState(var seed: Long) {
     var haptics = true
     var notifications = true
 
+    val buildings = LinkedHashMap<String, BuildingState>()
+    /** Tool id (axe, pickaxe, hoe, can, sickle) → tier 0 wood .. 3 gold. */
+    val tools = HashMap<String, Int>()
+    var forest = ForestState()
+
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
 
@@ -146,6 +151,9 @@ class GameState(var seed: Long) {
         put("tips", JSONArray(tips.toList()))
         put("rngCounter", rngCounter)
         put("settings", JSONObject().put("sfx", sfx).put("haptics", haptics).put("notifications", notifications))
+        put("buildings", JSONArray().apply { buildings.values.forEach { put(it.toJson()) } })
+        put("tools", JSONObject(tools as Map<*, *>))
+        put("forest", forest.toJson())
     }
 
     companion object {
@@ -177,6 +185,9 @@ class GameState(var seed: Long) {
             o.optJSONObject("settings")?.let {
                 sfx = it.optBoolean("sfx", true); haptics = it.optBoolean("haptics", true); notifications = it.optBoolean("notifications", true)
             }
+            o.optJSONArray("buildings")?.objects()?.forEach { val b = BuildingState.fromJson(it); buildings[b.id] = b }
+            o.optJSONObject("tools")?.toIntMap()?.forEach { (k, v) -> tools[k] = v }
+            o.optJSONObject("forest")?.let { forest = ForestState.fromJson(it) }
         }
     }
 }
