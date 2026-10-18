@@ -14,6 +14,7 @@ import com.ditherfarm.game.WorldEvent
 import com.ditherfarm.platform.SaveStore
 import com.ditherfarm.ui.FarmScreen
 import com.ditherfarm.ui.ForestScreen
+import com.ditherfarm.ui.MineScreen
 import com.ditherfarm.ui.Nav
 import com.ditherfarm.ui.Ui
 import org.json.JSONObject
@@ -48,6 +49,7 @@ class Game(val host: Host) {
 
     val farm = FarmScreen(this)
     val forest by lazy { ForestScreen(this) }
+    val mine by lazy { MineScreen(this) }
 
     init {
         applySettings()
@@ -133,6 +135,7 @@ class Game(val host: Host) {
     fun onBack(): Boolean = when (val s = engine.screen) {
         is FarmScreen -> s.closePanel()
         is ForestScreen -> s.closePanel() || run { goTo(Nav.FARM); true }
+        is MineScreen -> s.closePanel() || run { goTo(Nav.FARM); true }
         else -> false
     }
 
@@ -140,7 +143,8 @@ class Game(val host: Host) {
         val to = when (nav) {
             Nav.FARM -> farm
             Nav.FOREST -> forest
-            else -> { farm.toast("The mine opens in the next update!"); return }
+            Nav.MINE -> mine
+            else -> return
         }
         sfx.play("swap")
         engine.go(to)
@@ -149,11 +153,13 @@ class Game(val host: Host) {
     fun recenter() = when (val s = engine.screen) {
         is FarmScreen -> s.recenter()
         is ForestScreen -> s.recenter()
+        is MineScreen -> s.recenter()
         else -> Unit
     }
 
     fun toast(text: String) = when (val s = engine.screen) {
         is ForestScreen -> s.chrome.hud.toast(text)
+        is MineScreen -> s.chrome.hud.toast(text)
         else -> farm.toast(text)
     }
 

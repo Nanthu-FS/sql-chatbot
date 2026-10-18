@@ -23,6 +23,11 @@ import com.ditherfarm.game.secondsLeft
 import com.ditherfarm.game.toolTier
 import com.ditherfarm.game.trayCount
 import com.ditherfarm.game.baseId
+import com.ditherfarm.game.crackBlocker
+import com.ditherfarm.game.crackGeode
+import com.ditherfarm.game.elevatorStops
+import com.ditherfarm.game.enterFloor
+import com.ditherfarm.game.gateBlocker
 
 /** Modal panels opened from the HUD. Each draw call returns false when the panel should close. */
 class Panels(private val game: Game, private val hud: Hud) {
@@ -439,6 +444,62 @@ class Panels(private val game: Game, private val hud: Hud) {
             recipeRow(r, x + 8, ry, pw - 20)
         }
         c.restore()
+        return true
+    }
+
+    // ------------------------------------------------------------------ mine
+    private var lastGeode: Map<String, Int> = emptyMap()
+
+    /** Geode Anvil: crack geodes for a small fee. */
+    fun geodes(): Boolean {
+        val types = world.data.mine.geodes.keys.toList()
+        val (x, y, pw, ph) = frame("GEODE ANVIL", 58 + types.size * 30, pw = 220).toList()
+        if (closeButton(x, y, pw)) { lastGeode = emptyMap(); return false }
+        types.forEachIndexed { i, id ->
+            val ry = y + 24 + i * 30
+            val have = world.count(id)
+            ui.slot("geode-$id", x + 10, ry, icon(id), have)
+            g.text(world.data.name(id).uppercase(), x + 36, ry + 2, Gfx.INK, outline = 0, shadow = false)
+            g.sprite("icons/coin", (x + 40).toFloat(), (ry + 15).toFloat())
+            g.text("${world.data.mine.geodes.getValue(id).fee}", x + 47, ry + 12, Gfx.INK, outline = 0, shadow = false)
+            val ok = world.crackBlocker(id) == null
+            if (ui.button("crack-$id", x + pw - 64, ry + 2, 54, 16, "CRACK", style = if (ok) "green" else "grey")) {
+                val out = world.crackGeode(id)
+                if (out.isNotEmpty()) lastGeode = out
+            }
+        }
+        val ry = y + ph - 18
+        if (lastGeode.isNotEmpty()) {
+            val (k, n) = lastGeode.entries.first()
+            g.sprite(icon(k), (x + 16).toFloat(), (ry + 4).toFloat())
+            g.text("GOT $n ${world.data.name(k).uppercase()}".take(28), x + 26, ry, 0xFF3E8948.toInt(), outline = 0, shadow = false)
+        } else g.text("FEE PER CRACK. GEMS ARE RARE!", x + pw / 2, ry, Gfx.INK, align = 0, outline = 0, shadow = false)
+        return true
+    }
+
+    /** Mine elevator: ride to the surface or any stop already reached (every 5 floors). */
+    fun elevator(): Boolean {
+        val stops = world.elevatorStops()
+        val perRow = 5
+        val rows = (stops.size + perRow - 1) / perRow
+        val next = (stops.last() + 5).takeIf { it <= 40 }
+        val (x, y, pw, ph) = frame("ELEVATOR", 62 + rows * 22, pw = 220).toList()
+        if (closeButton(x, y, pw)) return false
+        val bw = (pw - 20 - (perRow - 1) * 4) / perRow
+        stops.forEachIndexed { i, f ->
+            val bx = x + 10 + (i % perRow) * (bw + 4)
+            val by = y + 24 + (i / perRow) * 22
+            val here = world.state.mine.floor == f
+            if (ui.button("stop-$f", bx, by, bw, 18, if (f == 0) "TOP" else "B$f", style = if (here) "grey" else if (f == 0) "wood" else "green")) {
+                if (!here && world.enterFloor(f)) return false
+            }
+        }
+        val note = when {
+            stops.size == 1 -> "REACH FLOOR 5 TO ADD A STOP"
+            next != null -> world.gateBlocker(next)?.uppercase() ?: "NEXT STOP: FLOOR $next"
+            else -> "YOU REACHED THE BOTTOM!"
+        }
+        g.text(note.take(34), x + pw / 2, y + ph - 16, Gfx.INK, align = 0, outline = 0, shadow = false)
         return true
     }
 }

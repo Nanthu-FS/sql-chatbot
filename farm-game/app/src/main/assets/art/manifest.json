@@ -1,4 +1,52 @@
 {
+ "buildings/barn": {
+  "ax": 34,
+  "ay": 48
+ },
+ "buildings/barn_snow": {
+  "ax": 34,
+  "ay": 48
+ },
+ "buildings/market": {
+  "ax": 21,
+  "ay": 40
+ },
+ "buildings/market_snow": {
+  "ax": 21,
+  "ay": 40
+ },
+ "buildings/orders": {
+  "ax": 17,
+  "ay": 36
+ },
+ "buildings/orders_snow": {
+  "ax": 17,
+  "ay": 36
+ },
+ "buildings/silo": {
+  "ax": 16,
+  "ay": 52
+ },
+ "buildings/silo_snow": {
+  "ax": 16,
+  "ay": 52
+ },
+ "buildings/well": {
+  "ax": 14,
+  "ay": 29
+ },
+ "buildings/well_snow": {
+  "ax": 14,
+  "ay": 29
+ },
+ "buildings/workbench": {
+  "ax": 18,
+  "ay": 20
+ },
+ "buildings/workbench_snow": {
+  "ax": 18,
+  "ay": 20
+ },
  "crops/cabbage_0": {
   "ax": 9,
   "ay": 5
@@ -991,7 +1039,59 @@
   "ax": 9,
   "ay": 9
  },
+ "items_big/acorn": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/amber": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/amethyst": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/apple": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/apple_sapling": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/basic_fertilizer": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/beam": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/birch_seed": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/bird_nest": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/blackberry": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/bread": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/brick": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/cabbage": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/cabbage_pickles": {
   "ax": 16,
   "ay": 16
  },
@@ -999,7 +1099,63 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/carrot_juice": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/carrot_pickles": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/cave_mushroom": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/chanterelle": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/clay": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/coal": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/cooking_oil": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/copper_bar": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/copper_ore": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/corn": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/corn_pickles": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/cornbread": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/cornmeal": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/crystal_geode": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/diamond": {
   "ax": 16,
   "ay": 16
  },
@@ -1007,7 +1163,103 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/eggplant_pickles": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/ember_geode": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/emerald": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/feather": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/fibre": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/flour": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/gear": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/geode": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/glass": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/glowcap": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/gold_bar": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/gold_ore": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/golden_acorn": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/golden_feather": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/grapes": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/grapes_jam": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/grapes_juice": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/hardwood": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/heartwood": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/honey": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/iron_bar": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/iron_ore": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/lantern": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/maple_seed": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/maple_syrup": {
   "ax": 16,
   "ay": 16
  },
@@ -1015,11 +1267,107 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/melon_jam": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/melon_juice": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mulch": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/nails": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/old_coin": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/pancakes": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/petrified_wood": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/pinecone": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/plank": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/plant_scraps": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/potato": {
   "ax": 16,
   "ay": 16
  },
+ "items_big/potato_chips": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/potato_pickles": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/prismatic_shard": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/pumpkin": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/pumpkin_pickles": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/pumpkin_pie": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/quality_fertilizer": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/quartz": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/ratatouille": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/resin": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/roast_veggies": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/rope": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/rope_ladder": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/ruby": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/sap": {
   "ax": 16,
   "ay": 16
  },
@@ -1071,7 +1419,23 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/stone": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/strawberry": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/strawberry_jam": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/strawberry_juice": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/strawberry_tart": {
   "ax": 16,
   "ay": 16
  },
@@ -1079,7 +1443,27 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/support_beam": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/tomato": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/tomato_juice": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/tomato_pickles": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/torch": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/veggie_stew": {
   "ax": 16,
   "ay": 16
  },
@@ -1087,7 +1471,75 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/wild_mushroom": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/wildflower_seed": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/withered_crop": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/wood": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items/acorn": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/amber": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/amethyst": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/apple": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/apple_sapling": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/basic_fertilizer": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/beam": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/birch_seed": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/bird_nest": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/blackberry": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/bread": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/brick": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/cabbage": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/cabbage_pickles": {
   "ax": 9,
   "ay": 9
  },
@@ -1095,7 +1547,63 @@
   "ax": 9,
   "ay": 9
  },
+ "items/carrot_juice": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/carrot_pickles": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/cave_mushroom": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/chanterelle": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/clay": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/coal": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/cooking_oil": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/copper_bar": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/copper_ore": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/corn": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/corn_pickles": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/cornbread": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/cornmeal": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/crystal_geode": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/diamond": {
   "ax": 9,
   "ay": 9
  },
@@ -1103,7 +1611,103 @@
   "ax": 9,
   "ay": 9
  },
+ "items/eggplant_pickles": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/ember_geode": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/emerald": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/feather": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/fibre": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/flour": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/gear": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/geode": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/glass": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/glowcap": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/gold_bar": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/gold_ore": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/golden_acorn": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/golden_feather": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/grapes": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/grapes_jam": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/grapes_juice": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/hardwood": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/heartwood": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/honey": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/iron_bar": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/iron_ore": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/lantern": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/maple_seed": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/maple_syrup": {
   "ax": 9,
   "ay": 9
  },
@@ -1111,11 +1715,107 @@
   "ax": 9,
   "ay": 9
  },
+ "items/melon_jam": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/melon_juice": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mulch": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/nails": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/old_coin": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/pancakes": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/petrified_wood": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/pinecone": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/plank": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/plant_scraps": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/potato": {
   "ax": 9,
   "ay": 9
  },
+ "items/potato_chips": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/potato_pickles": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/prismatic_shard": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/pumpkin": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/pumpkin_pickles": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/pumpkin_pie": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/quality_fertilizer": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/quartz": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/ratatouille": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/resin": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/roast_veggies": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/rope": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/rope_ladder": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/ruby": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/sap": {
   "ax": 9,
   "ay": 9
  },
@@ -1167,7 +1867,23 @@
   "ax": 9,
   "ay": 9
  },
+ "items/stone": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/strawberry": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/strawberry_jam": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/strawberry_juice": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/strawberry_tart": {
   "ax": 9,
   "ay": 9
  },
@@ -1175,11 +1891,47 @@
   "ax": 9,
   "ay": 9
  },
+ "items/support_beam": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/tomato": {
   "ax": 9,
   "ay": 9
  },
+ "items/tomato_juice": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/tomato_pickles": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/torch": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/veggie_stew": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/wheat": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/wild_mushroom": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/wildflower_seed": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/withered_crop": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/wood": {
   "ax": 9,
   "ay": 9
  },

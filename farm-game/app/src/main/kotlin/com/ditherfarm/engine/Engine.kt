@@ -63,6 +63,13 @@ class Engine(val gfx: Gfx, val router: GestureRouter) {
         transition = transitionTime
     }
 
+    /** Dither-dissolves from the current frame while the same screen changes underneath (e.g. a new mine floor). */
+    fun dissolve() {
+        if (snapshot != null) return
+        snapshot = frameBitmap?.copy(Bitmap.Config.ARGB_8888, false)
+        transition = transitionTime
+    }
+
     fun frame(dt: Float, canvas: Canvas, nowMs: Long) {
         time += dt
         router.tick(nowMs)

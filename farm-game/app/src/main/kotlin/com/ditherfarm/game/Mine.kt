@@ -126,7 +126,7 @@ object MineLayout {
         4 to 6, 10 to 8, 8 to 10, 5 to 11, 10 to 6, 3 to 7, 7 to 11, 11 to 9,
     )
     val mouth = 3 to 3
-    val slots = listOf(10 to 3, 11 to 5, 2 to 10, 11 to 11)
+    val slots = listOf(10 to 3, 12 to 6, 2 to 11, 4 to 12)
 }
 
 // ------------------------------------------------------------------ World API
@@ -266,7 +266,7 @@ fun World.elevatorStops(): List<Int> = listOf(0) + (5..state.mine.deepestStop st
 /** Rides the elevator or takes a ladder to [floor] (generates a fresh floor). */
 fun World.enterFloor(floor: Int): Boolean {
     val m = state.mine
-    if (floor <= 0) { m.floor = 0; return true }
+    if (floor <= 0) { m.floor = 0; events += WorldEvent.FloorEntered(0); return true }
     if (!m.repaired) { events += WorldEvent.Blocked("Repair the mine first"); return false }
     if (floor > 40) return false
     gateBlocker(floor)?.let { events += WorldEvent.Blocked(it); return false }

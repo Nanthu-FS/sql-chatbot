@@ -12,7 +12,15 @@ import com.ditherfarm.game.Weather
 import com.ditherfarm.game.build
 import com.ditherfarm.game.chop
 import com.ditherfarm.game.enqueue
+import com.ditherfarm.game.enterFloor
 import com.ditherfarm.game.forestSpots
+import com.ditherfarm.game.mine
+import com.ditherfarm.game.mineFloor
+import com.ditherfarm.game.mineQuarry
+import com.ditherfarm.game.placeTorch
+import com.ditherfarm.game.repairMine
+import com.ditherfarm.ui.Chrome
+import com.ditherfarm.ui.MineScreen
 import com.ditherfarm.ui.Nav
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -144,5 +152,69 @@ class ScreenshotTest {
             File("src/main/assets"),
             File("app/src/main/assets"),
         ).first { File(it, "art").exists() }
+    }
+
+    private fun toLevel(g: Game, l: Int) { g.world.gainXp(g.world.data.level(l).totalXp - g.world.state.xp); g.world.state.energy = 500.0; g.world.events.clear() }
+
+    @Test fun mineSurface() {
+        render("mine_surface", seconds = 1f, setup = { g ->
+            toLevel(g, 8)
+            g.world.state.coins += 2000; g.world.add("wood", 30); g.world.add("stone", 40); g.world.add("copper_bar", 4)
+            g.world.repairMine(); g.world.build("geode_anvil")
+            g.goTo(Nav.MINE)
+            g.engine.screen?.enter()
+            g.world.advance(1.0)
+            g.world.mineQuarry(0); g.world.mineQuarry(2)
+        })
+    }
+
+    @Test fun mineFloor() {
+        render("mine_floor", seconds = 1f, setup = { g ->
+            toLevel(g, 6)
+            g.world.state.coins += 200; g.world.add("wood", 30)
+            g.world.repairMine(); g.world.enterFloor(3)
+            g.goTo(Nav.MINE)
+            g.engine.screen?.enter()
+            val m = g.world.mine
+            val rocks = m.cells.indices.filter { m.cells[it].node != null && m.cells[it].node != "glow_mushroom" }
+            g.world.mineFloor(rocks[0]); g.world.mineFloor(rocks[1])
+        })
+    }
+
+    @Test fun mineDark() {
+        render("mine_dark", seconds = 1f, setup = { g ->
+            toLevel(g, 14)
+            g.world.state.coins += 200; g.world.add("wood", 30); g.world.add("torch", 3)
+            g.world.state.tools["pickaxe"] = 2
+            g.world.mine.gatesOpened += listOf(10, 20)
+            g.world.repairMine(); g.world.enterFloor(23)
+            g.goTo(Nav.MINE)
+            g.engine.screen?.enter()
+            val m = g.world.mine
+            val n = m.grid
+            m.cells.indices.firstOrNull { m.cells[it].node == null && it % n in 3..5 && it / n in 3..5 }?.let { g.world.placeTorch(it) }
+        })
+    }
+
+    @Test fun geodePanel() {
+        render("panel_geodes", setup = { g ->
+            toLevel(g, 7)
+            g.world.state.coins += 500; g.world.add("stone", 30); g.world.add("copper_bar", 2); g.world.add("geode", 4); g.world.add("ember_geode", 1)
+            g.world.build("geode_anvil")
+            g.goTo(Nav.MINE)
+            g.engine.screen?.enter()
+            (g.engine.screen as MineScreen).chrome.open(Chrome.Panel.GEODES)
+        })
+    }
+
+    @Test fun elevatorPanel() {
+        render("panel_elevator", setup = { g ->
+            toLevel(g, 8)
+            g.world.state.coins += 200; g.world.add("wood", 30)
+            g.world.repairMine(); g.world.enterFloor(5); g.world.enterFloor(7)
+            g.goTo(Nav.MINE)
+            g.engine.screen?.enter()
+            (g.engine.screen as MineScreen).chrome.open(Chrome.Panel.ELEVATOR)
+        })
     }
 }
