@@ -33,6 +33,8 @@ class Engine(val gfx: Gfx, val router: GestureRouter) {
 
     var screen: Screen? = null
         private set
+    /** Runs every frame before the screen updates (the game simulation hooks in here). */
+    var onTick: ((Float) -> Unit)? = null
     private var next: Screen? = null
     private var snapshot: Bitmap? = null
     private var transition = 0f
@@ -62,6 +64,7 @@ class Engine(val gfx: Gfx, val router: GestureRouter) {
         time += dt
         router.tick(nowMs)
         val s = screen ?: return
+        onTick?.invoke(dt)
         s.update(dt)
         gfx.bind(canvas)
         s.draw(gfx)
