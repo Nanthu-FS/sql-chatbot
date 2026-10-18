@@ -4,7 +4,6 @@ import com.ditherfarm.shots.ScreenshotTest
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
-import javax.imageio.ImageIO
 
 /**
  * World scale check (Docs/DECISIONS.md, "World scale"): every world sprite must stay inside the
@@ -31,6 +30,12 @@ class ScaleTest {
         Band("crops/", 4, 34, "crops fill their plot but stay under a farmhand and a half"),
     )
 
+    /** Height from the PNG header (IHDR, bytes 20-23), so the check needs no image library. */
+    private fun pngHeight(f: File): Int {
+        val b = f.inputStream().use { it.readNBytes(24) }
+        return ((b[20].toInt() and 0xFF) shl 24) or ((b[21].toInt() and 0xFF) shl 16) or ((b[22].toInt() and 0xFF) shl 8) or (b[23].toInt() and 0xFF)
+    }
+
     @Test fun worldSpritesStayInScale() {
         val art = File(ScreenshotTest.assetRoot(), "art")
         val bad = ArrayList<String>()
@@ -39,7 +44,7 @@ class ScaleTest {
             for (f in File(art, dir).listFiles { f -> f.name.endsWith(".png") }.orEmpty()) {
                 val name = "$dir/" + f.name.removeSuffix(".png").removeSuffix("_snow")
                 val band = bands.firstOrNull { it.regex.containsMatchIn(name) } ?: continue
-                val h = ImageIO.read(f).height
+                val h = pngHeight(f)
                 checked++
                 if (h !in band.min..band.max) bad += "$name is ${h}px tall, wants ${band.min}-${band.max} (${band.why})"
             }
