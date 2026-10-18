@@ -6,6 +6,13 @@ A cozy isometric pixel-art farming game for Android: tap to plant, water and har
 - **All art and sound are generated from code**, under `Tools/ArtGen`.
 - Design: [`Docs/GAME_DESIGN.md`](Docs/GAME_DESIGN.md) · owner decisions: [`Docs/DECISIONS.md`](Docs/DECISIONS.md) · art rules: [`Docs/ART_SPEC.md`](Docs/ART_SPEC.md)
 
+## What's in it
+- **Farm:** 48 plots unlocked from the centre, 12 crops with star quality, watering, fertilizer, seasons that wither crops, storms, a glass greenhouse that ignores seasons, sprinklers, scarecrows and lightning rods on the corners between plots.
+- **Forest:** five zones of trees to chop with axe tiers, stumps, saplings, foraging, fallen branches, bird nests and wild beehives.
+- **Mine:** a quarry that grows back, and 40 floors below it with ladders, hollow knocks, dark floors and torches, cave-ins to brace, gates, an elevator every 5 floors and geodes to crack.
+- **Machines:** about 20 buildings (Windmill, Bakery, Furnace, Sawmill, Drill Rig and more) that keep working while the app is closed, plus automation: Harvest and Planter Sheds, a Logging Hut, a Tree Nursery and a Market Cart that sells by your rules.
+- **Goals:** villager orders with friendship, achievements, a collection book with page bonuses, a daily gift streak, a traveling merchant and seasonal festivals.
+
 ## Get the APK
 Every push that touches `farm-game/` runs **Dither Farm APK** in GitHub Actions, which runs the unit and screenshot tests and builds a debug APK.
 1. Open the repository's **Actions** tab, then the latest **Dither Farm APK** run.
