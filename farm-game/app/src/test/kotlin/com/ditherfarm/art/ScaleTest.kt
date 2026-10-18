@@ -32,7 +32,7 @@ class ScaleTest {
 
     /** Height from the PNG header (IHDR, bytes 20-23), so the check needs no image library. */
     private fun pngHeight(f: File): Int {
-        val b = f.inputStream().use { it.readNBytes(24) }
+        val b = ByteArray(24).also { buf -> java.io.DataInputStream(f.inputStream()).use { it.readFully(buf) } }
         return ((b[20].toInt() and 0xFF) shl 24) or ((b[21].toInt() and 0xFF) shl 16) or ((b[22].toInt() and 0xFF) shl 8) or (b[23].toInt() and 0xFF)
     }
 
