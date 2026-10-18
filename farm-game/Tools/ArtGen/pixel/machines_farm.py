@@ -19,10 +19,11 @@ CX, CY = 48, 72        # ground-centre pixel on the canvas (the pivot)
 
 WOOD = ["brown_d", "brown", "brown_l", "tan"]
 WOOD_LT = ["brown", "brown_l", "tan", "cream"]
-STONE = ["grey_d", "grey", "grey_l", "cream"]
+STONE = ["grey_d", "grey", "grey", "grey_l"]
 BRICK = ["brown", "rust", "red", "clay"]
 RED_ROOF = ["red_d", "red", "red", "pink"]
 SLATE = ["slate", "grey_d", "grey", "grey_l"]
+GRAPE = ["purple", "purple", "magenta", "purple", "pink"]
 
 
 def col(c):
@@ -181,16 +182,19 @@ def stamp(im, rows, key, x0, y0):
                 continue
             X, Y = x0 + i, y0 + j
             if 0 <= X < W and 0 <= Y < H:
-                c = key[ch]
-                px[X, Y] = col(c)
+                px[X, Y] = col(key[ch])
+
+
+def put(im, X, Y, c):
+    if 0 <= X < W and 0 <= Y < H:
+        im.load()[X, Y] = col(c)
 
 
 def disc(im, cx, cy, r, c):
-    px = im.load()
     for Y in range(int(cy - r) - 1, int(cy + r) + 2):
         for X in range(int(cx - r) - 1, int(cx + r) + 2):
-            if 0 <= X < W and 0 <= Y < H and (X + 0.5 - cx) ** 2 + (Y + 0.5 - cy) ** 2 <= r * r:
-                px[X, Y] = col(c)
+            if (X + 0.5 - cx) ** 2 + (Y + 0.5 - cy) ** 2 <= r * r:
+                put(im, X, Y, c)
 
 
 def emit(sp, name, solids, paint=None):
@@ -204,11 +208,11 @@ def emit(sp, name, solids, paint=None):
     sys.stderr.write("%s: body %dx%d\n" % (name, body.width, body.height))
 
 
-# ---------------------------------------------------------------- windmill (34 x ~56)
+# ---------------------------------------------------------------- windmill (33 x 57)
 
 def windmill():
     ROOF = ["brown_d", "brown", "brown_l", "tan"]
-    HUB = (CX, CY - 36)
+    HX, HY = CX, CY - 34                       # hub, on the front of the cap
 
     def tower(tag, n, u, v, z, x, y):
         s = side_of(n)
@@ -230,7 +234,7 @@ def windmill():
         th = math.atan2(v, u) / (2 * math.pi)
         if (th * 12 + (row % 2) * 0.5) % 1.0 < 0.1:           # stone head joints
             return "grey_d"
-        return lit(STONE, n, x, y, crisp=True)
+        return lit(["grey_d", "grey", "grey_l", "cream"], n, x, y, crisp=True)
 
     def roof(tag, n, u, v, z, x, y):
         if z - int(z // 3) * 3 < 0.9:                          # shingle courses
@@ -238,33 +242,30 @@ def windmill():
         return lit(ROOF, n, x, y, crisp=True)
 
     def sails(im):
-        px = im.load()
-        hx, hy = HUB
         for sgn in (-1, 1):                                    # four blades on the hub
-            for t in range(4, 17):
+            for t in range(4, 15):
                 for s in range(-3, 3):
-                    if t == 16 or s in (-3, 2):
+                    if t == 14 or s in (-3, 2):
                         c = "brown"
                     elif t % 4 == 0:
                         c = "brown_l"                          # rungs of the lattice
                     else:
                         c = "cream" if s < 0 else "tan"
-                    for X, Y in ((hx + s, hy + sgn * t), (hx + sgn * t, hy + s)):
-                        if 0 <= X < W and 0 <= Y < H:
-                            px[X, Y] = E[c]
-        disc(im, hx, hy, 3.6, "brown_d")
-        disc(im, hx, hy, 2.2, "brown")
-        disc(im, hx - 1, hy - 1, 1.0, "tan")
-        px[hx, hy] = E["grey_d"]
+                    put(im, HX + s, HY + sgn * t, c)
+                    put(im, HX + sgn * t, HY + s, c)
+        disc(im, HX, HY, 3.6, "brown_d")
+        disc(im, HX, HY, 2.2, "brown")
+        disc(im, HX - 1, HY - 1, 1.0, "tan")
+        put(im, HX, HY, "grey_d")
 
     solids = [
         Solid(ring(0, 0, 0.42, 12, 0) + ring(0, 0, 0.34, 12, 30), tower),
-        Solid(ring(0, 0, 0.5, 12, 30) + [(0, 0, 44)], roof),
+        Solid(ring(0, 0, 0.5, 12, 30) + [(0, 0, 52)], roof),
     ]
     return solids, sails
 
 
-# ---------------------------------------------------------------- compost bin (1x1, slatted box)
+# ---------------------------------------------------------------- compost bin (27 x 26, slatted box)
 
 SPROUT = [
     "gG...Gg",
@@ -318,22 +319,27 @@ def compost_bin():
     return solids, paint
 
 
-# ---------------------------------------------------------------- bakery oven (1x1, brick dome)
+# ---------------------------------------------------------------- bakery oven (30 x 47, brick dome)
 
 def bakery_oven():
+    def mouth_top(X):
+        return 3.6 + math.sqrt(max(0.0, 4.6 * 4.6 - X * X))
+
     def body(tag, n, u, v, z, x, y):
         s = side_of(n)
         if s == "T":
             return "tan"
-        if s == "L" and abs(u) < 0.14 and 1.0 < z < 5.8:       # glowing mouth, front-left
-            if abs(u) > 0.11 or z < 1.5 or z > 5.2:
-                return "brown_d"
-            r = math.hypot(u / 0.1, (z - 3.2) / 2.0)
-            if r < 0.45:
-                return "yellow"
-            if r < 0.85:
-                return "amber"
-            return "orange" if r < 1.1 else "red_d"
+        if s == "L":
+            X = u * 16.0                                       # offset from the mouth's centre
+            if abs(X) < 4.6 and 1.2 < z < mouth_top(X):        # arched mouth, front-left
+                if abs(X) > 3.6 or z < 2.0 or z > mouth_top(X) - 0.9:
+                    return "brown_d"
+                r = math.hypot(X / 2.4, (z - 3.2) / 2.2)
+                if r < 0.5:
+                    return "yellow"
+                if r < 0.95:
+                    return "amber"
+                return "orange"
         row = int(z // 2.6)
         if z - row * 2.6 < 0.7:
             return "tan"
@@ -343,8 +349,8 @@ def bakery_oven():
         return lit(BRICK, n, x, y, crisp=True)
 
     def dome(tag, n, u, v, z, x, y):
-        if n[2] > 0.9 and z > 16.0:
-            return "grey_d"
+        if n[2] > 0.9 and z > 20.0:
+            return "grey_d"                                    # soot on the crown
         row = int(z // 2.4)
         if z - row * 2.4 < 0.7:
             return "tan"
@@ -354,7 +360,7 @@ def bakery_oven():
         return lit(BRICK, n, x, y, crisp=True)
 
     def chimney(tag, n, u, v, z, x, y):
-        if z > 23.0:
+        if z > 25.0:
             return "grey_d"
         row = int(z // 2.6)
         if z - row * 2.6 < 0.7:
@@ -362,21 +368,22 @@ def bakery_oven():
         return lit(["grey_d", "grey", "brown", "rust"], n, x, y, crisp=True)
 
     solids = [
-        Solid(bx(-0.4, 0.4, -0.36, 0.36, 0, 8), body),
-        Solid(ring(0, 0, 0.38, 12, 8) + ring(0, 0, 0.33, 12, 11) + ring(0, 0, 0.22, 12, 14)
-              + ring(0, 0, 0.08, 12, 17), dome),
-        Solid(bx(0.1, 0.26, -0.3, -0.14, 0, 24), chimney),
+        Solid(bx(-0.44, 0.44, -0.4, 0.4, 0, 9), body),
+        Solid(ring(0, 0, 0.42, 12, 9) + ring(0, 0, 0.42, 12, 11.5) + ring(0, 0, 0.39, 12, 14)
+              + ring(0, 0, 0.33, 12, 16.5) + ring(0, 0, 0.24, 12, 19) + ring(0, 0, 0.12, 12, 21)
+              + ring(0, 0, 0.04, 12, 22.5), dome),
+        Solid(bx(0.16, 0.38, -0.36, -0.14, 0, 25), chimney),
     ]
 
-    def paint(im):
-        disc(im, CX + 8, CY - 30, 2.6, "grey_l")               # smoke from the chimney
-        disc(im, CX + 11, CY - 36, 2.2, "white")
-        disc(im, CX + 8, CY - 40, 1.4, "grey_l")
+    def paint(im):                                             # smoke from the chimney
+        disc(im, CX + 10, CY - 30, 2.8, "grey_l")
+        disc(im, CX + 14, CY - 37, 2.4, "white")
+        disc(im, CX + 11, CY - 42, 1.6, "grey_l")
 
     return solids, paint
 
 
-# ---------------------------------------------------------------- preserves jar (shelf with jars)
+# ---------------------------------------------------------------- preserves jar (three-shelf rack, 9 jars)
 
 def preserves_jar():
     def wood(tag, n, u, v, z, x, y):
@@ -385,35 +392,36 @@ def preserves_jar():
         return lit(WOOD, n, x, y, crisp=True)
 
     def jar(cu, cv, z0, h, ramp):
+        top = z0 + h - 1.4
+
         def mat(tag, n, u, v, z, x, y):
             s = side_of(n)
-            if z > z0 + h - 1.4 or s == "T":                   # tan cloth lid
-                return lit(WOOD_LT, n, x, y, crisp=True)
-            if z0 + 2.2 < z < z0 + 4.4:                        # paper label
+            if z > top or s == "T":                            # brown screw-on lid
+                return lit(WOOD, n, x, y, crisp=True)
+            if z0 + 2.6 < z < z0 + 3.8:                        # thin paper label
                 return "cream"
-            if z0 + h - 1.4 - 0.7 < z < z0 + h - 1.4:
-                return "white"                                 # glass shoulder highlight
+            if z > top - 0.8:
+                return "white"                                 # glass shoulder
             return lit(ramp, n, x, y, crisp=True)
-        return Solid(ring(cu, cv, 0.19, 10, z0) + ring(cu, cv, 0.2, 10, z0 + h - 1.4)
-                     + ring(cu, cv, 0.22, 10, z0 + h), mat)
+        return Solid(ring(cu, cv, 0.21, 10, z0) + ring(cu, cv, 0.21, 10, top)
+                     + ring(cu, cv, 0.24, 10, z0 + h), mat)
 
     solids = []
-    for pu in (-0.4, 0.4):
-        for pv in (-0.2, 0.2):
-            solids.append(Solid(bx(pu - 0.04, pu + 0.04, pv - 0.04, pv + 0.04, 0, 30), wood))
+    for pu in (-0.6, 0.6):
+        for pv in (-0.3, 0.3):
+            solids.append(Solid(bx(pu - 0.035, pu + 0.035, pv - 0.035, pv + 0.035, 0, 31), wood))
     for z0 in (0.0, 11.0, 22.0):
-        solids.append(Solid(bx(-0.46, 0.46, -0.24, 0.24, z0, z0 + 1.6), wood))
+        solids.append(Solid(bx(-0.62, 0.62, -0.32, 0.32, z0, z0 + 1.6), wood))
     jam = ["red_d", "red", "red", "pink"]
     pickle = ["green_dd", "green_d", "green", "green"]
-    for cu in (-0.3, 0.0, 0.3):
-        solids.append(jar(cu, 0.02, 1.6, 6.8, jam))
-        solids.append(jar(cu, 0.02, 12.6, 6.8, pickle))
-    for cu in (-0.14, 0.14):
-        solids.append(jar(cu, 0.0, 23.6, 5.0, jam))
+    for cu in (-0.44, 0.0, 0.44):
+        solids.append(jar(cu, 0.0, 1.6, 6.6, jam))
+        solids.append(jar(cu, 0.0, 12.6, 6.6, pickle))
+        solids.append(jar(cu, 0.0, 23.6, 6.6, jam))
     return solids, None
 
 
-# ---------------------------------------------------------------- beehive (white boxes)
+# ---------------------------------------------------------------- beehive (two white boxes, 30 x 29)
 
 BEE = [
     ".ww..",
@@ -430,7 +438,7 @@ def beehive():
         if s == "T":
             return "white"
         if abs(z - 8.0) < 0.6:
-            return "grey"                                       # joint between the boxes
+            return "grey"                                      # joint between the boxes
         if s == "L" and abs(u) < 0.12 and 1.2 < z < 3.2:       # entrance slot
             return "brown_d"
         if s == "L" and abs(u) < 0.16 and 0.0 < z < 1.2:
@@ -459,44 +467,59 @@ def beehive():
     return solids, paint
 
 
-# ---------------------------------------------------------------- fruit press (barrel and screw press)
+# ---------------------------------------------------------------- fruit press (grape barrel and screw press)
 
 def fruit_press():
-    BCU, BCV = -0.1, 0.05
+    BCU, BCV = -0.2, 0.2                                       # barrel axis
+    TU0, TU1, TV0, TV1 = 0.14, 0.46, -0.36, 0.06               # grape tub
 
     def barrel(tag, n, u, v, z, x, y):
         if side_of(n) == "T":
-            if math.hypot(u - BCU, v - BCV) < 0.26:             # grape mash
-                return ["purple", "purple", "magenta", "purple", "pink"][(int(x) * 3 + int(y) * 5) % 5]
+            if math.hypot(u - BCU, v - BCV) < 0.27:            # grape mash
+                return GRAPE[(int(x) * 3 + int(y) * 5) % 5]
             return "brown_l"
-        if 2.0 < z < 3.3 or 12.4 < z < 13.8:                   # iron hoops
+        if 2.0 < z < 3.4 or 13.4 < z < 14.8:                   # iron hoops
             return "grey_d"
         th = math.atan2(v - BCV, u - BCU) / (2 * math.pi)
         if (th * 14) % 1.0 < 0.12:                             # stave seams
             return "brown_d"
         return lit(WOOD, n, x, y, crisp=True)
 
-    def press(tag, n, u, v, z, x, y):
+    def tub(tag, n, u, v, z, x, y):
+        if side_of(n) == "T":
+            if TU0 + 0.05 < u < TU1 - 0.05 and TV0 + 0.05 < v < TV1 - 0.05:
+                return GRAPE[(int(x) * 5 + int(y) * 3) % 5]
+            return "tan"
+        if (v * 5.0) % 1.0 < 0.14 if side_of(n) == "L" else (u * 5.0) % 1.0 < 0.14:
+            return "brown_d"                                   # plank joints
+        return lit(WOOD, n, x, y, crisp=True)
+
+    def timber(tag, n, u, v, z, x, y):
         if side_of(n) == "T":
             return "tan"
         return lit(WOOD, n, x, y, crisp=True)
 
-    def screw(tag, n, u, v, z, x, y):
+    def iron(tag, n, u, v, z, x, y):
         return lit(SLATE, n, x, y, crisp=True)
 
     solids = [
-        Solid(ring(BCU, BCV, 0.3, 12, 0) + ring(BCU, BCV, 0.37, 12, 8) + ring(BCU, BCV, 0.32, 12, 16), barrel),
-        Solid(bx(-0.14, 0.3, -0.2, 0.2, 17.5, 19.5), press),                # press plate
-        Solid(bx(0.32, 0.4, -0.26, -0.2, 0, 27), press),                    # frame posts
-        Solid(bx(0.32, 0.4, 0.2, 0.26, 0, 27), press),
-        Solid(bx(0.28, 0.42, -0.3, 0.3, 25, 28), press),                    # top beam
-        Solid(bx(0.2, 0.24, -0.02, 0.02, 19.5, 25), screw),                 # screw
-        Solid(bx(0.16, 0.28, -0.4, 0.4, 28, 30), press),                    # handle bar
+        Solid(ring(BCU, BCV, 0.34, 12, 0) + ring(BCU, BCV, 0.38, 12, 9) + ring(BCU, BCV, 0.34, 12, 18), barrel),
+        Solid(bx(TU0, TU1, TV0, TV1, 0, 12), tub),                                # grape tub
+        Solid(bx(0.25, 0.34, -0.46, -0.36, 0, 27), timber),                        # press posts
+        Solid(bx(0.25, 0.34, 0.1, 0.2, 0, 27), timber),
+        Solid(bx(0.24, 0.35, -0.48, 0.2, 26, 30), timber),                         # beam
+        Solid(bx(0.16, 0.44, -0.34, 0.04, 14, 15.5), timber),                     # press plate
+        Solid(bx(0.27, 0.33, -0.2, -0.14, 15.5, 27), iron),                        # screw
     ]
-    return solids, None
+
+    def paint(im):                                             # a bunch of grapes on the barrel lid
+        for X, Y, c in ((-9, -19, "purple"), (-6, -21, "magenta"), (-3, -19, "purple"), (-7, -17, "magenta")):
+            disc(im, CX + X, CY + Y, 1.8, c)
+
+    return solids, paint
 
 
-# ---------------------------------------------------------------- seed maker (cabinet, hopper, packets)
+# ---------------------------------------------------------------- seed maker (cabinet, round hopper, packets)
 
 def seed_maker():
     def cabinet(tag, n, u, v, z, x, y):
@@ -511,32 +534,24 @@ def seed_maker():
 
     def hopper(tag, n, u, v, z, x, y):
         if side_of(n) == "T":
-            if abs(u) < 0.26 and abs(v) < 0.26:                # open mouth with seeds
+            if math.hypot(u, v) < 0.3:                         # open mouth, seeds inside
                 return "amber" if (int(x) * 3 + int(y) * 5) % 7 == 0 else ("tan" if (int(x) + int(y)) % 3 == 0 else "brown_d")
             return "grey_l"
         return lit(SLATE, n, x, y, crisp=True)
 
-    def packet(colour):
+    def packet(ramp):
         def mat(tag, n, u, v, z, x, y):
-            if side_of(n) == "T":
+            if side_of(n) == "T" or 9.0 < z < 11.5:
                 return "cream"
-            if 10.0 < z < 12.0:
-                return "cream"
-            return colour
+            return lit(ramp, n, x, y, crisp=True)
         return mat
 
-    def shelf(tag, n, u, v, z, x, y):
-        return "tan" if side_of(n) == "T" else "brown"
-
     solids = [
-        Solid(bx(-0.34, 0.34, -0.3, 0.3, 0, 14), cabinet),
-        Solid(bx(-0.2, 0.2, -0.18, 0.18, 14, 24), hopper),
-        Solid([(-0.36, -0.34, 24), (0.36, -0.34, 24), (0.36, 0.34, 24), (-0.36, 0.34, 24),
-               (-0.2, -0.18, 14), (0.2, -0.18, 14), (0.2, 0.18, 14), (-0.2, 0.18, 14)], hopper),
-        Solid(bx(0.34, 0.46, -0.26, 0.26, 6, 8), shelf),
-        Solid(bx(0.36, 0.42, -0.22, -0.1, 8, 15), packet("red")),
-        Solid(bx(0.36, 0.42, -0.06, 0.06, 8, 16), packet("green")),
-        Solid(bx(0.36, 0.42, 0.1, 0.22, 8, 14), packet("amber")),
+        Solid(bx(-0.4, 0.4, -0.34, 0.34, 0, 14), cabinet),
+        Solid(ring(0, 0, 0.42, 12, 26) + ring(0, 0, 0.15, 12, 14), hopper),
+        Solid(bx(0.42, 0.5, -0.26, -0.1, 6, 14), packet(["red_d", "red", "red", "pink"])),
+        Solid(bx(0.42, 0.5, -0.06, 0.1, 6, 15), packet(["green_dd", "green_d", "green", "green"])),
+        Solid(bx(0.42, 0.5, 0.14, 0.3, 6, 13), packet(["orange", "amber", "amber", "yellow"])),
     ]
     return solids, None
 
@@ -544,63 +559,77 @@ def seed_maker():
 # ---------------------------------------------------------------- oil press (millstone wheel, oil jug)
 
 def oil_press():
-    WCU, WZ, WR = -0.1, 15.0, 12.0
+    WCU, WZ, WR = -0.12, 16.0, 12.5
 
     def wheel_face(tag, n, u, v, z, x, y):
         if abs(n[1]) < 0.8:
-            return "grey_d"                                    # rim edge
+            return "grey_d"                                    # thickness of the wheel
         rr = math.hypot((u - WCU) * 16.0, z - WZ)
-        if rr > WR - 1.6:
-            return "grey_d"
-        if rr < 2.4:
+        if rr > WR - 1.8:
+            return "grey_l" if (z - WZ) > -4.0 else "grey"     # rim band
+        if rr < 2.6:
             return "brown_d"                                   # axle hole
         ang = math.atan2(z - WZ, (u - WCU) * 16.0) / (2 * math.pi)
         if (ang * 8) % 1.0 < 0.12:                             # radial grooves
             return "grey_d"
-        return lit(SLATE, n, x, y, crisp=True)
+        return lit(["grey_d", "grey", "grey", "grey_l"], n, x, y, crisp=True)
 
     def jug(tag, n, u, v, z, x, y):
         if side_of(n) == "T":
-            return "yellow" if (int(x) + int(y)) % 2 else "amber"
+            return "amber"                                     # oil surface
         if 6.0 < z < 7.4:
-            return "brown_d"
-        return lit(["orange", "amber", "amber", "yellow"], n, x, y, crisp=True)
+            return "cream"                                     # paper label
+        return lit(["brown", "rust", "clay", "tan"], n, x, y, crisp=True)   # earthenware, not a flame
+
+    def cork(tag, n, u, v, z, x, y):
+        return "brown_d"
+
+    def hub(tag, n, u, v, z, x, y):
+        return lit(WOOD, n, x, y, crisp=True)
+
+    # squat bottle: a stack of frustums (the hull of a concave profile would fill in the neck)
+    JUG = [(0.0, 0.15), (5.0, 0.17), (9.0, 0.16), (12.0, 0.11), (13.5, 0.07), (15.5, 0.07)]
 
     def plinth(tag, n, u, v, z, x, y):
-        return "grey_l" if side_of(n) == "T" else lit(STONE, n, x, y)
+        if side_of(n) == "T":
+            return "grey_l"
+        return lit(STONE, n, x, y)
 
     wheel = []
-    for v in (-0.07, 0.07):
-        wheel += [(WCU + (WR / 16.0) * math.cos(2 * math.pi * i / 20), v, WZ + WR * math.sin(2 * math.pi * i / 20))
-                  for i in range(20)]
+    for v in (-0.1, 0.1):
+        wheel += [(WCU + (WR / 16.0) * math.cos(2 * math.pi * i / 24), v, WZ + WR * math.sin(2 * math.pi * i / 24))
+                  for i in range(24)]
     solids = [
         Solid(bx(-0.42, 0.42, -0.36, 0.36, 0, 3), plinth),
         Solid(wheel, wheel_face),
-        Solid(ring(0.26, 0.18, 0.1, 12, 3) + ring(0.26, 0.18, 0.135, 12, 9)
-              + ring(0.26, 0.18, 0.12, 12, 13) + ring(0.26, 0.18, 0.07, 12, 16.5), jug),
+        Solid([(WCU + 0.2 * math.cos(2 * math.pi * i / 10), vv, WZ + 4.0 * math.sin(2 * math.pi * i / 10))
+               for vv in (0.10, 0.22) for i in range(10)], hub),                     # axle hub on the wheel
+        *[Solid(ring(0.26, 0.2, ra, 12, za) + ring(0.26, 0.2, rb, 12, zb), jug)
+          for (za, ra), (zb, rb) in zip(JUG, JUG[1:])],
+        Solid(ring(0.26, 0.2, 0.08, 12, 15.5) + ring(0.26, 0.2, 0.08, 12, 17.5), cork),   # cork
     ]
     return solids, None
 
 
-# ---------------------------------------------------------------- market cart (hand cart, awning)
+# ---------------------------------------------------------------- market cart (hand cart, striped awning)
 
 def market_cart():
     def wood(tag, n, u, v, z, x, y):
         if side_of(n) == "T":
             return "tan"
-        if (int(math.floor(v * 10)) % 3) == 0 and side_of(n) == "R":
+        if int(math.floor(v * 10)) % 3 == 0 and side_of(n) == "R":
             return "brown_d"
         return lit(WOOD, n, x, y, crisp=True)
 
     def wheel(tag, n, u, v, z, x, y):
         if abs(n[1]) < 0.8:
             return "brown_d"
-        rr = math.hypot(u * 16.0, z - 7.0)
-        if rr > 5.6:
+        rr = math.hypot(u * 16.0, z - 6.0)
+        if rr > 5.4:
             return "brown_d"
-        if rr < 1.6:
+        if rr < 1.5:
             return "grey_d"
-        ang = math.atan2(z - 7.0, u * 16.0) / (2 * math.pi)
+        ang = math.atan2(z - 6.0, u * 16.0) / (2 * math.pi)
         if (ang * 6) % 1.0 < 0.14:
             return "tan"
         return lit(WOOD, n, x, y, crisp=True)
@@ -613,14 +642,14 @@ def market_cart():
             return "brown_d"
         return "red_d" if stripe == 0 else "tan"
 
-    def produce_apple(tag, n, u, v, z, x, y):
+    def apple(tag, n, u, v, z, x, y):
         return lit(["red_d", "red", "red", "pink"], n, x, y, crisp=True)
 
     def corn(tag, n, u, v, z, x, y):
         return lit(["brown", "amber", "yellow", "white"], n, x, y, crisp=True)
 
     def wheel_pts(v):
-        return [(0.4375 * math.cos(2 * math.pi * i / 14), v, 7.0 + 7.0 * math.sin(2 * math.pi * i / 14))
+        return [(0.375 * math.cos(2 * math.pi * i / 14), v, 6.0 + 6.0 * math.sin(2 * math.pi * i / 14))
                 for i in range(14)]
 
     solids = [
@@ -637,22 +666,22 @@ def market_cart():
         Solid([(-0.4, -0.4, 24.0), (-0.4, 0.4, 24.0), (-0.4, -0.4, 22.5), (-0.4, 0.4, 22.5),
                (0.36, -0.4, 20.5), (0.36, 0.4, 20.5), (0.36, -0.4, 19.0), (0.36, 0.4, 19.0)], canopy),
         Solid(bx(-0.26, 0.02, -0.2, 0.06, 10, 14), wood),                     # apple crate
-        Solid(ring(-0.14, -0.06, 0.06, 8, 14) + ring(-0.14, -0.06, 0.05, 8, 16.5), produce_apple),
-        Solid(ring(-0.06, -0.14, 0.06, 8, 14) + ring(-0.06, -0.14, 0.05, 8, 16.5), produce_apple),
-        Solid(ring(-0.2, 0.08, 0.06, 8, 14) + ring(-0.2, 0.08, 0.05, 8, 16.5), produce_apple),
+        Solid(ring(-0.14, -0.06, 0.06, 8, 14) + ring(-0.14, -0.06, 0.05, 8, 16.5), apple),
+        Solid(ring(-0.06, -0.14, 0.06, 8, 14) + ring(-0.06, -0.14, 0.05, 8, 16.5), apple),
+        Solid(ring(-0.2, 0.08, 0.06, 8, 14) + ring(-0.2, 0.08, 0.05, 8, 16.5), apple),
         Solid(bx(0.06, 0.28, -0.2, 0.2, 10, 13), wood),                       # corn crate
         Solid(ring(0.17, 0.0, 0.12, 8, 13) + [(0.17, 0.0, 18.0)], corn),
     ]
 
-    def paint(im):
-        disc(im, CX + 15, CY - 14, 2.8, "amber")               # little coin sign on a bracket
+    def paint(im):                                             # a little coin sign on a bracket
+        disc(im, CX + 15, CY - 14, 2.8, "amber")
         disc(im, CX + 15, CY - 14, 1.9, "yellow")
-        stamp(im, ["g"], {"g": "brown"}, CX + 13, CY - 12)
+        put(im, CX + 14, CY - 13, "brown")
 
     return solids, paint
 
 
-# ---------------------------------------------------------------- harvest shed (wood, red roof)
+# ---------------------------------------------------------------- harvest shed (wood walls, red roof)
 
 def harvest_shed():
     def wall(tag, n, u, v, z, x, y):
@@ -687,8 +716,7 @@ def harvest_shed():
     def basket(tag, n, u, v, z, x, y):
         if side_of(n) == "T":
             return "brown_d"
-        ang = math.atan2(v, u)
-        if (int(z // 2) + int(math.floor(ang * 6.0 / math.pi))) % 2:
+        if (int(z // 2) + int(math.floor(math.atan2(v, u) * 6.0 / math.pi))) % 2:
             return "tan"
         return "brown_l"
 
@@ -698,32 +726,31 @@ def harvest_shed():
     def carrot(tag, n, u, v, z, x, y):
         return lit(["rust", "orange", "orange", "amber"], n, x, y, crisp=True)
 
+    bA, bB = (-0.27, 0.42), (0.27, 0.42)
     solids = [
         Solid(bx(-0.36, 0.36, -0.36, 0.36, 0, 13), wall),
         Solid([(-0.42, -0.4, 13), (0.42, -0.4, 13), (0.42, 0.4, 13), (-0.42, 0.4, 13),
                (-0.42, 0.0, 21.5), (0.42, 0.0, 21.5)], roof),
-        Solid(ring(-0.2, 0.46, 0.13, 12, 0) + ring(-0.2, 0.46, 0.19, 12, 6), basket),
-        Solid(ring(-0.2, 0.46, 0.14, 8, 6) + [(-0.2, 0.46, 11.0)], wheat),
-        Solid(ring(0.24, 0.46, 0.13, 12, 0) + ring(0.24, 0.46, 0.19, 12, 6), basket),
-        Solid(ring(0.24, 0.46, 0.14, 8, 6) + [(0.24, 0.46, 10.0)], carrot),
+        Solid(ring(bA[0], bA[1], 0.15, 12, 0) + ring(bA[0], bA[1], 0.2, 12, 7), basket),
+        Solid(ring(bA[0], bA[1], 0.19, 8, 7) + [(bA[0], bA[1], 13.0)], wheat),
+        Solid(ring(bB[0], bB[1], 0.15, 12, 0) + ring(bB[0], bB[1], 0.2, 12, 7), basket),
+        Solid(ring(bB[0], bB[1], 0.19, 8, 7) + [(bB[0], bB[1], 12.0)], carrot),
     ]
 
-    def paint(im):
-        px = im.load()
-        for t in range(0, 22):                                  # scythe handle leaning on the wall
-            X = CX + 19 - int(round(t * 0.4))
-            Y = CY + 4 - t
-            if 0 <= X < W and 0 <= Y < H:
-                px[X, Y] = E["brown_l"]
-        for X, Y in ((CX + 9, CY - 19), (CX + 6, CY - 22), (CX + 3, CY - 23), (CX + 1, CY - 22)):
-            if 0 <= X < W and 0 <= Y < H:
-                px[X, Y] = E["grey_l"]
-                px[X, Y + 1] = E["grey"]
+    def paint(im):                                             # scythe leaning on the right wall
+        for Y in range(-21, 7):
+            X = 11 + round((Y + 21) * 5 / 27.0)
+            put(im, CX + X, CY + Y, "brown_l")
+        blade = [(11, -21), (12, -22), (13, -22), (14, -22), (15, -21), (16, -20), (17, -19),
+                 (18, -18), (19, -17), (19, -16), (18, -15)]
+        for X, Y in blade:
+            put(im, CX + X, CY + Y, "grey_l")
+            put(im, CX + X, CY + Y + 1, "grey")
 
     return solids, paint
 
 
-# ---------------------------------------------------------------- planter shed (green, seed sacks, can)
+# ---------------------------------------------------------------- planter shed (green walls, seed sacks, can)
 
 def planter_shed():
     def wall(tag, n, u, v, z, x, y):
@@ -736,7 +763,7 @@ def planter_shed():
             if abs(abs(u) - 0.12) < 0.02 or z > 9.2:
                 return "cream"
             return "brown" if int(math.floor(u * 30)) % 2 else "brown_l"
-        if s == "L" and z > 13.0:                              # gable: cream trim with a round vent
+        if s == "L" and z > 13.0:                              # gable: cream trim, round vent
             if math.hypot(u / 0.09, (z - 17.5) / 2.2) < 1.0:
                 return "brown_d"
             return "cream"
@@ -757,8 +784,8 @@ def planter_shed():
     def sack(tag, n, u, v, z, x, y):
         if side_of(n) == "T":
             return "tan"
-        if 6.0 < z < 7.6:
-            return "brown"
+        if 7.0 < z < 8.4:
+            return "brown"                                     # tie
         return lit(["tan_d", "tan", "cream", "white"], n, x, y, crisp=True)
 
     def can(tag, n, u, v, z, x, y):
@@ -768,16 +795,18 @@ def planter_shed():
             return "grey"
         return lit(["blue_d", "blue", "blue", "cyan"], n, x, y, crisp=True)
 
+    def sack_pts(cu, cv):
+        return (ring(cu, cv, 0.12, 10, 0) + ring(cu, cv, 0.15, 10, 4)
+                + ring(cu, cv, 0.12, 10, 7.5) + ring(cu, cv, 0.05, 10, 9.5))
+
     solids = [
         Solid(bx(-0.38, 0.36, -0.36, 0.38, 0, 13), wall),
         Solid([(-0.44, -0.42, 13), (0.44, -0.42, 13), (0.44, 0.42, 13), (-0.44, 0.42, 13),
                (0.0, -0.42, 21.0), (0.0, 0.42, 21.0)], roof),
-        Solid(ring(-0.14, 0.44, 0.1, 10, 0) + ring(-0.14, 0.44, 0.13, 10, 4)
-              + ring(-0.14, 0.44, 0.09, 10, 7) + ring(-0.14, 0.44, 0.04, 10, 8), sack),
-        Solid(ring(0.12, 0.44, 0.1, 10, 0) + ring(0.12, 0.44, 0.13, 10, 4)
-              + ring(0.12, 0.44, 0.09, 10, 7) + ring(0.12, 0.44, 0.04, 10, 8), sack),
-        Solid(ring(0.34, 0.14, 0.1, 10, 0) + ring(0.34, 0.14, 0.1, 10, 6), can),
-        Solid(bx(0.36, 0.44, 0.1, 0.18, 2.0, 4.0), can),                    # spout
+        Solid(sack_pts(-0.14, 0.46), sack),
+        Solid(sack_pts(0.14, 0.44), sack),
+        Solid(ring(0.36, 0.12, 0.12, 10, 0) + ring(0.36, 0.12, 0.12, 10, 8), can),
+        Solid(bx(0.4, 0.52, 0.12, 0.2, 2.0, 4.0), can),                    # spout
     ]
     return solids, None
 
