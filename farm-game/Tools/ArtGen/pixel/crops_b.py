@@ -889,6 +889,153 @@ def grapes_stages():
     return st
 
 
+# ================================================================ items
+#
+# items/<id> (14x14) and items_big/<id> (28x28): the harvested produce, drawn with the same
+# primitives as the ripe stage-3 crops so they read as the same fruit. Like crops_a's icons the
+# produce fills its box, is lit from the top-left with a white/cream glint and has its darkest
+# ramp step bottom-right; finish() adds the outline and drop shadow. Pivot = centre.
+
+def icon_pumpkin(n):
+    cv = Cv(n, n)
+    if n == 14:
+        cv.paint(pumpkin_ball(7, 8.3, 7, 5.7, ribs=(-0.52, -0.17, 0.17, 0.52)))
+        cv.map(["..sS", ".sS.", ".sS."], {"s": "tan_d", "S": "brown"}, 5, 0)
+        cv.map(["gG", "G."], {"g": "green", "G": "green_d"}, 9, 1)
+        return cv
+    cv.paint(pumpkin_ball(14, 16.4, 14, 11.4, ribs=(-0.55, -0.2, 0.2, 0.55)))
+    for q in ((6, 10), (7, 9), (8, 9), (9, 8), (5, 12)):
+        cv.set(*q, "yellow")
+    cv.paint(lobe_leaf(20.5, 4.5, 5.2, base=(-0.8, 0.6), depth=0.3), LEAF_LINE)
+    cv.paint(tendril(6, 6, -1), LEAF_LINE)
+    cv.map(["....tS", "...tsS", "..tsS.", "..ssS.", "..ssS.", "..ssS."], {"t": "tan", "s": "tan_d", "S": "brown"}, 10, 0)
+    return cv
+
+
+def icon_sunflower(n):
+    cv = Cv(n, n)
+    if n == 14:
+        cv.paint(flower_head(7, 7, 7.1, n=11, inner=0.48))
+        return cv
+    cv.paint(flower_head(14, 14, 14.1, n=14, inner=0.46))
+    return cv
+
+
+def icon_cabbage(n):
+    cv = Cv(n, n)
+    if n == 14:
+        cv.paint(lobe_leaf(3.5, 9.5, 3.6, CAB_LEAF, lobes=3, base=(0.8, -0.3), depth=0.12, veins=False))
+        cv.paint(lobe_leaf(10.5, 9.5, 3.6, CAB_LEAF, lobes=3, base=(-0.8, -0.3), depth=0.12, veins=False))
+        cv.paint(cabbage_head(7, 6.5, 6, 5.6), LEAF_LINE)
+        return cv
+    for cx, cy, b in ((6, 19.5, (0.8, -0.3)), (22, 19.5, (-0.8, -0.3))):
+        cv.paint(lobe_leaf(cx, cy, 6.8, CAB_LEAF, lobes=3, base=b, depth=0.12, ry=6.8 * 0.72), LEAF_LINE)
+    cv.paint(cabbage_head(14, 12.5, 11.5, 10.8), LEAF_LINE)
+    return cv
+
+
+def icon_eggplant(n):
+    cv = Cv(n, n)
+    if n == 14:
+        cv.paint(pod(10, 4, 132, 6.5, 1.6, 3.6, curve=-0.04))
+        cv.map([".gS", "ggS", "gSS", "S.."], {"g": "green_d", "S": "green_dd"}, 9, 1)
+        cv.set(12, 0, "green_d")
+        return cv
+    cv.paint(pod(20, 8, 132, 13, 3.2, 7.2, curve=-0.04, spec=None))
+    return cv
+
+
+def icon_melon(n):
+    cv = Cv(n, n)
+    if n == 14:
+        cv.paint(melon_ball(7, 7.6, 7, 6, n=3))
+        cv.map([".g", "G."], {"g": "green", "G": "green_d"}, 7, 0)
+        return cv
+    cv.paint(melon_ball(14, 15, 14, 11.8, n=3))
+    return cv
+
+
+def grape_bunch(cx, top, rows, r, pitch, ramp=GRAPE, spec="pink", step=None):
+    """Grape bunch for icons: rows of berries (r radius, pitch spacing) narrowing downwards,
+    each berry separated from the ones above by the ramp's darkest step."""
+    step = step or pitch * 0.8
+    m = {}
+    for i, k in enumerate(rows):
+        x0 = cx - (k - 1) * pitch / 2.0
+        cy = top + r + i * step
+        for j in range(k):
+            bx = x0 + j * pitch
+            b = ball(bx, cy, r, r, ramp, gain=1.4)
+            for q, c in b.items():
+                m[q] = c
+            # rim the lower-right of each berry so the next row reads as a separate ball
+            m[(int(bx - r * 0.45), int(cy - r * 0.45))] = spec if i < len(rows) - 1 else ramp[2]
+    return m
+
+
+def icon_grapes(n):
+    cv = Cv(n, n)
+    if n == 14:
+        cv.paint(grape_bunch(6.5, 2, (4, 3, 3, 2, 1), 1.75, 3.0, step=2.3))
+        cv.map(["gG", "G."], {"g": "green", "G": "green_d"}, 7, 0)
+        return cv
+    cv.paint(grape_bunch(13, 4, (4, 4, 3, 2, 1), 3.3, 5.6, step=4.6))
+    return cv
+
+
+ICONS = {"pumpkin": icon_pumpkin, "sunflower": icon_sunflower, "cabbage": icon_cabbage,
+         "eggplant": icon_eggplant, "melon": icon_melon, "grapes": icon_grapes}
+
+# Seed packets: crops_a's design (crimped paper packet, tinted band with a picture of the produce,
+# two printed lines at the bottom); the band tint gives each packet its own colour.
+PAPER = ("tan_d", "tan", "cream", "white")
+TINT = {"pumpkin": ("green", "green_d"), "sunflower": ("blue", "blue_d"), "cabbage": ("cyan", "blue"),
+        "eggplant": ("grey_l", "grey"), "melon": ("magenta", "purple"), "grapes": ("amber", "clay")}
+
+
+def ptone(ramp, v, x, y):
+    """crops_a's tone(): ramp index v (fractional), checker-dithered between steps."""
+    n = len(ramp) - 1
+    v = max(0.0, min(float(n), v))
+    b = int(v)
+    f = v - b
+    if b >= n or f < 0.3:
+        return ramp[b]
+    if f > 0.7:
+        return ramp[b + 1]
+    return ramp[b + 1] if (x + y) % 2 == 0 else ramp[b]
+
+
+def seed_packet(cid, n):
+    cv = Cv(n, n)
+    light, dark = TINT[cid]
+    x0, x1, y0, y1 = (2, 11, 1, 13) if n == 14 else (4, 23, 1, 27)
+    for y in range(y0, y1 + 1):
+        for x in range(x0, x1 + 1):
+            v = 2.0 - (0.6 if x >= x1 - (1 if n == 14 else 2) else 0) - (0.5 if y >= y1 - 1 else 0) + (0.4 if x == x0 else 0)
+            cv.set(x, y, ptone(PAPER, v, x, y))
+    for x in range(x0, x1 + 1):  # crimped top
+        cv.set(x, y0, "tan" if x % 2 else CLEAR)
+        cv.set(x, y0 + 1, "tan_d")
+    pic = ICONS[cid](14).im
+    if n == 14:
+        for y in range(y0 + 3, y0 + 10):
+            for x in range(x0 + 1, x1):
+                cv.set(x, y, ptone([dark, light], 1.0 if y < y0 + 8 else 0.0, x, y))
+        cv.im.alpha_composite(pic.resize((7, 7), resample=0), (x0 + 1, y0 + 3))
+    else:
+        for y in range(y0 + 4, y0 + 20):
+            for x in range(x0 + 2, x1 - 1):
+                cv.set(x, y, ptone([dark, light], 1.0 if y < y0 + 17 else 0.5 if y < y0 + 19 else 0.0, x, y))
+        cv.im.alpha_composite(pic, (x0 + 3, y0 + 4))
+        cv.p = cv.im.load()
+        for x in range(x0 + 3, x1 - 3, 2):
+            cv.set(x, y1 - 3, "tan_d")
+            cv.set(x + 1, y1 - 3, "tan_d")
+    cv.p = cv.im.load()
+    return cv
+
+
 # ================================================================ main
 
 CROPS = {
@@ -908,6 +1055,9 @@ def main():
         st = fn()
         for k in (0, 1, 2, 3, "dead"):
             trim_save(sc, f"{cid}_{k}", st[k])
+        for S, n in ((si, 14), (sb, 28)):
+            save_item(S, cid, ICONS[cid](n))
+            save_item(S, f"seed_{cid}", seed_packet(cid, n))
     pivots = {}
     for s in (sc, si, sb):
         pivots.update(s.pivots)

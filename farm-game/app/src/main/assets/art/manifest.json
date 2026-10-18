@@ -247,6 +247,10 @@
   "ax": 10,
   "ay": 12
  },
+ "deco/bush_snow": {
+  "ax": 10,
+  "ay": 12
+ },
  "deco/butterfly_a": {
   "ax": 3,
   "ay": 3
@@ -291,11 +295,19 @@
   "ax": 10,
   "ay": 8
  },
+ "deco/log_snow": {
+  "ax": 10,
+  "ay": 8
+ },
  "deco/mushrooms": {
   "ax": 6,
   "ay": 7
  },
  "deco/reeds": {
+  "ax": 7,
+  "ay": 8
+ },
+ "deco/reeds_snow": {
   "ax": 7,
   "ay": 8
  },
@@ -307,7 +319,19 @@
   "ax": 10,
   "ay": 10
  },
+ "deco/rock_big_snow": {
+  "ax": 10,
+  "ay": 10
+ },
+ "deco/rock_snow": {
+  "ax": 7,
+  "ay": 7
+ },
  "deco/stump": {
+  "ax": 8,
+  "ay": 10
+ },
+ "deco/stump_snow": {
   "ax": 8,
   "ay": 10
  },
@@ -315,9 +339,21 @@
   "ax": 7,
   "ay": 9
  },
+ "deco/tallgrass_a_snow": {
+  "ax": 7,
+  "ay": 9
+ },
  "deco/tallgrass_b": {
   "ax": 7,
   "ay": 9
+ },
+ "deco/tallgrass_b_snow": {
+  "ax": 7,
+  "ay": 9
+ },
+ "items_big/cabbage": {
+  "ax": 16,
+  "ay": 16
  },
  "items_big/carrot": {
   "ax": 16,
@@ -327,7 +363,27 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/eggplant": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/grapes": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/melon": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/potato": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/pumpkin": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_cabbage": {
   "ax": 16,
   "ay": 16
  },
@@ -339,11 +395,31 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/seed_eggplant": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_grapes": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_melon": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/seed_potato": {
   "ax": 16,
   "ay": 16
  },
+ "items_big/seed_pumpkin": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/seed_strawberry": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_sunflower": {
   "ax": 16,
   "ay": 16
  },
@@ -359,6 +435,10 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/sunflower": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/tomato": {
   "ax": 16,
   "ay": 16
@@ -366,6 +446,10 @@
  "items_big/wheat": {
   "ax": 16,
   "ay": 16
+ },
+ "items/cabbage": {
+  "ax": 9,
+  "ay": 9
  },
  "items/carrot": {
   "ax": 9,
@@ -375,7 +459,27 @@
   "ax": 9,
   "ay": 9
  },
+ "items/eggplant": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/grapes": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/melon": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/potato": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/pumpkin": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_cabbage": {
   "ax": 9,
   "ay": 9
  },
@@ -387,11 +491,31 @@
   "ax": 9,
   "ay": 9
  },
+ "items/seed_eggplant": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_grapes": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_melon": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/seed_potato": {
   "ax": 9,
   "ay": 9
  },
+ "items/seed_pumpkin": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/seed_strawberry": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_sunflower": {
   "ax": 9,
   "ay": 9
  },
@@ -404,6 +528,10 @@
   "ay": 9
  },
  "items/strawberry": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/sunflower": {
   "ax": 9,
   "ay": 9
  },
