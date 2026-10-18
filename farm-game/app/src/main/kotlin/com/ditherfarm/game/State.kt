@@ -138,11 +138,12 @@ class GameState(var seed: Long) {
     val fixtures = HashMap<Int, String>()
     /** Per field block (A..H): crop to replant and harvest destination. */
     val fields = ArrayList<FieldState>()
-    var planterMode = PlanterMode.REPLANT
-    var planterSeed: String? = null
-    /** Shed id → game minute of its next run, plots handled last run, and whether it is blocked. */
+    /** Hired farmhands by id, the truck and when the harvester next does its round. */
+    val workers = LinkedHashMap<String, WorkerState>()
+    var truck = TruckState()
+    var harvesterNext = 0.0
+    /** Timed building id → game minute of its next run, and whether it is blocked (tray full). */
     val shedNext = HashMap<String, Double>()
-    val shedLast = HashMap<String, Int>()
     val shedBlocked = HashMap<String, Boolean>()
     /** Achievement id → tiers claimed; "id#tier" keys already announced; claimed collection pages. */
     val achievements = HashMap<String, Int>()
@@ -192,9 +193,10 @@ class GameState(var seed: Long) {
         put("mine", mine.toJson())
         put("fixtures", JSONObject().apply { fixtures.forEach { (k, v) -> put(k.toString(), v) } })
         put("fields", JSONArray().apply { fields.forEach { put(it.toJson()) } })
-        put("planter", JSONObject().apply { put("mode", planterMode.name); planterSeed?.let { put("seed", it) } })
+        put("workers", JSONArray().apply { workers.values.forEach { put(it.toJson()) } })
+        put("truck", truck.toJson())
+        put("harvesterNext", harvesterNext)
         put("shedNext", JSONObject(shedNext as Map<*, *>))
-        put("shedLast", JSONObject(shedLast as Map<*, *>))
         put("achievements", JSONObject(achievements as Map<*, *>))
         put("achievementsSeen", JSONArray(achievementsSeen.toList()))
         put("pagesClaimed", JSONArray(pagesClaimed.toList()))
@@ -244,11 +246,10 @@ class GameState(var seed: Long) {
             o.optJSONObject("mine")?.let { mine = MineState.fromJson(it) }
             o.optJSONObject("fixtures")?.let { f -> f.keys().forEach { fixtures[it.toInt()] = f.getString(it) } }
             o.optJSONArray("fields")?.objects()?.forEach { fields += FieldState.fromJson(it) }
-            o.optJSONObject("planter")?.let { p ->
-                planterMode = PlanterMode.valueOf(p.optString("mode", "REPLANT")); planterSeed = if (p.has("seed")) p.getString("seed") else null
-            }
+            o.optJSONArray("workers")?.objects()?.forEach { val w = WorkerState.fromJson(it); workers[w.id] = w }
+            o.optJSONObject("truck")?.let { truck = TruckState.fromJson(it) }
+            harvesterNext = o.optDouble("harvesterNext", 0.0)
             o.optJSONObject("shedNext")?.let { m -> m.keys().forEach { shedNext[it] = m.getDouble(it) } }
-            o.optJSONObject("shedLast")?.toIntMap()?.forEach { (k, v) -> shedLast[k] = v }
             o.optJSONObject("achievements")?.toIntMap()?.forEach { (k, v) -> achievements[k] = v }
             o.optJSONArray("achievementsSeen")?.strings()?.let { achievementsSeen.addAll(it) }
             o.optJSONArray("pagesClaimed")?.strings()?.let { pagesClaimed.addAll(it) }

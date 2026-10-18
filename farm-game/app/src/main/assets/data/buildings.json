@@ -344,36 +344,6 @@
    "fixed": true
   },
   {
-   "id": "harvest_shed",
-   "name": "Harvest Shed",
-   "screen": "farm",
-   "unlock": 16,
-   "cost": {
-    "coins": 3000,
-    "plank": 25,
-    "iron_bar": 10,
-    "copper_bar": 4,
-    "cooking_oil": 3
-   },
-   "recipes": [],
-   "queue": 1
-  },
-  {
-   "id": "planter_shed",
-   "name": "Planter Shed",
-   "screen": "farm",
-   "unlock": 18,
-   "cost": {
-    "coins": 3500,
-    "plank": 25,
-    "iron_bar": 12,
-    "brick": 6,
-    "cooking_oil": 3
-   },
-   "recipes": [],
-   "queue": 1
-  },
-  {
    "id": "market_cart",
    "name": "Market Cart",
    "screen": "farm",

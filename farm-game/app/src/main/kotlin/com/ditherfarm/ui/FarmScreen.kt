@@ -612,7 +612,6 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             when {
                 world.isBuilt(def.id) -> when {
                     world.trayCount(def.id) > 0 -> world.collect(def.id)
-                    def.id.endsWith("_shed") -> chrome.open(Chrome.Panel.SHED, def.id)
                     def.id == "market_cart" -> chrome.open(Chrome.Panel.CART)
                     else -> chrome.open(Chrome.Panel.MACHINE, def.id)
                 }

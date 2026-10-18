@@ -180,7 +180,10 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.FestivalStarted -> { game.sfx.play("order"); hud.toast("The ${e.name} has begun!") }
             is WorldEvent.Bought -> { game.sfx.play("buy"); game.haptics.tick() }
             is WorldEvent.CartSold -> hud.toast("Market Cart sold ${e.units} for ${e.coins} coins")
-            is WorldEvent.ShedRan -> hud.toast(if (e.shed == "harvest_shed") "Harvest Shed picked ${e.plots} plots" else "Planter Shed sowed ${e.plots} plots")
+            is WorldEvent.WorkerHired -> { game.sfx.play("unlock"); game.haptics.heavy(); hud.toast("${world.state.workers[e.worker]?.name} joined your farm!") }
+            is WorldEvent.WorkerLevelUp -> { game.sfx.play("levelup"); hud.toast("${world.state.workers[e.worker]?.name} reached level ${e.level}") }
+            is WorldEvent.WorkerHungry -> hud.toast("${world.state.workers[e.worker]?.name} is hungry: put crops in the Silo")
+            is WorldEvent.TruckReturned -> { game.sfx.play("sell"); game.haptics.heavy(); hud.toast("The truck is back: +${e.coins} coins") }
             is WorldEvent.Collected -> { game.sfx.play("pickup"); game.haptics.tick(); hud.tip("collect", "Machines keep working while you are away. Tap the bubble to collect.") }
             is WorldEvent.ZoneUnlocked -> { game.sfx.play("unlock"); hud.toast("A new part of the forest is open!") }
             is WorldEvent.DayStarted -> if (e.day > 0) hud.toast("Day ${world.time.dayOfSeason} - ${e.weather.name.lowercase().replaceFirstChar { it.uppercase() }}")

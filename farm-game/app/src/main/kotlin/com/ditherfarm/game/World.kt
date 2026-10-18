@@ -50,7 +50,13 @@ sealed class WorldEvent {
     data class GeodeCracked(val geode: String, val out: Map<String, Int>) : WorldEvent()
     data class FixturePlaced(val vertex: Int, val item: String) : WorldEvent()
     data class FixtureRemoved(val vertex: Int, val item: String) : WorldEvent()
-    data class ShedRan(val shed: String, val plots: Int) : WorldEvent()
+    data class WorkerHired(val worker: String) : WorldEvent()
+    data class WorkerLevelUp(val worker: String, val level: Int) : WorldEvent()
+    data class WorkerActed(val worker: String, val plot: Int, val kind: WorkKind) : WorldEvent()
+    data class WorkerHungry(val worker: String) : WorldEvent()
+    data class HarvesterRan(val units: Int) : WorldEvent()
+    data class TruckSent(val units: Int, val coins: Int) : WorldEvent()
+    data class TruckReturned(val coins: Int) : WorldEvent()
     data class AchievementReady(val id: String) : WorldEvent()
     data class AchievementClaimed(val id: String, val tier: Int, val coins: Int) : WorldEvent()
     data class PageClaimed(val id: String, val coins: Int) : WorldEvent()
@@ -78,6 +84,7 @@ class World(val data: GameData, val state: GameState) {
 
     init {
         migrateLayout()
+        retireSheds()
         syncGreenhouse()
         while (state.fields.size < FieldLayout.BLOCKS) state.fields.add(FieldState())
     }
@@ -125,7 +132,7 @@ class World(val data: GameData, val state: GameState) {
         tickMachines()
         tickQuarry()
         tickMine()
-        tickSheds()
+        tickWorkers()
         tickForestAuto()
         checkAchievements()
     }
@@ -165,6 +172,7 @@ class World(val data: GameData, val state: GameState) {
         for (p in state.plots) p.watered = p.crop != null && ((state.weather.waters && !FieldLayout.isGreenhouse(p.index)) || covered(p.index, FixtureKind.WATER))
         for (k in state.glut.keys.toList()) state.glut[k] = state.glut[k]!! * 0.5
         forestDawn(day)
+        workersDawn()
         festivalDawn()
         runMarketCart()
         events += WorldEvent.DayStarted(day, state.weather)
@@ -428,19 +436,25 @@ class World(val data: GameData, val state: GameState) {
     }
 
     /** Harvests a ready plot. [auto] harvests (sheds) give half XP. */
-    fun harvest(i: Int, auto: Boolean = false): Boolean {
+    fun harvest(i: Int, auto: Boolean = false, into: MutableMap<String, Int>? = null): Boolean {
         val p = plot(i)
         if (!isReady(p)) return false
         val def = data.crop(p.crop!!)
-        if (!hasRoom(def.id)) { events += WorldEvent.Blocked("Silo full", i); return false }
+        if (into == null && !hasRoom(def.id)) { events += WorldEvent.Blocked("Silo full", i); return false }
         val quality = rollQuality(p)
         var qty = def.yield
         var q = quality
         if (p.battered) { if (q == Quality.NORMAL) qty = max(1, qty - 1) else q = Quality.entries[q.ordinal - 1] }
         val first = def.id !in state.discovered
-        add(q.key(def.id), qty)
-        // Leaves and stalks for the Compost Bin.
-        if (rng().chance(0.15) && hasRoom("plant_scraps")) add("plant_scraps", 1)
+        if (into != null) {
+            // A farmhand's crate at the field edge; the harvester takes it on from there.
+            into[q.key(def.id)] = (into[q.key(def.id)] ?: 0) + qty
+            if (state.discovered.add(def.id)) events += WorldEvent.Discovered(def.id)
+        } else {
+            add(q.key(def.id), qty)
+            // Leaves and stalks for the Compost Bin.
+            if (rng().chance(0.15) && hasRoom("plant_scraps")) add("plant_scraps", 1)
+        }
         val xp = (ceil(def.xp * q.mult).toInt() + if (first) 10 else 0).let { if (auto) (it + 1) / 2 else it }
         p.harvests++
         state.bump("harvested", qty.toLong())

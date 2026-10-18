@@ -81,31 +81,13 @@ class AutomationTest {
         assertEquals(FieldLayout.PER_BLOCK, w.ownedPlots)
     }
 
-    @Test fun shedsHarvestAndReplant() {
-        val w = fresh(18)
-        w.add("plank", 50); w.add("iron_bar", 30); w.add("copper_bar", 10); w.add("cooking_oil", 10); w.add("brick", 10)
-        assertTrue(w.build("harvest_shed"))
-        assertTrue(w.build("planter_shed"))
-        w.add("seed_wheat", 20)
-        for (i in 0 until 6) w.plot(i).apply { clear(); crop = "wheat"; lastCrop = "wheat"; growth = data.crop("wheat").growMinutes }
-        val wheat = w.count("wheat")
-        w.advance(SHED_REAL_MINUTES * 60 + 5)
-        assertTrue(w.count("wheat") > wheat)
-        // Whichever shed ran first, after two cycles everything is replanted and growing.
-        w.advance(SHED_REAL_MINUTES * 60 + 5)
-        assertTrue(w.state.plots.take(6).all { it.crop == "wheat" })
-    }
-
     @Test fun automationSurvivesSave() {
         val w = fresh(6)
         w.add("copper_sprinkler", 1)
         w.placeFixture(FieldLayout.vertex(0, 3, 3), "copper_sprinkler")
-        w.state.planterMode = PlanterMode.FILL; w.state.planterSeed = "carrot"
         w.plot(0).lastCrop = "wheat"
         val back = GameState.fromJson(w.state.toJson())
         assertEquals("copper_sprinkler", back.fixtures[FieldLayout.vertex(0, 3, 3)])
-        assertEquals(PlanterMode.FILL, back.planterMode)
-        assertEquals("carrot", back.planterSeed)
         assertEquals("wheat", back.plots[0].lastCrop)
     }
 

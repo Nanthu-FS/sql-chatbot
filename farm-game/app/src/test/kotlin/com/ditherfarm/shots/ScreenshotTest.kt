@@ -238,7 +238,7 @@ class ScreenshotTest {
             val w = g.world
             w.state.coins += 100_000
             w.add("plank", 200); w.add("stone", 100); w.add("iron_bar", 60); w.add("glass", 30); w.add("copper_bar", 10); w.add("cooking_oil", 10); w.add("brick", 10)
-            w.build("greenhouse"); w.build("harvest_shed"); w.build("planter_shed")
+            w.build("greenhouse")
             for (i in 0 until 20) w.plot(i).owned = true
             val gh = com.ditherfarm.game.FieldLayout.FIELD
             listOf("pumpkin", "tomato", "strawberry", "corn", "melon", "carrot").forEachIndexed { k, c ->
@@ -263,19 +263,6 @@ class ScreenshotTest {
             val x = com.ditherfarm.engine.Iso.x(bc + 2, br + 2).toFloat()
             val y = com.ditherfarm.engine.Iso.y(bc + 2, br + 2).toFloat()
             g.farm.onWorldTap(x, y)
-        })
-    }
-
-    @Test fun shedPanel() {
-        render("panel_shed", setup = { g ->
-            toLevel(g, 18)
-            val w = g.world
-            w.state.coins += 10_000
-            w.add("plank", 50); w.add("iron_bar", 30); w.add("brick", 10); w.add("cooking_oil", 5); w.add("seed_carrot", 12)
-            w.build("planter_shed")
-            w.state.planterMode = com.ditherfarm.game.PlanterMode.FILL; w.state.planterSeed = "carrot"
-            w.events.clear()
-            g.farm.chrome.open(Chrome.Panel.SHED, "planter_shed")
         })
     }
 

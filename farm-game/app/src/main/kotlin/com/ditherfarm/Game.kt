@@ -13,6 +13,7 @@ import com.ditherfarm.game.GameData
 import com.ditherfarm.game.GameState
 import com.ditherfarm.game.World
 import com.ditherfarm.game.WorldEvent
+import com.ditherfarm.game.truckLoad
 import com.ditherfarm.platform.SaveStore
 import com.ditherfarm.ui.FarmScreen
 import com.ditherfarm.ui.ForestScreen
@@ -94,7 +95,9 @@ class Game(val host: Host) {
         val batches = w.events.count { it is WorldEvent.JobDone }
         if (batches > 0) parts += "$batches machine batches done"
         w.events.filterIsInstance<WorldEvent.CartSold>().takeIf { it.isNotEmpty() }?.let { s -> parts += "Market Cart sold ${s.sumOf { it.units }}" }
-        w.events.filterIsInstance<WorldEvent.ShedRan>().takeIf { it.isNotEmpty() }?.let { s -> parts += "sheds worked ${s.sumOf { it.plots }} plots" }
+        val worked = w.events.count { it is WorldEvent.WorkerActed }
+        if (worked > 0) parts += "farmhands did $worked jobs"
+        if (w.state.truck.load.isNotEmpty()) parts += "the truck has ${w.truckLoad()} crops to sell"
         val hut = w.state.buildings["logging_hut"]?.tray?.values?.sum() ?: 0
         if (hut > 0) parts += "Logging Hut has $hut items"
         awaySummary = if (parts.isEmpty()) null else parts.joinToString(" - ")
