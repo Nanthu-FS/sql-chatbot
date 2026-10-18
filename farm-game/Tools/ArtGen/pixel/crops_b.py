@@ -159,6 +159,8 @@ def leaf(x0, y0, ang, length, wd, ramp=("green_dd", "green_d", "green"), bend=0.
                 c = ramp[2]
                 if rib and s < 0.75 and wd >= 2.2 and t < 0.85:
                     c = ramp[1]
+                elif ramp[2] == "green" and wd >= 2.2 and s > hw - 1.0 and 0.2 < t < 0.85 and (x + y) % 2 == 0:
+                    c = "yellow"  # dithered sheen along the lit edge, like crops_a's leaves
             else:
                 c = ramp[0] if -s > hw - 1.0 else ramp[1]
             if tipc and t > 0.88:
@@ -275,6 +277,65 @@ def mound(seeds):
     for sx, sy, rows, key in seeds:
         cv.map(rows, key, ox + sx, oy + sy)
     return cv
+
+
+# Heap of turned soil under growing plants and a front lip drawn over the stems, the same
+# shapes and dome shading as crops_a's mound()/soil_lip(), so both crop sets look rooted
+# the same way. Coordinates are crops_a's moved up 2px (its soil line is row 38, ours 36).
+SOIL = ("brown_d", "brown", "brown_l", "tan_d")
+_LT = (-0.55, -0.7, 0.6)
+_LT = tuple(v / math.sqrt(sum(u * u for u in _LT)) for v in _LT)
+MX, MY = BX - 0.5, BY - 0.5
+
+
+def _ellipse(cx, cy, rx, ry):
+    return {(x, y) for y in range(math.floor(cy - ry) - 1, math.ceil(cy + ry) + 2)
+            for x in range(math.floor(cx - rx) - 1, math.ceil(cx + rx) + 2)
+            if ((x - cx) / rx) ** 2 + ((y - cy) / ry) ** 2 <= 1.0}
+
+
+def _dome(s, ramp, depth, off):
+    """crops_a's shade_set(): a soft dome over any pixel set, lit from the top-left."""
+    N4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
+    q = [p for p in s if any((p[0] + dx, p[1] + dy) not in s for dx, dy in N4)]
+    dist = {p: 1 for p in q}
+    i = 0
+    while i < len(q):
+        x, y = q[i]
+        i += 1
+        for dx, dy in N4:
+            n = (x + dx, y + dy)
+            if n in s and n not in dist:
+                dist[n] = dist[(x, y)] + 1
+                q.append(n)
+    hgt = {p: depth * math.sqrt(max(0.0, 1 - (1 - min(1.0, (d - 0.5) / depth)) ** 2)) for p, d in dist.items()}
+    n = len(ramp) - 1
+    m = {}
+    for (x, y) in s:
+        gx = (hgt.get((x + 1, y), 0) - hgt.get((x - 1, y), 0)) / 2
+        gy = (hgt.get((x, y + 1), 0) - hgt.get((x, y - 1), 0)) / 2
+        nl = math.sqrt(gx * gx + gy * gy + 1)
+        lv = (-gx * _LT[0] - gy * _LT[1] + _LT[2]) / nl
+        m[(x, y)] = ptone(ramp, ((lv + 0.25) / 1.25) * n + off, x, y)
+    return m
+
+
+def heap(rx):
+    return _dome(_ellipse(MX, MY, rx, 2.1) | _ellipse(MX, MY - 1.0, rx - 1.6, 2.0), SOIL, 2.5, 0.2)
+
+
+def lip(rx):
+    return _dome({p for p in _ellipse(MX, MY + 0.3, rx, 1.6) if p[1] >= BY - 1}, SOIL, 1.5, 0.3)
+
+
+def rooted(cv, rx, lip_rx=None):
+    """The plant drawn on a soil heap; lip_rx also covers the stem bases with the heap's front lip."""
+    out = Cv(cv.w, cv.h)
+    out.paint(heap(rx))
+    out.over(cv)
+    if lip_rx:
+        out.paint(lip(lip_rx))
+    return out
 
 
 # ---------------------------------------------------------------- output
@@ -467,7 +528,7 @@ PETAL = ("orange", "amber", "yellow")
 DISC = ("brown_d", "brown", "rust")
 
 
-def flower_head(cx, cy, R, n=12, ry=None, petal=PETAL, disc=DISC, inner=0.5):
+def flower_head(cx, cy, R, n=12, ry=None, petal=PETAL, disc=DISC, inner=0.5, gap="rust"):
     """Sunflower head: pointed petals around a seeded disc. Returns a shape dict."""
     ry = ry or R
     m = {}
@@ -495,7 +556,7 @@ def flower_head(cx, cy, R, n=12, ry=None, petal=PETAL, disc=DISC, inner=0.5):
             v = lit(nx * 0.6, ny * 0.6, 0.8) * 1.35 - 0.1
             c = tone(petal, v, x, y)
             if sv > 0.78 or rr < inner + 0.1:
-                c = petal[0] if c != petal[0] else "rust"
+                c = petal[0] if c != petal[0] else gap
             m[(x, y)] = c
     return m
 
@@ -518,7 +579,10 @@ def sunflower_stages():
             cv.paint(stem([(14, BY - 1), (14, BY - 12), (16, BY - 18), (19, BY - 21)], sl, sd))
             for x0, y0, a, ln_, wd in ((14, BY - 4, 120, 8, 2.8), (16, BY - 8, 65, 8, 2.8), (15, BY - 13, 140, 6, 2.2), (17, BY - 17, 50, 6, 2.2)):
                 cv.paint(crumble(leaf(x0, y0, a, ln_, wd, lr, bend=0.15), x0 + y0, 0.2), ln)
-            cv.paint(crumble(ball(20, BY - 18.5, 3, 3.5, ("brown_d", "brown", "grey_d", "grey")), 5, 0.1), "ink")
+            # dried head hanging off the bent stem: shrivelled tan petals round a dark seed disc
+            head = flower_head(20, BY - 18, 5.2, n=9, ry=4.2, petal=("brown", "brown_l", "tan_d"),
+                               disc=("brown_d", "brown_d", "brown"), inner=0.56, gap="brown_d")
+            cv.paint(crumble(head, 5, 0.3), "ink")
             return cv
         cv.paint(stem([(14, BY - 1), (14, BY - 22)]))
         cv.paint(leaf(14, BY - 4, 168, 9, 3.4, bend=0.12), LEAF_LINE)
@@ -601,7 +665,8 @@ def cabbage_stages():
     cv = Cv()
     for cx, cy, r, b in ((6, BY - 9, 6.5, (0.7, 0.6)), (24, BY - 9, 6.5, (-0.7, 0.6)), (15, BY - 13, 6.5, (0, 1))):
         cv.paint(lobe_leaf(cx, cy, r, CAB_LEAF, lobes=3, base=b, depth=0.12, ry=r * 0.75), LEAF_LINE)
-    cv.paint(cabbage_head(15, BY - 9, 8, 7.2), LEAF_LINE)
+    # same head as the produce icon: pale heart clasped by darker wrapper leaves
+    cv.paint(cabbage_icon_ball(15, BY - 9, 8, 7.2, [(-2.2, 0.1, 1.42), (-0.1, 2.2, 1.36), (-0.75, 0.8, 1.08)], gain=1.2), LEAF_LINE)
     for cx, cy, r, b in ((7, BY - 3, 6.5, (0.8, -0.3)), (23, BY - 3, 6.5, (-0.8, -0.3))):
         cv.paint(lobe_leaf(cx, cy, r, CAB_LEAF, lobes=3, base=b, depth=0.12, ry=r * 0.6), LEAF_LINE)
     st[3] = cv
@@ -685,7 +750,7 @@ def eggplant_stages():
         cv.paint(stem([(14, BY - 6), (9, BY - 11)], sl, w=1))
         cv.paint(stem([(15, BY - 8), (20, BY - 13)], sl, w=1))
         spec = [(14, BY - 3, 160, 9, 3.4), (16, BY - 5, 20, 9, 3.4), (10, BY - 11, -150, 8, 3.2),
-                (19, BY - 13, -30, 8, 3.2), (14, BY - h + 1, -110, 7, 2.8), (16, BY - h + 1, -70, 7, 2.8)]
+                (19, BY - 13, -30, 8, 3.2), (14, BY - h + 3, -150, 7, 2.8), (15, BY - h + 1, -80, 8, 3.0)]
         for i, (x0, y0, a, ln_, wd) in enumerate(spec):
             if dead:
                 a = 90 + (a - 90) * 0.35 if a > -90 else 90 - (-90 - a) * 0.0 + (a + 90) * -0.3
@@ -709,11 +774,11 @@ def eggplant_stages():
     st["dead"] = grow(True)
 
     cv = Cv()
-    bush(cv, 24, k=1.1)
-    cv.paint(pod(19, BY - 12, 80, 8, 1.8, 3.6, curve=-0.05), "ink")
-    cv.paint(calyx(19, BY - 12), "ink")
-    cv.paint(pod(9, BY - 14, 100, 7, 1.6, 3.0, curve=0.05), "ink")
-    cv.paint(calyx(9, BY - 14), "ink")
+    bush(cv, 22, k=1.1)
+    cv.paint(pod(19, BY - 13, 82, 10, 2.0, 4.2, curve=-0.05), "ink")
+    cv.paint(calyx(19, BY - 13), "ink")
+    cv.paint(pod(9, BY - 15, 98, 9, 1.8, 3.8, curve=0.05), "ink")
+    cv.paint(calyx(9, BY - 15), "ink")
     st[3] = cv
     return st
 
@@ -776,7 +841,10 @@ def melon_stages():
     cv.paint(lobe_leaf(5, BY - 10, 6, base=(0.6, 0.8), depth=0.32), LEAF_LINE)
     cv.paint(lobe_leaf(25, BY - 10, 6, base=(-0.6, 0.8), depth=0.32), LEAF_LINE)
     cv.paint(tendril(3, BY - 2, -1), LEAF_LINE)
-    cv.paint(melon_ball(15, BY - 5.5, 12.5, 7.6), "ink")
+    # same rind as the produce icon: broad dark stripes that pinch together at both ends
+    cv.paint(melon_icon_ball(15, BY - 5.5, 12.5, 7.6, n=4, wave=0.1, dark=0.45, gain=1.15), "ink")
+    for q in ((7, BY - 10), (8, BY - 10), (6, BY - 9)):
+        cv.set(q[0], q[1], "yellow")
     cv.paint(stem([(9, BY - 12), (8, BY - 14)], "green_d", w=1), "ink")
     st[3] = cv
     return st
@@ -921,65 +989,154 @@ def icon_sunflower(n):
     return cv
 
 
+CAB_CORE = ("green_d", "green", "yellow")
+CAB_WRAP = ("teal_dd", "green_dd", "green_d", "green")
+
+
+def cabbage_icon_ball(cx, cy, rx, ry, leaves, frill=0.05, gain=1.3):
+    """Harvested cabbage: a ball whose lower part is clasped by outer leaves. Leaves are
+    (from, to, reach) fans around the stalk at the bottom (angles in radians, 0 = up; reach
+    in ball radii from the stalk), listed back to front. The pale core shows above them;
+    each leaf casts a dark seam on whatever it covers, its top edge is lit and its midrib
+    is light."""
+    bx, by = cx, cy + ry * 0.9
+    m, layer, info = {}, {}, {}
+    for y in range(int(cy - ry) - 1, int(cy + ry) + 2):
+        for x in range(int(cx - rx) - 1, int(cx + rx) + 2):
+            nx, ny = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
+            r2 = nx * nx + ny * ny
+            if r2 > 1.0:
+                continue
+            v = lit(nx, ny, math.sqrt(1 - r2)) * gain + 0.05
+            dx, dy = (x + 0.5 - bx) / rx, (y + 0.5 - by) / ry
+            d, th = math.hypot(dx, dy), math.atan2(dx, -dy)
+            L = None
+            for i, (lo, hi, reach) in enumerate(leaves):
+                if lo <= th <= hi and d < reach * (1 + frill * math.sin(th * 11 + i)):
+                    L = i
+            layer[(x, y)] = L
+            info[(x, y)] = (v, d, th)
+            m[(x, y)] = tone(CAB_CORE, v, x, y) if L is None else tone(CAB_WRAP, v * 1.05, x, y)
+    def depth(q):
+        return -1 if layer[q] is None else layer[q]
+
+    for (x, y), L in layer.items():
+        if L is None:
+            continue
+        lo, hi, reach = leaves[L]
+        v, d, th = info[(x, y)]
+        behind = [q for q in ((x - 1, y), (x, y - 1), (x + 1, y)) if q in layer and depth(q) < L]
+        for q in behind:
+            m[q] = "green_d" if layer[q] is None else "green_dd"
+        if (x, y - 1) in behind:
+            m[(x, y)] = "yellow" if v > 0.8 else "green"
+        elif not behind and abs(th - (lo + hi) / 2) * d * rx < 0.55 and 0.25 < d < reach - 0.2:
+            m[(x, y)] = "green" if v < 0.75 else "yellow"
+    return m
+
+
 def icon_cabbage(n):
     cv = Cv(n, n)
     if n == 14:
-        cv.paint(lobe_leaf(3.5, 9.5, 3.6, CAB_LEAF, lobes=3, base=(0.8, -0.3), depth=0.12, veins=False))
-        cv.paint(lobe_leaf(10.5, 9.5, 3.6, CAB_LEAF, lobes=3, base=(-0.8, -0.3), depth=0.12, veins=False))
-        cv.paint(cabbage_head(7, 6.5, 6, 5.6), LEAF_LINE)
+        cv.paint(cabbage_icon_ball(7, 7, 6.6, 6.4, [(-2.4, 0.05, 1.45), (-0.05, 2.4, 1.4), (-0.8, 0.8, 1.05)], frill=0.0, gain=1.15))
         return cv
-    for cx, cy, b in ((6, 19.5, (0.8, -0.3)), (22, 19.5, (-0.8, -0.3))):
-        cv.paint(lobe_leaf(cx, cy, 6.8, CAB_LEAF, lobes=3, base=b, depth=0.12, ry=6.8 * 0.72), LEAF_LINE)
-    cv.paint(cabbage_head(14, 12.5, 11.5, 10.8), LEAF_LINE)
+    for cx, b in ((5, (0.8, 0.5)), (23, (-0.8, 0.5))):
+        cv.paint(lobe_leaf(cx, 18.5, 5.4, CAB_LEAF, lobes=3, base=b, depth=0.16, ry=4.6), LEAF_LINE)
+    cv.paint(cabbage_icon_ball(14, 12.6, 11.4, 11, [(-2.2, 0.1, 1.42), (-0.1, 2.2, 1.36), (-0.75, 0.8, 1.08)], gain=1.2), LEAF_LINE)
     return cv
+
+
+CALYX_BIG = [
+    "........gG.",
+    ".......gG..",
+    "......gG...",
+    "....ggGgg..",
+    "...gGgGGGg.",
+    "..gGGgGGDGg",
+    ".gGD.GD.D.G",
+    ".GD..G..D..",
+    ".D...D.....",
+]
 
 
 def icon_eggplant(n):
     cv = Cv(n, n)
     if n == 14:
-        cv.paint(pod(10, 4, 132, 6.5, 1.6, 3.6, curve=-0.04))
+        cv.paint(pod(10, 4, 132, 6.8, 1.8, 4.0, curve=-0.04))
         cv.map([".gS", "ggS", "gSS", "S.."], {"g": "green_d", "S": "green_dd"}, 9, 1)
         cv.set(12, 0, "green_d")
         return cv
-    cv.paint(pod(20, 8, 132, 13, 3.2, 7.2, curve=-0.04, spec=None))
+    cv.paint(pod(19.5, 7.5, 132, 13, 3.0, 7.0, curve=-0.04, spec=None))
+    for q in ((9, 13), (10, 12), (11, 11), (12, 10), (8, 15)):
+        cv.set(*q, "pink")
+    cv.set(9, 12, "white")
+    cv.map(CALYX_BIG, {"g": "green", "G": "green_d", "D": "green_dd"}, 15, 1)
     return cv
+
+
+MELON_LIGHT = ("green_dd", "green_d", "green", "green", "yellow")
+MELON_DARK = ("teal_dd", "green_dd", "green_d")
+
+
+def melon_icon_ball(cx, cy, rx, ry, n=4, wave=0.0, dark=0.5, gain=1.3):
+    """Watermelon for icons: shaded oval with broad dark stripes along its length that pinch
+    together at both ends; wave makes the stripe edges wiggle."""
+    def mod(nx, ny, nz, v, x, y):
+        w = math.sqrt(max(0.04, 1 - nx * nx))
+        lat = math.asin(max(-1.0, min(1.0, ny / w)))
+        z = wave * math.sin(x * 1.3) * w
+        ph = (lat + z) / math.pi * n + 0.5
+        if ph - math.floor(ph) < dark:
+            return MELON_DARK[0] if v < 0.3 else MELON_DARK[1] if v < 0.95 else MELON_DARK[2]
+        return tone(MELON_LIGHT, v * 0.95, x, y)
+    return ball(cx, cy, rx, ry, MELON_LIGHT, mod, gain=gain, bias=0.05)
 
 
 def icon_melon(n):
     cv = Cv(n, n)
     if n == 14:
-        cv.paint(melon_ball(7, 7.6, 7, 6, n=3))
-        cv.map([".g", "G."], {"g": "green", "G": "green_d"}, 7, 0)
+        cv.paint(melon_icon_ball(7, 7.8, 7, 5.9, n=4, dark=0.45))
+        cv.set(4, 4, "yellow")
+        cv.map([".s", "s."], {"s": "brown_l"}, 3, 1)
         return cv
-    cv.paint(melon_ball(14, 15, 14, 11.8, n=3))
+    cv.paint(melon_icon_ball(14, 15.2, 14, 11.6, n=4, wave=0.1, dark=0.45))
+    for q in ((6, 8), (7, 8), (5, 9), (8, 7)):
+        cv.set(*q, "yellow")
+    cv.paint(stem([(7, 4), (5, 1)], "green_d", "green_dd"), "ink")
+    cv.paint(tendril(9, 4, 1, "green_d"))
     return cv
 
 
-def grape_bunch(cx, top, rows, r, pitch, ramp=GRAPE, spec="pink", step=None):
-    """Grape bunch for icons: rows of berries (r radius, pitch spacing) narrowing downwards,
-    each berry separated from the ones above by the ramp's darkest step."""
-    step = step or pitch * 0.8
-    m = {}
+def berry(bx, by, r, ramp=GRAPE, spec="pink"):
+    """One grape: crisp (undithered) three-step shading so tiny berries stay clean."""
+    def mod(nx, ny, nz, v, x, y):
+        return ramp[max(0, min(len(ramp) - 1, int(v * len(ramp))))]
+    m = ball(bx, by, r, r, ramp, mod, gain=1.25, bias=0.02)
+    q = (int(bx - r * 0.5), int(by - r * 0.5))
+    if q in m:
+        m[q] = spec
+    return m
+
+
+def grape_bunch(cv, cx, top, rows, r, pitch, step):
+    """Rows of berries narrowing downwards; each later (lower, nearer) berry is painted over
+    the ones above with a dark seam so every berry reads as its own ball."""
     for i, k in enumerate(rows):
         x0 = cx - (k - 1) * pitch / 2.0
-        cy = top + r + i * step
         for j in range(k):
-            bx = x0 + j * pitch
-            b = ball(bx, cy, r, r, ramp, gain=1.4)
-            for q, c in b.items():
-                m[q] = c
-            # rim the lower-right of each berry so the next row reads as a separate ball
-            m[(int(bx - r * 0.45), int(cy - r * 0.45))] = spec if i < len(rows) - 1 else ramp[2]
-    return m
+            cv.paint(berry(x0 + j * pitch, top + r + i * step, r), "brown_d")
 
 
 def icon_grapes(n):
     cv = Cv(n, n)
     if n == 14:
-        cv.paint(grape_bunch(6.5, 2, (4, 3, 3, 2, 1), 1.75, 3.0, step=2.3))
-        cv.map(["gG", "G."], {"g": "green", "G": "green_d"}, 7, 0)
+        grape_bunch(cv, 6.5, 2.2, (4, 3, 2, 1), 1.75, 3.0, 2.7)
+        cv.map(["..sgG", ".s.Gg", "s...."], {"s": "brown_l", "g": "green", "G": "green_d"}, 5, 0)
         return cv
-    cv.paint(grape_bunch(13, 4, (4, 4, 3, 2, 1), 3.3, 5.6, step=4.6))
+    grape_bunch(cv, 13.5, 4, (4, 3, 3, 2, 1), 3.3, 5.4, 4.5)
+    cv.paint(lobe_leaf(21, 4.5, 5.2, LEAF, lobes=5, base=(-0.9, 0.3), depth=0.3), LEAF_LINE)
+    cv.paint(stem([(13, 4), (14, 1)], "brown_l", "brown"), "brown_d")
+    cv.paint(tendril(8, 5, -1, "green_d"))
     return cv
 
 
@@ -1048,11 +1205,25 @@ CROPS = {
 }
 
 
+# Soil heap radius and front-lip radius per growing stage (lip None where fruit or leaves
+# lying on the ground already cover the plant's base).
+ROOT = {
+    "pumpkin": {1: (4.0, 3.0), 2: (5.0, None), 3: (5.5, None), "dead": (5.0, None)},
+    "sunflower": {1: (4.0, 3.0), 2: (5.0, 3.5), 3: (5.0, 3.5), "dead": (5.0, 3.5)},
+    "cabbage": {1: (4.0, 3.0), 2: (5.5, None), 3: (6.0, None), "dead": (5.5, None)},
+    "eggplant": {1: (4.0, 3.0), 2: (5.0, 3.5), 3: (5.5, 3.5), "dead": (5.0, 3.5)},
+    "melon": {1: (4.0, 3.0), 2: (5.0, None), 3: (5.5, None), "dead": (5.0, None)},
+    "grapes": {1: (4.0, 3.0), 2: (5.0, 3.5), 3: (5.0, 3.5), "dead": (5.0, 3.5)},
+}
+
+
 def main():
     art = sys.argv[1]
     sc, si, sb = Sprites(art, "crops"), Sprites(art, "items"), Sprites(art, "items_big")
     for cid, fn in CROPS.items():
         st = fn()
+        for k, (rx, lrx) in ROOT[cid].items():
+            st[k] = rooted(st[k], rx, lrx)
         for k in (0, 1, 2, 3, "dead"):
             trim_save(sc, f"{cid}_{k}", st[k])
         for S, n in ((si, 14), (sb, 28)):
