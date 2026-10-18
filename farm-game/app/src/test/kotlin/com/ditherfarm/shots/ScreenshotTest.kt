@@ -6,8 +6,10 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
-import com.ditherfarm.engine.Weather
-import com.ditherfarm.ui.GridDemoScreen
+import com.ditherfarm.game.GameTime
+import com.ditherfarm.game.Season
+import com.ditherfarm.game.Weather
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -31,9 +33,14 @@ class ScreenshotTest {
         override val density = 3f
     }
 
-    private fun render(name: String, w: Int = 270, h: Int = 585, seconds: Float = 0.5f, drive: (Game, Float) -> Unit = { _, _ -> }) {
+    /** Builds a game, lets [setup] arrange it, runs frames for [seconds] and saves a PNG. */
+    private fun render(name: String, seconds: Float = 0.6f, setup: (Game) -> Unit = {}, drive: (Game, Float) -> Unit = { _, _ -> }): Game {
         val game = Game(TestHost())
+        val w = 270
+        val h = 585
         game.engine.resize(w, h)
+        game.engine.screen?.enter()
+        setup(game)
         val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
         val dt = 1f / 30f
@@ -46,26 +53,59 @@ class ScreenshotTest {
             t += dt
             now += (dt * 1000).toLong()
         }
-        val out = System.getProperty("shots.out") ?: return
-        File(out).mkdirs()
-        val big = Bitmap.createScaledBitmap(bmp, w * 3, h * 3, false)
-        File(out, "$name.png").outputStream().use { big.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        System.getProperty("shots.out")?.let { out ->
+            File(out).mkdirs()
+            val big = Bitmap.createScaledBitmap(bmp, w * 3, h * 3, false)
+            File(out, "$name.png").outputStream().use { big.compress(Bitmap.CompressFormat.PNG, 100, it) }
+        }
+        return game
     }
 
-    @Test fun boot() = render("boot")
+    @Test fun farmStart() { render("farm_start") }
 
-    private fun demo(name: String, hour: Float, season: String, weather: Weather.Kind) = render(name, seconds = 1f) { game, _ ->
-        (game.engine.screen as? GridDemoScreen)?.let { it.hourOverride = hour; it.season = season; it.weather.kind = weather }
+    @Test fun farmHarvestAndPlant() {
+        val game = render("farm_harvest", seconds = 0.4f, setup = { g ->
+            val (c, r) = g.farm.plotTile(0)
+            g.farm.onTileTap(c, r)
+            val (c2, r2) = g.farm.plotTile(2)
+            g.farm.onTileTap(c2, r2) // opens the seed tray for this plot
+        })
+        assertTrue(game.world.count("wheat", anyQuality = true) >= 3)
     }
 
-    @Test fun demoDay() = demo("demo_day", 11f, "spring", Weather.Kind.CLEAR)
+    @Test fun farmSeedTray() { render("farm_tray", setup = { it.farm.showPanel("tray") }) }
+    @Test fun farmBarn() { render("panel_barn", setup = { it.world.harvest(0); it.world.harvest(1); it.farm.showPanel("barn") }) }
+    @Test fun farmMarket() { render("panel_market", setup = { it.world.harvest(0); it.farm.showPanel("market") }) }
+    @Test fun farmOrders() { render("panel_orders", setup = { it.world.harvest(0); it.world.harvest(1); it.farm.showPanel("orders") }) }
+    @Test fun farmSettings() { render("panel_settings", setup = { it.farm.showPanel("settings") }) }
 
-    @Test fun demoOverview() = render("demo_overview", seconds = 1f) { game, t ->
-        if (t == 0f) game.engine.screen?.pinch(-1, 135f, 290f)
+    @Test fun farmRainyNight() {
+        render("farm_night_rain", seconds = 1f, setup = { g ->
+            g.world.state.minutes = GameTime.of(1, Season.SPRING, 2, 22.5).minutes
+            g.world.state.lastDayRolled = g.world.time.dayIndex
+            g.world.state.weather = Weather.RAIN
+        })
     }
-    @Test fun demoRainDusk() = demo("demo_dusk_rain", 18.6f, "summer", Weather.Kind.RAIN)
-    @Test fun demoNight() = demo("demo_night", 23f, "fall", Weather.Kind.LEAVES)
-    @Test fun demoWinter() = demo("demo_winter", 7f, "winter", Weather.Kind.SNOW)
+
+    @Test fun farmGrown() {
+        render("farm_grown", seconds = 1f, setup = { g ->
+            val w = g.world
+            val s = w.state
+            s.level = 22; s.xp = 61_000; s.coins = 48_250
+            s.minutes = GameTime.of(1, Season.SUMMER, 6, 10.0).minutes
+            s.lastDayRolled = w.time.dayIndex
+            val crops = listOf("wheat", "corn", "tomato", "sunflower", "eggplant", "melon", "grapes", "potato")
+            for (i in 0 until 40) {
+                val p = s.plots[i]
+                p.owned = true
+                val id = crops[(i * 7) % crops.size]
+                if (!w.data.crop(id).seasons.contains(Season.SUMMER)) continue
+                p.crop = id
+                p.growth = w.data.crop(id).growMinutes * listOf(0.1, 0.4, 0.8, 1.0, 1.0)[i % 5]
+                p.watered = i % 3 != 0
+            }
+        })
+    }
 
     companion object {
         /** app/src/main/assets, whether Gradle runs from the module dir or elsewhere. */

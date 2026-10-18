@@ -55,7 +55,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val cap = world.capacity(storage)
         ui.bar(x + 10, y + 42, pw - 90, used.toFloat() / cap, if (used >= cap * 0.9) "red" else "gold")
         g.text("$used/$cap", x + pw - 76, y + 41, Gfx.INK, outline = 0, shadow = false)
-        if (world.upgradeCost(storage) != null && ui.button("upgrade", x + pw - 40, y + 38, 32, 14, null, "icons/upgrade", if (world.canUpgrade(storage)) "green" else "grey")) {
+        if (world.upgradeCost(storage) != null && ui.button("upgrade", x + pw - 40, y + 38, 32, 14, null, "icons/arrow_up", if (world.canUpgrade(storage)) "green" else "grey")) {
             if (world.upgrade(storage)) { game.sfx.play("levelup"); hud.toast("${if (storage == Storage.BARN) "Barn" else "Silo"} upgraded!") }
             else hud.toast(upgradeText(storage))
         }

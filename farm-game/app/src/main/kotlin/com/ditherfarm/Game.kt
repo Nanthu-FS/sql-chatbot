@@ -49,7 +49,7 @@ class Game(val host: Host) {
     init {
         applySettings()
         engine.onTick = { dt -> tick(dt) }
-        engine.start(farm.screen)
+        engine.start(farm)
     }
 
     private fun loadOrCreate(): World {

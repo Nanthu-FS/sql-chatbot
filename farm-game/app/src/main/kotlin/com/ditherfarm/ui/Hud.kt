@@ -104,7 +104,7 @@ class Hud(private val game: Game) {
     }
 
     /** Toasts, tips and the away summary, drawn last. */
-    fun drawOverlays() {
+    fun drawOverlays(tipVisible: Boolean = true, tipLift: Int = 0) {
         val w = game.engine.w
         val h = game.engine.h
         toastText?.let { text ->
@@ -116,10 +116,10 @@ class Hud(private val game: Game) {
             }
         }
         val tip = tipText
-        if (tip != null) {
+        if (tip != null && tipVisible) {
             val lines = wrap(tip, w - 40)
             val bh = 12 + lines.size * 10
-            val y = h - game.engine.safeBottom - bottomHeight - bh - 6
+            val y = h - game.engine.safeBottom - bottomHeight - bh - 6 - tipLift
             g.slice9("ui/bubble", 10, y, w - 10, y + bh, 5)
             lines.forEachIndexed { i, l -> g.text(l, 18, y + 6 + i * 10, Gfx.INK, outline = 0, shadow = false) }
             if (ui.clickable("tip", 10, y, w - 20, bh)) {

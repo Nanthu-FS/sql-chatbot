@@ -351,6 +351,46 @@
   "ax": 7,
   "ay": 9
  },
+ "fx/chip_stone": {
+  "ax": 2,
+  "ay": 2
+ },
+ "fx/chip_wood": {
+  "ax": 2,
+  "ay": 2
+ },
+ "fx/coin": {
+  "ax": 3,
+  "ay": 3
+ },
+ "fx/drop": {
+  "ax": 3,
+  "ay": 3
+ },
+ "fx/dust": {
+  "ax": 3,
+  "ay": 2
+ },
+ "fx/heart": {
+  "ax": 3,
+  "ay": 3
+ },
+ "fx/leaf": {
+  "ax": 2,
+  "ay": 2
+ },
+ "fx/sparkle": {
+  "ax": 4,
+  "ay": 4
+ },
+ "fx/star": {
+  "ax": 2,
+  "ay": 2
+ },
+ "fx/zap": {
+  "ax": 3,
+  "ay": 3
+ },
  "icons_big/arrow_down": {
   "ax": 16,
   "ay": 16
