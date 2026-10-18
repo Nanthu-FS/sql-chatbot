@@ -195,7 +195,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private fun drawPlacement(g: Gfx) {
         val item = placing ?: return
         val fixture = Fixture.of(item) ?: return
-        val pulse = (sin(time * 5f) * 50 + 150).toInt()
+        val pulse = (sin(time * 5f) * 50 + 205).toInt()
         if (placeVertex >= 0) {
             for (i in 0 until FieldLayout.FIELD) if (FieldLayout.covers(placeVertex, fixture.radius, i)) {
                 val (c, r) = plotTiles[i]
@@ -300,7 +300,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         placing?.let { item ->
             if (placeVertex >= 0) {
                 val (x, y) = vertexPos(placeVertex)
-                list.add(y + 0.4f) { game.gfx.sprite(fixtureSprite(item), x, y, (sin(time * 6f) * 60 + 170).toInt()) }
+                // The ghost draws over everything so tall crops never hide it.
+                list.add(Float.MAX_VALUE) { game.gfx.sprite(fixtureSprite(item), x, y, (sin(time * 6f) * 50 + 200).toInt()) }
             }
         }
         for (p in props) {
