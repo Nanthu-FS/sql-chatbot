@@ -377,6 +377,19 @@
      "xp": 0
     }
    ]
+  },
+  {
+   "id": "steady_hands",
+   "name": "Steady Hands",
+   "desc": "Brace cave-ins",
+   "metric": "braced",
+   "tiers": [
+    {
+     "target": 10,
+     "coins": 1000,
+     "xp": 0
+    }
+   ]
   }
  ],
  "pages": [

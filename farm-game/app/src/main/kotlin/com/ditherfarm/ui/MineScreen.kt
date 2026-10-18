@@ -8,7 +8,12 @@ import com.ditherfarm.engine.Lighting
 import com.ditherfarm.engine.Noise
 import com.ditherfarm.engine.Terrain
 import com.ditherfarm.game.MineLayout
+import com.ditherfarm.game.BRACE_TAPS
 import com.ditherfarm.game.WorldEvent
+import com.ditherfarm.game.brace
+import com.ditherfarm.game.placeBeam
+import com.ditherfarm.game.rumbleSecondsLeft
+import com.ditherfarm.game.useRopeLadder
 import com.ditherfarm.game.buildingsOn
 import com.ditherfarm.game.collect
 import com.ditherfarm.game.descend
@@ -112,6 +117,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         if (layoutFloor != m.floor) relayout()
         val it = shake.entries.iterator()
         while (it.hasNext()) { val e = it.next(); e.setValue(e.value - dt); if (e.value <= 0) it.remove() }
+        if (under && m.rumble >= 0) fx.shake(1.2f)
         if (holdCell >= 0) {
             holdTimer -= dt
             if (holdTimer <= 0f) {
@@ -252,6 +258,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             val node = cell.node
             if (node != null) list.add(y) { drawRock(i, node, cell.damage, x, y, hidden = !world.lit(i)) }
             if (i in m.torches) list.add(y + 0.1f) { g.sprite(pick("rocks/torch_wall", "deco/lantern"), x, y) }
+            if (i in m.markers) list.add(y + 0.15f) { drawMarker(i, x, y) }
         }
         val e = entryCell(n)
         val ex = Iso.x(e % n, e / n).toFloat()
@@ -264,6 +271,19 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             val (lx, ly) = center(m.ladder)
             list.add(ly + 0.2f) { g.sprite("icons/arrow_down", lx, ly - 16 + sin(time * 4f) * 2f) }
         }
+    }
+
+    /** A cracked ceiling beam; flashes with a tap counter while it rumbles. */
+    private fun drawMarker(i: Int, x: Float, y: Float) {
+        val g = game.gfx
+        val rumbling = i == m.rumble
+        val sx = if (rumbling && ((time * 30).toInt() % 2 == 0)) 1f else 0f
+        g.sprite(pick("rocks/support_beam_prop", "deco/fence_l"), x + sx, y)
+        if (game.assets.has("rocks/crack_2")) g.sprite("rocks/crack_2", x + sx, y - 10)
+        if (rumbling) {
+            g.sprite("icons/warning", x, y - 34 + sin(time * 20f) * 1.5f)
+            g.text("TAP x${BRACE_TAPS - m.braceTaps}", x.toInt(), (y - 48).toInt(), Gfx.GOLD, align = 0)
+        } else g.sprite("icons/warning", x + 8, y - 28, (sin(time * 3f) * 60 + 160).toInt())
     }
 
     override fun worldLights(out: MutableList<Lighting.Light>) {
@@ -295,6 +315,10 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             ui.pill(124, y, 40, 14)
             g.sprite("items/torch", 132f, y + 7f)
             g.text("${world.count("torch")}", 140, y + 3, Gfx.WHITE)
+            val ropes = world.count("rope_ladder")
+            if (ropes > 0 && ui.button("rope", 168, y, 56, 14, "ROPE x$ropes", style = "wood")) {
+                chrome.confirm("ROPE LADDER", "Climb down to floor ${m.floor + 1} right away?", "DOWN") { world.useRopeLadder() }
+            }
         } else {
             val next = world.quarryUpgrade()
             val label = "QUARRY ${m.quarryLevel}"
@@ -356,6 +380,14 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
 
     private fun tapFloor(i: Int) {
         val cell = m.cells.getOrNull(i) ?: return
+        if (i in m.markers) {
+            when {
+                i == m.rumble -> { if (world.brace(i)) { game.sfx.play("chop"); game.haptics.click() } }
+                world.count("support_beam") > 0 -> chrome.confirm("CRACKED BEAM", "Prop it up with a Support Beam so it can't cave in?", "PROP") { world.placeBeam(i) }
+                else -> hud.toast("A cracked beam. Careful mining near it! A Support Beam makes it safe.")
+            }
+            return
+        }
         when {
             i == entryCell(m.grid) -> chrome.open(Chrome.Panel.ELEVATOR)
             m.ladderFound && i == m.ladder -> world.descend()
@@ -410,6 +442,22 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
                 game.sfx.play("drip")
                 fx.floatText("knock", x, y - 30, 0xFFC0CBDC.toInt())
                 hud.tip("knock", "That rock sounded hollow. The ladder is next to it, or under it!")
+            }
+            is WorldEvent.Rumble -> {
+                game.sfx.play("thunder"); game.haptics.heavy()
+                hud.toast("The ceiling rumbles! Tap the beam ${BRACE_TAPS} times!")
+            }
+            is WorldEvent.Braced -> {
+                val (x, y) = center(e.cell)
+                game.sfx.play("unlock"); fx.floatText("SAFE!", x, y - 40, Gfx.GREEN)
+                fx.burst("fx/dust", x, y - 20, 5, speed = 20f, gravity = 40f)
+            }
+            is WorldEvent.CaveIn -> {
+                val (x, y) = center(e.cell)
+                game.sfx.play("rock_break"); game.haptics.heavy(); fx.shake(4f)
+                fx.burst("fx/dust", x, y - 10, 16, speed = 60f, gravity = 30f, life = 1f)
+                fx.burst("fx/chip_stone", x, y - 20, 12, speed = 70f)
+                hud.toast("Cave-in! Rubble everywhere. -5 energy")
             }
             is WorldEvent.LadderFound -> {
                 game.sfx.play("unlock"); game.haptics.heavy()

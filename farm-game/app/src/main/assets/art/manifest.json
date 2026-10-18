@@ -1,19 +1,19 @@
 {
  "buildings/barn": {
-  "ax": 34,
-  "ay": 48
+  "ax": 32,
+  "ay": 51
  },
  "buildings/barn_snow": {
-  "ax": 34,
-  "ay": 48
+  "ax": 32,
+  "ay": 51
  },
  "buildings/market": {
-  "ax": 21,
-  "ay": 40
+  "ax": 20,
+  "ay": 37
  },
  "buildings/market_snow": {
-  "ax": 21,
-  "ay": 40
+  "ax": 20,
+  "ay": 37
  },
  "buildings/orders": {
   "ax": 17,
@@ -32,20 +32,20 @@
   "ay": 52
  },
  "buildings/well": {
-  "ax": 14,
+  "ax": 15,
   "ay": 29
  },
  "buildings/well_snow": {
-  "ax": 14,
+  "ax": 15,
   "ay": 29
  },
  "buildings/workbench": {
   "ax": 18,
-  "ay": 20
+  "ay": 27
  },
  "buildings/workbench_snow": {
   "ax": 18,
-  "ay": 20
+  "ay": 27
  },
  "crops/cabbage_0": {
   "ax": 9,
@@ -1135,6 +1135,10 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/copper_sprinkler": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/corn": {
   "ax": 16,
   "ay": 16
@@ -1211,6 +1215,10 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/gold_sprinkler": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/golden_acorn": {
   "ax": 16,
   "ay": 16
@@ -1251,7 +1259,15 @@
   "ax": 16,
   "ay": 16
  },
+ "items_big/iron_sprinkler": {
+  "ax": 16,
+  "ay": 16
+ },
  "items_big/lantern": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/lightning_rod": {
   "ax": 16,
   "ay": 16
  },
@@ -1272,6 +1288,66 @@
   "ay": 16
  },
  "items_big/melon_juice": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_agate": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_aurora_quartz": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_calcite": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_celestine": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_fire_opal": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_fluorite": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_garnet": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_jasper": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_jet": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_mica": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_moonstone": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_obsidian": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_opal": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_star_sapphire": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/mineral_sunstone": {
   "ax": 16,
   "ay": 16
  },
@@ -1368,6 +1444,10 @@
   "ay": 16
  },
  "items_big/sap": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/scarecrow": {
   "ax": 16,
   "ay": 16
  },
@@ -1583,6 +1663,10 @@
   "ax": 9,
   "ay": 9
  },
+ "items/copper_sprinkler": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/corn": {
   "ax": 9,
   "ay": 9
@@ -1659,6 +1743,10 @@
   "ax": 9,
   "ay": 9
  },
+ "items/gold_sprinkler": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/golden_acorn": {
   "ax": 9,
   "ay": 9
@@ -1699,7 +1787,15 @@
   "ax": 9,
   "ay": 9
  },
+ "items/iron_sprinkler": {
+  "ax": 9,
+  "ay": 9
+ },
  "items/lantern": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/lightning_rod": {
   "ax": 9,
   "ay": 9
  },
@@ -1720,6 +1816,66 @@
   "ay": 9
  },
  "items/melon_juice": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_agate": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_aurora_quartz": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_calcite": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_celestine": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_fire_opal": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_fluorite": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_garnet": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_jasper": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_jet": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_mica": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_moonstone": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_obsidian": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_opal": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_star_sapphire": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/mineral_sunstone": {
   "ax": 9,
   "ay": 9
  },
@@ -1816,6 +1972,10 @@
   "ay": 9
  },
  "items/sap": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/scarecrow": {
   "ax": 9,
   "ay": 9
  },
@@ -1934,6 +2094,134 @@
  "items/wood": {
   "ax": 9,
   "ay": 9
+ },
+ "portraits/bram": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/fennel": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/ivy": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/juniper": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/mara": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/pip": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/sela": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/tobias": {
+  "ax": 17,
+  "ay": 17
+ },
+ "rocks/boulder": {
+  "ax": 19,
+  "ay": 27
+ },
+ "rocks/cave_mushroom_cluster": {
+  "ax": 13,
+  "ay": 18
+ },
+ "rocks/clay_bank": {
+  "ax": 15,
+  "ay": 16
+ },
+ "rocks/coal_rock": {
+  "ax": 14,
+  "ay": 17
+ },
+ "rocks/copper_vein": {
+  "ax": 14,
+  "ay": 16
+ },
+ "rocks/crack_1": {
+  "ax": 14,
+  "ay": 18
+ },
+ "rocks/crack_2": {
+  "ax": 14,
+  "ay": 18
+ },
+ "rocks/crate": {
+  "ax": 13,
+  "ay": 21
+ },
+ "rocks/gem_node_amethyst": {
+  "ax": 14,
+  "ay": 19
+ },
+ "rocks/gem_node_diamond": {
+  "ax": 14,
+  "ay": 19
+ },
+ "rocks/gem_node_emerald": {
+  "ax": 14,
+  "ay": 19
+ },
+ "rocks/gem_node_ruby": {
+  "ax": 14,
+  "ay": 19
+ },
+ "rocks/geode_rock": {
+  "ax": 13,
+  "ay": 22
+ },
+ "rocks/gold_vein": {
+  "ax": 14,
+  "ay": 16
+ },
+ "rocks/iron_vein": {
+  "ax": 14,
+  "ay": 16
+ },
+ "rocks/ladder_hole": {
+  "ax": 19,
+  "ay": 13
+ },
+ "rocks/mine_cart": {
+  "ax": 15,
+  "ay": 20
+ },
+ "rocks/mine_mouth": {
+  "ax": 29,
+  "ay": 49
+ },
+ "rocks/quartz_cluster": {
+  "ax": 14,
+  "ay": 23
+ },
+ "rocks/rock": {
+  "ax": 14,
+  "ay": 16
+ },
+ "rocks/rock_big": {
+  "ax": 16,
+  "ay": 20
+ },
+ "rocks/rubble": {
+  "ax": 12,
+  "ay": 9
+ },
+ "rocks/support_beam_prop": {
+  "ax": 14,
+  "ay": 28
+ },
+ "rocks/torch_wall": {
+  "ax": 5,
+  "ay": 28
  },
  "tiles/cursor": {
   "ax": 16,
@@ -2074,6 +2362,166 @@
  "tiles/winter_d": {
   "ax": 16,
   "ay": 0
+ },
+ "trees/ancient_oak": {
+  "ax": 29,
+  "ay": 62
+ },
+ "trees/ancient_oak_fall": {
+  "ax": 29,
+  "ay": 62
+ },
+ "trees/ancient_oak_sapling": {
+  "ax": 10,
+  "ay": 20
+ },
+ "trees/ancient_oak_snow": {
+  "ax": 29,
+  "ay": 62
+ },
+ "trees/ancient_oak_stump": {
+  "ax": 14,
+  "ay": 13
+ },
+ "trees/ancient_oak_young": {
+  "ax": 18,
+  "ay": 38
+ },
+ "trees/apple_tree": {
+  "ax": 17,
+  "ay": 40
+ },
+ "trees/apple_tree_empty": {
+  "ax": 17,
+  "ay": 40
+ },
+ "trees/beehive": {
+  "ax": 13,
+  "ay": 20
+ },
+ "trees/berry_bush": {
+  "ax": 17,
+  "ay": 21
+ },
+ "trees/berry_bush_empty": {
+  "ax": 17,
+  "ay": 21
+ },
+ "trees/birch": {
+  "ax": 18,
+  "ay": 56
+ },
+ "trees/birch_fall": {
+  "ax": 18,
+  "ay": 56
+ },
+ "trees/birch_sapling": {
+  "ax": 7,
+  "ay": 18
+ },
+ "trees/birch_snow": {
+  "ax": 18,
+  "ay": 56
+ },
+ "trees/birch_stump": {
+  "ax": 9,
+  "ay": 9
+ },
+ "trees/birch_young": {
+  "ax": 12,
+  "ay": 34
+ },
+ "trees/brambles": {
+  "ax": 22,
+  "ay": 25
+ },
+ "trees/branch_pile": {
+  "ax": 13,
+  "ay": 11
+ },
+ "trees/log_windfall": {
+  "ax": 16,
+  "ay": 11
+ },
+ "trees/maple": {
+  "ax": 26,
+  "ay": 57
+ },
+ "trees/maple_fall": {
+  "ax": 26,
+  "ay": 57
+ },
+ "trees/maple_sapling": {
+  "ax": 9,
+  "ay": 18
+ },
+ "trees/maple_snow": {
+  "ax": 26,
+  "ay": 57
+ },
+ "trees/maple_stump": {
+  "ax": 10,
+  "ay": 10
+ },
+ "trees/maple_young": {
+  "ax": 16,
+  "ay": 35
+ },
+ "trees/mushroom_spot": {
+  "ax": 15,
+  "ay": 12
+ },
+ "trees/oak": {
+  "ax": 26,
+  "ay": 54
+ },
+ "trees/oak_fall": {
+  "ax": 26,
+  "ay": 54
+ },
+ "trees/oak_sapling": {
+  "ax": 9,
+  "ay": 18
+ },
+ "trees/oak_snow": {
+  "ax": 26,
+  "ay": 54
+ },
+ "trees/oak_stump": {
+  "ax": 10,
+  "ay": 10
+ },
+ "trees/oak_young": {
+  "ax": 16,
+  "ay": 33
+ },
+ "trees/pine": {
+  "ax": 16,
+  "ay": 54
+ },
+ "trees/pine_fall": {
+  "ax": 16,
+  "ay": 54
+ },
+ "trees/pine_sapling": {
+  "ax": 6,
+  "ay": 18
+ },
+ "trees/pine_snow": {
+  "ax": 16,
+  "ay": 54
+ },
+ "trees/pine_stump": {
+  "ax": 9,
+  "ay": 9
+ },
+ "trees/pine_young": {
+  "ax": 10,
+  "ay": 34
+ },
+ "trees/signpost": {
+  "ax": 13,
+  "ay": 26
  },
  "ui/arrow_down": {
   "ax": 2,

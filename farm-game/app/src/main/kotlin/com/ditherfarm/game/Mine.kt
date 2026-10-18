@@ -89,6 +89,11 @@ class MineState {
     /** Cells opened this visit (entry + broken rocks); the lantern lights around them. */
     val opened = LinkedHashSet<Int>()
     val gatesOpened = LinkedHashSet<Int>()
+    /** Cave-in markers (cracked beams) on this floor, and the one rumbling right now. */
+    val markers = LinkedHashSet<Int>()
+    var rumble = -1
+    var rumbleEnd = 0.0
+    var braceTaps = 0
 
     fun toJson() = JSONObject().apply {
         put("repaired", repaired); put("quarryLevel", quarryLevel); put("floor", floor); put("deepestStop", deepestStop)
@@ -98,6 +103,7 @@ class MineState {
         put("cells", JSONArray().apply { cells.forEach { put(JSONObject().put("n", it.node ?: "").put("d", it.damage)) } })
         put("torches", JSONArray(torches.toList()))
         put("opened", JSONArray(opened.toList()))
+        put("markers", JSONArray(markers.toList()))
         put("gates", JSONArray(gatesOpened.toList()))
     }
 
@@ -113,6 +119,7 @@ class MineState {
             o.optJSONArray("cells")?.objects()?.forEach { c -> cells += Cell(c.getString("n").ifEmpty { null }, c.optInt("d")) }
             o.optJSONArray("torches")?.let { a -> (0 until a.length()).forEach { torches += a.getInt(it) } }
             o.optJSONArray("opened")?.let { a -> (0 until a.length()).forEach { opened += a.getInt(it) } }
+            o.optJSONArray("markers")?.let { a -> (0 until a.length()).forEach { markers += a.getInt(it) } }
             o.optJSONArray("gates")?.let { a -> (0 until a.length()).forEach { gatesOpened += a.getInt(it) } }
         }
     }
@@ -298,6 +305,8 @@ private fun World.generateFloor(floor: Int) {
     m.cells.clear()
     m.torches.clear()
     m.opened.clear()
+    m.markers.clear()
+    m.rumble = -1
     m.ladderFound = false
     m.breaks = 0
     m.dark = rng.chance(band.dark)
@@ -328,6 +337,10 @@ private fun World.generateFloor(floor: Int) {
         node != "glow_mushroom" && node != "crate" && def.minPick <= pickTier() && abs(i % n - ec) + abs(i / n - er) >= 4
     }
     m.ladder = if (floor >= 40 || candidates.isEmpty()) -1 else candidates[rng.nextInt(candidates.size)]
+    // Cave-in markers from floor 8: a quarter of floors get one or two cracked beams.
+    if (floor >= 8 && rng.chance(0.25)) {
+        repeat(1 + rng.nextInt(2)) { if (empties.isNotEmpty()) m.markers += empties.removeAt(rng.nextInt(empties.size)) }
+    }
 }
 
 /** The cell the ladder or elevator drops the player onto. */
@@ -370,6 +383,7 @@ fun World.mineFloor(i: Int): Boolean {
     if (broke != null) {
         m.breaks++
         m.opened += i
+        maybeRumble(i)
         if (i == m.ladder) { m.ladderFound = true; events += WorldEvent.LadderFound(i) }
         else if (!m.ladderFound && m.breaks >= 10 && m.ladder >= 0) {
             // Pity rule: the ladder moves under the rock just broken.
@@ -377,6 +391,82 @@ fun World.mineFloor(i: Int): Boolean {
         }
     }
     return true
+}
+
+// ------------------------------------------------------------------ cave-ins
+private const val RUMBLE_SECONDS = 2.5
+const val BRACE_TAPS = 3
+
+/** Breaking a rock within 2 tiles of a cracked beam has a 30% chance to start a rumble. */
+private fun World.maybeRumble(i: Int) {
+    val m = state.mine
+    if (m.rumble >= 0) return
+    val n = m.grid
+    val marker = m.markers.firstOrNull { max(abs(it % n - i % n), abs(it / n - i / n)) <= 2 } ?: return
+    if (!rng().chance(0.30)) return
+    m.rumble = marker
+    m.braceTaps = 0
+    m.rumbleEnd = state.minutes + Time.realSecondsToGameMinutes(RUMBLE_SECONDS)
+    events += WorldEvent.Rumble(marker)
+}
+
+/** Seconds left to brace the rumbling beam (0 when none). */
+fun World.rumbleSecondsLeft(): Double {
+    val m = state.mine
+    return if (m.rumble < 0) 0.0 else Time.gameMinutesToRealSeconds(max(0.0, m.rumbleEnd - state.minutes))
+}
+
+/** One tap on a rumbling beam; three taps brace it (+5 XP). */
+fun World.brace(cell: Int): Boolean {
+    val m = state.mine
+    if (cell != m.rumble) return false
+    m.braceTaps++
+    if (m.braceTaps < BRACE_TAPS) return true
+    m.markers.remove(cell)
+    m.rumble = -1
+    state.bump("braced")
+    events += WorldEvent.Braced(cell)
+    gainXp(5)
+    return true
+}
+
+/** A Support Beam makes a cracked beam safe for this visit. */
+fun World.placeBeam(cell: Int): Boolean {
+    val m = state.mine
+    if (cell !in m.markers || cell == m.rumble) return false
+    if (!removeAny("support_beam", 1)) { events += WorldEvent.Blocked("Needs a Support Beam"); return false }
+    m.markers.remove(cell)
+    events += WorldEvent.Braced(cell)
+    return true
+}
+
+/** An unbraced rumble collapses: rubble fills 3x3 around the beam and costs 5 energy. */
+internal fun World.tickMine() {
+    val m = state.mine
+    if (m.rumble < 0 || state.minutes < m.rumbleEnd) return
+    val marker = m.rumble
+    val n = m.grid
+    m.rumble = -1
+    m.markers.remove(marker)
+    val entry = entryCell(n)
+    for (dr in -1..1) for (dc in -1..1) {
+        val c = marker % n + dc; val r = marker / n + dr
+        if (c <= 0 || r <= 0 || c >= n - 1 || r >= n - 1) continue
+        val i = r * n + c
+        if (i == entry || (m.ladderFound && i == m.ladder) || i in m.torches) continue
+        if (m.cells[i].node == null) { m.cells[i].node = "rubble"; m.cells[i].damage = 0 }
+    }
+    state.energy = max(0.0, state.energy - 5)
+    events += WorldEvent.CaveIn(marker)
+}
+
+/** Rope Ladder: drop to the next floor from any empty tile (not past a gate floor). */
+fun World.useRopeLadder(): Boolean {
+    val m = state.mine
+    if (m.floor <= 0) return false
+    if (data.mine.gates.any { it.floor == m.floor + 1 } || m.floor % 10 == 0) { events += WorldEvent.Blocked("Too deep for a rope here"); return false }
+    if (!removeAny("rope_ladder", 1)) { events += WorldEvent.Blocked("No rope ladder"); return false }
+    return enterFloor(m.floor + 1)
 }
 
 fun World.descend(): Boolean {

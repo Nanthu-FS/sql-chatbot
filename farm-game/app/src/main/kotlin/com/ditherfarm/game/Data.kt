@@ -126,6 +126,7 @@ class GameData(
                     o.getJSONObject("cost").toIntMap(), o.getJSONArray("recipes").strings(), o.optInt("queue", 3),
                     o.optBoolean("prebuilt"), o.optString("sprite", "buildings/" + o.getString("id")),
                     o.optJSONObject("fuel")?.optInt("tank", 0) ?: 0,
+                    o.optInt("trayCap", 3),
                 )
             }.associateBy { it.id }
             val recipes = JSONObject(read("recipes.json")).getJSONArray("recipes").objects().map { o ->

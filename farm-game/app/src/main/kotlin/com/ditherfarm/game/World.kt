@@ -59,6 +59,9 @@ sealed class WorldEvent {
     data class FestivalStarted(val name: String) : WorldEvent()
     data class FestivalWon(val name: String) : WorldEvent()
     data class CartSold(val units: Int, val coins: Int) : WorldEvent()
+    data class Rumble(val cell: Int) : WorldEvent()
+    data class Braced(val cell: Int) : WorldEvent()
+    data class CaveIn(val cell: Int) : WorldEvent()
 }
 
 /**
@@ -115,6 +118,7 @@ class World(val data: GameData, val state: GameState) {
         tickOrders()
         tickMachines()
         tickQuarry()
+        tickMine()
         tickSheds()
         checkAchievements()
     }

@@ -17,6 +17,8 @@ class BuildingDef(
     val sprite: String,
     /** Coal tank size for fuelled machines (Furnace); 0 = no fuel. */
     val fuelTank: Int,
+    /** A producer (no-input recipe) stops restarting once its tray holds this many items. */
+    val trayCap: Int = 3,
 )
 
 class RecipeDef(
@@ -171,28 +173,48 @@ fun World.cancelLast(id: String): Boolean {
 /** Moves finished jobs into trays; tool upgrades apply immediately. Called from the time step. */
 internal fun World.tickMachines() {
     for (b in state.buildings.values) {
-        while (b.jobs.isNotEmpty() && b.jobs[0].end <= state.minutes) {
-            val job = b.jobs.removeAt(0)
-            val r = data.recipes[job.recipe] ?: continue
-            b.batches++
-            for ((k, v) in r.outputs) {
-                val tool = k.removePrefix("@tool:")
-                if (tool != k) {
-                    state.tools[tool] = maxOf(state.tools[tool] ?: 0, v)
-                    events += WorldEvent.ToolUpgraded(tool, v)
-                } else {
-                    b.tray[k] = (b.tray[k] ?: 0) + v
-                }
-            }
-            events += WorldEvent.JobDone(b.id, r.id)
-        }
-        // Producers (no inputs, e.g. the Beehive) restart themselves.
         val def = data.buildings[b.id] ?: continue
-        if (b.built && b.jobs.isEmpty() && b.tray.values.sum() < 3) {
-            val auto = def.recipes.mapNotNull { data.recipes[it] }.firstOrNull { it.inputs.isEmpty() && it.unlockLevel <= state.level }
-            if (auto != null) b.jobs += Job(auto.id, state.minutes, state.minutes + jobMinutes(auto))
+        var lastEnd = -1.0
+        var guard = 0
+        while (guard++ < 1000) {
+            while (b.jobs.isNotEmpty() && b.jobs[0].end <= state.minutes) {
+                val job = b.jobs.removeAt(0)
+                lastEnd = job.end
+                val r = data.recipes[job.recipe] ?: continue
+                b.batches++
+                for ((k, v) in r.outputs) {
+                    val tool = k.removePrefix("@tool:")
+                    if (tool != k) {
+                        state.tools[tool] = maxOf(state.tools[tool] ?: 0, v)
+                        events += WorldEvent.ToolUpgraded(tool, v)
+                    } else {
+                        b.tray[k] = (b.tray[k] ?: 0) + v
+                    }
+                }
+                if (r.id == "drill") drillBonus(b)
+                events += WorldEvent.JobDone(b.id, r.id)
+            }
+            // Producers (no inputs, e.g. the Beehive or Drill Rig) restart themselves, back to back
+            // from the end of the last batch so offline time is not lost.
+            if (!b.built || b.jobs.isNotEmpty() || b.tray.values.sum() >= def.trayCap) break
+            val auto = def.recipes.mapNotNull { data.recipes[it] }.firstOrNull { it.inputs.isEmpty() && it.unlockLevel <= state.level } ?: break
+            if (b.fuel < auto.fuel) break
+            b.fuel -= auto.fuel
+            val start = if (lastEnd >= 0) lastEnd else state.minutes
+            b.jobs += Job(auto.id, start, start + jobMinutes(auto))
+            if (b.jobs[0].end > state.minutes) break
         }
     }
+}
+
+/** The Drill Rig also turns up one quarry rock's worth of ore per batch. */
+private fun World.drillBonus(b: BuildingState) {
+    val q = data.mine.quarry.getOrNull(state.mine.quarryLevel - 1) ?: return
+    val w = q.weights
+    var r = rng().nextInt(w.values.sum().coerceAtLeast(1))
+    val node = w.entries.firstOrNull { r -= it.value; r < 0 }?.key ?: return
+    val drop = data.mine.nodes[node]?.drops?.keys?.firstOrNull() ?: return
+    b.tray[drop] = (b.tray[drop] ?: 0) + 1
 }
 
 fun World.trayCount(id: String) = building(id).tray.values.sum()

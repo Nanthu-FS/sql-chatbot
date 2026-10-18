@@ -319,4 +319,22 @@ class ScreenshotTest {
             g.farm.showPanel("cart")
         })
     }
+
+    @Test fun mineCaveIn() {
+        render("mine_cavein", seconds = 0.5f, setup = { g ->
+            toLevel(g, 14)
+            val w = g.world
+            w.state.coins += 200; w.add("wood", 30); w.add("rope_ladder", 2)
+            w.state.tools["pickaxe"] = 2
+            w.mine.gatesOpened += 10
+            w.repairMine()
+            var tries = 0
+            while (tries++ < 200 && !(w.enterFloor(12) && w.mine.markers.isNotEmpty() && !w.mine.dark)) {}
+            g.goTo(Nav.MINE)
+            g.engine.screen?.enter()
+            val m = w.mine
+            m.rumble = m.markers.first(); m.rumbleEnd = w.state.minutes + 1000; m.braceTaps = 1
+            w.events.clear()
+        })
+    }
 }

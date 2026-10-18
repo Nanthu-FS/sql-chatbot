@@ -372,29 +372,22 @@ def it_nails(c):
     return c
 
 
-def it_gear(c):
-    teeth = 6 if c.n == 14 else 8
-    R, r = 6.2, 4.7
-    per = 2 * math.pi / teeth
+def tooth(cx, cy, a, r0, r1, w0, w1):
+    """Trapezoid tooth on the ray at angle a: half-width w0 at the root (r0), w1 at the tip (r1)."""
+    ux, uy = math.cos(a), math.sin(a)
+    tx, ty = -uy, ux
+    bx, by = cx + ux * r0, cy + uy * r0
+    qx, qy = cx + ux * r1, cy + uy * r1
+    return poly([(bx + tx * w0, by + ty * w0), (qx + tx * w1, qy + ty * w1),
+                 (qx - tx * w1, qy - ty * w1), (bx - tx * w0, by - ty * w0)])
 
-    def rad(th):
-        f = (th % per) / per
-        if f < 0.15:
-            return r
-        if f < 0.3:
-            return r + (R - r) * (f - 0.15) / 0.15
-        if f < 0.55:
-            return R
-        if f < 0.7:
-            return R - (R - r) * (f - 0.55) / 0.15
-        return r
-    pts = []
-    for i in range(240):
-        th = i * 2 * math.pi / 240
-        rr = rad(th)
-        pts.append((7 + rr * math.cos(th), 7 + rr * math.sin(th)))
-    fill(c, poly(pts), METAL, ball(6.2, 6.2, R, R, N=4, bias=0.4), sep="slate_d")
-    fill(c, disc(7.0, 7.0, 2.1 if c.n == 14 else 2.0), ["ink", "slate_d"], const(0.6), sep="slate_d")
+
+def it_gear(c):
+    cx, cy = 7.0, 7.0
+    teeth = [tooth(cx, cy, k * math.pi / 4, 3.6, 6.5, 1.5, 1.0) for k in range(8)]
+    shape = U(disc(cx, cy, 4.9), *teeth)
+    fill(c, shape, METAL, ball(6.0, 6.0, 6.4, 6.4, N=4, bias=0.4), sep="slate_d")
+    fill(c, disc(cx, cy, 1.6), ["ink", "slate_d"], const(0.6), sep="slate_d")
     return c
 
 
@@ -471,30 +464,37 @@ def it_quartz(c):
     return c
 
 
-def ingot(c, ramp, top_lv, front_lv, side_lv):
-    top = poly([(2, 4), (4, 2), (12, 2), (10, 4)])
-    front = rect(2, 4, 10, 12)
-    side = poly([(10, 4), (12, 2), (12, 9), (10, 12)])
+def ingot_bar(c, ramp, x0, y0, top_lv, front_lv, side_lv):
+    """One iso bar: lit top face, front face with a vertical gradient, darker end face."""
+    top = poly([(x0, y0), (x0 + 2, y0 - 2), (x0 + 11, y0 - 2), (x0 + 9, y0)])
+    front = rect(x0, y0, x0 + 9, y0 + 3)
+    side = poly([(x0 + 9, y0), (x0 + 11, y0 - 2), (x0 + 11, y0 + 1), (x0 + 9, y0 + 3)])
     fill(c, top, ramp, const(top_lv), sep="brown_d")
-    fill(c, front, ramp, vgrad(4, 12, front_lv[0], front_lv[1]), sep="brown_d")
+    fill(c, front, ramp, vgrad(y0, y0 + 3, front_lv[0], front_lv[1]), sep="brown_d")
     fill(c, side, ramp, const(side_lv), sep="brown_d")
+
+
+def bars(c, ramp, top_lv, front_lv, side_lv):
+    """Two ingots stacked, so the metal reads as bars rather than a crate."""
+    ingot_bar(c, ramp, 0.5, 9.8, top_lv, front_lv, side_lv)
+    ingot_bar(c, ramp, 2.0, 5.6, top_lv, front_lv, side_lv)
     return c
 
 
 def it_copper_bar(c):
-    return ingot(c, COPPER_BAR, 3.4, (2.6, 1.4), 0.7)
+    return bars(c, COPPER_BAR, 3.4, (2.6, 1.4), 0.7)
 
 
 def it_iron_bar(c):
-    ingot(c, IRON_BAR, 3.4, (2.6, 1.4), 0.6)
-    dot(c, 4.5, 4.5, "white")
+    bars(c, IRON_BAR, 3.4, (2.6, 1.4), 0.6)
+    dot(c, 5.5, 4.5, "white")
     return c
 
 
 def it_gold_bar(c):
-    ingot(c, GOLD_BAR, 3.6, (2.8, 1.8), 1.0)
-    dot(c, 4.5, 4.5, "white")
-    dot(c, 6.5, 8.5, "white")
+    bars(c, GOLD_BAR, 3.6, (2.8, 1.8), 1.0)
+    dot(c, 5.5, 4.5, "white")
+    dot(c, 6.5, 10.5, "white")
     return c
 
 
@@ -693,6 +693,242 @@ def it_resin(c):
 
 
 
+# ---------------------------------------------------------------- fixtures (sold and placed on the farm)
+
+def fixture_sprinkler(c, ramp):
+    base = poly([(4.2, 9.0), (9.8, 9.0), (10.6, 12.6), (3.4, 12.6)])
+    fill(c, base, ramp, hgrad(3.4, 10.6, 1.2, 3.2), sep="brown_d")
+    fill(c, rect(3.0, 8.0, 11.0, 9.4), ramp, const(3.6), sep="brown_d")
+    head = U(disc(7.0, 6.4, 2.2, 1.6), rect(6.2, 4.6, 7.8, 8.0))
+    fill(c, head, ramp, hgrad(4.8, 9.2, 1.0, 3.4), sep="brown_d")
+    for u, v in ((3.5, 4.5), (10.5, 4.5), (5.5, 2.5), (8.5, 2.5)):
+        dot(c, u, v, "cyan")
+    return c
+
+
+def it_copper_sprinkler(c):
+    return fixture_sprinkler(c, COPPER_BAR)
+
+
+def it_iron_sprinkler(c):
+    return fixture_sprinkler(c, IRON_BAR)
+
+
+def it_gold_sprinkler(c):
+    return fixture_sprinkler(c, GOLD_BAR)
+
+
+def it_lightning_rod(c):
+    rod = U(poly([(7.0, 0.6), (6.0, 3.6), (8.0, 3.6)]), rect(6.2, 3.6, 7.8, 10.8))
+    fill(c, rod, METAL, hgrad(6.0, 8.0, 0.6, 3.4), sep="slate_d")
+    plate = poly([(3.6, 10.4), (10.4, 10.4), (11.4, 12.8), (2.6, 12.8)])
+    fill(c, plate, COPPER_BAR, hgrad(2.6, 11.4, 1.2, 3.2), sep="brown_d")
+    dot(c, 3.5, 2.5, "yellow")
+    dot(c, 10.5, 2.5, "yellow")
+    return c
+
+
+def it_scarecrow(c):
+    fill(c, disc(7.0, 6.0, 2.0, 1.9), FACE, ball(6.4, 5.6, 2.2, 2.0, N=3, bias=0.3), sep="tan_d")
+    hat = U(rect(4.8, 0.8, 9.2, 3.4), rect(2.8, 3.0, 11.2, 4.2))
+    fill(c, hat, BARK, vgrad(0.8, 4.2, 3.0, 1.0), sep="brown_d")
+    dot(c, 6.5, 5.5, "ink")
+    dot(c, 8.5, 5.5, "ink")
+    fill(c, rect(1.6, 8.0, 12.4, 9.2), BARK, vgrad(8.0, 9.2, 2.4, 1.0), sep="brown_d")
+    fill(c, rect(5.8, 9.2, 8.2, 12.6), BARK, hgrad(5.8, 8.2, 2.2, 0.8), sep="brown_d")
+    for u, v in ((1.5, 10.5), (12.5, 10.5), (4.5, 12.5), (9.5, 12.5)):
+        dot(c, u, v, "amber")
+    return c
+
+
+# ---------------------------------------------------------------- minerals (mine rewards)
+
+AGATE = ["rust", "clay", "tan", "cream", "white"]
+AURORA = ["blue", "cyan", "green", "yellow", "pink", "white"]
+CELESTINE = ["blue_d", "blue", "cyan", "white"]
+CALCITE = ["tan", "cream", "white"]
+FIRE_OPAL = ["red_d", "red", "orange", "amber", "yellow", "white"]
+PURPLE_CUBE = ["purple", "magenta", "pink", "white"]
+GREEN_CUBE = ["green_dd", "green_d", "green", "yellow"]
+GARNET = ["purple", "red_d", "red", "pink"]
+JASPER = ["brown_d", "brown", "red_d", "red", "clay"]
+SUNSTONE = ["rust", "orange", "amber", "yellow"]
+MOON = ["slate", "grey", "grey_l", "white"]
+JET = ["slate_d", "slate", "grey_d", "grey"]
+OBSIDIAN = ["ink", "slate_d", "slate", "grey_d", "grey", "grey_l"]
+OPAL = ["purple", "magenta", "pink", "cyan", "white"]
+SAPPHIRE = ["blue_d", "blue", "cyan", "white"]
+
+
+def it_agate(c):
+    shape = disc(7.0, 7.2, 5.6, 4.8)
+
+    def lv(u, v):
+        rho = math.hypot((u - 6.2) / 5.4, (v - 6.4) / 4.4)
+        return 2.4 - 1.2 * rho + (1.2 if int(rho * 3.0) % 2 == 0 else 0.0)
+    fill(c, shape, AGATE, lv, sep="rust")
+    dot(c, 4.5, 4.5, "white")
+    return c
+
+
+def it_aurora_quartz(c):
+    for cx, top, w, bot in ((3.6, 4.6, 3.6, 12.6), (10.6, 3.6, 3.8, 12.6), (7.0, 1.2, 5.2, 12.8)):
+        h2 = top + 0.7 * w
+        sf = poly([(cx, top), (cx + w / 2, h2), (cx + w / 2, bot), (cx - w / 2, bot), (cx - w / 2, h2)])
+        fill(c, sf, AURORA, lambda u, v, cx=cx, w=w: 1.0 + 4.0 * (u - cx + w / 2) / w, sep="blue")
+    dot(c, 6.5, 2.5, "white")
+    dot(c, 10.5, 9.5, "white")
+    return c
+
+
+def it_celestine(c):
+    for cx, top, bot in ((4.0, 3.0, 12.6), (7.4, 1.0, 12.8), (10.6, 4.2, 12.4)):
+        blade = poly([(cx, top), (cx + 1.3, top + 2.0), (cx + 1.3, bot), (cx - 1.3, bot), (cx - 1.3, top + 2.0)])
+        fill(c, blade, CELESTINE, hgrad(cx - 1.3, cx + 1.3, 1.0, 3.0), sep="blue_d")
+    dot(c, 6.5, 3.5, "white")
+    return c
+
+
+def it_calcite(c):
+    big = poly([(6.0, 1.6), (10.8, 6.0), (6.0, 10.4), (1.2, 6.0)])
+    small = poly([(10.6, 7.4), (13.0, 9.2), (10.6, 11.0), (8.2, 9.2)])
+    fill(c, big, CALCITE, lambda u, v: 2.0 - 1.2 * (u - 1.2) / 9.6, sep="tan")
+    fill(c, small, CALCITE, const(1.4), sep="tan")
+    dot(c, 4.5, 4.5, "white")
+    return c
+
+
+def cube(c, cx, top, w, side, ramp, lv_top, lv_left, lv_right, sep):
+    """Isometric cube: top diamond of half-width w, side faces `side` tall, drawn left, right, top."""
+    h = w / 2.0
+    tp = poly([(cx, top), (cx + w, top + h), (cx, top + 2 * h), (cx - w, top + h)])
+    lf = poly([(cx - w, top + h), (cx, top + 2 * h), (cx, top + 2 * h + side), (cx - w, top + h + side)])
+    rt = poly([(cx, top + 2 * h), (cx + w, top + h), (cx + w, top + h + side), (cx, top + 2 * h + side)])
+    fill(c, lf, ramp, const(lv_left), sep=sep)
+    fill(c, rt, ramp, const(lv_right), sep=sep)
+    fill(c, tp, ramp, const(lv_top), sep=sep)
+
+
+def it_fluorite(c):
+    cube(c, 8.0, 2.6, 3.6, 4.4, PURPLE_CUBE, 2.4, 1.4, 0.4, "purple")
+    cube(c, 4.0, 7.6, 2.6, 3.4, GREEN_CUBE, 2.8, 1.8, 0.8, "green_dd")
+    return c
+
+
+def it_fire_opal(c):
+    faceted(c, [(7.0, 0.8), (11.6, 3.2), (12.6, 7.4), (9.6, 12.6), (4.4, 12.6), (1.4, 7.4), (2.4, 3.2)],
+            [([(7.0, 0.8), (2.4, 3.2), (7.0, 6.2)], 4.2),
+             ([(7.0, 0.8), (11.6, 3.2), (7.0, 6.2)], 2.6),
+             ([(2.4, 3.2), (7.0, 6.2), (4.4, 12.6), (1.4, 7.4)], 2.8),
+             ([(11.6, 3.2), (12.6, 7.4), (9.6, 12.6), (7.0, 6.2)], 1.4),
+             ([(7.0, 6.2), (9.6, 12.6), (4.4, 12.6)], 2.0)],
+            FIRE_OPAL, default=2.0, edge="red_d")
+    dot(c, 5.0, 3.5, "white")
+    return c
+
+
+def it_garnet(c):
+    faceted(c, [(4.0, 1.6), (10.0, 1.6), (12.6, 4.2), (12.6, 9.8), (10.0, 12.4), (4.0, 12.4), (1.4, 9.8), (1.4, 4.2)],
+            [([(4.6, 4.4), (9.4, 4.4), (9.4, 9.6), (4.6, 9.6)], 2.6),
+             ([(4.0, 1.6), (10.0, 1.6), (9.4, 4.4), (4.6, 4.4)], 3.0),
+             ([(1.4, 4.2), (4.0, 1.6), (4.6, 4.4)], 2.0),
+             ([(1.4, 4.2), (4.6, 4.4), (4.6, 9.6), (1.4, 9.8)], 1.4),
+             ([(10.0, 1.6), (12.6, 4.2), (9.4, 4.4)], 1.0),
+             ([(9.4, 4.4), (12.6, 4.2), (12.6, 9.8), (9.4, 9.6)], 0.6)],
+            GARNET, default=1.6, edge="purple")
+    dot(c, 5.5, 3.0, "pink")
+    return c
+
+
+def it_jasper(c):
+    shape = U(disc(7.0, 7.4, 5.4, 4.8), disc(5.2, 5.6, 3.0, 3.0))
+    fill(c, shape, JASPER, ball(6.2, 6.0, 5.8, 5.2, N=4, bias=0.3), sep="brown_d")
+    for u, v in ((4.5, 9.5), (9.5, 10.5), (10.5, 5.5), (7.5, 8.5)):
+        dot(c, u, v, "cream")
+    return c
+
+
+def it_sunstone(c):
+    fill(c, disc(7.0, 7.2, 5.6, 5.0), SUNSTONE, ball(6.2, 6.0, 5.8, 5.2, N=3, bias=0.3), sep="rust")
+    for u, v in ((4.5, 4.5), (9.5, 8.5), (6.5, 10.5)):
+        dot(c, u, v, "white")
+    return c
+
+
+def it_moonstone(c):
+    shape = disc(7.0, 7.0, 5.6, 5.2)
+    fill(c, shape, MOON, ball(6.2, 6.0, 5.8, 5.4, N=3, bias=0.3), sep="grey_d")
+    fill(c, I(seg((3.2, 9.6), (10.8, 5.2), 1.2), shape), ["cyan"], const(0))
+    dot(c, 4.5, 4.5, "white")
+    return c
+
+
+def it_jet(c):
+    shape = U(disc(7.0, 7.4, 5.4, 4.8), disc(5.0, 5.8, 2.8, 2.6))
+    fill(c, shape, JET, ball(6.2, 6.0, 5.6, 5.0, N=3, bias=0.2), sep="ink")
+    dot(c, 4.5, 4.5, "grey_l")
+    return c
+
+
+def it_obsidian(c):
+    faceted(c, [(7.0, 0.8), (11.6, 4.0), (10.4, 12.6), (4.2, 13.0), (2.2, 4.6)],
+            [([(7.0, 0.8), (2.2, 4.6), (7.0, 7.0)], 3.4),
+             ([(2.2, 4.6), (4.2, 13.0), (7.0, 7.0)], 2.2),
+             ([(7.0, 0.8), (11.6, 4.0), (7.0, 7.0)], 1.6),
+             ([(11.6, 4.0), (10.4, 12.6), (7.0, 7.0)], 0.8),
+             ([(10.4, 12.6), (4.2, 13.0), (7.0, 7.0)], 1.0)],
+            OBSIDIAN, default=1.2, edge="purple")
+    dot(c, 5.0, 3.5, "white")
+    return c
+
+
+def mica_sheet(c, y0, lv):
+    top = poly([(2.0, y0), (8.0, y0 - 2.4), (12.0, y0 - 0.6), (6.0, y0 + 1.8)])
+    edge = poly([(2.0, y0), (6.0, y0 + 1.8), (6.0, y0 + 2.8), (2.0, y0 + 1.0)])
+    fill(c, top, METAL, const(lv), sep="slate_d")
+    fill(c, edge, METAL, const(0.6), sep="slate_d")
+
+
+def it_mica(c):
+    mica_sheet(c, 10.4, 1.4)
+    mica_sheet(c, 7.4, 2.4)
+    mica_sheet(c, 4.4, 3.4)
+    return c
+
+
+def it_opal(c):
+    faceted(c, [(7.0, 1.2), (11.4, 3.4), (12.4, 7.2), (9.4, 12.4), (4.6, 12.4), (1.6, 7.2), (2.6, 3.4)],
+            [([(7.0, 1.2), (2.6, 3.4), (7.0, 6.4)], 3.0),
+             ([(7.0, 1.2), (11.4, 3.4), (7.0, 6.4)], 4.0),
+             ([(2.6, 3.4), (7.0, 6.4), (4.6, 12.4), (1.6, 7.2)], 1.0),
+             ([(11.4, 3.4), (12.4, 7.2), (9.4, 12.4), (7.0, 6.4)], 2.0),
+             ([(7.0, 6.4), (9.4, 12.4), (4.6, 12.4)], 3.0)],
+            OPAL, default=2.0, edge="magenta")
+    dot(c, 5.0, 3.0, "white")
+    return c
+
+
+def it_star_sapphire(c):
+    shape = disc(7.0, 7.0, 5.8, 5.2)
+    fill(c, shape, SAPPHIRE, ball(6.2, 6.0, 5.8, 5.2, N=3, bias=0.3), sep="blue_d")
+    rays = U(*[seg((7.0 - 3.8 * math.cos(a), 7.0 - 3.8 * math.sin(a)),
+                   (7.0 + 3.8 * math.cos(a), 7.0 + 3.8 * math.sin(a)), 0.8)
+               for a in (0.0, math.pi / 3, 2 * math.pi / 3)])
+    fill(c, I(rays, shape), ["white"], const(0))
+    return c
+
+
+MINERALS = {
+    "mineral_agate": it_agate, "mineral_aurora_quartz": it_aurora_quartz, "mineral_calcite": it_calcite,
+    "mineral_celestine": it_celestine, "mineral_fire_opal": it_fire_opal, "mineral_fluorite": it_fluorite,
+    "mineral_garnet": it_garnet, "mineral_jasper": it_jasper, "mineral_jet": it_jet, "mineral_mica": it_mica,
+    "mineral_moonstone": it_moonstone, "mineral_obsidian": it_obsidian, "mineral_opal": it_opal,
+    "mineral_star_sapphire": it_star_sapphire, "mineral_sunstone": it_sunstone,
+    "copper_sprinkler": it_copper_sprinkler, "iron_sprinkler": it_iron_sprinkler,
+    "gold_sprinkler": it_gold_sprinkler, "lightning_rod": it_lightning_rod, "scarecrow": it_scarecrow,
+}
+
+
 ITEMS = {
     "wood": it_wood, "hardwood": it_hardwood, "heartwood": it_heartwood, "resin": it_resin,
     "sap": it_sap, "plank": it_plank, "beam": it_beam, "fibre": it_fibre, "rope": it_rope,
@@ -705,6 +941,7 @@ ITEMS = {
     "amethyst": it_amethyst, "emerald": it_emerald, "ruby": it_ruby, "diamond": it_diamond,
     "prismatic_shard": it_prismatic_shard, "cave_mushroom": it_cave_mushroom,
 }
+ITEMS.update(MINERALS)
 
 
 def main():

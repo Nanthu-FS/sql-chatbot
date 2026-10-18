@@ -386,6 +386,31 @@
    },
    "recipes": [],
    "queue": 1
+  },
+  {
+   "id": "drill_rig",
+   "name": "Drill Rig",
+   "screen": "mine",
+   "unlock": 19,
+   "cost": {
+    "coins": 4000,
+    "stone": 40,
+    "brick": 10,
+    "beam": 6,
+    "iron_bar": 14,
+    "cooking_oil": 4
+   },
+   "recipes": [
+    "drill"
+   ],
+   "queue": 1,
+   "prebuilt": false,
+   "sprite": "buildings/drill_rig",
+   "fuel": {
+    "item": "coal",
+    "tank": 20
+   },
+   "trayCap": 80
   }
  ]
 }

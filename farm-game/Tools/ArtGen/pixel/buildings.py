@@ -399,9 +399,9 @@ def market(winter):
 
 # ---------------------------------------------------------------- orders notice board (1x1)
 
-# (u0, u1, z0, z1, paper colour, has an exclamation mark)
-PAPERS = [(-0.32, -0.08, 16.5, 22.0, "cream", False), (0.02, 0.28, 18.0, 23.0, "white", False),
-          (-0.28, -0.06, 9.5, 14.5, "white", False), (0.06, 0.3, 9.0, 13.5, "cream", True)]
+# (u0, u1, z0, z1, paper colour, has an exclamation mark): a 2x2 grid of notes, each pinned at the top
+PAPERS = [(-0.34, -0.02, 13.6, 20.0, "cream", False), (0.02, 0.34, 14.4, 20.4, "white", False),
+          (-0.34, -0.02, 8.0, 12.2, "white", False), (0.02, 0.34, 8.0, 12.2, "cream", True)]
 
 
 def orders(winter):
@@ -410,15 +410,17 @@ def orders(winter):
             return "white" if winter else "brown_l"
         if tag == "R":
             return "brown_d"
-        if abs(u) > 0.36 or z < 7.2 or z > 23.2:         # wooden frame
-            return "brown"
+        if abs(u) > 0.36 or z < 7.4 or z > 22.6:         # wooden frame, lit top rail
+            return ("white" if winter else "brown_l") if z > 21.6 else "brown"
         for u0, u1, z0, z1, c, mark in PAPERS:
             if u0 <= u <= u1 and z0 <= z <= z1:
                 mu = (u0 + u1) / 2.0
                 if abs(u - mu) < 0.05 and z > z1 - 1.0:
-                    return "red"                          # pin
-                if mark and abs(u - mu) < 0.05 and z0 + 1.5 < z < z1 - 1.5:
-                    return "red"                          # exclamation mark
+                    return "red"                          # drawing pin
+                if mark:                                  # bold exclamation mark: dot and bar
+                    if abs(u - mu) < 0.04 and (z < z0 + 0.9 or z0 + 1.4 < z < z0 + 3.2):
+                        return "red"
+                    return c
                 if int(z - z0) in (2, 4) and u0 + 0.05 < u < u1 - 0.05:
                     return "grey_d"                       # ink lines
                 return c
@@ -438,8 +440,8 @@ def orders(winter):
             return shingle(u, z, "brown", "brown_d", "brown_l")
         return "brown"
 
-    solids = [Solid(box(-0.42, 0.42, -0.02, 0.06, 7.0, 23.5), board)]
-    for pu in (-0.36, 0.36):
+    solids = [Solid(box(-0.46, 0.46, -0.02, 0.06, 7.0, 23.5), board)]
+    for pu in (-0.4, 0.4):
         solids.append(Solid(box(pu - 0.04, pu + 0.04, -0.12, -0.02, 0.0, 23.5), post))
     solids.append(Solid(gable(0.0, 0.0, 1.0, 0.0, 0.52, 0.46, 23.5, 6.5), roof))
     return solids
@@ -509,27 +511,32 @@ def well(winter):
 # ---------------------------------------------------------------- workbench (1x1, with tools)
 
 def workbench(winter):
+    IRON = ["slate", "grey_d", "grey", "grey_l"]
+    WOOD = ["brown_d", "brown", "brown_l", "tan"]
+    RED = ["red_d", "red", "red", "pink"]
+
     def top(tag, n, u, v, z, x, y):
         if tag == "T":
             if winter:
                 return "white" if (x + y) % 4 else "grey_l"
-            # tools lying flat on the bench top, drawn as decals in (u, v)
-            if -0.56 <= u <= -0.2 and -0.1 <= v <= -0.04:              # hammer handle
-                return "brown"
-            if -0.27 <= u <= -0.13 and -0.22 <= v <= 0.0:              # hammer head
-                return "slate" if (u < -0.22 or v > -0.02) else "grey_l"
-            if -0.12 <= u <= 0.42 and -0.27 <= v <= -0.17:             # saw blade, toothed
-                return "grey_l" if int(math.floor(u * 22)) % 2 == 0 else "grey"
-            if 0.42 < u <= 0.56 and -0.31 <= v <= -0.12:               # saw handle
-                return "red"
-            if -0.5 <= u <= -0.32 and 0.1 <= v <= 0.18:                # screwdriver grip
-                return "red_d"
-            if -0.32 < u <= -0.02 and 0.12 <= v <= 0.15:               # screwdriver shaft
-                return "grey"
-            return "brown" if seam(v) else "tan"
+            return "brown" if seam(v, 3.0) else "tan"          # planks run along u
         if tag == "L":
             return "brown_d" if seam(u, 3.0) else "brown_l"
         return "brown_d" if seam(v, 3.0) else "brown"
+
+    def pegboard(tag, n, u, v, z, x, y):                         # tool wall with a grid of peg holes
+        if tag == "T":
+            return "white" if winter else "tan"
+        if tag == "L":
+            if z % 3.0 < 1.0 and math.floor((u + 0.72) * 5.0) % 2 == 0:
+                return "grey_d" if winter else "brown_d"
+            return "grey_l" if winter else "brown_l"
+        return "grey" if winter else "brown"
+
+    def saw_blade(tag, n, u, v, z, x, y):                        # teeth along the bottom edge
+        if z < 12.8 and math.floor(u * 9.0) % 2 == 0:
+            return "grey_d"
+        return lit(IRON, n, x, y)
 
     def leg(tag, n, u, v, z, x, y):
         return "brown_d" if tag == "R" else ("tan_d" if tag == "T" else "brown")
@@ -539,20 +546,27 @@ def workbench(winter):
 
     def vice(tag, n, u, v, z, x, y):
         if tag == "T":
-            return "white" if winter else "grey"
+            return "white" if winter else "grey_l"
         if tag == "L":
-            return "brown" if abs(u - 0.47) < 0.02 else "slate"
-        return "grey_d"
+            return "brown" if 12.0 < z < 13.6 else "grey"        # wooden jaw
+        return "slate"
 
     solids = [
-        Solid(box(-0.8, 0.8, -0.26, 0.26, 9.0, 11.0), top),
-        Solid(box(0.38, 0.62, 0.18, 0.34, 11.0, 17.0), vice),
+        Solid(box(-0.72, 0.72, -0.3, 0.3, 8.5, 10.5), top),                  # bench top
+        Solid(box(-0.72, 0.72, -0.36, -0.3, 10.5, 16.0), pegboard),          # tool wall behind it
+        Solid(box(0.34, 0.66, 0.08, 0.32, 10.5, 15.0), vice),                # iron vice, right end
+        Solid(box(-0.66, -0.36, -0.29, -0.25, 16.6, 18.4), flat(IRON)),      # hammer head
+        Solid(box(-0.57, -0.43, -0.29, -0.25, 11.8, 17.0), flat(WOOD)),      # hammer handle
+        Solid(box(-0.12, 0.42, -0.29, -0.25, 12.0, 15.5), saw_blade),        # hand saw blade
+        Solid(box(-0.26, -0.08, -0.29, -0.25, 12.0, 18.0), flat(RED)),       # saw handle
+        Solid(box(0.5, 0.58, -0.29, -0.25, 11.8, 15.5), flat(IRON)),         # screwdriver shaft
+        Solid(box(0.46, 0.62, -0.29, -0.25, 15.5, 18.8), flat(RED)),         # screwdriver grip
     ]
-    for pu in (-0.72, 0.72):
+    for pu in (-0.62, 0.62):
         for pv in (-0.2, 0.2):
-            solids.append(Solid(box(pu - 0.045, pu + 0.045, pv - 0.045, pv + 0.045, 0.0, 9.0), leg))
-    solids.append(Solid(box(-0.74, 0.74, 0.16, 0.21, 6.0, 9.0), apron))
-    solids.append(Solid(box(-0.74, 0.74, -0.21, -0.16, 6.0, 9.0), apron))
+            solids.append(Solid(box(pu - 0.07, pu + 0.07, pv - 0.07, pv + 0.07, 0.0, 8.5), leg))
+    solids.append(Solid(box(-0.62, 0.62, 0.14, 0.22, 5.5, 8.5), apron))
+    solids.append(Solid(box(-0.62, 0.62, -0.22, -0.14, 5.5, 8.5), apron))
     return solids
 
 

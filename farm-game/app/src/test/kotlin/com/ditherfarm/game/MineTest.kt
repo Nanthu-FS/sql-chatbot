@@ -125,4 +125,56 @@ class MineTest {
         assertEquals(w.mine.cells.map { it.node }, back.mine.cells.map { it.node })
         assertEquals(w.mine.ladder, back.mine.ladder)
     }
+
+    /** Finds a floor (by re-entering) that has a cave-in marker. */
+    private fun World.floorWithMarker(floor: Int) {
+        repeat(200) { if (enterFloor(floor) && mine.markers.isNotEmpty()) return }
+        error("no marker after 200 visits")
+    }
+
+    @Test fun caveInCollapsesUnlessBraced() {
+        val w = fresh(14)
+        w.add("wood", 25); w.state.coins += 100; w.repairMine()
+        w.state.tools["pickaxe"] = 2
+        w.mine.gatesOpened += 10
+        w.floorWithMarker(12)
+        val m = w.mine
+        val marker = m.markers.first()
+        // Force a rumble and let it run out.
+        m.rumble = marker; m.rumbleEnd = w.state.minutes + 1
+        val energy = w.state.energy
+        w.advance(5.0)
+        assertTrue(w.events.any { it is WorldEvent.CaveIn })
+        assertTrue(marker !in m.markers)
+        assertEquals(energy - 5, w.state.energy, 0.5)
+        // A second marker (or a fresh floor) can be braced with three taps.
+        w.floorWithMarker(12)
+        val next = m.markers.first()
+        m.rumble = next; m.rumbleEnd = w.state.minutes + 100
+        repeat(BRACE_TAPS) { assertTrue(w.brace(next)) }
+        assertEquals(-1, m.rumble)
+        assertEquals(1L, w.state.stat("braced"))
+    }
+
+    @Test fun ropeLadderDropsAFloor() {
+        val w = fresh(12)
+        w.add("wood", 25); w.state.coins += 100; w.repairMine()
+        w.enterFloor(3)
+        assertFalse(w.useRopeLadder())
+        w.add("rope_ladder", 1)
+        assertTrue(w.useRopeLadder())
+        assertEquals(4, w.mine.floor)
+    }
+
+    @Test fun drillRigRunsOfflineOnCoal() {
+        val w = fresh(19)
+        w.state.coins += 10_000
+        w.add("stone", 40); w.add("brick", 10); w.add("beam", 6); w.add("iron_bar", 14); w.add("cooking_oil", 4); w.add("coal", 10)
+        assertTrue(w.build("drill_rig"))
+        assertEquals(5, w.addFuel("drill_rig", 5))
+        w.catchUp(3 * 3600.0)
+        // 5 coal = 5 batches of 4 stone plus one ore roll each.
+        assertEquals(25, w.trayCount("drill_rig"))
+        assertEquals(0.0, w.building("drill_rig").fuel, 0.01)
+    }
 }

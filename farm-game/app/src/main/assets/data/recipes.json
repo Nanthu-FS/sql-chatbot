@@ -1140,6 +1140,18 @@
    "unlock": 24,
    "coins": 500,
    "fuel": 0.0
+  },
+  {
+   "id": "drill",
+   "building": "drill_rig",
+   "inputs": {},
+   "outputs": {
+    "stone": 4
+   },
+   "minutes": 10,
+   "unlock": 19,
+   "fuel": 1.0,
+   "name": "Drilling"
   }
  ]
 }
