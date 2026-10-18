@@ -1,4 +1,244 @@
 {
+ "crops/cabbage_0": {
+  "ax": 9,
+  "ay": 5
+ },
+ "crops/cabbage_1": {
+  "ax": 10,
+  "ay": 10
+ },
+ "crops/cabbage_2": {
+  "ax": 15,
+  "ay": 15
+ },
+ "crops/cabbage_3": {
+  "ax": 17,
+  "ay": 20
+ },
+ "crops/cabbage_dead": {
+  "ax": 14,
+  "ay": 12
+ },
+ "crops/carrot_0": {
+  "ax": 7,
+  "ay": 6
+ },
+ "crops/carrot_1": {
+  "ax": 6,
+  "ay": 12
+ },
+ "crops/carrot_2": {
+  "ax": 11,
+  "ay": 23
+ },
+ "crops/carrot_3": {
+  "ax": 13,
+  "ay": 30
+ },
+ "crops/carrot_dead": {
+  "ax": 12,
+  "ay": 17
+ },
+ "crops/corn_0": {
+  "ax": 7,
+  "ay": 6
+ },
+ "crops/corn_1": {
+  "ax": 7,
+  "ay": 13
+ },
+ "crops/corn_2": {
+  "ax": 14,
+  "ay": 34
+ },
+ "crops/corn_3": {
+  "ax": 14,
+  "ay": 38
+ },
+ "crops/corn_dead": {
+  "ax": 13,
+  "ay": 28
+ },
+ "crops/eggplant_0": {
+  "ax": 9,
+  "ay": 5
+ },
+ "crops/eggplant_1": {
+  "ax": 8,
+  "ay": 11
+ },
+ "crops/eggplant_2": {
+  "ax": 14,
+  "ay": 28
+ },
+ "crops/eggplant_3": {
+  "ax": 14,
+  "ay": 32
+ },
+ "crops/eggplant_dead": {
+  "ax": 11,
+  "ay": 18
+ },
+ "crops/grapes_0": {
+  "ax": 15,
+  "ay": 36
+ },
+ "crops/grapes_1": {
+  "ax": 15,
+  "ay": 36
+ },
+ "crops/grapes_2": {
+  "ax": 15,
+  "ay": 36
+ },
+ "crops/grapes_3": {
+  "ax": 17,
+  "ay": 36
+ },
+ "crops/grapes_dead": {
+  "ax": 15,
+  "ay": 36
+ },
+ "crops/melon_0": {
+  "ax": 9,
+  "ay": 5
+ },
+ "crops/melon_1": {
+  "ax": 9,
+  "ay": 11
+ },
+ "crops/melon_2": {
+  "ax": 15,
+  "ay": 17
+ },
+ "crops/melon_3": {
+  "ax": 17,
+  "ay": 22
+ },
+ "crops/melon_dead": {
+  "ax": 14,
+  "ay": 11
+ },
+ "crops/potato_0": {
+  "ax": 7,
+  "ay": 6
+ },
+ "crops/potato_1": {
+  "ax": 9,
+  "ay": 13
+ },
+ "crops/potato_2": {
+  "ax": 14,
+  "ay": 20
+ },
+ "crops/potato_3": {
+  "ax": 15,
+  "ay": 27
+ },
+ "crops/potato_dead": {
+  "ax": 14,
+  "ay": 15
+ },
+ "crops/pumpkin_0": {
+  "ax": 9,
+  "ay": 5
+ },
+ "crops/pumpkin_1": {
+  "ax": 10,
+  "ay": 11
+ },
+ "crops/pumpkin_2": {
+  "ax": 16,
+  "ay": 20
+ },
+ "crops/pumpkin_3": {
+  "ax": 17,
+  "ay": 24
+ },
+ "crops/pumpkin_dead": {
+  "ax": 15,
+  "ay": 14
+ },
+ "crops/strawberry_0": {
+  "ax": 7,
+  "ay": 6
+ },
+ "crops/strawberry_1": {
+  "ax": 7,
+  "ay": 14
+ },
+ "crops/strawberry_2": {
+  "ax": 13,
+  "ay": 17
+ },
+ "crops/strawberry_3": {
+  "ax": 15,
+  "ay": 21
+ },
+ "crops/strawberry_dead": {
+  "ax": 13,
+  "ay": 14
+ },
+ "crops/sunflower_0": {
+  "ax": 9,
+  "ay": 5
+ },
+ "crops/sunflower_1": {
+  "ax": 8,
+  "ay": 12
+ },
+ "crops/sunflower_2": {
+  "ax": 12,
+  "ay": 30
+ },
+ "crops/sunflower_3": {
+  "ax": 13,
+  "ay": 38
+ },
+ "crops/sunflower_dead": {
+  "ax": 10,
+  "ay": 24
+ },
+ "crops/tomato_0": {
+  "ax": 7,
+  "ay": 6
+ },
+ "crops/tomato_1": {
+  "ax": 8,
+  "ay": 13
+ },
+ "crops/tomato_2": {
+  "ax": 13,
+  "ay": 28
+ },
+ "crops/tomato_3": {
+  "ax": 14,
+  "ay": 35
+ },
+ "crops/tomato_dead": {
+  "ax": 13,
+  "ay": 28
+ },
+ "crops/wheat_0": {
+  "ax": 7,
+  "ay": 6
+ },
+ "crops/wheat_1": {
+  "ax": 7,
+  "ay": 14
+ },
+ "crops/wheat_2": {
+  "ax": 12,
+  "ay": 33
+ },
+ "crops/wheat_3": {
+  "ax": 13,
+  "ay": 36
+ },
+ "crops/wheat_dead": {
+  "ax": 13,
+  "ay": 25
+ },
  "deco/bush": {
   "ax": 10,
   "ay": 12
@@ -77,6 +317,102 @@
  },
  "deco/tallgrass_b": {
   "ax": 7,
+  "ay": 9
+ },
+ "items_big/carrot": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/corn": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/potato": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_carrot": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_corn": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_potato": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_strawberry": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_tomato": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/seed_wheat": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/strawberry": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/tomato": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items_big/wheat": {
+  "ax": 16,
+  "ay": 16
+ },
+ "items/carrot": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/corn": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/potato": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_carrot": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_corn": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_potato": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_strawberry": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_tomato": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/seed_wheat": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/strawberry": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/tomato": {
+  "ax": 9,
+  "ay": 9
+ },
+ "items/wheat": {
+  "ax": 9,
   "ay": 9
  },
  "tiles/cursor": {
