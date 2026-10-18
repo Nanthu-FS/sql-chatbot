@@ -45,5 +45,9 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 - Crops come in normal, silver and gold quality; fertilizer and care raise quality and sell price.
 - Events: a travelling merchant (rare seeds and tools), one festival per season with a mini-goal, and a daily login gift.
 
+## Balance (from simulation)
+- The XP curve is shorter than the design table from level 4 on (`levels.json` is authoritative). A bot that checks in hourly, 8 times a day, reaches L5 on day 2, L10 by day 5 and about L18 after three weeks (`PacingTest`).
+- `ProgressionTest` checks that every item a building, recipe, tool, zone or gate needs can be obtained by the level it unlocks.
+
 ## Later (not v1)
 - Farm animals.
