@@ -125,6 +125,7 @@ class ScreenshotTest {
     @Test fun forest() {
         render("forest", seconds = 1f, setup = { g ->
             g.world.gainXp(130) // level 3: zone A open
+            g.world.events.clear()
             g.world.state.tools["axe"] = 1
             g.goTo(Nav.FOREST)
             g.engine.screen?.enter()

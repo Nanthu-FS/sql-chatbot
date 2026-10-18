@@ -62,6 +62,11 @@ class Hud(private val game: Game) {
         val maxE = world.maxEnergy
         ui.bar(190, y + 4, w - 218, (s.energy / maxE).toFloat(), if (s.energy < 20) "red" else "green", 6)
         g.text("${s.energy.toInt()}", w - 6, y + 3, Gfx.WHITE, align = 1)
+        if (ui.clickable("hud-energy", 174, y, w - 176, 14)) {
+            val food = world.quickEat()
+            if (food == null) toast(if (s.energy >= maxE - 1) "Energy is full" else "No food to eat. Crops restore energy.")
+            else { game.sfx.play("eat"); game.haptics.tick(); toast("Ate ${world.data.name(food)}") }
+        }
         // Calendar, clock and weather.
         val t = world.time
         val y2 = y + 16

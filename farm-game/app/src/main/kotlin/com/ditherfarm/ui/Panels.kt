@@ -244,24 +244,27 @@ class Panels(private val game: Game, private val hud: Hud) {
                 return@forEachIndexed
             }
             val v = world.data.villagers.firstOrNull { it.id == o.villager }
-            g.text((v?.name ?: o.villager).uppercase(), x + 14, cy + 5, Gfx.INK, outline = 0, shadow = false)
+            val portrait = "portraits/${o.villager}"
+            if (game.assets.has(portrait)) g.sprite(portrait, (x + 27).toFloat(), (cy + cardH / 2).toFloat())
+            val tx = x + 48
+            g.text((v?.name ?: o.villager).uppercase(), tx, cy + 5, Gfx.INK, outline = 0, shadow = false)
             val hearts = world.hearts(o.villager)
-            for (h in 0 until hearts) g.sprite("icons/heart", (x + 18 + g.textWidth(v?.name ?: "") + h * 8).toFloat(), (cy + 9).toFloat())
+            for (h in 0 until hearts) g.sprite("icons/heart", (tx + 4 + g.textWidth((v?.name ?: "").uppercase()) + h * 8).toFloat(), (cy + 9).toFloat())
             o.lines.forEachIndexed { li, line ->
-                val lx = x + 14 + li * 58
+                val lx = tx + li * 50
                 val have = world.count(line.item, anyQuality = true)
-                g.sprite(icon(line.item), (lx + 7).toFloat(), (cy + 28).toFloat())
-                g.text("$have/${line.qty}", lx + 16, cy + 24, if (have >= line.qty) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
+                g.sprite(icon(line.item), (lx + 7).toFloat(), (cy + 26).toFloat())
+                g.text("$have/${line.qty}", lx + 16, cy + 22, if (have >= line.qty) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
             }
-            g.sprite("icons/coin", (x + 16).toFloat(), (cy + 42).toFloat())
-            g.text("${o.coins}", x + 24, cy + 38, Gfx.INK, outline = 0, shadow = false)
-            g.sprite("icons/xp", (x + 34 + g.textWidth("${o.coins}")).toFloat(), (cy + 42).toFloat())
-            g.text("${o.xp}", x + 42 + g.textWidth("${o.coins}"), cy + 38, Gfx.INK, outline = 0, shadow = false)
+            g.sprite("icons/coin", (tx + 2).toFloat(), (cy + 42).toFloat())
+            g.text("${o.coins}", tx + 10, cy + 38, Gfx.INK, outline = 0, shadow = false)
+            g.sprite("icons/xp", (tx + 20 + g.textWidth("${o.coins}")).toFloat(), (cy + 42).toFloat())
+            g.text("${o.xp}", tx + 28 + g.textWidth("${o.coins}"), cy + 38, Gfx.INK, outline = 0, shadow = false)
             val can = world.canDeliver(i)
-            if (ui.button("deliver-$i", x + pw - 76, cy + 28, 50, 18, "SEND", style = if (can) "green" else "grey")) {
+            if (ui.button("deliver-$i", x + pw - 76, cy + 30, 50, 16, "SEND", style = if (can) "green" else "grey")) {
                 if (world.deliver(i)) { game.sfx.play("sell"); game.haptics.heavy() } else game.sfx.play("error")
             }
-            if (ui.button("trash-$i", x + pw - 24, cy + 28, 14, 18, null, "ui/x", "red")) world.trashOrder(i)
+            if (ui.button("trash-$i", x + pw - 24, cy + 30, 14, 16, null, "ui/x", "red")) world.trashOrder(i)
         }
         return true
     }

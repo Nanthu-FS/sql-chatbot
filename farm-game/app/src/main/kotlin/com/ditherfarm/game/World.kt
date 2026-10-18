@@ -217,6 +217,15 @@ class World(val data: GameData, val state: GameState) {
         return (crop.energy * Quality.of(key).mult * if (hasBonus("dish_energy")) 1.1 else 1.0).roundToInt()
     }
 
+    /** Eats the cheapest food (coins per energy) that fits under the energy cap; returns its key. */
+    fun quickEat(): String? {
+        val room = maxEnergy - state.energy
+        val key = state.inventory.keys
+            .filter { count(it) > 0 && foodEnergy(it) in 1..room.toInt() }
+            .minByOrNull { unitPrice(it).toDouble() / foodEnergy(it) } ?: return null
+        return if (eat(key)) key else null
+    }
+
     fun eat(key: String): Boolean {
         val e = foodEnergy(key)
         if (e <= 0 || count(key) <= 0) return false
