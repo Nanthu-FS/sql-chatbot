@@ -100,6 +100,11 @@ class Game(val host: Host) {
         if (w.state.truck.load.isNotEmpty()) parts += "the truck has ${w.truckLoad()} crops to sell"
         val hut = w.state.buildings["logging_hut"]?.tray?.values?.sum() ?: 0
         if (hut > 0) parts += "Logging Hut has $hut items"
+        // Farmhand work happened while away: no per-plot sounds and sparkles for it.
+        w.events.removeAll {
+            it is WorldEvent.WorkerActed || it is WorldEvent.Harvested || it is WorldEvent.Planted || it is WorldEvent.Watered ||
+                it is WorldEvent.Cleared || it is WorldEvent.HarvesterRan || it is WorldEvent.XpGained
+        }
         awaySummary = if (parts.isEmpty()) null else parts.joinToString(" - ")
     }
 

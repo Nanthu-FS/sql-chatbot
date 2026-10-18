@@ -26,7 +26,7 @@ object FarmMap {
     val WORKBENCH = 14 to 12
     val MARKET = 16 to 11
     val BUNKHOUSE = 10 to 15
-    val TRUCK = 13 to 13
+    val TRUCK = 15 to 15
     val MERCHANT = 17 to 13
 
     // Village along the Forest road.
@@ -45,7 +45,8 @@ object FarmMap {
     val PASTURE_C = 32..37
     val PASTURE_R = 12..16
 
-    val LANTERNS = listOf(12 to 14, 16 to 16, 13 to 19, 22 to 21, 27 to 26, 32 to 31, 19 to 12, 13 to 29)
+    /** Lanterns light the farmstead, the village and the main road's edge (never on the road: vehicles drive it). */
+    val LANTERNS = listOf(12 to 14, 14 to 17, 13 to 19, 23 to 21, 28 to 26, 33 to 31, 19 to 12, 13 to 29)
 
     fun u(c: Int, r: Int) = c - r
     fun v(c: Int, r: Int) = c + r
@@ -58,7 +59,8 @@ object FarmMap {
     fun isBank(c: Int, r: Int) = !isRiver(c, r) && (isRiver(c + 1, r) || isRiver(c - 1, r) || isRiver(c, r + 1) || isRiver(c, r - 1))
 
     /** Main road (c == r and c == r + 1) from the farmstead down off the map, for the truck. */
-    fun isMainRoad(c: Int, r: Int) = (c == r || c == r + 1) && c >= TRUCK.first
+    fun isMainRoad(c: Int, r: Int) = (c == r || c == r + 1) && c >= ROAD_START
+    const val ROAD_START = 13
     /** Road to the Mine, east, crossing the river on a bridge. */
     fun isMineRoad(c: Int, r: Int) = (r == 11 || r == 12) && c >= 18
     /** Road to the Forest, west, past the village. */

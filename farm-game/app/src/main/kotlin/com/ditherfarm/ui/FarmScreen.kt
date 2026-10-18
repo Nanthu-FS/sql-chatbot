@@ -30,6 +30,12 @@ import com.ditherfarm.game.placeFixture
 import com.ditherfarm.game.isBuilt
 import com.ditherfarm.game.jobProgress
 import com.ditherfarm.game.trayCount
+import com.ditherfarm.game.FARMHANDS
+import com.ditherfarm.game.TRUCK_CAP
+import com.ditherfarm.game.sendTruck
+import com.ditherfarm.game.truckLoad
+import com.ditherfarm.game.truckSecondsLeft
+import com.ditherfarm.game.truckValue
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.math.sin
@@ -99,6 +105,11 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     private enum class Action { PLANT, WATER, HARVEST, CLEAR }
 
+    /** Farmhands, crates, harvester and truck. */
+    private val crew = FarmCrew(game, this)
+    /** Plot of the farmhand job just announced: its result events stay quiet (the crew shows them). */
+    private var workerPlot = -1
+
     override fun terrain(c: Int, r: Int): Terrain = FarmMap.terrain(c, r) { cc, rr -> isYard(cc, rr) }
 
     /** Dirt under owned plots and one tile around them; the rest of the field stays meadow. */
@@ -132,7 +143,9 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         props.clear()
         waterTiles.clear()
         val reserved = HashSet<Long>()
-        listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE).forEach { reserved += key(it.first, it.second) }
+        listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
+        for (b in 0 until FieldLayout.BLOCKS) FarmCrew.crateTile(b).let { reserved += key(it.first, it.second) }
+        for (dc in 0..1) for (dr in 0..1) reserved += key(FarmMap.TRUCK.first + dc, FarmMap.TRUCK.second + dr)
         FarmMap.COTTAGES.forEach { reserved += key(it.first, it.second) }
         for (r in 0 until rows) for (c in 0 until cols) {
             if (FarmMap.isRiver(c, r)) waterTiles += c to r
@@ -200,6 +213,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     override fun update(dt: Float) {
         super.update(dt)
         chrome.update(dt)
+        crew.update(dt)
         if (infoTime > 0) infoTime -= dt
         if (flashTime > 0) flashTime -= dt
         weather.kind = when (world.state.weather) {
@@ -337,6 +351,13 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 else { game.gfx.sprite("tiles/shadow", x, y - 6); game.gfx.sprite("icons_big/merchant", x, y - 12) }
                 game.gfx.sprite("icons/coin", x + 10, y - 34 + sin(time * 4f) * 2f)
             }
+        }
+        crew.collect(list)
+        // The bunkhouse calls when a farmhand is looking for work.
+        if (FARMHANDS.any { it.unlockLevel <= world.level && it.id !in world.state.workers }) {
+            val (bc, br) = FarmMap.BUNKHOUSE
+            val x = Iso.x(bc, br).toFloat(); val y = Iso.centerY(bc, br).toFloat()
+            if (inView(x, y)) list.add(y + 1f) { game.gfx.sprite("icons/ready", x + 8, y - 40 + sin(time * 6f) * 1.5f) }
         }
         for ((v, item) in world.state.fixtures) {
             val (x, y) = vertexPos(v)
@@ -608,6 +629,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             return
         }
         if ((c to r) == MERCHANT_TILE && world.merchantHere()) { chrome.open(Chrome.Panel.MERCHANT); return }
+        if ((c to r) == FarmMap.BUNKHOUSE) { chrome.open(Chrome.Panel.WORKERS); return }
+        if (FarmCrew.isTruck(c, r)) { tapTruck(); return }
         machineAt(c, r)?.let { def ->
             when {
                 world.isBuilt(def.id) -> when {
@@ -639,6 +662,18 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             }
             null -> { infoPlot = i; infoTime = 2.2f; game.sfx.play("click", 0.4f) }
             else -> perform(i, a)
+        }
+    }
+
+    private fun tapTruck() {
+        val t = world.state.truck
+        val load = world.truckLoad()
+        when {
+            t.away -> world.truckSecondsLeft().toInt().let { hud.toast("The truck is in town: back in %d:%02d".format(it / 60, it % 60)) }
+            load == 0 -> hud.toast("The truck is empty. Farmhands fill it from fields set to Truck.")
+            else -> chrome.confirm("SEND TRUCK?", "Sell $load crops in town for about ${world.truckValue()} coins?" + if (load >= TRUCK_CAP) " It is full." else "", "SEND") {
+                world.sendTruck()
+            }
         }
     }
 
@@ -681,6 +716,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "settings" -> chrome.open(Chrome.Panel.SETTINGS); "workbench" -> chrome.open(Chrome.Panel.WORKBENCH)
             "tray" -> { trayOpen = true; seed = "carrot" }
             "place" -> startPlacing("copper_sprinkler")
+            "workers" -> chrome.open(Chrome.Panel.WORKERS)
             "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART)
             else -> if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
             else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))
@@ -704,7 +740,24 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     override fun onWorldEvent(e: WorldEvent) {
         if (e is WorldEvent.Built && e.building == "greenhouse") invalidateGround()
         if (chrome.onEvent(e)) return
+        // A farmhand's own harvest, planting, watering or clearing: the crew shows it when they get there.
+        val quiet = when (e) {
+            is WorldEvent.Harvested -> e.plot == workerPlot
+            is WorldEvent.Planted -> e.plot == workerPlot
+            is WorldEvent.Watered -> e.plot == workerPlot
+            is WorldEvent.Cleared -> e.plot == workerPlot
+            else -> false
+        }
+        if (quiet) { workerPlot = -1; return }
         when (e) {
+            is WorldEvent.WorkerActed -> { workerPlot = e.plot; crew.onActed(e.worker, e.plot, e.kind) }
+            is WorldEvent.HarvesterRan -> crew.onHarvesterRan()
+            is WorldEvent.TruckSent -> {
+                game.sfx.play("sell"); game.haptics.heavy()
+                hud.toast("The truck left with ${e.units} crops")
+                val (tc, tr) = FarmMap.TRUCK
+                fx.floatText("+${e.coins}", Iso.x(tc, tr).toFloat() + 8, Iso.centerY(tc, tr) - 40f, Gfx.GOLD, icon = "icons/coin")
+            }
             is WorldEvent.Harvested -> {
                 val (x, y) = plotCenter(e.plot)
                 game.sfx.play("harvest"); game.haptics.tick()

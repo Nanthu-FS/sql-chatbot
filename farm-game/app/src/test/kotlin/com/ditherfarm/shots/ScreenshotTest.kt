@@ -12,6 +12,12 @@ import com.ditherfarm.game.Weather
 import com.ditherfarm.game.addCartRule
 import com.ditherfarm.game.build
 import com.ditherfarm.game.buyBlock
+import com.ditherfarm.game.buildingsOn
+import com.ditherfarm.game.assign
+import com.ditherfarm.game.crate
+import com.ditherfarm.game.hire
+import com.ditherfarm.game.levelUpWorker
+import com.ditherfarm.game.worker
 import com.ditherfarm.game.chop
 import com.ditherfarm.game.enqueue
 import com.ditherfarm.game.enterFloor
@@ -357,5 +363,54 @@ class ScreenshotTest {
             for (b in 1..4) g.world.buyBlock(b)
             g.world.events.clear()
         }, size = 1500 to 820, zoom = 1)
+    }
+    private fun crewSetup(g: Game) {
+        toLevel(g, 13)
+        val w = g.world
+        w.state.coins += 100_000
+        w.buyBlock(1)
+        w.hire("rosa"); w.hire("milo"); w.hire("hana")
+        repeat(15) { w.levelUpWorker("rosa") }
+        w.assign("rosa", 0); w.assign("milo", 1)
+        w.state.fields[0].crop = "wheat"; w.state.fields[1].crop = "carrot"
+        w.add("seed_wheat", 20); w.add("carrot", 20)
+        for (i in com.ditherfarm.game.FieldLayout.plotsOf(0)) w.plot(i).apply { clear(); crop = "wheat"; growth = w.data.crop("wheat").growMinutes * if (i % 3 == 0) 1.0 else 0.5 }
+        w.crate(0)["wheat"] = 12
+        w.state.truck.load["carrot"] = 34
+        w.events.clear()
+    }
+
+    @Test fun farmCrew() {
+        val game = render("farm_crew", seconds = 3f, setup = { g ->
+            crewSetup(g)
+            g.farm.centerOnTile(16, 20)
+        }, zoom = 2)
+        assertTrue(game.world.state.stat("worker_actions") > 0)
+    }
+
+    @Test fun farmTruck() {
+        render("farm_truck", seconds = 0.5f, setup = { g ->
+            crewSetup(g)
+            g.farm.centerOnTile(14, 15)
+        }, zoom = 2)
+    }
+
+    @Test fun workersPanel() {
+        render("panel_workers", setup = { g ->
+            crewSetup(g)
+            g.world.worker("milo")!!.hungry = true
+            g.farm.showPanel("workers")
+        })
+    }
+    /** Scale check: the farmstead with every farm machine, farmhands and the truck, at play zoom. */
+    @Test fun farmScale() {
+        render("farm_scale", seconds = 0.5f, setup = { g ->
+            crewSetup(g)
+            val w = g.world
+            for (b in w.buildingsOn("farm")) w.state.buildings.getOrPut(b.id) { com.ditherfarm.game.BuildingState(b.id) }.built = true
+            w.assign("hana", -1)
+            w.events.clear()
+            g.farm.centerOnTile(13, 12)
+        }, size = 540 to 585, zoom = 2)
     }
 }

@@ -32,9 +32,10 @@ tasks.test {
     maxHeapSize = "2g"
     inputs.dir(app.resolve("main/assets"))
     systemProperty("robolectric.dependency.repo.url", "https://maven-central.storage-download.googleapis.com/maven2/")
-    systemProperty("assets.dir", app.resolve("main/assets").absolutePath)
+    // -Passets=<dir> renders the shots with another asset folder (art previews before they land).
+    systemProperty("assets.dir", (project.findProperty("assets") as String?) ?: app.resolve("main/assets").absolutePath)
     // gradle test -Pshots writes 3x PNGs of each rendered screen to build/shots.
-    if (project.hasProperty("shots")) systemProperty("shots.out", layout.buildDirectory.dir("shots").get().asFile.absolutePath)
+    if (project.hasProperty("shots")) systemProperty("shots.out", (project.findProperty("shotsOut") as String?) ?: layout.buildDirectory.dir("shots").get().asFile.absolutePath)
     testLogging {
         events("failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL

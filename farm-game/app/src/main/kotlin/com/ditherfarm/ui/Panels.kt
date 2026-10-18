@@ -64,6 +64,21 @@ import com.ditherfarm.game.crackGeode
 import com.ditherfarm.game.elevatorStops
 import com.ditherfarm.game.enterFloor
 import com.ditherfarm.game.gateBlocker
+import com.ditherfarm.game.CRATE_CAP
+import com.ditherfarm.game.FARMHANDS
+import com.ditherfarm.game.FieldLayout
+import com.ditherfarm.game.TRUCK_CAP
+import com.ditherfarm.game.WORKER_MAX_LEVEL
+import com.ditherfarm.game.assign
+import com.ditherfarm.game.blockOwned
+import com.ditherfarm.game.hire
+import com.ditherfarm.game.levelUpWorker
+import com.ditherfarm.game.truckLoad
+import com.ditherfarm.game.truckSecondsLeft
+import com.ditherfarm.game.workerAppetite
+import com.ditherfarm.game.workerLevelCost
+import com.ditherfarm.game.workerOn
+import com.ditherfarm.game.workerPlotsPerMinute
 
 /** Modal panels opened from the HUD. Each draw call returns false when the panel should close. */
 class Panels(private val game: Game, private val hud: Hud) {
@@ -815,12 +830,12 @@ class Panels(private val game: Game, private val hud: Hud) {
         val crops = world.data.crops.values.filter { it.unlockLevel <= world.level }.sortedBy { it.unlockLevel }
         val per = 6
         val rows = (crops.size + per - 1) / per
-        val (x, y, pw, ph) = frame("FIELD ${com.ditherfarm.game.FieldLayout.name(block)}", 104 + rows * 28, pw = 220).toList()
+        val (x, y, pw, ph) = frame("FIELD ${FieldLayout.name(block)}", 128 + rows * 28, pw = 220).toList()
         if (closeButton(x, y, pw)) return false
-        val plots = com.ditherfarm.game.FieldLayout.plotsOf(block)
+        val plots = FieldLayout.plotsOf(block)
         val ripe = plots.count { world.isReady(world.plot(it)) }
         val growing = plots.count { world.plot(it).crop != null } - ripe
-        g.text("$growing GROWING, $ripe RIPE", x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
+        g.text("$growing GROWING, $ripe RIPE, CRATE ${f.crate.values.sum()}/$CRATE_CAP", x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
         g.text("CROP FOR THIS FIELD", x + 10, y + 36, Gfx.GREY, outline = 0, shadow = false)
         crops.forEachIndexed { i, c ->
             val sx = x + 12 + (i % per) * 33
@@ -831,6 +846,60 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.text("HARVEST GOES TO", x + 10, ty, Gfx.GREY, outline = 0, shadow = false)
         if (ui.button("fdest-truck", x + 10, ty + 12, 96, 16, "TRUCK (SELL)", style = if (f.toTruck) "gold" else "wood")) f.toTruck = true
         if (ui.button("fdest-silo", x + pw - 106, ty + 12, 96, 16, "SILO (KEEP)", style = if (!f.toTruck) "gold" else "wood")) f.toTruck = false
+        g.text("FARMHAND", x + 10, ty + 40, Gfx.GREY, outline = 0, shadow = false)
+        val hand = world.workerOn(block)
+        val free = world.state.workers.values.filter { it.field < 0 }
+        val label = hand?.name?.uppercase() ?: if (world.state.workers.isEmpty()) "HIRE AT BUNKHOUSE" else "NOBODY"
+        if (ui.button("fhand", x + pw - 126, ty + 36, 116, 16, label, style = if (hand != null) "gold" else "wood", enabled = world.state.workers.isNotEmpty())) {
+            // Cycle: the current farmhand, then each free one, then nobody.
+            val next = if (hand == null) free.firstOrNull() else free.firstOrNull { it.id > hand.id } ?: free.firstOrNull()
+            hand?.let { world.assign(it.id, -1) }
+            if (next != null && next !== hand) world.assign(next.id, block)
+        }
+        return true
+    }
+
+    // ------------------------------------------------------------------ farmhands
+    /** The bunkhouse: hire farmhands, train them (faster, hungrier) and give each a field. */
+    fun workers(): Boolean {
+        val rowH = 44
+        val (x, y, pw, ph) = frame("FARMHANDS", 54 + FARMHANDS.size * rowH).toList()
+        if (closeButton(x, y, pw)) return false
+        val t = world.state.truck
+        val truck = if (t.away) world.truckSecondsLeft().toInt().let { "TRUCK IN TOWN, BACK IN %d:%02d".format(it / 60, it % 60) }
+            else "TRUCK ${world.truckLoad()}/$TRUCK_CAP" + if (t.lastTrip > 0) "  LAST TRIP ${t.lastTrip} COINS" else ""
+        g.text(truck, x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
+        FARMHANDS.forEachIndexed { i, d ->
+            val ry = y + 34 + i * rowH
+            g.slice9("ui/slot", x + 8, ry, x + pw - 8, ry + rowH - 4, 4)
+            val ws = world.state.workers[d.id]
+            val locked = ws == null && world.level < d.unlockLevel
+            val portrait = "portraits/fh_${d.id}"
+            if (game.assets.has(portrait)) g.sprite(portrait, (x + 27).toFloat(), (ry + 20).toFloat(), if (locked) 90 else 255)
+            val tx = x + 48
+            val bx = x + pw - 72
+            if (ws == null) {
+                g.text(d.name.uppercase(), tx, ry + 4, if (locked) Gfx.GREY else Gfx.INK, outline = 0, shadow = false)
+                if (locked) g.text("LOOKING FOR WORK AT L${d.unlockLevel}", tx, ry + 16, Gfx.GREY, outline = 0, shadow = false)
+                else {
+                    g.text("WANTS ${d.hireCost} COINS", tx, ry + 16, Gfx.GREY, outline = 0, shadow = false)
+                    if (ui.button("hire-${d.id}", bx, ry + 11, 62, 16, "HIRE", style = "green", enabled = world.state.coins >= d.hireCost)) world.hire(d.id)
+                }
+                return@forEachIndexed
+            }
+            g.text("${ws.name.uppercase()}  LV ${ws.level}", tx, ry + 4, Gfx.INK, outline = 0, shadow = false)
+            if (ws.hungry) g.text("HUNGRY - NEEDS SILO CROPS", tx, ry + 15, Gfx.RED, outline = 0, shadow = false)
+            else g.text("${workerPlotsPerMinute(ws.level)} JOBS/MIN, EATS ${workerAppetite(ws.level)}/DAY", tx, ry + 15, Gfx.GREY, outline = 0, shadow = false)
+            g.text(if (ws.field >= 0) "WORKS FIELD ${FieldLayout.name(ws.field)}" else "RESTING", tx, ry + 26, Gfx.INK, outline = 0, shadow = false)
+            if (ui.button("wfield-${d.id}", bx, ry + 2, 62, 16, if (ws.field >= 0) "FIELD ${FieldLayout.name(ws.field)}" else "NO FIELD", style = "wood")) {
+                val options = listOf(-1) + (0 until FieldLayout.BLOCKS).filter { b -> world.blockOwned(b) && world.workerOn(b).let { it == null || it === ws } }
+                world.assign(d.id, options[(options.indexOf(ws.field) + 1) % options.size])
+            }
+            val max = ws.level >= WORKER_MAX_LEVEL
+            val cost = workerLevelCost(ws.level)
+            if (ui.button("wlevel-${d.id}", bx, ry + 20, 62, 16, if (max) "MAX" else Ui.compact(cost), if (max) null else "icons/level", "gold",
+                    enabled = !max && world.state.coins >= cost)) world.levelUpWorker(d.id)
+        }
         return true
     }
 }

@@ -136,13 +136,16 @@ private fun World.workStep(w: WorkerState): Boolean {
         ?: plots.firstOrNull { val p = plot(it); p.crop != null && !p.needsClearing && !p.watered && !isReady(p) }?.let { it to WorkKind.WATER }
         ?: return false
     val (i, kind) = target
+    // Announced first so screens can tell the farmhand's harvest from the player's.
+    val acted = WorldEvent.WorkerActed(w.id, i, kind)
+    events += acted
     val done = when (kind) {
         WorkKind.HARVEST -> harvest(i, auto = true, into = crate)
         WorkKind.CLEAR -> clearPlot(i)
         WorkKind.PLANT -> plant(i, crop!!)
         WorkKind.WATER -> water(i)
     }
-    if (done) { w.lastPlot = i; state.bump("worker_actions"); events += WorldEvent.WorkerActed(w.id, i, kind) }
+    if (done) { w.lastPlot = i; state.bump("worker_actions") } else events.remove(acted)
     return done
 }
 
