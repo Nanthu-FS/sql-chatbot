@@ -5,7 +5,9 @@ each screen pixel. Rendering with the ray grid stretched by 1/s draws the same m
 smaller with fresh, crisp pixels (not a downscale). Screen-space touches some sprites paint after
 the render (sails, smoke, leaves) are drawn on their own layer and scaled about the pivot.
 
-  python3 scaled.py <out_art_dir> [name ...]    renders SCALE entries (all, or the names given)
+  python3 scaled.py <out_art_dir> [name|module ...]    renders SCALE entries (all, or those named)
+
+generate.mjs runs it after the pixel groups it draws, so the art always lands at this scale.
 
 SCALE is the agreed size of each object relative to its modelled size; see Docs/DECISIONS.md
 ("World scale").
@@ -144,7 +146,9 @@ def jobs(name):
 
 def main():
     out = sys.argv[1]
-    names = sys.argv[2:] or list(SCALE)
+    # Arguments are sprite names or module names (every entry drawn by that module).
+    args = sys.argv[2:]
+    names = [n for n, (m, _, _) in SCALE.items() if not args or n in args or m in args]
     pivots = {}
     for name in names:
         _, folder, s = SCALE[name]

@@ -65,6 +65,16 @@ for (const group of PIXEL.filter(pick)) {
   console.log(`${group}: ${Object.keys(pivots).length} sprites`);
 }
 
+// World scale: re-render the objects listed in scaled.py at their agreed size (overwrites the
+// full-size renders of the groups just drawn).
+const scaledGroups = PIXEL.filter(pick).filter((g) => ['buildings', 'machines_farm', 'machines_wild', 'village'].includes(g));
+if (scaledGroups.length > 0) {
+  const out = execFileSync('python3', ['-I', path.join(here, 'scaled.py'), artDir, ...scaledGroups], { encoding: 'utf8' });
+  const pivots = JSON.parse(out);
+  Object.assign(manifest, pivots);
+  console.log(`world scale: ${Object.keys(pivots).length} sprites`);
+}
+
 const sorted = Object.fromEntries(Object.entries(manifest).sort(([a], [b]) => a.localeCompare(b)));
 fs.writeFileSync(manifestFile, JSON.stringify(sorted, null, 1) + '\n');
 

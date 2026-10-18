@@ -149,6 +149,10 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     fun inView(wx: Float, wy: Float, pad: Float = 40f): Boolean =
         wx >= cam.x - pad && wx <= cam.x + cam.viewWidth + pad && wy >= cam.y - pad && wy <= cam.y + cam.viewHeight + pad * 2
 
+    /** Height of [sprite] above its pivot, for bubbles over it; [default] if the art is missing. */
+    fun spriteTop(sprite: String, default: Int = 30): Float =
+        if (game.assets.has(sprite)) game.assets[sprite].ay.toFloat() else default.toFloat()
+
     /** World pixel → buffer pixel, e.g. to anchor a HUD bubble over a tile. */
     fun toBufferX(wx: Float) = (wx - cam.x) * cam.zoom
     fun toBufferY(wy: Float) = (wy - cam.y) * cam.zoom

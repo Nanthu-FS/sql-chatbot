@@ -1,5 +1,6 @@
-"""Five named farmhands (pixel-direct): folder "people" holds their 14x22 body frames and folder
-"portraits" their 30x30 busts (fh_<name>). Names: rosa, milo, hana, otis, wren.
+"""Five named farmhands (pixel-direct): folder "people" holds their body frames (drawn by
+_farmhands.py, style D3) and folder "portraits" their 30x30 busts (fh_<name>). Names: rosa, milo,
+hana, otis, wren. The 14x22 body templates below are the first style, kept for reference.
 
 Body frames, pivot = the point between the feet on the ground (+ pad), as in deco.py:
   se_idle, se_walk0, se_walk1      facing the viewer, walking down-right (legs alternate)
@@ -722,11 +723,11 @@ def main():
     art = sys.argv[1]
     sp = Sprites(art, "people")
     pt = Sprites(art, "portraits")
-    for name, p in PEOPLE.items():
-        lk = look(p)
-        for view, pose, phase, suffix in FRAMES:
-            im, pad = paint(frame(lk, view, pose, phase), lk)
-            sp.save(f"{name}_{view}_{suffix}", im, W // 2 + pad, (H - 1) + pad)
+    import _farmhands as F
+    for name in PEOPLE:
+        for view, pose, phase, suffix in F.FRAMES:
+            im, pad, h = F.sprite(name, view, pose, phase)
+            sp.save(f"{name}_{view}_{suffix}", im, F.CANVAS_W // 2 + pad, (h - 1) + pad)
         im, pad = paint_portrait(PORTRAITS[name])
         pt.save(f"fh_{name}", im, 15 + pad, 15 + pad)
     print(json.dumps({**sp.pivots, **pt.pivots}))

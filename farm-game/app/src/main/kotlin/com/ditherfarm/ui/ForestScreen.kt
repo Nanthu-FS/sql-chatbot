@@ -201,8 +201,8 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         val g = game.gfx
         if (world.isBuilt(def.id)) {
             chrome.panels.drawBuilding(def.id, x, y, world.time.season == Season.WINTER)
-            if (world.trayCount(def.id) > 0) g.sprite("icons/ready", x + 10, y - 30 + sin(time * 5f) * 2f)
-            else if (world.jobProgress(def.id) > 0f) g.sprite("fx/sparkle", x + 10, y - 26, (120 + sin(time * 3f) * 80).toInt())
+            if (world.trayCount(def.id) > 0) g.sprite("icons/ready", x + 10, y - spriteTop("buildings/${def.id}") - 2 + sin(time * 5f) * 2f)
+            else if (world.jobProgress(def.id) > 0f) g.sprite("fx/sparkle", x + 10, y - spriteTop("buildings/${def.id}") + 2, (120 + sin(time * 3f) * 80).toInt())
         } else if (def.unlockLevel <= world.level) {
             g.sprite("icons_big/build", x, y - 10 + sin(time * 3f) * 1.5f, 200)
         }

@@ -176,18 +176,16 @@ def centred(s, w=21):
     return s.center(w, ".")
 
 
+# A farmhand is about 25px tall, so the scarecrow (on its pole) stands a little taller: 17x20 map.
 SCARE = [
-    centred("hhhhhhh"), centred("hHhhhhd"), centred("hhhhhhd"), centred("bbbbbbb"),    # hat
-    centred("LLLLLLLLLLLLLLL"), centred("BBBBBBBBBBBBBBBBB"), centred("ddddddddddddddddd"),   # brim
-    centred("fffffffff"), centred("ffefffeff"), centred("ffffffffF"),                 # burlap head
-    centred("fffxxxfff"), centred("ffffffffF"), centred("FFFFFFFFF"),
-    "ss" + "rrrr" + "rrrrrrrrr" + "rrrr" + "ss",                                       # outstretched arms
-    "kk" + "RRRR" + "rrrrrrrrr" + "RRRR" + "kk",
-    centred("rrrrrrrrR"), centred("rxxxxrrrR"), centred("rpppprrrR"),                # patched shirt
-    centred("rxxxxrrrR"), centred("rrrrrnnnR"), centred("kkkkkkkkk"),
-    centred("sSsSsSsSsSsSsSs"), centred("k" + "sSsSsSsSsSsSsSs" + "k"),              # straw skirt
-    centred("sSsknNnwnNnksSs"), centred("ksSnNnwnNnSsk"), centred("sSsnNnwnNnsSs"),  # legs and pole
-    centred("nNnwnNn"), centred("nNnwnNn"), centred("xxxwxxx"), centred("w"),
+    centred("hhhhh", 17), centred("hHhhd", 17), centred("bbbbb", 17),                # hat
+    centred("LLLLLLLLLLL", 17), centred("ddddddddddd", 17),                           # brim
+    centred("fffffff", 17), centred("fefffef", 17), centred("ffxxxfF", 17), centred("FFFFFFF", 17),  # burlap head
+    "ss" + "rrr" + "rrrrrrr" + "rrr" + "ss",                                          # outstretched arms
+    "kk" + "RRR" + "rrrrrrr" + "RRR" + "kk",
+    centred("rpprrrR", 17), centred("rxxxrrR", 17), centred("kkkkkkk", 17),           # patched shirt, rope belt
+    centred("sSsSsSsSs", 17), centred("sSknwnkSs", 17),                               # straw skirt
+    centred("nNnwnNn", 17), centred("nNnwnNn", 17), centred("xwx", 17), centred("w", 17),  # legs and pole
 ]
 SCARE_KEY = {
     "h": "brown", "H": "brown_l", "d": "brown_d", "b": "red_d", "L": "brown_l", "B": "brown",
@@ -196,7 +194,7 @@ SCARE_KEY = {
     "s": "amber", "S": "yellow", "k": "clay", "w": "brown",
     "W": "white", "G": "grey_l",
 }
-SNOW_ROWS = set(range(0, 7)) | {13}      # hat, brim and the top of the arms
+SNOW_ROWS = set(range(0, 5)) | {9}       # hat, brim and the top of the arms
 
 
 def snow_map(rows):
@@ -222,10 +220,10 @@ def mound(a, winter):
 
 
 def scarecrow(a, winter):
-    assert all(len(r) == 21 for r in SCARE), "scarecrow rows must be 21 wide"
+    assert all(len(r) == 17 for r in SCARE), "scarecrow rows must be 17 wide"
     mound(a, winter)
     rows = snow_map(SCARE) if winter else SCARE
-    a.blit(rows, SCARE_KEY, 10, 30)                      # pivot = mound centre (map col 10, row 30)
+    a.blit(rows, SCARE_KEY, 8, len(SCARE) - 1)          # pivot = mound centre (the pole's foot)
 
 
 # ---------------------------------------------------------------- lightning rod (~12x41)

@@ -169,17 +169,16 @@ internal class FarmCrew(private val game: Game, private val screen: FarmScreen) 
             list.add(y) {
                 val full = crate > 0
                 g.sprite(if (full) "deco/crate_full" else "deco/crate_empty", x, y)
-                if (full) g.text(if (crate >= com.ditherfarm.game.CRATE_CAP) "FULL" else "$crate", x.toInt(), (y - 24).toInt(), if (crate >= com.ditherfarm.game.CRATE_CAP) Gfx.RED else Gfx.WHITE, align = 0)
+                if (full) g.text(if (crate >= com.ditherfarm.game.CRATE_CAP) "FULL" else "$crate", x.toInt(), (y - screen.spriteTop("deco/crate_full") - 9).toInt(), if (crate >= com.ditherfarm.game.CRATE_CAP) Gfx.RED else Gfx.WHITE, align = 0)
             }
         }
         for ((id, w) in walkers) {
             val ws = world.state.workers[id] ?: continue
             val x = wx(w); val y = wy(w)
             if (!screen.inView(x, y, 32f)) continue
-            // Plots sort by their top corner: stand between this plot's crop and the next row's.
-            list.add(y - Iso.HH + 1f) {
+            list.add(y + 0.2f) {
                 g.sprite(frame(id, w), x, y, flipX = flipped(w))
-                if (ws.hungry) g.sprite("icons/energy_food", x, y - 32 + sin(time * 4f) * 1.5f)
+                if (ws.hungry) g.sprite("icons/energy_food", x, y - screen.spriteTop("people/${id}_se_idle") - 6 + sin(time * 4f) * 1.5f)
             }
         }
         drawTruck(list)
@@ -231,8 +230,9 @@ internal class FarmCrew(private val game: Game, private val screen: FarmScreen) 
                 g.sprite("vehicles/truck_load", x, y)
                 val full = load >= TRUCK_CAP
                 val bob = sin(time * 4f) * 1.5f
-                g.sprite("icons/sell", x + 2, y - 30 + bob)
-                g.text(if (full) "FULL" else "$load", x.toInt() + 2, (y - 46 + bob).toInt(), if (full) Gfx.RED else Gfx.GOLD, align = 0)
+                val top = screen.spriteTop("vehicles/truck_se_0")
+                g.sprite("icons/sell", x + 2, y - top - 4 + bob)
+                g.text(if (full) "FULL" else "$load", x.toInt() + 2, (y - top - 20 + bob).toInt(), if (full) Gfx.RED else Gfx.GOLD, align = 0)
             }
         }
     }

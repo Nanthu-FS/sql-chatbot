@@ -1,0 +1,50 @@
+package com.ditherfarm.art
+
+import com.ditherfarm.shots.ScreenshotTest
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.io.File
+import javax.imageio.ImageIO
+
+/**
+ * World scale check (Docs/DECISIONS.md, "World scale"): every world sprite must stay inside the
+ * height band of its kind, measured against a cottage (about 44px). Catches art that comes out
+ * too big or too small before anyone has to spot it in the game. Heights include the 2px pad.
+ */
+class ScaleTest {
+    private class Band(pattern: String, val min: Int, val max: Int, val why: String) {
+        val regex = Regex(pattern)
+    }
+
+    private val bands = listOf(
+        Band("people/", 22, 27, "a farmhand is a little over half a cottage"),
+        Band("buildings/cottage_", 38, 48, "the reference house"),
+        Band("buildings/barn", 60, 72, "the barn is the biggest building"),
+        Band("buildings/(silo|windmill)", 50, 66, "tall farm buildings"),
+        Band("buildings/drill_rig", 36, 52, "a derrick, taller than a cottage"),
+        Band("buildings/(market|sawmill|logging_hut|tree_nursery|bakery_oven|furnace|charcoal_kiln)$", 20, 40, "sheds and big machines stay under the cottage"),
+        Band("buildings/(well|orders|market_cart|merchant_cart|preserves_jar|fruit_press|seed_maker|oil_press|wood_chipper)$", 16, 34, "people-sized machines"),
+        Band("buildings/(workbench|compost_bin|beehive|geode_anvil|syrup_kettle)$", 12, 26, "waist-high things"),
+        Band("vehicles/(truck|harvester)_[ns]e_", 14, 26, "vehicles: about a farmhand tall"),
+        Band("deco/(crate_|hay_bale|trough)", 8, 22, "knee-high props"),
+        Band("deco/scarecrow", 22, 32, "a scarecrow on its pole, a bit taller than a farmhand"),
+        Band("crops/", 4, 34, "crops fill their plot but stay under a farmhand and a half"),
+    )
+
+    @Test fun worldSpritesStayInScale() {
+        val art = File(ScreenshotTest.assetRoot(), "art")
+        val bad = ArrayList<String>()
+        var checked = 0
+        for (dir in listOf("people", "buildings", "vehicles", "deco", "crops")) {
+            for (f in File(art, dir).listFiles { f -> f.name.endsWith(".png") }.orEmpty()) {
+                val name = "$dir/" + f.name.removeSuffix(".png").removeSuffix("_snow")
+                val band = bands.firstOrNull { it.regex.containsMatchIn(name) } ?: continue
+                val h = ImageIO.read(f).height
+                checked++
+                if (h !in band.min..band.max) bad += "$name is ${h}px tall, wants ${band.min}-${band.max} (${band.why})"
+            }
+        }
+        assertTrue("nothing checked", checked > 100)
+        assertTrue("Out of scale:\n" + bad.joinToString("\n"), bad.isEmpty())
+    }
+}

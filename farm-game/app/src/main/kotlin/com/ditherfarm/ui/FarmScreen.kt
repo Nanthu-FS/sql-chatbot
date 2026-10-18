@@ -235,8 +235,12 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val x = Iso.x(c, r).toFloat(); val y = Iso.y(c, r).toFloat()
             if (!inView(x, y)) return@forEachIndexed
             val p = world.plot(i)
-            if (p.owned) g.sprite("tiles/shadow", x + 2f, y + 3f)
-            else if (FieldLayout.isGreenhouse(i)) {
+            if (p.owned) {
+                // Soil is ground: drawn before anything stands on it, so farmhands never sink into it.
+                g.sprite("tiles/shadow", x + 2f, y + 3f)
+                g.sprite(if (p.watered && p.crop != null) "tiles/soil_wet" else "tiles/soil_dry", x, y)
+                if (i == flashPlot && flashTime > 0) g.sprite("tiles/cursor_ok", x, y)
+            } else if (FieldLayout.isGreenhouse(i)) {
                 if (world.level >= GREENHOUSE_LEVEL) g.sprite("tiles/cursor", x, y, (sin(time * 3f) * 30 + 70).toInt())
             } else if (world.level >= FieldLayout.UNLOCK[FieldLayout.blockOf(i)]) {
                 // A field for sale you can afford to unlock: pulse its outline.
@@ -349,7 +353,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             list.add(y) {
                 if (game.assets.has("buildings/merchant_cart")) game.gfx.sprite("buildings/merchant_cart", x, y)
                 else { game.gfx.sprite("tiles/shadow", x, y - 6); game.gfx.sprite("icons_big/merchant", x, y - 12) }
-                game.gfx.sprite("icons/coin", x + 10, y - 34 + sin(time * 4f) * 2f)
+                game.gfx.sprite("icons/coin", x + 10, y - spriteTop("buildings/merchant_cart") - 2 + sin(time * 4f) * 2f)
             }
         }
         crew.collect(list)
@@ -405,7 +409,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 val bob = if (b == Building.ORDERS && world.state.orders.indices.any { world.canDeliver(it) }) sin(time * 6f) * 1.5f else 0f
                 if (game.assets.has(art)) {
                     game.gfx.sprite(if (winter && game.assets.has("${art}_snow")) "${art}_snow" else art, x, y)
-                    if (bob != 0f) game.gfx.sprite("icons/ready", x + 10, y - 40 + bob)
+                    if (bob != 0f) game.gfx.sprite("icons/ready", x + 10, y - spriteTop(art) - 4 + bob)
                 } else {
                     game.gfx.sprite("tiles/shadow", x, y - 6)
                     game.gfx.sprite(b.sprite, x, y - 12 + bob)
@@ -423,8 +427,9 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 if (built) {
                     chrome.panels.drawBuilding(def.id, x, y, world.time.season == Season.WINTER)
                     val ready = world.trayCount(def.id)
-                    if (ready > 0) g.sprite("icons/ready", x + 10, y - 30 + sin(time * 5f) * 2f)
-                    else if (world.jobProgress(def.id) > 0f) g.sprite("fx/sparkle", x + 10, y - 26, (120 + sin(time * 3f) * 80).toInt())
+                    val top = spriteTop("buildings/${def.id}")
+                    if (ready > 0) g.sprite("icons/ready", x + 10, y - top - 2 + sin(time * 5f) * 2f)
+                    else if (world.jobProgress(def.id) > 0f) g.sprite("fx/sparkle", x + 10, y - top + 2, (120 + sin(time * 3f) * 80).toInt())
                 } else {
                     g.sprite("tiles/cursor", Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat(), (sin(time * 4f) * 50 + 140).toInt())
                     g.sprite("icons_big/build", x, y - 10 + sin(time * 3f) * 1.5f, 200)
@@ -438,7 +443,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val top = Iso.y(c, r).toFloat()
             val cy = Iso.centerY(c, r).toFloat()
             if (!inView(x, top)) return@forEachIndexed
-            list.add(top + 0.5f) { drawPlot(i, p, x, top, cy) }
+            if (p.crop != null) list.add(cy) { drawPlot(i, p, x, cy) }
         }
     }
 
@@ -450,10 +455,9 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         return world.plot(i).owned
     }
 
-    private fun drawPlot(i: Int, p: PlotState, x: Float, top: Float, cy: Float) {
+    /** The crop on plot [i] and its status marks; sorted by its base like everything standing. */
+    private fun drawPlot(i: Int, p: PlotState, x: Float, cy: Float) {
         val g = game.gfx
-        g.sprite(if (p.watered && p.crop != null) "tiles/soil_wet" else "tiles/soil_dry", x, top)
-        if (i == flashPlot && flashTime > 0) g.sprite("tiles/cursor_ok", x, top)
         val crop = p.crop
         if (crop != null) {
             val sprite = if (p.needsClearing) "crops/${crop}_dead" else "crops/${crop}_${world.stage(p)}"

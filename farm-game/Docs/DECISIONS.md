@@ -56,6 +56,8 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 - **Harvester and truck:** workers stack the harvest in crates at the field edge. A harvester cart collects crates and loads the truck (Truck fields) or the Silo (Silo fields). The truck waits by the barn; tap it to send it off the map to sell its load, and it returns with the coins.
 - **Skills:** 1 skill point per level across five branches (Green Thumb, Woodsman, Miner, Trader, Tinkerer), plus craftable one-shot tonics. Respec at the Workbench for coins (price grows with level).
 - **Scale:** crops are redrawn smaller (about two thirds) so buildings tower over the fields.
+- **World scale (round 1b):** the cottage (about 44px) is the yardstick. Farmhands are about 25px, vehicles about a farmhand tall, waist-high things (workbench, compost bin, beehive, anvil, kettle) at most 26px, people-sized machines at most 34px, sheds and big machines stay under the cottage; only the barn, silo, windmill and drill rig are taller. Buildings, machines and vehicles are re-rendered at their size by `Tools/ArtGen/scaled.py` (part of `generate.mjs`), and `ScaleTest` fails the build if a sprite leaves its band. The `farm_scale` screenshot shows the farmstead for a visual check.
+- **Farmhand look:** style D3 "tall" (11x21 body, hand-placed pixels: collar, buttons, pocket, knee patches, boot soles), picked from five options (`Docs/farmhand_styles.png`).
 - **Audio:** sound effects vary in pitch and have variants; ambient loops (birds, wind, crickets, forest, mine drips); weather ambience (rain, thunder, snowy wind); lo-fi, very calm background music (replaces the earlier "SFX only"), with toggles.
 
 ## Later (not v1)
