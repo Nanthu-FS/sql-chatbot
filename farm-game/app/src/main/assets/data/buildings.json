@@ -372,6 +372,20 @@
    },
    "recipes": [],
    "queue": 1
+  },
+  {
+   "id": "market_cart",
+   "name": "Market Cart",
+   "screen": "farm",
+   "unlock": 13,
+   "cost": {
+    "coins": 1200,
+    "plank": 20,
+    "iron_bar": 6,
+    "copper_bar": 4
+   },
+   "recipes": [],
+   "queue": 1
   }
  ]
 }

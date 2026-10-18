@@ -21,7 +21,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART }
 
     var panel = Panel.NONE
         private set
@@ -117,6 +117,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.GOALS -> panels.goals()
             Panel.GIFT -> panels.gift()
             Panel.MERCHANT -> panels.merchant()
+            Panel.CART -> panels.cart()
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -161,6 +162,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.AchievementClaimed, is WorldEvent.PageClaimed, is WorldEvent.GiftClaimed, is WorldEvent.FestivalWon -> { game.sfx.play("coin"); game.haptics.heavy() }
             is WorldEvent.FestivalStarted -> { game.sfx.play("order"); hud.toast("The ${e.name} has begun!") }
             is WorldEvent.Bought -> { game.sfx.play("buy"); game.haptics.tick() }
+            is WorldEvent.CartSold -> hud.toast("Market Cart sold ${e.units} for ${e.coins} coins")
             is WorldEvent.ShedRan -> hud.toast(if (e.shed == "harvest_shed") "Harvest Shed picked ${e.plots} plots" else "Planter Shed sowed ${e.plots} plots")
             is WorldEvent.Collected -> { game.sfx.play("pickup"); game.haptics.tick() }
             is WorldEvent.ZoneUnlocked -> { game.sfx.play("unlock"); hud.toast("A new part of the forest is open!") }

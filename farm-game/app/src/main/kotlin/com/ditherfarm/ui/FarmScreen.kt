@@ -546,6 +546,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 world.isBuilt(def.id) -> when {
                     world.trayCount(def.id) > 0 -> world.collect(def.id)
                     def.id.endsWith("_shed") -> chrome.open(Chrome.Panel.SHED, def.id)
+                    def.id == "market_cart" -> chrome.open(Chrome.Panel.CART)
                     else -> chrome.open(Chrome.Panel.MACHINE, def.id)
                 }
                 def.unlockLevel <= world.level -> chrome.open(Chrome.Panel.BUILD, def.id)
@@ -605,7 +606,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "settings" -> chrome.open(Chrome.Panel.SETTINGS); "workbench" -> chrome.open(Chrome.Panel.WORKBENCH)
             "tray" -> { trayOpen = true; seed = "carrot" }
             "place" -> startPlacing("copper_sprinkler")
-            "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT)
+            "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART)
             else -> if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
             else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))
         }

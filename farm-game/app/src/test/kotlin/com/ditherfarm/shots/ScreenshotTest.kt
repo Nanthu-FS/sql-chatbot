@@ -9,6 +9,7 @@ import com.ditherfarm.engine.FileAssets
 import com.ditherfarm.game.GameTime
 import com.ditherfarm.game.Season
 import com.ditherfarm.game.Weather
+import com.ditherfarm.game.addCartRule
 import com.ditherfarm.game.build
 import com.ditherfarm.game.chop
 import com.ditherfarm.game.enqueue
@@ -303,6 +304,19 @@ class ScreenshotTest {
             g.world.advance(com.ditherfarm.game.Time.gameMinutesToRealSeconds(day * 1440.0 + 60))
             g.world.events.clear()
             g.farm.showPanel("merchant")
+        })
+    }
+
+    @Test fun cartPanel() {
+        render("panel_cart", setup = { g ->
+            toLevel(g, 13)
+            val w = g.world
+            w.state.coins += 5000; w.add("plank", 20); w.add("iron_bar", 6); w.add("copper_bar", 4)
+            w.build("market_cart")
+            w.add("carrot", 30); w.add("wood", 40)
+            w.addCartRule("carrot"); w.addCartRule("wood"); w.state.cartRules[1].cond = 3
+            w.events.clear()
+            g.farm.showPanel("cart")
         })
     }
 }

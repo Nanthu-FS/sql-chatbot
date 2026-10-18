@@ -56,6 +56,10 @@ import com.ditherfarm.game.pageClaimable
 import com.ditherfarm.game.pageEntries
 import com.ditherfarm.game.pageProgress
 import com.ditherfarm.game.target
+import com.ditherfarm.game.CART_DAILY_CAP
+import com.ditherfarm.game.CART_MAX_RULES
+import com.ditherfarm.game.CartRule
+import com.ditherfarm.game.addCartRule
 import com.ditherfarm.game.crackBlocker
 import com.ditherfarm.game.crackGeode
 import com.ditherfarm.game.elevatorStops
@@ -762,6 +766,49 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (world.merchantBought(i)) g.text("SOLD", cx + cw - 30, cy + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
             else if (ui.button("buy-$i", cx + cw - 48, cy + 20, 40, 14, "BUY", style = if (world.state.coins >= o.price) "green" else "grey")) world.buyFromMerchant(i)
         }
+        return true
+    }
+
+    // ------------------------------------------------------------------ market cart
+    private var cartPicking = false
+
+    /** Market Cart rules: what to sell, at which price, and how many to keep. */
+    fun cart(): Boolean {
+        val rules = world.state.cartRules
+        val pickable = world.state.inventory.keys.map { baseId(it) }.distinct().filter { world.data.item(it).price > 0 && rules.none { r -> r.item == it } }.sorted()
+        val per = (game.engine.w - 36) / 26
+        val want = if (cartPicking) 80 + ((pickable.size + per - 1) / per) * 26 else 84 + rules.size * 34
+        val (x, y, pw, ph) = frame("MARKET CART", minOf(maxPanelH, want)).toList()
+        if (closeButton(x, y, pw)) { cartPicking = false; return false }
+        g.text("SELLS UP TO $CART_DAILY_CAP A DAY AT DAWN, TOP RULE FIRST", x + pw / 2, y + 22, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        var ry = y + 34
+        if (cartPicking) {
+            g.text("PICK AN ITEM TO SELL", x + 10, ry, Gfx.INK, outline = 0, shadow = false)
+            pickable.forEachIndexed { i, id ->
+                if (ui.slot("pick-$id", x + 10 + (i % per) * 26, ry + 12 + (i / per) * 26, icon(id), world.count(id, anyQuality = true), false, 24)) {
+                    world.addCartRule(id); cartPicking = false
+                }
+            }
+            if (ui.button("pick-cancel", x + pw / 2 - 30, y + ph - 24, 60, 16, "BACK", style = "red")) cartPicking = false
+            return true
+        }
+        var remove = -1
+        rules.forEachIndexed { i, r ->
+            g.slice9("ui/slot", x + 8, ry, x + pw - 8, ry + 30, 4)
+            g.sprite(icon(r.item), (x + 20).toFloat(), (ry + 15).toFloat())
+            g.text(world.data.name(r.item).uppercase().take(12), x + 32, ry + 4, Gfx.INK, outline = 0, shadow = false)
+            g.text("${world.percentOfBase(r.item)}% TODAY", x + 32, ry + 16, Gfx.GREY, outline = 0, shadow = false)
+            if (ui.button("cond-$i", x + pw - 150, ry + 7, 44, 16, CartRule.CONDITIONS[r.cond], style = "wood")) r.cond = (r.cond + 1) % CartRule.CONDITIONS.size
+            if (ui.button("keep-$i-m", x + pw - 102, ry + 7, 14, 16, "-", style = "wood")) r.keep = maxOf(0, r.keep - 5)
+            g.text("KEEP ${r.keep}", x + pw - 66, ry + 11, Gfx.INK, align = 0, outline = 0, shadow = false)
+            if (ui.button("keep-$i-p", x + pw - 44, ry + 7, 14, 16, "+", style = "wood")) r.keep += 5
+            if (ui.button("del-$i", x + pw - 26, ry + 7, 14, 16, null, "ui/x", "red")) remove = i
+            ry += 34
+        }
+        if (remove >= 0) rules.removeAt(remove)
+        if (rules.size < CART_MAX_RULES && ui.button("cart-add", x + pw / 2 - 40, ry + 2, 80, 16, "+ ADD RULE", style = "green")) cartPicking = true
+        val log = world.state.cartLog.firstOrNull()
+        g.text(if (log != null) "LAST SALE: ${log.units} ITEMS FOR ${log.coins} COINS" else "NO SALES YET", x + pw / 2, y + ph - 16, Gfx.INK, align = 0, outline = 0, shadow = false)
         return true
     }
 }

@@ -155,6 +155,9 @@ class GameState(var seed: Long) {
     var festivalProgress = 0
     var festivalBase = 0L
     val festivalsClaimed = HashSet<String>()
+    /** Market Cart rules in priority order and the last 7 days of sales. */
+    val cartRules = ArrayList<CartRule>()
+    val cartLog = ArrayList<CartDay>()
 
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
@@ -190,6 +193,8 @@ class GameState(var seed: Long) {
         put("achievements", JSONObject(achievements as Map<*, *>))
         put("achievementsSeen", JSONArray(achievementsSeen.toList()))
         put("pagesClaimed", JSONArray(pagesClaimed.toList()))
+        put("cartRules", cartRulesToJson(cartRules))
+        put("cartLog", JSONArray().apply { cartLog.forEach { put(it.toJson()) } })
         put("events", JSONObject().apply {
             put("giftDay", giftDay); put("giftStreak", giftStreak); put("merchantDay", merchantDay)
             put("merchantBought", JSONArray(merchantBought.toList()))
@@ -240,6 +245,8 @@ class GameState(var seed: Long) {
             o.optJSONObject("achievements")?.toIntMap()?.forEach { (k, v) -> achievements[k] = v }
             o.optJSONArray("achievementsSeen")?.strings()?.let { achievementsSeen.addAll(it) }
             o.optJSONArray("pagesClaimed")?.strings()?.let { pagesClaimed.addAll(it) }
+            o.optJSONArray("cartRules")?.objects()?.forEach { cartRules += CartRule.fromJson(it) }
+            o.optJSONArray("cartLog")?.objects()?.forEach { cartLog += CartDay(it.getInt("day"), it.getInt("units"), it.getInt("coins")) }
             o.optJSONObject("events")?.let { e ->
                 giftDay = e.optLong("giftDay", -1); giftStreak = e.optInt("giftStreak"); merchantDay = e.optInt("merchantDay", -1)
                 e.optJSONArray("merchantBought")?.let { a -> (0 until a.length()).forEach { merchantBought += a.getInt(it) } }

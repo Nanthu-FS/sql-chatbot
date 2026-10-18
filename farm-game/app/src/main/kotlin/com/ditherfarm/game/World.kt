@@ -58,6 +58,7 @@ sealed class WorldEvent {
     data class Bought(val item: String, val qty: Int, val price: Int) : WorldEvent()
     data class FestivalStarted(val name: String) : WorldEvent()
     data class FestivalWon(val name: String) : WorldEvent()
+    data class CartSold(val units: Int, val coins: Int) : WorldEvent()
 }
 
 /**
@@ -154,6 +155,7 @@ class World(val data: GameData, val state: GameState) {
         for (k in state.glut.keys.toList()) state.glut[k] = state.glut[k]!! * 0.5
         forestDawn(day)
         festivalDawn()
+        runMarketCart()
         events += WorldEvent.DayStarted(day, state.weather)
     }
 

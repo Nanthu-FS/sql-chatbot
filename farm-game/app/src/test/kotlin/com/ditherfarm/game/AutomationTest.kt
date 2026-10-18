@@ -108,4 +108,23 @@ class AutomationTest {
         assertEquals("carrot", back.planterSeed)
         assertEquals("wheat", back.plots[0].lastCrop)
     }
+
+    @Test fun marketCartSellsDailyWithinCap() {
+        val w = fresh(13)
+        w.add("plank", 20); w.add("iron_bar", 6); w.add("copper_bar", 4)
+        assertTrue(w.build("market_cart"))
+        w.add("wheat", 40)
+        assertTrue(w.addCartRule("wheat"))
+        w.state.cartRules[0].cond = 0
+        w.state.cartRules[0].keep = 10
+        assertFalse("no duplicates", w.addCartRule("wheat"))
+        val coins = w.state.coins
+        w.advance(Time.REAL_SECONDS_PER_DAY)
+        assertEquals(40 + w.state.stat("harvest_wheat").toInt() - CART_DAILY_CAP, w.count("wheat", anyQuality = true))
+        assertTrue(w.state.coins > coins)
+        assertEquals(1, w.state.cartLog.size)
+        val back = GameState.fromJson(w.state.toJson())
+        assertEquals("wheat", back.cartRules[0].item)
+        assertEquals(0, back.cartRules[0].cond)
+    }
 }
