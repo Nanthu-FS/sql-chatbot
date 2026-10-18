@@ -7,10 +7,13 @@ A cozy isometric pixel-art farming game for Android: tap to plant, water and har
 - Design: [`Docs/GAME_DESIGN.md`](Docs/GAME_DESIGN.md) · owner decisions: [`Docs/DECISIONS.md`](Docs/DECISIONS.md) · art rules: [`Docs/ART_SPEC.md`](Docs/ART_SPEC.md)
 
 ## What's in it
-- **Farm:** 48 plots unlocked from the centre, 12 crops with star quality, watering, fertilizer, seasons that wither crops, storms, a glass greenhouse that ignores seasons, sprinklers, scarecrows and lightning rods on the corners between plots.
+- **Farm:** a 44x44 world inside a forest wall: farmstead, river and bridge, village, pasture and eight fenced 4x4 field blocks bought one at a time. 12 crops with star quality, watering, fertilizer, seasons that wither crops, storms, a glass greenhouse that ignores seasons, sprinklers, scarecrows and lightning rods on the corners between plots.
 - **Forest:** five zones of trees to chop with axe tiers, stumps, saplings, foraging, fallen branches, bird nests and wild beehives.
 - **Mine:** a quarry that grows back, and 40 floors below it with ladders, hollow knocks, dark floors and torches, cave-ins to brace, gates, an elevator every 5 floors and geodes to crack.
-- **Machines:** about 20 buildings (Windmill, Bakery, Furnace, Sawmill, Drill Rig and more) that keep working while the app is closed, plus automation: Harvest and Planter Sheds, a Logging Hut, a Tree Nursery and a Market Cart that sells by your rules.
+- **Machines:** about 20 buildings (Windmill, Bakery, Furnace, Sawmill, Drill Rig and more) that keep working while the app is closed, plus a Logging Hut, a Tree Nursery and a Market Cart that sells by your rules.
+- **Farmhands:** five named farmhands (from level 5) each work one field: harvest into its crate, replant its crop, water and clear. They train up to level 25 and eat crops each morning. A harvester takes the crates to the truck or the Silo, and you tap the truck to sell its load in town.
+- **Skills:** a point per level for a 20-skill tree in five branches (crops, wood, mine, trade, machines), reset at the Workbench; four craftable tonics (Energy Brew, Growth Tonic, Rain Totem, Lucky Charm).
+- **Sound:** varied sound effects, calm lo-fi music per season and place, ambience and weather loops.
 - **Goals:** villager orders with friendship, achievements, a collection book with page bonuses, a daily gift streak, a traveling merchant and seasonal festivals.
 
 ## Get the APK
@@ -55,7 +58,7 @@ node generate.mjs            # all sprites (or: node generate.mjs tiles ui crops
 node sfx.mjs                 # all sound effects (+ variants)
 node music.mjs               # lo-fi music and ambience loops (needs ffmpeg)
 ```
-Contact sheets for review are written to `Docs/sheets/`.
+Contact sheets for review are written to `Docs/sheets/`. Buildings, machines and vehicles are re-rendered at world scale by `scaled.py` (run by `generate.mjs`); `ScaleTest` fails the build if a sprite leaves its size band, and the `farm_scale` screenshot shows the farmstead for a visual check.
 
 ## Credits
 See [`CREDITS.md`](CREDITS.md).
