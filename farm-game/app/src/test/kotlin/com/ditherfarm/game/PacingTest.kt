@@ -24,7 +24,8 @@ class PacingTest {
             if (p.needsClearing) clearPlot(p.index)
             if (isReady(p)) harvest(p.index)
         }
-        val crop = bestCrop()
+        // Wheat until the Windmill blueprint is found (the notebook asks for it early).
+        val crop = if (!met(BLUEPRINTS.getValue("windmill"))) "wheat" else bestCrop()
         for (p in state.plots) {
             if (!p.owned) continue
             if (p.empty && crop != null && state.coins > seedPrice(crop)) plant(p.index, crop)
@@ -47,6 +48,9 @@ class PacingTest {
             if (data.item(baseId(k)).storage == Storage.BARN && count(k) > 30) sell(k, count(k) - 30)
         }
         for (b in 0 until FieldLayout.BLOCKS) if (blockBlocker(b) == null && state.coins > FieldLayout.PRICE[b] * 2) buyBlock(b)
+        // Pick up loose stones and forage, and claim notebook quests as they finish.
+        for (sp in forestSpots) if (sp.kind != SpotKind.TREE && sp.kind != SpotKind.SLOT && zoneOpen(sp.zone)) forage(sp.index)
+        while (claimQuest()) {}
         // Spend energy on the forest and the quarry.
         if (level >= 2) for (sp in forestSpots) {
             if (state.energy < 30) break
@@ -74,6 +78,9 @@ class PacingTest {
             }
             w.advance(16 * 3600.0 - 8 * 3600.0 + 8 * 3600.0) // overnight (capped catch-up)
             if (day in listOf(1, 2, 3, 5, 7, 10, 14, 21)) report += "day $day: L${w.level} coins=${w.state.coins} plots=${w.ownedPlots} built=${data.buildings.keys.count { w.isBuilt(it) }}"
+            // Targets (Docs/DECISIONS.md, round 2): level 5 on day 1, level 10 after about a week.
+            if (day == 1) assertTrue("level 5 on day 1: L${w.level}", w.level >= 5)
+            if (day == 7) assertTrue("about level 10 after a week: L${w.level}", w.level in 9..12)
         }
         println("PACING:\n" + report.joinToString("\n"))
         assertTrue("too slow: ${report.last()}", w.level >= 14)

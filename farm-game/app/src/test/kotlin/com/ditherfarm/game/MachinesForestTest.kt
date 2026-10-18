@@ -9,7 +9,7 @@ import org.junit.Test
 
 class MachinesForestTest {
     private val data = WorldTest.loadData()
-    private fun fresh() = World.newGame(data, 99)
+    private fun fresh() = World.newGame(data, 99).apply { knowEverything() }
     private fun World.realMinutes(m: Double) = advance(m * 60)
 
     @Test fun everyReferencedItemExists() {
@@ -81,11 +81,10 @@ class MachinesForestTest {
         assertEquals("tool_axe_2", w.nextToolRecipe(Tool.AXE)?.id)
     }
 
-    @Test fun forestOpensAtLevelTwoWithMatureTrees() {
+    @Test fun forestIsOpenFromTheStartWithMatureTrees() {
         val w = fresh()
-        assertFalse(w.zoneOpen("A"))
-        w.gainXp(40)
         assertTrue(w.zoneOpen("A"))
+        assertFalse("the next grove waits for chopping", w.zoneOpen("B"))
         val pine = w.forestSpots.first { it.native == "pine" }
         assertEquals(TreeStage.MATURE, w.treeStage(pine.index))
     }

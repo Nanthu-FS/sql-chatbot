@@ -10,6 +10,7 @@ import org.junit.Test
 class MineTest {
     private val data = WorldTest.loadData()
     private fun fresh(level: Int = 1) = World.newGame(data, 7).apply {
+        knowEverything()
         if (level > 1) gainXp(data.level(level).totalXp - state.xp)
         state.energy = 10_000.0
     }
@@ -26,7 +27,7 @@ class MineTest {
         assertTrue("missing items: $missing", missing.isEmpty())
     }
 
-    @Test fun quarryFillsAtLevel3AndRegrowsAfterBreaking() {
+    @Test fun quarryFillsOnceOpenAndRegrowsAfterBreaking() {
         val w = fresh(3)
         w.advance(1.0)
         assertEquals(12, w.mine.quarry.size)

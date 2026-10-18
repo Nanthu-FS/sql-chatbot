@@ -30,6 +30,7 @@ import com.ditherfarm.game.placeFixture
 import com.ditherfarm.game.isBuilt
 import com.ditherfarm.game.jobProgress
 import com.ditherfarm.game.trayCount
+import com.ditherfarm.game.pointer
 import com.ditherfarm.game.FARMHANDS
 import com.ditherfarm.game.TRUCK_CAP
 import com.ditherfarm.game.sendTruck
@@ -357,6 +358,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             }
         }
         crew.collect(list)
+        drawPointer(list)
         // The bunkhouse calls when a farmhand is looking for work.
         if (FARMHANDS.any { it.unlockLevel <= world.level && it.id !in world.state.workers }) {
             val (bc, br) = FarmMap.BUNKHOUSE
@@ -446,6 +448,24 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             if (!inView(x, top)) return@forEachIndexed
             if (p.crop != null) list.add(cy) { drawPlot(i, p, x, cy) }
         }
+    }
+
+    /** Grandpa's notebook points at what its quest needs on the farm. */
+    private fun drawPointer(list: DrawList) {
+        val (tile, art) = when (world.pointer) {
+            com.ditherfarm.game.Pointer.FIELD -> (FarmMap.BLOCKS[0].first + 1 to FarmMap.BLOCKS[0].second + 1) to null
+            com.ditherfarm.game.Pointer.MARKET -> FarmMap.MARKET to "buildings/market"
+            com.ditherfarm.game.Pointer.ORDERS -> FarmMap.ORDERS to "buildings/orders"
+            com.ditherfarm.game.Pointer.WORKBENCH -> FarmMap.WORKBENCH to "buildings/workbench"
+            com.ditherfarm.game.Pointer.WINDMILL -> (slotTiles.getOrNull(machines.indexOfFirst { it.id == "windmill" }) ?: return) to "buildings/windmill"
+            com.ditherfarm.game.Pointer.FIELD_B -> (FarmMap.BLOCKS[1].first - 1 to FarmMap.BLOCKS[1].second - 1) to "deco/field_sign"
+            com.ditherfarm.game.Pointer.BUNKHOUSE -> FarmMap.BUNKHOUSE to "buildings/cottage_c"
+            com.ditherfarm.game.Pointer.TRUCK -> FarmMap.TRUCK to "vehicles/truck_se_0"
+            else -> return
+        }
+        val x = Iso.x(tile.first, tile.second).toFloat(); val y = Iso.centerY(tile.first, tile.second).toFloat()
+        val h = (art?.let { spriteTop(it) } ?: 24f) + 10f
+        if (inView(x, y, 60f)) list.add(Float.MAX_VALUE) { game.gfx.sprite("icons/arrow_down", x, y - h + sin(time * 6f) * 2f) }
     }
 
     private val pickTmp = IntArray(2)

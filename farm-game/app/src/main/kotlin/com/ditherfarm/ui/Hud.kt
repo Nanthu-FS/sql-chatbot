@@ -3,10 +3,13 @@ package com.ditherfarm.ui
 import com.ditherfarm.Game
 import com.ditherfarm.engine.Gfx
 import com.ditherfarm.game.Season
+import com.ditherfarm.game.pointer
+import com.ditherfarm.game.progress
+import com.ditherfarm.game.quarryOpen
 
 /** Bottom-bar destinations. */
 enum class Nav(val icon: String, val unlockLevel: Int) {
-    FARM("icons_big/nav_farm", 1), FOREST("icons_big/nav_forest", 2), MINE("icons_big/nav_mine", 3),
+    FARM("icons_big/nav_farm", 1), FOREST("icons_big/nav_forest", 1), MINE("icons_big/nav_mine", 1),
     BARN("icons_big/bag", 1), ORDERS("icons_big/orders", 1), MARKET("icons_big/market", 1), MENU("icons_big/menu", 1),
 }
 
@@ -90,22 +93,34 @@ class Hud(private val game: Game) {
         val size = 34
         val gap = (w - 8 - n * size) / (n - 1)
         var picked: Nav? = null
+        var navArrow = -1
         Nav.entries.forEachIndexed { i, nav ->
             val x = 4 + i * (size + gap)
-            val locked = world.level < nav.unlockLevel
+            val locked = navLock(nav) != null
             if (ui.slot("nav-$nav", x, y + 6, if (locked) null else nav.icon, -1, nav == current, size)) picked = nav
             if (locked) {
                 g.sprite("icons/lock", (x + size / 2).toFloat(), (y + 6 + size / 2).toFloat())
-                g.text("L${nav.unlockLevel}", x + size / 2, y + 6 + size - 9, Gfx.WHITE, align = 0)
+                g.text(if (nav == Nav.MINE) "?" else "L${nav.unlockLevel}", x + size / 2, y + 6 + size - 9, Gfx.WHITE, align = 0)
             }
+            if (nav == Nav.MINE && world.pointer == com.ditherfarm.game.Pointer.MINE && current != Nav.MINE) navArrow = x + size / 2
+            if (nav == Nav.FOREST && current != Nav.FOREST && world.pointer.let { it == com.ditherfarm.game.Pointer.TREE || it == com.ditherfarm.game.Pointer.ROCK || it == com.ditherfarm.game.Pointer.SAWMILL }) navArrow = x + size / 2
             val b = badges[nav] ?: 0
             if (b > 0) {
                 g.sprite("ui/badge", (x + size - 3).toFloat(), (y + 9).toFloat())
             }
         }
+        // The notebook points at the screen its quest needs.
+        if (navArrow >= 0) g.sprite("icons/arrow_down", navArrow.toFloat(), y - 6 + kotlin.math.sin(game.engine.time * 6f) * 2f)
         return picked?.let { nav ->
-            if (world.level < nav.unlockLevel) { toast("Unlocks at level ${nav.unlockLevel}"); game.sfx.play("error"); null } else nav
+            navLock(nav)?.let { why -> toast(why); game.sfx.play("error"); null } ?: nav
         }
+    }
+
+    /** Why a nav button is locked, or null: the Mine waits for forest stone, the rest for a level. */
+    private fun navLock(nav: Nav): String? = when {
+        nav == Nav.MINE && !world.quarryOpen -> com.ditherfarm.game.FEATS.getValue("quarry").let { "${it.text} to open the quarry (${world.progress(it)})" }
+        world.level < nav.unlockLevel -> "Unlocks at level ${nav.unlockLevel}"
+        else -> null
     }
 
     /** Toasts, tips and the away summary, drawn last. */

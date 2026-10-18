@@ -164,7 +164,7 @@
     "@tool:hoe": 1
    },
    "minutes": 1,
-   "unlock": 4,
+   "unlock": 1,
    "fuel": 0.0,
    "coins": 40
   },
@@ -205,13 +205,13 @@
    "building": "workbench",
    "inputs": {
     "wood": 8,
-    "stone": 15
+    "stone": 6
    },
    "outputs": {
     "@tool:axe": 1
    },
    "minutes": 2,
-   "unlock": 4,
+   "unlock": 1,
    "fuel": 0.0,
    "coins": 50
   },
@@ -258,7 +258,7 @@
     "@tool:pickaxe": 1
    },
    "minutes": 2,
-   "unlock": 4,
+   "unlock": 1,
    "fuel": 0.0,
    "coins": 50
   },
@@ -306,7 +306,7 @@
     "@tool:sickle": 1
    },
    "minutes": 2,
-   "unlock": 4,
+   "unlock": 1,
    "fuel": 0.0,
    "coins": 60
   },

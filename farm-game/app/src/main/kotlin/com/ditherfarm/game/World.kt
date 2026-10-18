@@ -52,6 +52,8 @@ sealed class WorldEvent {
     data class FixtureRemoved(val vertex: Int, val item: String) : WorldEvent()
     data class WorkerHired(val worker: String) : WorldEvent()
     data class SkillLearned(val skill: String, val rank: Int) : WorldEvent()
+    data class FeatDone(val key: String) : WorldEvent()
+    data class QuestDone(val quest: String) : WorldEvent()
     data class Respecced(val coins: Int) : WorldEvent()
     data class TonicUsed(val item: String) : WorldEvent()
     data class WorkerLevelUp(val worker: String, val level: Int) : WorldEvent()
@@ -86,10 +88,18 @@ class World(val data: GameData, val state: GameState) {
     val level get() = state.level
 
     init {
+        val from = state.version
         migrateLayout()
+        // Saves from before the notebook: players past level 4 skip it; feats already met stay quiet.
+        if (from < 3) {
+            if (state.level >= 4) state.questIndex = QUESTS.size
+            for ((k, f) in FEATS + BLUEPRINTS.mapKeys { "bp_" + it.key }) if (met(f)) state.featsSeen += k
+            state.version = GameState.VERSION
+        }
         retireSheds()
         syncGreenhouse()
         while (state.fields.size < FieldLayout.BLOCKS) state.fields.add(FieldState())
+        autoOpenZones() // the Edge Grove is open from the start
     }
 
     // ------------------------------------------------------------------ time
@@ -138,6 +148,7 @@ class World(val data: GameData, val state: GameState) {
         tickWorkers()
         tickForestAuto()
         checkAchievements()
+        checkFeats()
     }
 
     private fun grow(dt: Double) {
@@ -422,6 +433,7 @@ class World(val data: GameData, val state: GameState) {
         if (p.crop == null || p.needsClearing || p.watered || isReady(p)) return false
         p.watered = true
         p.cared = true
+        state.bump("watered")
         events += WorldEvent.Watered(i)
         return true
     }
@@ -596,7 +608,9 @@ class World(val data: GameData, val state: GameState) {
         val rng = rng()
         val busy = state.orders.mapNotNull { it.order?.villager }.toSet()
         val villager = villagersUnlocked().filter { it.id !in busy }.let { if (it.isEmpty()) return null else it[rng.nextInt(it.size)] }
-        val pool = state.discovered.filter { id ->
+        // Only what can be had right now (Docs/DECISIONS.md, round 2).
+        val can = obtainableNow()
+        val pool = can.filter { id ->
             val item = data.items[id] ?: return@filter false
             item.price > 0 && item.storage != Storage.NONE && id !in NOT_ORDERED && !id.startsWith("mineral_") &&
                 item.category !in setOf("fixture", "rare", "seed", "mineral") && (data.crops[id]?.let { it.unlockLevel <= state.level } ?: true)

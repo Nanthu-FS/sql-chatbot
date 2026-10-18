@@ -9,6 +9,7 @@ import org.junit.Test
 class AutomationTest {
     private val data = WorldTest.loadData()
     private fun fresh(level: Int = 1) = World.newGame(data, 11).apply {
+        knowEverything()
         if (level > 1) gainXp(data.level(level).totalXp - state.xp)
         state.coins = 1_000_000
         events.clear()
@@ -101,8 +102,9 @@ class AutomationTest {
         w.state.cartRules[0].keep = 10
         assertFalse("no duplicates", w.addCartRule("wheat"))
         val coins = w.state.coins
+        val harvested = w.state.stat("harvest_wheat")
         w.advance(Time.REAL_SECONDS_PER_DAY)
-        assertEquals(40 + w.state.stat("harvest_wheat").toInt() - CART_DAILY_CAP, w.count("wheat", anyQuality = true))
+        assertEquals(40 + (w.state.stat("harvest_wheat") - harvested).toInt() - CART_DAILY_CAP, w.count("wheat", anyQuality = true))
         assertTrue(w.state.coins > coins)
         assertEquals(1, w.state.cartLog.size)
         val back = GameState.fromJson(w.state.toJson())

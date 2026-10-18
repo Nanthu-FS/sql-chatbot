@@ -156,7 +156,7 @@ private fun rollWeighted(rng: Rng, weights: Map<String, Int>, filter: (String) -
 
 /** Regrows quarry spots whose timer has passed (also runs during offline catch-up). */
 internal fun World.tickQuarry() {
-    if (state.level < (data.mine.quarry.firstOrNull()?.unlockLevel ?: 3)) return
+    if (!quarryOpen) return
     ensureQuarry()
     val m = state.mine
     val q = data.mine.quarry[m.quarryLevel - 1]

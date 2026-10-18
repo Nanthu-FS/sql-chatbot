@@ -5,7 +5,7 @@ import org.json.JSONObject
 import kotlin.math.max
 
 /** What stands on a forest spot. */
-enum class SpotKind { TREE, BUSH, APPLE, MUSHROOM, SLOT }
+enum class SpotKind { TREE, BUSH, APPLE, MUSHROOM, SLOT, ROCK }
 
 enum class TreeStage { EMPTY, SAPLING, YOUNG, MATURE, STUMP }
 
@@ -90,6 +90,7 @@ object ForestLayout {
 
     fun build(zones: List<ZoneDef>): List<ForestSpot> {
         val spots = ArrayList<ForestSpot>()
+        val rockTiles = HashMap<String, List<Pair<Int, Int>>>()
         for (z in zones) {
             val tiles = ArrayList<Pair<Int, Int>>()
             for (r in 1 until SIZE - 1) for (c in 1 until SIZE - 1) {
@@ -108,7 +109,13 @@ object ForestLayout {
             repeat(z.bushes) { take(SpotKind.BUSH) }
             repeat(z.apples) { take(SpotKind.APPLE) }
             repeat(z.mushrooms) { take(SpotKind.MUSHROOM) }
+            // Rocks sit on the odd tiles between the spots.
+            rockTiles[z.id] = (1 until SIZE - 1).flatMap { r -> (1 until SIZE - 1).map { c -> c to r } }
+                .filter { (c, r) -> zoneOf(c, r) == z.id && !isTrail(c, r) && (c + r) % 2 == 1 }
+                .let { odd -> odd.indices.map { odd[(it * 7 + z.id.hashCode().mod(odd.size)) % odd.size] }.distinct() }
         }
+        // Loose rocks come last so spots in saves made before they existed keep their indices.
+        for (z in zones) for ((c, r) in rockTiles[z.id].orEmpty().take(z.rocks)) spots += ForestSpot(spots.size, z.id, SpotKind.ROCK, null, c, r)
         return spots
     }
 }
@@ -129,6 +136,7 @@ private fun World.ensureForest() {
                 SpotKind.BUSH, SpotKind.APPLE -> st.stock = 2
                 SpotKind.MUSHROOM -> st.stock = 1
                 SpotKind.SLOT -> {}
+                SpotKind.ROCK -> st.stock = 2
             }
         }
         f.seeded = true
@@ -144,6 +152,7 @@ fun World.zoneBlocker(id: String): String? {
     return when {
         zoneOpen(id) -> "Already open"
         z.unlockLevel > state.level -> "Unlocks at level ${z.unlockLevel}"
+        featBlocker("zone_$id") != null -> featBlocker("zone_$id")
         !canAfford(z.cost) -> "Needs " + z.cost.entries.joinToString(", ") { (k, v) -> if (k == "coins") "${v}c" else "$v ${data.name(k)}" }
         else -> null
     }
@@ -243,6 +252,7 @@ private fun World.fell(i: Int, rng: Rng) {
             s.since = state.minutes
             state.bump("fells")
             state.bump("fell_${s.tree}")
+            state.bump("fells_zone_${forestSpots[i].zone}")
             val xp = def?.xp ?: 1
             events += WorldEvent.Felled(i, s.tree ?: "", drops, xp)
             gainXp(xp)
@@ -309,11 +319,13 @@ fun World.forage(i: Int): Boolean {
         SpotKind.BUSH -> "blackberry"
         SpotKind.APPLE -> "apple"
         SpotKind.MUSHROOM -> if (time.season == Season.FALL && rng().chance(0.4)) "chanterelle" else if (time.hour >= 20 && rng().chance(0.05)) "glowcap" else "wild_mushroom"
+        SpotKind.ROCK -> "stone"
         else -> return false
     }
     if (!hasRoom(item)) { events += WorldEvent.Blocked("Barn full"); return false }
     val n = s.stock
     add(item, n)
+    if (sp.kind == SpotKind.ROCK) state.bump("forest_stone", n.toLong())
     s.stock = 0
     events += WorldEvent.Foraged(i, item, n)
     gainXp(n)
@@ -351,6 +363,7 @@ internal fun World.forestDawn(day: Int) {
             SpotKind.BUSH -> if (season == Season.SUMMER && day % 2 == 0) s.stock = minOf(3, s.stock + 1)
             SpotKind.APPLE -> if ((season == Season.SUMMER || season == Season.FALL) && day % 2 == 0) s.stock = minOf(3, s.stock + 1)
             SpotKind.MUSHROOM -> if (season != Season.WINTER) s.stock = minOf(if (state.weather.waters) 2 else 1, s.stock + 1)
+            SpotKind.ROCK -> s.stock = minOf(2, s.stock + 1)
             SpotKind.SLOT -> {}
         }
     }

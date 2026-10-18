@@ -166,6 +166,10 @@ class GameState(var seed: Long) {
     /** Skill id → rank, and the game minute the Lucky Charm wears off. */
     val skills = LinkedHashMap<String, Int>()
     var luckUntil = 0.0
+    /** Grandpa's notebook: current quest and its stat when it started; feats and blueprints announced. */
+    var questIndex = 0
+    var questBase = 0L
+    val featsSeen = LinkedHashSet<String>()
 
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
@@ -205,6 +209,7 @@ class GameState(var seed: Long) {
         put("pagesClaimed", JSONArray(pagesClaimed.toList()))
         put("cartRules", cartRulesToJson(cartRules))
         put("skills", JSONObject(skills as Map<*, *>)); put("luck", luckUntil)
+        put("quest", questIndex); put("questBase", questBase); put("feats", JSONArray(featsSeen.toList()))
         put("cartLog", JSONArray().apply { cartLog.forEach { put(it.toJson()) } })
         put("events", JSONObject().apply {
             put("giftDay", giftDay); put("giftStreak", giftStreak); put("merchantDay", merchantDay)
@@ -215,7 +220,7 @@ class GameState(var seed: Long) {
     }
 
     companion object {
-        const val VERSION = 2
+        const val VERSION = 3
 
         fun fromJson(o: JSONObject): GameState = GameState(o.getLong("seed")).apply {
             version = o.optInt("version", 1)
@@ -260,6 +265,8 @@ class GameState(var seed: Long) {
             o.optJSONArray("cartRules")?.objects()?.forEach { cartRules += CartRule.fromJson(it) }
             o.optJSONObject("skills")?.toIntMap()?.forEach { (k, v) -> skills[k] = v }
             luckUntil = o.optDouble("luck", 0.0)
+            questIndex = o.optInt("quest", 0); questBase = o.optLong("questBase", 0L)
+            o.optJSONArray("feats")?.let { a -> for (k in 0 until a.length()) featsSeen += a.getString(k) }
             o.optJSONArray("cartLog")?.objects()?.forEach { cartLog += CartDay(it.getInt("day"), it.getInt("units"), it.getInt("coins")) }
             o.optJSONObject("events")?.let { e ->
                 giftDay = e.optLong("giftDay", -1); giftStreak = e.optInt("giftStreak"); merchantDay = e.optInt("merchantDay", -1)

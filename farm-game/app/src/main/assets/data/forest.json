@@ -1,5 +1,5 @@
 {
- "_doc": "Forest (GAME_DESIGN \u00a78). growMinutes are REAL minutes (season multipliers apply). minAxe: 0 wood,1 stone,2 iron,3 gold.",
+ "_doc": "Forest (GAME_DESIGN §8). growMinutes are REAL minutes (season multipliers apply). minAxe: 0 wood,1 stone,2 iron,3 gold.",
  "trees": [
   {
    "id": "pine",
@@ -137,7 +137,7 @@
   {
    "id": "A",
    "name": "Edge Grove",
-   "unlock": 2,
+   "unlock": 1,
    "cost": {},
    "trees": {
     "pine": 6,
@@ -147,14 +147,15 @@
    "bushes": 2,
    "apples": 2,
    "mushrooms": 3,
-   "slots": 2
+   "slots": 2,
+   "rocks": 5
   },
   {
    "id": "B",
    "name": "Birch Hollow",
-   "unlock": 6,
+   "unlock": 1,
    "cost": {
-    "coins": 800,
+    "coins": 300,
     "wood": 20
    },
    "trees": {
@@ -165,16 +166,16 @@
    "bushes": 1,
    "apples": 0,
    "mushrooms": 3,
-   "slots": 2
+   "slots": 2,
+   "rocks": 4
   },
   {
    "id": "C",
    "name": "Maple Ridge",
-   "unlock": 12,
+   "unlock": 1,
    "cost": {
-    "coins": 4000,
-    "plank": 30,
-    "iron_bar": 5
+    "coins": 1200,
+    "plank": 20
    },
    "trees": {
     "maple": 6,
@@ -183,16 +184,17 @@
    "bushes": 0,
    "apples": 1,
    "mushrooms": 0,
-   "slots": 1
+   "slots": 1,
+   "rocks": 3
   },
   {
    "id": "D",
    "name": "Mushroom Glade",
-   "unlock": 16,
+   "unlock": 1,
    "cost": {
-    "coins": 9000,
-    "plank": 40,
-    "hardwood": 10
+    "coins": 3000,
+    "plank": 30,
+    "hardwood": 5
    },
    "trees": {
     "oak": 5,
@@ -202,17 +204,17 @@
    "bushes": 0,
    "apples": 0,
    "mushrooms": 6,
-   "slots": 1
+   "slots": 1,
+   "rocks": 3
   },
   {
    "id": "E",
    "name": "Ancient Heart",
-   "unlock": 24,
+   "unlock": 1,
    "cost": {
-    "coins": 25000,
-    "beam": 10,
-    "gold_bar": 5,
-    "gear": 3
+    "coins": 8000,
+    "plank": 40,
+    "hardwood": 15
    },
    "trees": {
     "ancient_oak": 3,
@@ -221,7 +223,8 @@
    "bushes": 0,
    "apples": 0,
    "mushrooms": 0,
-   "slots": 1
+   "slots": 1,
+   "rocks": 3
   }
  ],
  "tools": {

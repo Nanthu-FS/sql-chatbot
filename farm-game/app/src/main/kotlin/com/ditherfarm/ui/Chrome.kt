@@ -9,6 +9,10 @@ import com.ditherfarm.game.festivalClaimable
 import com.ditherfarm.game.giftReady
 import com.ditherfarm.game.merchantHere
 import com.ditherfarm.game.skillPoints
+import com.ditherfarm.game.claimQuest
+import com.ditherfarm.game.quest
+import com.ditherfarm.game.questDone
+import com.ditherfarm.game.questProgress
 
 /**
  * Everything around the map that every screen shares: the HUD, the nav bar, the modal
@@ -77,8 +81,8 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     private var giftShown = false
 
-    /** HUD top bar plus the goals button; call before drawing screen-specific overlays. */
-    fun drawTop() {
+    /** HUD top bar plus the goals button; call before drawing screen-specific overlays. [questBelow] moves the notebook chip down past a screen's own chip. */
+    fun drawTop(questBelow: Int = 0) {
         hud.drawTop()
         val w = game.engine.w
         val y = game.engine.safeTop + 18
@@ -103,6 +107,26 @@ class Chrome(private val game: Game, private val here: Nav) {
             g.text(pts.coerceAtMost(9).toString(), 90, ly - 2, Gfx.WHITE, align = 0, shadow = false)
         }
         if (ui.clickable("hud-level", 2, ly, 92, 14)) open(Panel.SKILLS)
+        drawQuest(questBelow)
+    }
+
+    /** Grandpa's notebook: the current quest under the status bar; tap to claim when done. */
+    private fun drawQuest(below: Int) {
+        val q = world.quest ?: return
+        val w = game.engine.w
+        val y = game.engine.safeTop + 34 + below
+        val done = world.questDone
+        val (have, need) = world.questProgress()
+        val text = if (done) "DONE! TAP TO CLAIM" else q.text.uppercase()
+        val count = if (!done && need > 1) " $have/$need" else ""
+        val tw = minOf(w - 8, g.textWidth(text + count) + 26)
+        ui.pill(2, y, tw, 14)
+        g.sprite("icons/book", 10f, y + 7f)
+        g.text((text + count).let { if (g.textWidth(it) > tw - 24) it.take(((tw - 24) / 5.5).toInt()) else it }, 18, y + 3, if (done) Gfx.GOLD else Gfx.WHITE)
+        if (done) g.sprite("ui/badge", (tw - 1).toFloat(), y + 2f)
+        if (ui.clickable("hud-quest", 2, y, tw, 14)) {
+            if (done) world.claimQuest() else hud.toast(q.text)
+        }
     }
 
     /** Nav bar, panels and overlays. [tipLift] raises tips above screen trays. */
@@ -199,6 +223,17 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.WorkerHired -> { game.sfx.play("unlock"); game.haptics.heavy(); hud.toast("${world.state.workers[e.worker]?.name} joined your farm!") }
             is WorldEvent.WorkerLevelUp -> { game.sfx.play("levelup"); hud.toast("${world.state.workers[e.worker]?.name} reached level ${e.level}") }
             is WorldEvent.WorkerHungry -> hud.toast("${world.state.workers[e.worker]?.name} is hungry: put crops in the Silo")
+            is WorldEvent.FeatDone -> {
+                game.sfx.play("unlock"); game.haptics.heavy()
+                val k = e.key
+                hud.toast(when {
+                    k.startsWith("bp_") -> "Blueprint found: ${world.data.buildings[k.removePrefix("bp_")]?.name}!"
+                    k == "quarry" -> "The quarry is open! Find it in the Mine."
+                    k.startsWith("zone_") -> "A new part of the forest can be opened"
+                    else -> world.data.recipes[k]?.outputs?.keys?.firstOrNull()?.let { "New tool recipe at the Workbench" } ?: "Something new is unlocked"
+                })
+            }
+            is WorldEvent.QuestDone -> { game.sfx.play("coin"); game.haptics.heavy(); hud.toast("Notebook: done!") }
             is WorldEvent.SkillLearned -> {
                 game.sfx.play("unlock"); game.haptics.tick()
                 com.ditherfarm.game.SKILLS[e.skill]?.let { hud.toast("${it.name} rank ${e.rank}") }

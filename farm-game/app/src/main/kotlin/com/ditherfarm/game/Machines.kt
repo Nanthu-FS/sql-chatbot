@@ -92,6 +92,7 @@ fun World.buildBlocker(id: String): String? {
     return when {
         isBuilt(id) -> "Already built"
         def.unlockLevel > state.level -> "Unlocks at level ${def.unlockLevel}"
+        featBlocker(id) != null -> "Blueprint: " + featBlocker(id)
         !canAfford(def.cost) -> "Not enough materials"
         else -> null
     }
@@ -122,6 +123,7 @@ fun World.recipeBlocker(r: RecipeDef): String? {
     return when {
         !b.built -> "Build the ${def?.name ?: r.building} first"
         r.unlockLevel > state.level -> "Unlocks at level ${r.unlockLevel}"
+        featBlocker(r.id) != null -> featBlocker(r.id)
         b.jobs.size >= queueSize(r.building) -> "Queue is full"
         state.coins < r.coins -> "Not enough coins"
         r.inputs.any { (k, v) -> available(k) < v } -> "Missing ingredients"
@@ -226,7 +228,7 @@ fun World.collect(id: String): Int {
     var value = 0
     for (k in b.tray.keys.toList()) {
         var n = b.tray[k] ?: 0
-        while (n > 0 && hasRoom(k)) { add(k, 1); n--; got++; value += data.item(baseId(k)).price }
+        while (n > 0 && hasRoom(k)) { add(k, 1); n--; got++; value += data.item(baseId(k)).price; state.bump("made_${baseId(k)}") }
         if (n == 0) b.tray.remove(k) else b.tray[k] = n
     }
     if (got == 0 && b.tray.isNotEmpty()) { events += WorldEvent.Blocked("Barn full"); return 0 }

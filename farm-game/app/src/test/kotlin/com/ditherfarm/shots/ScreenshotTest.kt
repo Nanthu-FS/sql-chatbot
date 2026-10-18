@@ -14,6 +14,7 @@ import com.ditherfarm.game.build
 import com.ditherfarm.game.buyBlock
 import com.ditherfarm.game.buildingsOn
 import com.ditherfarm.game.learn
+import com.ditherfarm.game.knowEverything
 import com.ditherfarm.game.assign
 import com.ditherfarm.game.crate
 import com.ditherfarm.game.hire
@@ -175,7 +176,7 @@ class ScreenshotTest {
     @Test fun machinePanel() {
         render("panel_machine", setup = { g ->
             val w = g.world
-            w.gainXp(130); w.add("wheat", 40); w.add("wood", 30); w.build("windmill")
+            w.knowEverything(); w.gainXp(130); w.add("wheat", 40); w.add("wood", 30); w.build("windmill")
             w.enqueue("flour"); w.enqueue("flour")
             g.farm.showPanel("machine:windmill")
         })
@@ -190,7 +191,7 @@ class ScreenshotTest {
         ).first { File(it, "art").exists() }
     }
 
-    private fun toLevel(g: Game, l: Int) { g.world.gainXp(g.world.data.level(l).totalXp - g.world.state.xp); g.world.state.energy = 500.0; g.world.events.clear() }
+    private fun toLevel(g: Game, l: Int) { g.world.knowEverything(); g.world.gainXp(g.world.data.level(l).totalXp - g.world.state.xp); g.world.state.energy = 500.0; g.world.events.clear() }
 
     @Test fun mineSurface() {
         render("mine_surface", seconds = 1f, setup = { g ->

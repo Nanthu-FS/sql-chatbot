@@ -64,6 +64,8 @@ class ZoneDef(
     val apples: Int,
     val mushrooms: Int,
     val slots: Int,
+    /** Loose rocks to pick stone from (no tool needed). */
+    val rocks: Int = 0,
 )
 
 class ToolTiers(val damage: List<Int>, val crit: List<Double>, val names: List<String>)
@@ -149,6 +151,7 @@ class GameData(
                 ZoneDef(
                     o.getString("id"), o.getString("name"), o.getInt("unlock"), o.getJSONObject("cost").toIntMap(),
                     o.getJSONObject("trees").toIntMap(), o.getInt("bushes"), o.getInt("apples"), o.getInt("mushrooms"), o.getInt("slots"),
+                    o.optInt("rocks", 0),
                 )
             }
             val t = forest.getJSONObject("tools")

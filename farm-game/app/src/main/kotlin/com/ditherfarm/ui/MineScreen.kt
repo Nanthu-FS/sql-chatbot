@@ -304,7 +304,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
     }
 
     override fun drawHud(g: Gfx) {
-        chrome.drawTop()
+        chrome.drawTop(questBelow = 16)
         val y = game.engine.safeTop + hud.topHeight + 2
         ui.pill(2, y, 74, 14)
         g.sprite("icons/tool_pickaxe", 10f, y + 7f)

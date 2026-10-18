@@ -10,6 +10,9 @@ import com.ditherfarm.engine.Terrain
 import com.ditherfarm.game.ForestLayout
 import com.ditherfarm.game.Season
 import com.ditherfarm.game.SpotKind
+import com.ditherfarm.game.Pointer
+import com.ditherfarm.game.pointer
+import com.ditherfarm.game.toolTier
 import com.ditherfarm.game.Tool
 import com.ditherfarm.game.TreeStage
 import com.ditherfarm.game.Weather
@@ -26,7 +29,6 @@ import com.ditherfarm.game.isBuilt
 import com.ditherfarm.game.jobProgress
 import com.ditherfarm.game.plantTree
 import com.ditherfarm.game.spot
-import com.ditherfarm.game.toolTier
 import com.ditherfarm.game.trayCount
 import com.ditherfarm.game.treeHp
 import com.ditherfarm.game.treeStage
@@ -186,9 +188,25 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
                     SpotKind.BUSH -> g.sprite(if (st.stock > 0) pick("trees/berry_bush", "deco/bush_berry") else pick("trees/berry_bush_empty", "deco/bush"), x, y)
                     SpotKind.APPLE -> g.sprite(if (st.stock > 0) pick("trees/apple_tree", "deco/bush_berry") else pick("trees/apple_tree_empty", "deco/bush"), x, y)
                     SpotKind.MUSHROOM -> if (st.stock > 0) g.sprite(pick("trees/mushroom_spot", "deco/mushrooms"), x, y)
+                    SpotKind.ROCK -> g.sprite(if (st.stock > 0) "deco/rock_big" else "deco/rock", x, y, if (st.stock > 0) 255 else 140)
                     SpotKind.SLOT -> drawSlot(sp.index, x, y)
                 }
             }
+        }
+        // Grandpa's notebook points at a tree, a loose rock or the Sawmill's spot.
+        val target = when (world.pointer) {
+            Pointer.TREE -> world.forestSpots.firstOrNull { sp ->
+                sp.kind == SpotKind.TREE && world.zoneOpen(sp.zone) && world.treeStage(sp.index) == TreeStage.MATURE &&
+                    world.spot(sp.index).tree?.let { (world.data.trees[it]?.minAxe ?: 0) <= world.toolTier(Tool.AXE) } == true
+            }
+            Pointer.ROCK -> world.forestSpots.firstOrNull { it.kind == SpotKind.ROCK && world.zoneOpen(it.zone) && world.spot(it.index).stock > 0 }
+            Pointer.SAWMILL -> slotSpots.getOrNull(machines.indexOfFirst { it.id == "sawmill" })
+            else -> null
+        }
+        target?.let { sp ->
+            val x = Iso.x(sp.c, sp.r).toFloat(); val y = Iso.centerY(sp.c, sp.r).toFloat()
+            val h = if (sp.kind == SpotKind.TREE) 56f else 24f
+            list.add(Float.MAX_VALUE) { g.sprite("icons/arrow_down", x, y - h + sin(time * 6f) * 2f) }
         }
     }
 
@@ -213,7 +231,7 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
     }
 
     override fun drawHud(g: Gfx) {
-        chrome.drawTop()
+        chrome.drawTop(questBelow = 16)
         // Axe tier chip under the HUD.
         val y = game.engine.safeTop + hud.topHeight + 2
         ui.pill(2, y, 70, 14)
@@ -237,6 +255,7 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
                 }
             }
             SpotKind.BUSH, SpotKind.APPLE, SpotKind.MUSHROOM -> if (!world.forage(sp.index)) hud.toast("Nothing to pick yet")
+            SpotKind.ROCK -> if (!world.forage(sp.index)) hud.toast("No loose stones left here today")
             SpotKind.SLOT -> {
                 val def = slotMachine(sp.index) ?: return
                 when {
@@ -283,7 +302,7 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         if (!world.zoneOpen(sp.zone)) return
         when (sp.kind) {
             SpotKind.TREE -> if (holdSpot >= 0 && world.treeStage(sp.index) != TreeStage.EMPTY) holdSpot = sp.index
-            SpotKind.BUSH, SpotKind.APPLE, SpotKind.MUSHROOM -> world.forage(sp.index)
+            SpotKind.BUSH, SpotKind.APPLE, SpotKind.MUSHROOM, SpotKind.ROCK -> world.forage(sp.index)
             SpotKind.SLOT -> {}
         }
     }
