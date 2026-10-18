@@ -1,0 +1,182 @@
+package com.ditherfarm.game
+
+import org.json.JSONArray
+import org.json.JSONObject
+
+enum class Weather(val icon: String, val waters: Boolean, val stormy: Boolean) {
+    SUNNY("icons/weather_sunny", false, false),
+    RAIN("icons/weather_rain", true, false),
+    STORM("icons/weather_storm", true, true),
+    SNOW("icons/weather_snow", true, false),
+    BLIZZARD("icons/weather_snow", true, true),
+}
+
+class PlotState(val index: Int) {
+    var owned = false
+    var crop: String? = null
+    /** Effective game minutes of growth (watered = 1/min, dry = 0.6/min). */
+    var growth = 0.0
+    var watered = false
+    /** Watered at some point since planting or the last regrow; counts as care for quality. */
+    var cared = false
+    var withered = false
+    /** Struck by lightning: cleared like a withered plot. */
+    var scorched = false
+    var battered = false
+    var fertSilver = 0.0
+    var fertGold = 0.0
+    var harvests = 0
+
+    val empty get() = crop == null && !withered && !scorched
+    val needsClearing get() = withered || scorched
+
+    fun clear() {
+        crop = null; growth = 0.0; cared = false; withered = false; scorched = false
+        battered = false; fertSilver = 0.0; fertGold = 0.0; harvests = 0
+    }
+
+    fun toJson() = JSONObject().apply {
+        put("i", index); put("owned", owned); crop?.let { put("crop", it) }; put("growth", growth)
+        put("watered", watered); put("cared", cared); put("withered", withered); put("scorched", scorched)
+        put("battered", battered); put("fs", fertSilver); put("fg", fertGold); put("h", harvests)
+    }
+
+    companion object {
+        fun fromJson(o: JSONObject) = PlotState(o.getInt("i")).apply {
+            owned = o.optBoolean("owned"); crop = if (o.has("crop")) o.getString("crop") else null
+            growth = o.optDouble("growth", 0.0); watered = o.optBoolean("watered"); cared = o.optBoolean("cared")
+            withered = o.optBoolean("withered"); scorched = o.optBoolean("scorched"); battered = o.optBoolean("battered")
+            fertSilver = o.optDouble("fs", 0.0); fertGold = o.optDouble("fg", 0.0); harvests = o.optInt("h")
+        }
+    }
+}
+
+class OrderLine(val item: String, val qty: Int)
+
+class Order(
+    val id: Int,
+    val villager: String,
+    val lines: List<OrderLine>,
+    val coins: Int,
+    val xp: Int,
+    val big: Boolean = false,
+) {
+    fun toJson() = JSONObject().apply {
+        put("id", id); put("v", villager); put("coins", coins); put("xp", xp); put("big", big)
+        put("lines", JSONArray().apply { lines.forEach { put(JSONObject().put("item", it.item).put("qty", it.qty)) } })
+    }
+
+    companion object {
+        fun fromJson(o: JSONObject) = Order(
+            o.getInt("id"), o.getString("v"),
+            o.getJSONArray("lines").objects().map { OrderLine(it.getString("item"), it.getInt("qty")) },
+            o.getInt("coins"), o.getInt("xp"), o.optBoolean("big"),
+        )
+    }
+}
+
+class OrderSlot {
+    var order: Order? = null
+    /** Game minute at which a new order fills this empty slot. */
+    var nextAt = 0.0
+}
+
+/** Everything that is saved. Static definitions live in [GameData]. */
+class GameState(var seed: Long) {
+    var version = VERSION
+    var minutes = Time.START_MINUTE
+    var lastSavedMs = 0L
+    /** dayIndex of the last 06:00 roll that ran. */
+    var lastDayRolled = -1
+    var lastStormDay = -10
+
+    var coins = 0
+    var xp = 0
+    var level = 1
+    var energy = 100.0
+
+    /** Item key (with optional quality suffix) → count. */
+    val inventory = LinkedHashMap<String, Int>()
+    var barnLevel = 1
+    var siloLevel = 1
+
+    val plots = ArrayList<PlotState>()
+
+    val orders = ArrayList<OrderSlot>()
+    var orderCounter = 0
+    val friendship = HashMap<String, Int>()
+    val recentOrderItems = ArrayList<String>()
+
+    var weather = Weather.SUNNY
+    var forecast = Weather.SUNNY
+
+    /** Market saturation per item (base coins sold recently). */
+    val glut = HashMap<String, Double>()
+    /** Items obtained at least once (collection book, order pool). */
+    val discovered = LinkedHashSet<String>()
+    val stats = HashMap<String, Long>()
+    /** Tutorial tips already shown. */
+    val tips = HashSet<String>()
+    var rngCounter = 0L
+
+    var sfx = true
+    var haptics = true
+    var notifications = true
+
+    fun stat(key: String) = stats[key] ?: 0L
+    fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
+
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("version", version); put("seed", seed); put("minutes", minutes); put("lastSavedMs", lastSavedMs)
+        put("lastDayRolled", lastDayRolled); put("lastStormDay", lastStormDay)
+        put("coins", coins); put("xp", xp); put("level", level); put("energy", energy)
+        put("inventory", JSONObject(inventory as Map<*, *>))
+        put("barnLevel", barnLevel); put("siloLevel", siloLevel)
+        put("plots", JSONArray().apply { plots.forEach { put(it.toJson()) } })
+        put("orders", JSONArray().apply {
+            orders.forEach { s -> put(JSONObject().apply { put("nextAt", s.nextAt); s.order?.let { put("order", it.toJson()) } }) }
+        })
+        put("orderCounter", orderCounter)
+        put("friendship", JSONObject(friendship as Map<*, *>))
+        put("recentOrderItems", JSONArray(recentOrderItems))
+        put("weather", weather.name); put("forecast", forecast.name)
+        put("glut", JSONObject(glut as Map<*, *>))
+        put("discovered", JSONArray(discovered.toList()))
+        put("stats", JSONObject(stats as Map<*, *>))
+        put("tips", JSONArray(tips.toList()))
+        put("rngCounter", rngCounter)
+        put("settings", JSONObject().put("sfx", sfx).put("haptics", haptics).put("notifications", notifications))
+    }
+
+    companion object {
+        const val VERSION = 1
+
+        fun fromJson(o: JSONObject): GameState = GameState(o.getLong("seed")).apply {
+            version = o.optInt("version", 1)
+            minutes = o.getDouble("minutes"); lastSavedMs = o.optLong("lastSavedMs")
+            lastDayRolled = o.optInt("lastDayRolled", -1); lastStormDay = o.optInt("lastStormDay", -10)
+            coins = o.getInt("coins"); xp = o.getInt("xp"); level = o.getInt("level"); energy = o.getDouble("energy")
+            o.getJSONObject("inventory").toIntMap().forEach { (k, v) -> inventory[k] = v }
+            barnLevel = o.optInt("barnLevel", 1); siloLevel = o.optInt("siloLevel", 1)
+            o.getJSONArray("plots").objects().forEach { plots.add(PlotState.fromJson(it)) }
+            o.getJSONArray("orders").objects().forEach { so ->
+                orders.add(OrderSlot().apply {
+                    nextAt = so.optDouble("nextAt", 0.0)
+                    if (so.has("order")) order = Order.fromJson(so.getJSONObject("order"))
+                })
+            }
+            orderCounter = o.optInt("orderCounter")
+            o.optJSONObject("friendship")?.toIntMap()?.forEach { (k, v) -> friendship[k] = v }
+            o.optJSONArray("recentOrderItems")?.strings()?.let { recentOrderItems.addAll(it) }
+            weather = Weather.valueOf(o.optString("weather", "SUNNY")); forecast = Weather.valueOf(o.optString("forecast", "SUNNY"))
+            o.optJSONObject("glut")?.let { g -> g.keys().forEach { glut[it] = g.getDouble(it) } }
+            o.optJSONArray("discovered")?.strings()?.let { discovered.addAll(it) }
+            o.optJSONObject("stats")?.let { s -> s.keys().forEach { stats[it] = s.getLong(it) } }
+            o.optJSONArray("tips")?.strings()?.let { tips.addAll(it) }
+            rngCounter = o.optLong("rngCounter")
+            o.optJSONObject("settings")?.let {
+                sfx = it.optBoolean("sfx", true); haptics = it.optBoolean("haptics", true); notifications = it.optBoolean("notifications", true)
+            }
+        }
+    }
+}

@@ -1,0 +1,17 @@
+{
+  "_doc": "Crops (GAME_DESIGN §6). growHours/regrowHours are game hours (1 game hour = 50 real s). Seasons: spring, summer, fall, winter.",
+  "crops": [
+    {"id": "wheat",      "unlock": 1,  "seasons": ["spring","summer","fall","winter"], "growHours": 3,   "regrowHours": 0,  "seed": 2,   "yield": 3, "price": 3,   "xp": 2,  "energy": 0},
+    {"id": "carrot",     "unlock": 1,  "seasons": ["spring","fall","winter"],          "growHours": 6,   "regrowHours": 0,  "seed": 4,   "yield": 2, "price": 8,   "xp": 3,  "energy": 12},
+    {"id": "corn",       "unlock": 2,  "seasons": ["summer","fall"],                   "growHours": 9,   "regrowHours": 0,  "seed": 6,   "yield": 2, "price": 12,  "xp": 3,  "energy": 15},
+    {"id": "potato",     "unlock": 4,  "seasons": ["spring","fall"],                   "growHours": 12,  "regrowHours": 0,  "seed": 8,   "yield": 3, "price": 10,  "xp": 4,  "energy": 12},
+    {"id": "cabbage",    "unlock": 5,  "seasons": ["spring","winter"],                 "growHours": 18,  "regrowHours": 0,  "seed": 12,  "yield": 2, "price": 22,  "xp": 5,  "energy": 25},
+    {"id": "tomato",     "unlock": 7,  "seasons": ["summer"],                          "growHours": 24,  "regrowHours": 12, "seed": 30,  "yield": 3, "price": 8,   "xp": 3,  "energy": 10},
+    {"id": "strawberry", "unlock": 9,  "seasons": ["spring"],                          "growHours": 30,  "regrowHours": 12, "seed": 45,  "yield": 3, "price": 9,   "xp": 3,  "energy": 12},
+    {"id": "sunflower",  "unlock": 11, "seasons": ["summer","fall"],                   "growHours": 36,  "regrowHours": 0,  "seed": 20,  "yield": 2, "price": 42,  "xp": 8,  "energy": 0},
+    {"id": "eggplant",   "unlock": 13, "seasons": ["summer","fall"],                   "growHours": 36,  "regrowHours": 18, "seed": 60,  "yield": 2, "price": 20,  "xp": 4,  "energy": 20},
+    {"id": "pumpkin",    "unlock": 15, "seasons": ["fall"],                            "growHours": 72,  "regrowHours": 0,  "seed": 40,  "yield": 1, "price": 160, "xp": 12, "energy": 50},
+    {"id": "melon",      "unlock": 18, "seasons": ["summer"],                          "growHours": 96,  "regrowHours": 0,  "seed": 55,  "yield": 1, "price": 215, "xp": 15, "energy": 60},
+    {"id": "grapes",     "unlock": 21, "seasons": ["summer","fall"],                   "growHours": 120, "regrowHours": 48, "seed": 120, "yield": 5, "price": 22,  "xp": 6,  "energy": 10}
+  ]
+}

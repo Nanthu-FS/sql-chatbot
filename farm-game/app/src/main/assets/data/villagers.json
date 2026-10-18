@@ -1,0 +1,108 @@
+{
+ "_doc": "Villagers who post orders (GAME_DESIGN \u00a714).",
+ "villagers": [
+  {
+   "id": "mara",
+   "name": "Mara",
+   "role": "Baker",
+   "unlock": 1,
+   "favorites": [
+    "wheat",
+    "flour",
+    "corn",
+    "bread",
+    "pumpkin_pie"
+   ]
+  },
+  {
+   "id": "tobias",
+   "name": "Tobias",
+   "role": "Carpenter",
+   "unlock": 1,
+   "favorites": [
+    "wood",
+    "plank",
+    "stone",
+    "hardwood"
+   ]
+  },
+  {
+   "id": "ivy",
+   "name": "Ivy",
+   "role": "Florist",
+   "unlock": 3,
+   "favorites": [
+    "sunflower",
+    "strawberry",
+    "carrot",
+    "honey"
+   ]
+  },
+  {
+   "id": "bram",
+   "name": "Bram",
+   "role": "Blacksmith",
+   "unlock": 6,
+   "favorites": [
+    "coal",
+    "copper_ore",
+    "iron_ore",
+    "gold_ore",
+    "copper_bar",
+    "iron_bar",
+    "gold_bar"
+   ]
+  },
+  {
+   "id": "juniper",
+   "name": "Juniper",
+   "role": "Innkeeper",
+   "unlock": 9,
+   "favorites": [
+    "potato",
+    "tomato",
+    "cabbage",
+    "bread",
+    "veggie_stew",
+    "roast_veggies"
+   ]
+  },
+  {
+   "id": "pip",
+   "name": "Pip",
+   "role": "Village kid",
+   "unlock": 12,
+   "favorites": [
+    "carrot",
+    "strawberry",
+    "melon",
+    "quartz",
+    "strawberry_jam"
+   ]
+  },
+  {
+   "id": "sela",
+   "name": "Sela",
+   "role": "Vintner",
+   "unlock": 16,
+   "favorites": [
+    "grapes",
+    "grapes_juice",
+    "cooking_oil"
+   ]
+  },
+  {
+   "id": "fennel",
+   "name": "Doc Fennel",
+   "role": "Herbalist",
+   "unlock": 20,
+   "favorites": [
+    "cabbage",
+    "eggplant",
+    "honey",
+    "cabbage_pickles",
+    "amethyst"
+   ]
+  }
+ ]
+}

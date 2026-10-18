@@ -1,0 +1,275 @@
+{
+ "_doc": "Unified level table (GAME_DESIGN \u00a75). xpToNext 0 = max level.",
+ "levels": [
+  {
+   "level": 1,
+   "xpToNext": 40,
+   "totalXp": 0,
+   "maxEnergy": 100,
+   "plotCap": 6,
+   "orderSlots": 3,
+   "levelUpCoins": 0
+  },
+  {
+   "level": 2,
+   "xpToNext": 90,
+   "totalXp": 40,
+   "maxEnergy": 105,
+   "plotCap": 8,
+   "orderSlots": 3,
+   "levelUpCoins": 120
+  },
+  {
+   "level": 3,
+   "xpToNext": 170,
+   "totalXp": 130,
+   "maxEnergy": 110,
+   "plotCap": 10,
+   "orderSlots": 3,
+   "levelUpCoins": 230
+  },
+  {
+   "level": 4,
+   "xpToNext": 270,
+   "totalXp": 300,
+   "maxEnergy": 115,
+   "plotCap": 12,
+   "orderSlots": 3,
+   "levelUpCoins": 370
+  },
+  {
+   "level": 5,
+   "xpToNext": 400,
+   "totalXp": 570,
+   "maxEnergy": 120,
+   "plotCap": 14,
+   "orderSlots": 4,
+   "levelUpCoins": 530
+  },
+  {
+   "level": 6,
+   "xpToNext": 560,
+   "totalXp": 970,
+   "maxEnergy": 125,
+   "plotCap": 16,
+   "orderSlots": 4,
+   "levelUpCoins": 700
+  },
+  {
+   "level": 7,
+   "xpToNext": 760,
+   "totalXp": 1530,
+   "maxEnergy": 130,
+   "plotCap": 18,
+   "orderSlots": 4,
+   "levelUpCoins": 900
+  },
+  {
+   "level": 8,
+   "xpToNext": 990,
+   "totalXp": 2290,
+   "maxEnergy": 135,
+   "plotCap": 20,
+   "orderSlots": 4,
+   "levelUpCoins": 1100
+  },
+  {
+   "level": 9,
+   "xpToNext": 1250,
+   "totalXp": 3280,
+   "maxEnergy": 140,
+   "plotCap": 22,
+   "orderSlots": 4,
+   "levelUpCoins": 1350
+  },
+  {
+   "level": 10,
+   "xpToNext": 1550,
+   "totalXp": 4530,
+   "maxEnergy": 145,
+   "plotCap": 24,
+   "orderSlots": 5,
+   "levelUpCoins": 1600
+  },
+  {
+   "level": 11,
+   "xpToNext": 1900,
+   "totalXp": 6080,
+   "maxEnergy": 150,
+   "plotCap": 26,
+   "orderSlots": 5,
+   "levelUpCoins": 1850
+  },
+  {
+   "level": 12,
+   "xpToNext": 2300,
+   "totalXp": 7980,
+   "maxEnergy": 155,
+   "plotCap": 28,
+   "orderSlots": 5,
+   "levelUpCoins": 2150
+  },
+  {
+   "level": 13,
+   "xpToNext": 2750,
+   "totalXp": 10280,
+   "maxEnergy": 160,
+   "plotCap": 30,
+   "orderSlots": 5,
+   "levelUpCoins": 2400
+  },
+  {
+   "level": 14,
+   "xpToNext": 3250,
+   "totalXp": 13030,
+   "maxEnergy": 165,
+   "plotCap": 32,
+   "orderSlots": 5,
+   "levelUpCoins": 2750
+  },
+  {
+   "level": 15,
+   "xpToNext": 3800,
+   "totalXp": 16280,
+   "maxEnergy": 170,
+   "plotCap": 34,
+   "orderSlots": 6,
+   "levelUpCoins": 3050
+  },
+  {
+   "level": 16,
+   "xpToNext": 4450,
+   "totalXp": 20080,
+   "maxEnergy": 175,
+   "plotCap": 36,
+   "orderSlots": 6,
+   "levelUpCoins": 3400
+  },
+  {
+   "level": 17,
+   "xpToNext": 5200,
+   "totalXp": 24530,
+   "maxEnergy": 180,
+   "plotCap": 38,
+   "orderSlots": 6,
+   "levelUpCoins": 3700
+  },
+  {
+   "level": 18,
+   "xpToNext": 6100,
+   "totalXp": 29730,
+   "maxEnergy": 185,
+   "plotCap": 40,
+   "orderSlots": 6,
+   "levelUpCoins": 4100
+  },
+  {
+   "level": 19,
+   "xpToNext": 7100,
+   "totalXp": 35830,
+   "maxEnergy": 190,
+   "plotCap": 42,
+   "orderSlots": 6,
+   "levelUpCoins": 4450
+  },
+  {
+   "level": 20,
+   "xpToNext": 8250,
+   "totalXp": 42930,
+   "maxEnergy": 195,
+   "plotCap": 44,
+   "orderSlots": 6,
+   "levelUpCoins": 4850
+  },
+  {
+   "level": 21,
+   "xpToNext": 9600,
+   "totalXp": 51180,
+   "maxEnergy": 200,
+   "plotCap": 46,
+   "orderSlots": 6,
+   "levelUpCoins": 5200
+  },
+  {
+   "level": 22,
+   "xpToNext": 11200,
+   "totalXp": 60780,
+   "maxEnergy": 205,
+   "plotCap": 48,
+   "orderSlots": 6,
+   "levelUpCoins": 5600
+  },
+  {
+   "level": 23,
+   "xpToNext": 13100,
+   "totalXp": 71980,
+   "maxEnergy": 210,
+   "plotCap": 48,
+   "orderSlots": 6,
+   "levelUpCoins": 6050
+  },
+  {
+   "level": 24,
+   "xpToNext": 15400,
+   "totalXp": 85080,
+   "maxEnergy": 215,
+   "plotCap": 48,
+   "orderSlots": 6,
+   "levelUpCoins": 6450
+  },
+  {
+   "level": 25,
+   "xpToNext": 18100,
+   "totalXp": 100480,
+   "maxEnergy": 220,
+   "plotCap": 48,
+   "orderSlots": 6,
+   "levelUpCoins": 6900
+  },
+  {
+   "level": 26,
+   "xpToNext": 21300,
+   "totalXp": 118580,
+   "maxEnergy": 225,
+   "plotCap": 48,
+   "orderSlots": 6,
+   "levelUpCoins": 7350
+  },
+  {
+   "level": 27,
+   "xpToNext": 25300,
+   "totalXp": 139880,
+   "maxEnergy": 230,
+   "plotCap": 48,
+   "orderSlots": 6,
+   "levelUpCoins": 7800
+  },
+  {
+   "level": 28,
+   "xpToNext": 30100,
+   "totalXp": 165180,
+   "maxEnergy": 235,
+   "plotCap": 48,
+   "orderSlots": 6,
+   "levelUpCoins": 8250
+  },
+  {
+   "level": 29,
+   "xpToNext": 35900,
+   "totalXp": 195280,
+   "maxEnergy": 240,
+   "plotCap": 48,
+   "orderSlots": 6,
+   "levelUpCoins": 8750
+  },
+  {
+   "level": 30,
+   "xpToNext": 0,
+   "totalXp": 231180,
+   "maxEnergy": 245,
+   "plotCap": 48,
+   "orderSlots": 6,
+   "levelUpCoins": 9250
+  }
+ ]
+}

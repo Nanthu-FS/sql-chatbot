@@ -1,0 +1,233 @@
+{
+ "_doc": "Barn and Silo tiers (GAME_DESIGN \u00a710.4). cost.coins is coins; other keys are item ids.",
+ "barn": [
+  {
+   "level": 1,
+   "capacity": 100,
+   "unlock": 1,
+   "cost": {}
+  },
+  {
+   "level": 2,
+   "capacity": 125,
+   "unlock": 3,
+   "cost": {
+    "plank": 6,
+    "rope": 2,
+    "coins": 200
+   }
+  },
+  {
+   "level": 3,
+   "capacity": 150,
+   "unlock": 6,
+   "cost": {
+    "plank": 10,
+    "nails": 6,
+    "rope": 3,
+    "coins": 400
+   }
+  },
+  {
+   "level": 4,
+   "capacity": 175,
+   "unlock": 8,
+   "cost": {
+    "plank": 14,
+    "nails": 10,
+    "rope": 4,
+    "coins": 700
+   }
+  },
+  {
+   "level": 5,
+   "capacity": 200,
+   "unlock": 11,
+   "cost": {
+    "plank": 18,
+    "nails": 14,
+    "rope": 6,
+    "iron_bar": 2,
+    "coins": 1000
+   }
+  },
+  {
+   "level": 6,
+   "capacity": 250,
+   "unlock": 14,
+   "cost": {
+    "plank": 22,
+    "nails": 18,
+    "rope": 8,
+    "iron_bar": 4,
+    "coins": 1500
+   }
+  },
+  {
+   "level": 7,
+   "capacity": 300,
+   "unlock": 17,
+   "cost": {
+    "plank": 26,
+    "nails": 22,
+    "rope": 10,
+    "iron_bar": 6,
+    "coins": 2100
+   }
+  },
+  {
+   "level": 8,
+   "capacity": 350,
+   "unlock": 20,
+   "cost": {
+    "plank": 30,
+    "nails": 26,
+    "rope": 12,
+    "iron_bar": 8,
+    "gold_bar": 1,
+    "coins": 2800
+   }
+  },
+  {
+   "level": 9,
+   "capacity": 425,
+   "unlock": 24,
+   "cost": {
+    "plank": 35,
+    "nails": 30,
+    "rope": 15,
+    "iron_bar": 10,
+    "gold_bar": 2,
+    "coins": 3800
+   }
+  },
+  {
+   "level": 10,
+   "capacity": 500,
+   "unlock": 28,
+   "cost": {
+    "plank": 40,
+    "nails": 35,
+    "rope": 18,
+    "iron_bar": 12,
+    "gold_bar": 3,
+    "coins": 5000
+   }
+  }
+ ],
+ "silo": [
+  {
+   "level": 1,
+   "capacity": 75,
+   "unlock": 1,
+   "cost": {}
+  },
+  {
+   "level": 2,
+   "capacity": 100,
+   "unlock": 2,
+   "cost": {
+    "stone": 12,
+    "plank": 4,
+    "coins": 120
+   }
+  },
+  {
+   "level": 3,
+   "capacity": 125,
+   "unlock": 5,
+   "cost": {
+    "stone": 20,
+    "plank": 8,
+    "coins": 300
+   }
+  },
+  {
+   "level": 4,
+   "capacity": 150,
+   "unlock": 7,
+   "cost": {
+    "stone": 30,
+    "plank": 12,
+    "nails": 6,
+    "coins": 550
+   }
+  },
+  {
+   "level": 5,
+   "capacity": 175,
+   "unlock": 10,
+   "cost": {
+    "stone": 40,
+    "plank": 15,
+    "nails": 10,
+    "iron_bar": 2,
+    "coins": 850
+   }
+  },
+  {
+   "level": 6,
+   "capacity": 200,
+   "unlock": 13,
+   "cost": {
+    "stone": 50,
+    "plank": 20,
+    "nails": 14,
+    "iron_bar": 4,
+    "coins": 1250
+   }
+  },
+  {
+   "level": 7,
+   "capacity": 250,
+   "unlock": 16,
+   "cost": {
+    "stone": 65,
+    "plank": 25,
+    "nails": 18,
+    "iron_bar": 6,
+    "hardwood": 2,
+    "coins": 1800
+   }
+  },
+  {
+   "level": 8,
+   "capacity": 300,
+   "unlock": 19,
+   "cost": {
+    "stone": 80,
+    "plank": 30,
+    "nails": 22,
+    "iron_bar": 8,
+    "hardwood": 4,
+    "coins": 2500
+   }
+  },
+  {
+   "level": 9,
+   "capacity": 350,
+   "unlock": 23,
+   "cost": {
+    "stone": 100,
+    "plank": 35,
+    "nails": 26,
+    "iron_bar": 10,
+    "hardwood": 6,
+    "coins": 3400
+   }
+  },
+  {
+   "level": 10,
+   "capacity": 400,
+   "unlock": 27,
+   "cost": {
+    "stone": 120,
+    "plank": 40,
+    "nails": 30,
+    "iron_bar": 12,
+    "hardwood": 8,
+    "coins": 4600
+   }
+  }
+ ]
+}

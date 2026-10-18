@@ -1,0 +1,789 @@
+{
+ "_doc": "Master items (GAME_DESIGN \u00a716). price = base sell price before market swing (0 = not sellable). storage: silo (crops), barn (everything else), none (seeds, tools, instant pickups).",
+ "items": [
+  {
+   "id": "wheat",
+   "name": "Wheat",
+   "category": "crop",
+   "price": 3,
+   "storage": "silo"
+  },
+  {
+   "id": "carrot",
+   "name": "Carrot",
+   "category": "crop",
+   "price": 8,
+   "storage": "silo"
+  },
+  {
+   "id": "corn",
+   "name": "Corn",
+   "category": "crop",
+   "price": 12,
+   "storage": "silo"
+  },
+  {
+   "id": "potato",
+   "name": "Potato",
+   "category": "crop",
+   "price": 10,
+   "storage": "silo"
+  },
+  {
+   "id": "cabbage",
+   "name": "Cabbage",
+   "category": "crop",
+   "price": 22,
+   "storage": "silo"
+  },
+  {
+   "id": "tomato",
+   "name": "Tomato",
+   "category": "crop",
+   "price": 8,
+   "storage": "silo"
+  },
+  {
+   "id": "strawberry",
+   "name": "Strawberry",
+   "category": "crop",
+   "price": 9,
+   "storage": "silo"
+  },
+  {
+   "id": "sunflower",
+   "name": "Sunflower",
+   "category": "crop",
+   "price": 42,
+   "storage": "silo"
+  },
+  {
+   "id": "eggplant",
+   "name": "Eggplant",
+   "category": "crop",
+   "price": 20,
+   "storage": "silo"
+  },
+  {
+   "id": "pumpkin",
+   "name": "Pumpkin",
+   "category": "crop",
+   "price": 160,
+   "storage": "silo"
+  },
+  {
+   "id": "melon",
+   "name": "Melon",
+   "category": "crop",
+   "price": 215,
+   "storage": "silo"
+  },
+  {
+   "id": "grapes",
+   "name": "Grapes",
+   "category": "crop",
+   "price": 22,
+   "storage": "silo"
+  },
+  {
+   "id": "withered_crop",
+   "name": "Withered Crop",
+   "category": "crop",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "plant_scraps",
+   "name": "Plant Scraps",
+   "category": "fertilizer_input",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "flour",
+   "name": "Flour",
+   "category": "food_input",
+   "price": 12,
+   "storage": "barn"
+  },
+  {
+   "id": "cornmeal",
+   "name": "Cornmeal",
+   "category": "food_input",
+   "price": 26,
+   "storage": "barn"
+  },
+  {
+   "id": "cooking_oil",
+   "name": "Cooking Oil",
+   "category": "goods",
+   "price": 28,
+   "storage": "barn"
+  },
+  {
+   "id": "bread",
+   "name": "Bread",
+   "category": "dish",
+   "price": 40,
+   "storage": "barn"
+  },
+  {
+   "id": "cornbread",
+   "name": "Cornbread",
+   "category": "dish",
+   "price": 80,
+   "storage": "barn"
+  },
+  {
+   "id": "roast_veggies",
+   "name": "Roast Veggies",
+   "category": "dish",
+   "price": 26,
+   "storage": "barn"
+  },
+  {
+   "id": "strawberry_tart",
+   "name": "Strawberry Tart",
+   "category": "dish",
+   "price": 100,
+   "storage": "barn"
+  },
+  {
+   "id": "pumpkin_pie",
+   "name": "Pumpkin Pie",
+   "category": "dish",
+   "price": 110,
+   "storage": "barn"
+  },
+  {
+   "id": "pancakes",
+   "name": "Pancakes",
+   "category": "dish",
+   "price": 85,
+   "storage": "barn"
+  },
+  {
+   "id": "veggie_stew",
+   "name": "Veggie Stew",
+   "category": "dish",
+   "price": 80,
+   "storage": "barn"
+  },
+  {
+   "id": "potato_chips",
+   "name": "Potato Chips",
+   "category": "dish",
+   "price": 75,
+   "storage": "barn"
+  },
+  {
+   "id": "ratatouille",
+   "name": "Ratatouille",
+   "category": "dish",
+   "price": 95,
+   "storage": "barn"
+  },
+  {
+   "id": "honey",
+   "name": "Honey",
+   "category": "forest",
+   "price": 25,
+   "storage": "barn"
+  },
+  {
+   "id": "maple_syrup",
+   "name": "Maple Syrup",
+   "category": "forest",
+   "price": 40,
+   "storage": "barn"
+  },
+  {
+   "id": "wild_mushroom",
+   "name": "Wild Mushroom",
+   "category": "forest",
+   "price": 6,
+   "storage": "barn"
+  },
+  {
+   "id": "chanterelle",
+   "name": "Chanterelle",
+   "category": "forest",
+   "price": 18,
+   "storage": "barn"
+  },
+  {
+   "id": "glowcap",
+   "name": "Glowcap",
+   "category": "forest",
+   "price": 45,
+   "storage": "barn"
+  },
+  {
+   "id": "apple",
+   "name": "Apple",
+   "category": "forest",
+   "price": 8,
+   "storage": "barn"
+  },
+  {
+   "id": "blackberry",
+   "name": "Blackberry",
+   "category": "forest",
+   "price": 5,
+   "storage": "barn"
+  },
+  {
+   "id": "apple_sapling",
+   "name": "Apple Sapling",
+   "category": "forest",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "wood",
+   "name": "Wood",
+   "category": "forest",
+   "price": 3,
+   "storage": "barn"
+  },
+  {
+   "id": "hardwood",
+   "name": "Hardwood",
+   "category": "forest",
+   "price": 12,
+   "storage": "barn"
+  },
+  {
+   "id": "heartwood",
+   "name": "Heartwood",
+   "category": "forest",
+   "price": 120,
+   "storage": "barn"
+  },
+  {
+   "id": "resin",
+   "name": "Resin",
+   "category": "forest",
+   "price": 6,
+   "storage": "barn"
+  },
+  {
+   "id": "sap",
+   "name": "Sap",
+   "category": "forest",
+   "price": 5,
+   "storage": "barn"
+  },
+  {
+   "id": "plank",
+   "name": "Plank",
+   "category": "material",
+   "price": 6,
+   "storage": "barn"
+  },
+  {
+   "id": "beam",
+   "name": "Beam",
+   "category": "material",
+   "price": 30,
+   "storage": "barn"
+  },
+  {
+   "id": "mulch",
+   "name": "Mulch",
+   "category": "fertilizer",
+   "price": 2,
+   "storage": "barn"
+  },
+  {
+   "id": "pinecone",
+   "name": "Pinecone",
+   "category": "seed",
+   "price": 2,
+   "storage": "barn"
+  },
+  {
+   "id": "birch_seed",
+   "name": "Birch Seed",
+   "category": "seed",
+   "price": 2,
+   "storage": "barn"
+  },
+  {
+   "id": "acorn",
+   "name": "Acorn",
+   "category": "seed",
+   "price": 4,
+   "storage": "barn"
+  },
+  {
+   "id": "maple_seed",
+   "name": "Maple Seed",
+   "category": "seed",
+   "price": 6,
+   "storage": "barn"
+  },
+  {
+   "id": "golden_acorn",
+   "name": "Golden Acorn",
+   "category": "seed",
+   "price": 250,
+   "storage": "barn"
+  },
+  {
+   "id": "wildflower_seed",
+   "name": "Wildflower Seed",
+   "category": "seed",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "bird_nest",
+   "name": "Bird Nest",
+   "category": "forest",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "amber",
+   "name": "Amber",
+   "category": "rare",
+   "price": 120,
+   "storage": "barn"
+  },
+  {
+   "id": "petrified_wood",
+   "name": "Petrified Wood",
+   "category": "rare",
+   "price": 150,
+   "storage": "barn"
+  },
+  {
+   "id": "old_coin",
+   "name": "Old Coin",
+   "category": "rare",
+   "price": 80,
+   "storage": "barn"
+  },
+  {
+   "id": "golden_feather",
+   "name": "Golden Feather",
+   "category": "rare",
+   "price": 200,
+   "storage": "barn"
+  },
+  {
+   "id": "feather",
+   "name": "Feather",
+   "category": "rare",
+   "price": 15,
+   "storage": "barn"
+  },
+  {
+   "id": "fibre",
+   "name": "Fibre",
+   "category": "material",
+   "price": 1,
+   "storage": "barn"
+  },
+  {
+   "id": "stone",
+   "name": "Stone",
+   "category": "mine",
+   "price": 2,
+   "storage": "barn"
+  },
+  {
+   "id": "coal",
+   "name": "Coal",
+   "category": "mine",
+   "price": 6,
+   "storage": "barn"
+  },
+  {
+   "id": "copper_ore",
+   "name": "Copper Ore",
+   "category": "mine",
+   "price": 6,
+   "storage": "barn"
+  },
+  {
+   "id": "iron_ore",
+   "name": "Iron Ore",
+   "category": "mine",
+   "price": 12,
+   "storage": "barn"
+  },
+  {
+   "id": "gold_ore",
+   "name": "Gold Ore",
+   "category": "mine",
+   "price": 25,
+   "storage": "barn"
+  },
+  {
+   "id": "quartz",
+   "name": "Quartz",
+   "category": "mine",
+   "price": 15,
+   "storage": "barn"
+  },
+  {
+   "id": "clay",
+   "name": "Clay",
+   "category": "mine",
+   "price": 3,
+   "storage": "barn"
+  },
+  {
+   "id": "copper_bar",
+   "name": "Copper Bar",
+   "category": "material",
+   "price": 30,
+   "storage": "barn"
+  },
+  {
+   "id": "iron_bar",
+   "name": "Iron Bar",
+   "category": "material",
+   "price": 55,
+   "storage": "barn"
+  },
+  {
+   "id": "gold_bar",
+   "name": "Gold Bar",
+   "category": "material",
+   "price": 105,
+   "storage": "barn"
+  },
+  {
+   "id": "brick",
+   "name": "Brick",
+   "category": "material",
+   "price": 7,
+   "storage": "barn"
+  },
+  {
+   "id": "glass",
+   "name": "Glass",
+   "category": "material",
+   "price": 8,
+   "storage": "barn"
+  },
+  {
+   "id": "nails",
+   "name": "Nails",
+   "category": "material",
+   "price": 8,
+   "storage": "barn"
+  },
+  {
+   "id": "rope",
+   "name": "Rope",
+   "category": "material",
+   "price": 5,
+   "storage": "barn"
+  },
+  {
+   "id": "gear",
+   "name": "Gear",
+   "category": "material",
+   "price": 40,
+   "storage": "barn"
+  },
+  {
+   "id": "torch",
+   "name": "Torch",
+   "category": "mine",
+   "price": 4,
+   "storage": "barn"
+  },
+  {
+   "id": "lantern",
+   "name": "Lantern",
+   "category": "mine",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "support_beam",
+   "name": "Support Beam",
+   "category": "mine",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "rope_ladder",
+   "name": "Rope Ladder",
+   "category": "mine",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "geode",
+   "name": "Geode",
+   "category": "mine",
+   "price": 20,
+   "storage": "barn"
+  },
+  {
+   "id": "ember_geode",
+   "name": "Ember Geode",
+   "category": "mine",
+   "price": 45,
+   "storage": "barn"
+  },
+  {
+   "id": "crystal_geode",
+   "name": "Crystal Geode",
+   "category": "mine",
+   "price": 90,
+   "storage": "barn"
+  },
+  {
+   "id": "amethyst",
+   "name": "Amethyst",
+   "category": "gem",
+   "price": 60,
+   "storage": "barn"
+  },
+  {
+   "id": "emerald",
+   "name": "Emerald",
+   "category": "gem",
+   "price": 130,
+   "storage": "barn"
+  },
+  {
+   "id": "ruby",
+   "name": "Ruby",
+   "category": "gem",
+   "price": 160,
+   "storage": "barn"
+  },
+  {
+   "id": "diamond",
+   "name": "Diamond",
+   "category": "gem",
+   "price": 450,
+   "storage": "barn"
+  },
+  {
+   "id": "prismatic_shard",
+   "name": "Prismatic Shard",
+   "category": "rare",
+   "price": 1500,
+   "storage": "barn"
+  },
+  {
+   "id": "cave_mushroom",
+   "name": "Cave Mushroom",
+   "category": "mine_food",
+   "price": 15,
+   "storage": "barn"
+  },
+  {
+   "id": "seed_wheat",
+   "name": "Wheat Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_carrot",
+   "name": "Carrot Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_corn",
+   "name": "Corn Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_potato",
+   "name": "Potato Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_cabbage",
+   "name": "Cabbage Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_tomato",
+   "name": "Tomato Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_strawberry",
+   "name": "Strawberry Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_sunflower",
+   "name": "Sunflower Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_eggplant",
+   "name": "Eggplant Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_pumpkin",
+   "name": "Pumpkin Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_melon",
+   "name": "Melon Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "seed_grapes",
+   "name": "Grapes Seeds",
+   "category": "seed",
+   "price": 0,
+   "storage": "none"
+  },
+  {
+   "id": "strawberry_jam",
+   "name": "Strawberry Jam",
+   "category": "goods",
+   "price": 50,
+   "storage": "barn"
+  },
+  {
+   "id": "melon_jam",
+   "name": "Melon Jam",
+   "category": "goods",
+   "price": 144,
+   "storage": "barn"
+  },
+  {
+   "id": "grapes_jam",
+   "name": "Grape Jelly",
+   "category": "goods",
+   "price": 79,
+   "storage": "barn"
+  },
+  {
+   "id": "carrot_pickles",
+   "name": "Pickled Carrot",
+   "category": "goods",
+   "price": 22,
+   "storage": "barn"
+  },
+  {
+   "id": "potato_pickles",
+   "name": "Pickled Potato",
+   "category": "goods",
+   "price": 28,
+   "storage": "barn"
+  },
+  {
+   "id": "tomato_pickles",
+   "name": "Pickled Tomato",
+   "category": "goods",
+   "price": 22,
+   "storage": "barn"
+  },
+  {
+   "id": "corn_pickles",
+   "name": "Pickled Corn",
+   "category": "goods",
+   "price": 34,
+   "storage": "barn"
+  },
+  {
+   "id": "pumpkin_pickles",
+   "name": "Pickled Pumpkin",
+   "category": "goods",
+   "price": 108,
+   "storage": "barn"
+  },
+  {
+   "id": "cabbage_pickles",
+   "name": "Pickled Cabbage",
+   "category": "goods",
+   "price": 62,
+   "storage": "barn"
+  },
+  {
+   "id": "eggplant_pickles",
+   "name": "Pickled Eggplant",
+   "category": "goods",
+   "price": 56,
+   "storage": "barn"
+  },
+  {
+   "id": "carrot_juice",
+   "name": "Carrot Juice",
+   "category": "goods",
+   "price": 34,
+   "storage": "barn"
+  },
+  {
+   "id": "tomato_juice",
+   "name": "Tomato Juice",
+   "category": "goods",
+   "price": 34,
+   "storage": "barn"
+  },
+  {
+   "id": "strawberry_juice",
+   "name": "Strawberry Juice",
+   "category": "goods",
+   "price": 38,
+   "storage": "barn"
+  },
+  {
+   "id": "melon_juice",
+   "name": "Melon Juice",
+   "category": "goods",
+   "price": 204,
+   "storage": "barn"
+  },
+  {
+   "id": "grapes_juice",
+   "name": "Grape Juice",
+   "category": "goods",
+   "price": 92,
+   "storage": "barn"
+  },
+  {
+   "id": "basic_fertilizer",
+   "name": "Basic Fertilizer",
+   "category": "fertilizer",
+   "price": 6,
+   "storage": "barn"
+  },
+  {
+   "id": "quality_fertilizer",
+   "name": "Quality Fertilizer",
+   "category": "fertilizer",
+   "price": 20,
+   "storage": "barn"
+  }
+ ]
+}
