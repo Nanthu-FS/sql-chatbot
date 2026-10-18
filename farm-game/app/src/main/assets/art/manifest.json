@@ -351,6 +351,14 @@
   "ax": 7,
   "ay": 9
  },
+ "icons_big/arrow_down": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/arrow_up": {
+  "ax": 16,
+  "ay": 16
+ },
  "icons_big/bag": {
   "ax": 16,
   "ay": 16
@@ -367,11 +375,39 @@
   "ax": 16,
   "ay": 16
  },
+ "icons_big/check": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/clock": {
+  "ax": 16,
+  "ay": 16
+ },
  "icons_big/close": {
   "ax": 16,
   "ay": 16
  },
+ "icons_big/coin": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/coins": {
+  "ax": 16,
+  "ay": 16
+ },
  "icons_big/craft": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/cross": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/energy": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/energy_food": {
   "ax": 16,
   "ay": 16
  },
@@ -387,6 +423,10 @@
   "ax": 16,
   "ay": 16
  },
+ "icons_big/gem": {
+  "ax": 16,
+  "ay": 16
+ },
  "icons_big/gift": {
   "ax": 16,
   "ay": 16
@@ -395,11 +435,23 @@
   "ax": 16,
   "ay": 16
  },
+ "icons_big/heart": {
+  "ax": 16,
+  "ay": 16
+ },
  "icons_big/import": {
   "ax": 16,
   "ay": 16
  },
  "icons_big/info": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/level": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/lock": {
   "ax": 16,
   "ay": 16
  },
@@ -412,6 +464,14 @@
   "ay": 16
  },
  "icons_big/merchant": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/minus": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/moon": {
   "ax": 16,
   "ay": 16
  },
@@ -431,6 +491,42 @@
   "ax": 16,
   "ay": 16
  },
+ "icons_big/plus": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/quality_gold": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/quality_iridium": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/quality_silver": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/ready": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/season_fall": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/season_spring": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/season_summer": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/season_winter": {
+  "ax": 16,
+  "ay": 16
+ },
  "icons_big/seeds": {
   "ax": 16,
   "ay": 16
@@ -447,6 +543,10 @@
   "ax": 16,
   "ay": 16
  },
+ "icons_big/silo": {
+  "ax": 16,
+  "ay": 16
+ },
  "icons_big/sound_off": {
   "ax": 16,
   "ay": 16
@@ -456,6 +556,26 @@
   "ay": 16
  },
  "icons_big/sprinkler": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/storage": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/sun": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/sunrise": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/thirsty": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/timer": {
   "ax": 16,
   "ay": 16
  },
@@ -487,9 +607,57 @@
   "ax": 16,
   "ay": 16
  },
+ "icons_big/unlock": {
+  "ax": 16,
+  "ay": 16
+ },
  "icons_big/vibrate": {
   "ax": 16,
   "ay": 16
+ },
+ "icons_big/warning": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/water": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/weather_cloudy": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/weather_rain": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/weather_snow": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/weather_storm": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/weather_sunny": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/withered": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons_big/xp": {
+  "ax": 16,
+  "ay": 16
+ },
+ "icons/arrow_down": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/arrow_up": {
+  "ax": 9,
+  "ay": 9
  },
  "icons/bag": {
   "ax": 9,
@@ -507,11 +675,39 @@
   "ax": 9,
   "ay": 9
  },
+ "icons/check": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/clock": {
+  "ax": 9,
+  "ay": 9
+ },
  "icons/close": {
   "ax": 9,
   "ay": 9
  },
+ "icons/coin": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/coins": {
+  "ax": 9,
+  "ay": 9
+ },
  "icons/craft": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/cross": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/energy": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/energy_food": {
   "ax": 9,
   "ay": 9
  },
@@ -527,6 +723,10 @@
   "ax": 9,
   "ay": 9
  },
+ "icons/gem": {
+  "ax": 9,
+  "ay": 9
+ },
  "icons/gift": {
   "ax": 9,
   "ay": 9
@@ -535,11 +735,23 @@
   "ax": 9,
   "ay": 9
  },
+ "icons/heart": {
+  "ax": 9,
+  "ay": 9
+ },
  "icons/import": {
   "ax": 9,
   "ay": 9
  },
  "icons/info": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/level": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/lock": {
   "ax": 9,
   "ay": 9
  },
@@ -552,6 +764,14 @@
   "ay": 9
  },
  "icons/merchant": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/minus": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/moon": {
   "ax": 9,
   "ay": 9
  },
@@ -571,6 +791,42 @@
   "ax": 9,
   "ay": 9
  },
+ "icons/plus": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/quality_gold": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/quality_iridium": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/quality_silver": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/ready": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/season_fall": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/season_spring": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/season_summer": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/season_winter": {
+  "ax": 9,
+  "ay": 9
+ },
  "icons/seeds": {
   "ax": 9,
   "ay": 9
@@ -587,6 +843,10 @@
   "ax": 9,
   "ay": 9
  },
+ "icons/silo": {
+  "ax": 9,
+  "ay": 9
+ },
  "icons/sound_off": {
   "ax": 9,
   "ay": 9
@@ -596,6 +856,26 @@
   "ay": 9
  },
  "icons/sprinkler": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/storage": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/sun": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/sunrise": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/thirsty": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/timer": {
   "ax": 9,
   "ay": 9
  },
@@ -627,7 +907,47 @@
   "ax": 9,
   "ay": 9
  },
+ "icons/unlock": {
+  "ax": 9,
+  "ay": 9
+ },
  "icons/vibrate": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/warning": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/water": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/weather_cloudy": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/weather_rain": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/weather_snow": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/weather_storm": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/weather_sunny": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/withered": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/xp": {
   "ax": 9,
   "ay": 9
  },

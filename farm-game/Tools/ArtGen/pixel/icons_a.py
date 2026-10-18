@@ -20,7 +20,7 @@ N4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
 
 GOLD = ["brown", "clay", "amber", "yellow", "white"]
 SILVER = ["slate", "grey_d", "grey", "grey_l", "white"]
-IRID = ["slate_d", "purple", "magenta", "pink", "white"]
+IRID = ["purple", "purple", "purple", "magenta", "pink"]
 RED = ["purple", "red_d", "red", "pink", "white"]
 BLUE = ["slate", "blue_d", "blue", "cyan", "white"]
 GREEN = ["teal_dd", "green_dd", "green_d", "green", "yellow"]
@@ -33,6 +33,7 @@ SUN = ["clay", "orange", "amber", "yellow", "white"]
 PETAL = ["purple", "magenta", "pink", "white", "white"]
 CREAM = ["brown_l", "tan_d", "tan", "cream", "white"]
 MOON = ["tan_d", "tan", "cream", "white", "white"]
+DRIED = ["brown", "brown_l", "tan_d", "tan", "cream"]
 
 
 def col(c):
@@ -546,18 +547,20 @@ STAR14 = [
 
 
 def ic_xp(n):
+    """XP: a glossy green orb with a white glint. Round on purpose, so it never reads as a quality star."""
     c = Canvas(n)
     if n == 14:
-        s = poly(star_pts(7.0, 7.7, 7.4, 3.3), n)
-        dome(c, s, GOLD, depth=2.0, off=0.35)
-        c.put(6, 4, "white")
-        c.put(5, 5, "white")
-        c.put(6, 5, "white")
+        s = disc(6.5, 6.5, 6.2, n)
+        ball(c, 6.5, 6.5, 6.2, 6.2, GREEN, gain=1.0, off=0.1, s=s, spec={(4, 3): "white", (4, 4): "white", (3, 4): "white"})
         return c
-    s = poly(star_pts(14.0, 15.3, 14.6, 6.8), n)
-    dome(c, s, GOLD, depth=4.0, off=0.3)
-    for p in ((12, 8), (11, 9), (12, 9), (11, 10), (10, 11), (13, 7)):
+    s = disc(13.0, 15.0, 10.6, n)
+    ball(c, 13.0, 15.0, 10.6, 10.6, GREEN, gain=1.0, off=0.1, s=s)
+    for p in ((8, 10), (9, 9), (8, 11), (10, 8), (7, 12), (11, 7), (12, 7)):
         c.put(*p, "white")
+    # four-point sparkle sitting just outside the orb, top right
+    c.put(23, 4, "white")
+    for p in ((22, 4), (24, 4), (23, 3), (23, 5)):
+        c.put(*p, "yellow")
     return c
 
 
@@ -856,56 +859,48 @@ def paint_leaf(c, shp, ramp, lit=3.0, vein=True, sep=None):
 
 
 def ic_summer(n):
+    """Sunflower: ring of yellow petals round a brown seed disc, a green stalk and one leaf."""
     c = Canvas(n)
-    k = n / 14
-    # sun peeking from behind the top-right of the leaf
     if n == 14:
-        put_map(c, ["..o..o", "o.yyy.", ".ywyya", ".yyyya", "oyyyaa", "..aaa."], ox=0, oy=0)
+        cx, cy, dp, rp, rc, P = 6.5, 5.2, 3.1, 2.0, 2.3, 8
     else:
-        scx, scy, sr = 3.9 * k, 3.9 * k, 3.1 * k
-        tri_rays(c, scx, scy, sr + 1.0, sr + 4.4, 8, 3.6)
-        s = disc(scx, scy, sr, n)
-        for p in s:
-            c.erase(*p)
-        ball(c, scx, scy, sr * 1.1, sr * 1.1, SUN, off=0.5, s=s)
-    base, tip = (2.2 * k, 12.4 * k), (12.8 * k, 1.8 * k)
-    shp = leaf_ovate(base, tip, 3.6 * k if n > 14 else 4.3, n)
-    for p in shp:
-        c.erase(*p)
+        cx, cy, dp, rp, rc, P = 14.0, 11.4, 8.0, 3.5, 6.0, 10
+    petals = set()
+    for i in range(P):
+        a = 2 * math.pi * i / P - math.pi / 2
+        petals |= disc(cx + dp * math.cos(a), cy + dp * math.sin(a), rp, n)
+    centre = disc(cx, cy, rc, n)
+    petals = clip(petals, n) - centre
+    dome(c, petals, SUN, depth=2.6 if n == 14 else 4.2, off=0.2)
+    edge_over(c, centre, "amber")
+    ball(c, cx, cy, rc, rc, WOOD, gain=0.9, off=0.2, s=centre)
+    if n == 28:
+        seeds = [(12, 9), (15, 8), (13, 12), (16, 11), (11, 13), (14, 14), (17, 14), (13, 16), (16, 17), (10, 11)]
+        for x, y in seeds:
+            if (x, y) in centre:
+                c.put(x, y, "brown_d")
+        c.put(12, 6, "brown_l")
+        c.put(10, 8, "brown_l")
+    # stalk
+    top = cy + dp + rp - 1
+    if n == 14:
+        stalk = capsule((cx, top), (cx, n - 1), 1.4, n)
+        for p in stalk:
+            c.put(*p, "green_d")
+        leaf = leaf_ovate((cx - 0.5, 12.2), (0.8, 8.6), 2.0, n)
+    else:
+        stalk = capsule((cx, top), (cx - 0.5, n - 1), 2.6, n)
+        for p in stalk:
+            c.put(*p, "green_d")
+        leaf = leaf_ovate((cx - 1.0, 24.0), (1.0, 16.0), 4.0, n)
     cols = {}
-    for (x, y), (t, side) in shp.items():
+    for (x, y), (t, side) in leaf.items():
         v = 3.0 if side < 0 else 2.0
-        if (x + 1, y) not in shp or (x, y + 1) not in shp:
+        if (x + 1, y) not in leaf or (x, y + 1) not in leaf:
             v -= 0.9
-        elif ((x - 1, y) not in shp or (x, y - 1) not in shp) and side < 0:
-            v += 0.9 if n > 14 else 0.0
         cols[(x, y)] = tone(GREEN, v, x, y)
     paint(c, cols)
-    L = math.hypot(tip[0] - base[0], tip[1] - base[1])
-    ux, uy = (tip[0] - base[0]) / L, (tip[1] - base[1]) / L
-    for i in range(int(L * 0.85)):
-        x, y = int(base[0] + ux * (i + 0.5)), int(base[1] + uy * (i + 0.5))
-        if (x, y) in shp:
-            c.put(x, y, "green_dd")
-    if n == 28:
-        for t in (0.3, 0.5, 0.7):
-            mx, my = base[0] + ux * L * t, base[1] + uy * L * t
-            for sgn in (-1, 1):
-                vx, vy = ux * 0.7 + sgn * -uy * 0.7, uy * 0.7 + sgn * ux * 0.7
-                for j in range(1, 5):
-                    x, y = int(mx + vx * j), int(my + vy * j)
-                    if (x, y) in shp and (x + 1, y) in shp and (x, y + 1) in shp:
-                        c.put(x, y, "green_d" if sgn < 0 else "green_dd")
-    edge_over(c, set(shp), "ink")
-    # stem
-    if n == 14:
-        c.put(1, 12, "green_d")
-        c.put(0, 13, "green_dd")
-    else:
-        for p in ((3, 24), (2, 25), (1, 26), (0, 27)):
-            c.put(*p, "green_d")
-        for p in ((7, 15), (6, 16), (8, 14), (9, 13)):
-            c.put(*p, "yellow")
+    edge_over(c, set(leaf), "ink")
     return c
 
 
@@ -1283,45 +1278,30 @@ def ic_ready(n):
 
 
 def ic_withered(n):
+    """Wilted flower: a bent brown stalk carrying a dead head of dry brown petals that hangs
+    down. Drawn as a flower (not a leaf) so it reads as dead bloom at 1x and 2x."""
     c = Canvas(n)
     if n == 14:
-        put_map(c, WITHER14)
-        return c
-    base, tip = (4.6, 4.2), (22.6, 24.6)
-    shp = leaf_set(base, tip, 7.4, n, bend=0.04)
-    L = math.hypot(tip[0] - base[0], tip[1] - base[1])
-    ux, uy = (tip[0] - base[0]) / L, (tip[1] - base[1]) / L
-    # bites out of the lower edge and one on the upper edge
-    for bx, by, br in ((21.4, 12.6, 2.6), (8.2, 18.4, 2.2), (16.4, 23.4, 1.8)):
-        for p in disc(bx, by, br, n):
-            shp.pop(p, None)
-    cols = {}
-    for (x, y), (t, side) in shp.items():
-        v = 3.0 if side < 0 else 2.2
-        if (x + 1, y) not in shp or (x, y + 1) not in shp:
-            v -= 1.1
-        elif ((x - 1, y) not in shp or (x, y - 1) not in shp) and side < 0:
-            v += 0.8
-        cols[(x, y)] = tone(DEAD, v, x, y)
-    paint(c, cols)
-    # midrib and side veins
-    for i in range(int(L * 0.92)):
-        x, y = int(base[0] + ux * i), int(base[1] + uy * i)
-        if (x, y) in shp:
-            c.put(x, y, "brown")
-    for t in (0.25, 0.45, 0.65):
-        mx, my = base[0] + ux * L * t, base[1] + uy * L * t
-        for sgn in (-1, 1):
-            vx, vy = ux * 0.7 + sgn * -uy * 0.7, uy * 0.7 + sgn * ux * 0.7
-            for j in range(1, 6):
-                x, y = int(mx + vx * j), int(my + vy * j)
-                if (x, y) in shp and (x + 1, y) in shp and (x, y + 1) in shp:
-                    c.put(x, y, "brown_l")
-    # stem and curled tip
-    for i, p in enumerate(((0, 0), (1, 0), (1, 1), (2, 1), (2, 2), (3, 2), (3, 3), (4, 3), (4, 4))):
-        c.put(*p, "brown_d" if i < 4 else "brown")
-    for p in ((23, 25), (23, 26), (22, 27), (21, 27)):
-        c.put(*p, "brown")
+        head, R, r, sw = (8.5, 4.2), 2.9, 2.0, 1.3
+        stalk_pts = [(6.0, 13.0), (6.6, 9.0), (8.0, 7.0)]
+    else:
+        head, R, r, sw = (17.0, 9.0), 5.6, 3.8, 2.4
+        stalk_pts = [(9.0, 27.0), (11.5, 19.0), (14.5, 13.0)]
+    # petals fanned over the lower half so the head hangs; the top stays open
+    angles = (0, 40, 90, 140, 180)
+    stalk = set()
+    for a, b in zip(stalk_pts, stalk_pts[1:]):
+        stalk |= capsule(a, b, sw, n)
+    split = (stalk_pts[0][0] + head[0]) / 2
+    paint(c, {p: ("brown_l" if p[0] < split else "brown") for p in stalk})
+    petals = set()
+    for ang in angles:
+        a = math.radians(ang)
+        petals |= disc(head[0] + R * math.cos(a), head[1] + R * math.sin(a), r, n)
+    centre = disc(head[0], head[1], R * 0.55, n)
+    petals = clip(petals, n) - centre
+    dome(c, petals, DRIED, depth=max(1.5, r * 0.9))
+    ball(c, head[0], head[1], R * 0.55, R * 0.55, ["brown_d", "brown_d", "brown", "brown"], gain=0.9, s=centre)
     return c
 
 
@@ -1600,7 +1580,7 @@ def ic_minus(n):
     k = n / 14
     a, b = int(4.5 * k), int(9.5 * k) - 1
     lo, hi = int(1 * k), n - int(1 * k) - 1
-    s = rect(lo, a, hi, b) - {(lo, a), (lo, b), (hi, a), (hi, b)}
+    s = rect(lo, a, hi, b)
     glyph_fill(c, s, RED)
     return c
 
@@ -1859,24 +1839,6 @@ SNOW14 = [
     ".....www.....",
     "....w.w.w....",
     "......w......",
-]
-
-
-WITHER14 = [
-    "zz............",
-    ".zB...........",
-    "..Bnnnn.......",
-    ".nnBnnnnnn....",
-    ".nnnBBnnnnN...",
-    "..nnnnBnn.NN..",
-    "..NnnnnBBnnNN.",
-    "...NnnnnnBnNb.",
-    "...NNnnnnnBNb.",
-    "....NN.nnnNBb.",
-    ".....NNbbNNNB.",
-    "........bbb.B.",
-    "............B.",
-    "...........B..",
 ]
 
 

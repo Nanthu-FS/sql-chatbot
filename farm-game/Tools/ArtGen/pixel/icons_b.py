@@ -430,42 +430,47 @@ def nav_forest(n):
     return c
 
 
+def gem(c, x, y, cut):
+    """3x3 cut gem for ore on rock faces."""
+    if cut == "cyan":
+        c.stamp(x, y, [".w.", "wcc", "cCC"], {"w": "white", "c": "cyan", "C": "blue"})
+    else:
+        c.stamp(x, y, [".w.", "wpp", "pRR"], {"w": "white", "p": "pink", "R": "red"})
+
+
 def nav_mine(n):
+    """Mine entrance: a rock mound with a dark tunnel framed in timber, a lantern and ore gems."""
     c = Canvas(n)
     if n == 14:
-        c.pts([(x, 13) for x in range(14)], "grey")
-        c.pts([(x, 13) for x in range(1, 14, 3)], "brown")
-        minecart(c, 0, 0, False)
+        mound = ell(6.5, 12, 6.9, 11.2) & rect(0, 0, 13, 12)
+        c.dome(mound, STONE, depth=3, off=0.3)
+        c.pts([(2, 7), (3, 9), (12, 9), (11, 2)], "grey_d")
+        c.pts([(4, 3), (8, 2)], "grey_l")
+        gem(c, 8, 2, "cyan")
+        frame = mapset(["WWWWWWWWWW", "WWWiiiiWWW", "WWiiiiiiWW", "WWiiiiiiWW",
+                        "WWiiiiiiWW", "WWiiiiiiWW", "WWiiiiiiWW", "WWiiiiiiWW"], "W", 2, 5)
+        interior = mapset(["WWWWWWWWWW", "WWWiiiiWWW", "WWiiiiiiWW", "WWiiiiiiWW",
+                           "WWiiiiiiWW", "WWiiiiiiWW", "WWiiiiiiWW", "WWiiiiiiWW"], "i", 2, 5)
+        c.fill(interior, "ink")
+        c.bevel(frame, WOOD, lit=2.5)
+        c.stamp(5, 7, ["y"], {"y": "yellow"})
         return c
-    hill = ell(13.5, 16, 14.5, 13.5) & rect(0, 0, 27, 27)
-    c.dome(hill, STONE, depth=5, off=0.3)
-    for p in ((5, 6), (6, 6), (20, 4), (21, 5), (2, 14), (25, 12), (24, 13), (9, 3), (17, 2), (18, 3)):
-        c.put(*p, "grey_d")
-    for p in ((5, 5), (20, 3), (9, 2), (17, 1)):
-        c.put(*p, "grey_l")
-    c.fill(rect(8, 11, 19, 27), "ink")
-    c.fill(rect(9, 13, 18, 27), "slate_d")
-    for y in range(13, 19):
-        for x in range(9, 19):
-            if (x + y) % 2 == 0 or y < 15:
-                c.put(x, y, "ink")
-    for y in range(18, 28):
-        k = (y - 18) // 3
-        c.put(11 - k, y, "grey_d")
-        c.put(16 + k, y, "grey_d")
-    posts = rect(6, 10, 8, 27) | rect(19, 10, 21, 27)
-    c.bevel(posts, WOOD, lit=2, sep="ink")
-    beam = rect(4, 7, 23, 10)
-    c.bevel(beam, WOOD, lit=2.6, sep="ink")
-    c.pts([(9, 8), (16, 9), (5, 9)], "brown")
-    for x in (7, 20):
-        c.put(x, 8, "grey_l")
-        c.put(x, 9, "grey_d")
-    c.stamp(24, 12, [".k.", "kyk", "yoy", "kyk"], {"k": "ink", "y": "yellow", "o": "white"})
-    c.put(25, 11, "ink")
-    c.pts([(x, 27) for x in range(0, 28)], "grey")
-    c.pts([(x, 27) for x in range(1, 28, 4)], "brown")
-    minecart(c, 1, 12, True)
+    mound = ell(13.5, 21, 13.8, 14.2) & rect(0, 0, 27, 27)
+    c.dome(mound, STONE, depth=6, off=0.3)
+    c.pts([(3, 12), (4, 13), (6, 9), (23, 10), (24, 8), (22, 26)], "grey_d")
+    c.pts([(6, 8), (9, 7), (19, 8), (5, 16)], "grey_l")
+    gem(c, 2, 17, "cyan")
+    gem(c, 22, 14, "pink")
+    outer = rect(4, 19, 23, 27) | (ell(13.5, 19, 9.5, 9.5) & rect(0, 0, 27, 19))
+    inner = rect(7, 19, 20, 27) | (ell(13.5, 19, 6.5, 6.5) & rect(0, 0, 27, 19))
+    frame = outer - inner
+    c.fill(inner, "ink")
+    c.pts([(x, 26) for x in range(8, 20)], "slate")
+    c.pts([(x, 27) for x in range(8, 20) if x % 3 == 0], "grey_d")
+    c.stamp(12, 15, [".k.", "kyk", "kwk", ".k."], {"k": "ink", "y": "yellow", "w": "white"})
+    c.pts([(13, 14)], "grey_l")
+    c.bevel(frame, WOOD, lit=2.6, sep="ink")
+    c.pts([(x, 19) for x in range(4, 24) if (x, 19) in frame], "brown")
     return c
 
 
@@ -781,19 +786,32 @@ def shop(n):
     return c
 
 
+def flat_coin(c, cx, cy, r):
+    """Flat gold disc: amber rim, yellow face, orange lower-right shade, white glint, '$' stroke.
+    Reads as money at 14px where the sphere shading of coin() turns into a blob."""
+    c.fill(ell(cx, cy, r, r), "amber")
+    face = ell(cx, cy, r - 1.2, r - 1.2)
+    c.fill(face, "yellow")
+    c.fill({p for p in face if (p[0] - cx) + (p[1] - cy) > 0.8 * r}, "orange")
+    c.fill({p for p in face if (p[0] - cx) + (p[1] - cy) < -0.9 * r and abs((p[0] - cx) - (p[1] - cy)) < 0.7 * r}, "white")
+    x, y = round(cx), round(cy)
+    c.pts([(x, y + k) for k in range(-2, 3) if r >= 4 or k == 0], "orange")
+    return ell(cx, cy, r, r)
+
+
 def sell(n):
+    """Coins dropping into a shipping crate."""
     c = Canvas(n)
     if n == 14:
         crate = rect(0, 6, 9, 13)
+        flat_coin(c, 9.5, 4.5, 4.0)
         c.bevel(crate, PLANK, lit=1.8)
         c.pts([(x, 6) for x in range(0, 10)], "tan")
         for y in (9, 12):
             c.pts([(x, y) for x in range(1, 9)], "brown")
         c.pts([(1, y) for y in range(7, 13)] + [(8, y) for y in range(7, 13)], "brown_l")
-        c.stamp(1, 4, [".gG.", "aAgG"], {"a": "red", "A": "red_d", "g": "green", "G": "green_d"})
-        c.stamp(2, 3, ["g"], {"g": "green"})
-        coin(c, 9.5, 4.5, 4.0)
         return c
+    flat_coin(c, 7.5, 10, 4.8)
     crate = rect(1, 13, 20, 27)
     c.bevel(crate, PLANK, lit=1.8)
     for y in (13, 18, 23):
@@ -802,17 +820,10 @@ def sell(n):
     for x in (2, 3, 18, 19):
         c.pts([(x, y) for y in range(13, 28)], "brown_l" if x in (3, 18) else "tan_d")
     c.pts(line((4, 26), (17, 14)), "brown_l")
-    # produce peeking out
-    c.sphere(5, 11, 3.0, 3.0, REDS, off=0.3)
-    c.sphere(10.5, 10.5, 3.0, 3.0, GOLD, off=-0.3)
-    c.sphere(15.5, 11, 3.0, 3.0, REDS, off=0.3)
-    c.stamp(4, 7, ["gG"], {"g": "green", "G": "green_d"})
-    c.stamp(15, 7, ["gG"], {"g": "green", "G": "green_d"})
     c.edge(rect(1, 13, 20, 27), "ink", sides=((0, -1),))
     c.pts([(x, 13) for x in range(1, 21)], "tan")
-    c.fill(ell(20, 8, 7.5, 7.5) & rect(0, 0, 27, 27), "ink")
-    coin(c, 20, 8, 6.4)
-    sparkle(c, 12, 2)
+    flat_coin(c, 20, 8, 6.4)
+    sparkle(c, 4, 4, big=True)
     return c
 
 
@@ -1213,7 +1224,8 @@ def vibrate(n):
     if n == 14:
         phone = rrect(4, 0, 9, 13, 1)
         c.bevel(phone, IRON, lit=2.0)
-        c.bevel(rect(5, 2, 8, 10), BLUES, lit=2.4, soft=False)
+        c.fill(rect(5, 2, 8, 10), "blue")
+        c.pts([(5, 4), (5, 5), (5, 6)], "cyan")
         c.pts([(6, 1), (7, 1)], "ink")
         c.pts([(6, 12), (7, 12)], "grey")
         c.pts([(5, 2), (5, 3), (6, 2)], "white")
@@ -1224,7 +1236,8 @@ def vibrate(n):
     phone = rrect(8, 1, 19, 26, 2)
     c.bevel(phone, IRON, lit=2.0)
     scr = rect(10, 4, 17, 21)
-    c.bevel(scr, BLUES, lit=2.3, soft=False)
+    c.fill(scr, "blue")
+    c.pts([(x, 7) for x in range(10, 13)] + [(10, 8), (10, 9)], "cyan")
     c.pts([(10, 4), (11, 4), (10, 5), (12, 4), (10, 6)], "white")
     c.fill(rect(12, 2, 15, 2), "ink")
     c.fill(rrect(12, 23, 15, 24, 1), "grey")
