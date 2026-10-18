@@ -1,5 +1,5 @@
 {
- "_doc": "Recipes (GAME_DESIGN \u00a710.2, \u00a712). minutes are REAL minutes. inputs '#crop' = any crops. outputs '@tool:<tool>' = sets that tool's tier. coins = extra coin cost. fuel = coal units.",
+ "_doc": "Recipes (GAME_DESIGN §10.2, §12). minutes are REAL minutes. inputs '#crop' = any crops. outputs '@tool:<tool>' = sets that tool's tier. coins = extra coin cost. fuel = coal units.",
  "recipes": [
   {
    "id": "wb_plank",
@@ -1152,6 +1152,59 @@
    "unlock": 19,
    "fuel": 1.0,
    "name": "Drilling"
+  },
+  {
+   "id": "wb_energy_brew",
+   "building": "workbench",
+   "inputs": {
+    "carrot": 3,
+    "wheat": 2
+   },
+   "outputs": {
+    "energy_brew": 1
+   },
+   "minutes": 2,
+   "unlock": 4
+  },
+  {
+   "id": "wb_growth_tonic",
+   "building": "workbench",
+   "inputs": {
+    "plant_scraps": 3,
+    "coal": 1
+   },
+   "outputs": {
+    "growth_tonic": 1
+   },
+   "minutes": 4,
+   "unlock": 6
+  },
+  {
+   "id": "wb_rain_totem",
+   "building": "workbench",
+   "inputs": {
+    "wood": 6,
+    "resin": 2,
+    "quartz": 1
+   },
+   "outputs": {
+    "rain_totem": 1
+   },
+   "minutes": 6,
+   "unlock": 8
+  },
+  {
+   "id": "wb_lucky_charm",
+   "building": "workbench",
+   "inputs": {
+    "iron_bar": 1,
+    "quartz": 2
+   },
+   "outputs": {
+    "lucky_charm": 1
+   },
+   "minutes": 8,
+   "unlock": 11
   }
  ]
 }

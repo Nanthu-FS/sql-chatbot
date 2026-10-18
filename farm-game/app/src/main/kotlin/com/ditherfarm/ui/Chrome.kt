@@ -8,6 +8,7 @@ import com.ditherfarm.game.festival
 import com.ditherfarm.game.festivalClaimable
 import com.ditherfarm.game.giftReady
 import com.ditherfarm.game.merchantHere
+import com.ditherfarm.game.skillPoints
 
 /**
  * Everything around the map that every screen shares: the HUD, the nav bar, the modal
@@ -21,7 +22,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS }
 
     var panel = Panel.NONE
         private set
@@ -34,7 +35,10 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     val isOpen get() = panel != Panel.NONE
 
-    init { panels.onPlace = { item -> panel = Panel.NONE; game.startPlacing(item) } }
+    init {
+        panels.onPlace = { item -> panel = Panel.NONE; game.startPlacing(item) }
+        panels.onSkills = { open(Panel.SKILLS, "bench") }
+    }
 
     fun open(p: Panel, target: String? = null) {
         panels.reset()
@@ -42,6 +46,7 @@ class Chrome(private val game: Game, private val here: Nav) {
         this.target = target
         game.sfx.play("open")
         if (p == Panel.MARKET) hud.tip("market", "Prices change every day. A green arrow means today is a good day to sell.")
+        if (p == Panel.SKILLS) hud.tip("skills", "Every level gives a skill point. Skills in a branch unlock in order.")
         if (p == Panel.WORKERS) hud.tip("workers", "Farmhands work one field each: they harvest into its crate, replant its crop and water. They eat crops from the Silo each morning.")
         if (p == Panel.WORKBENCH) hud.tip("workbench", "Crafts keep running while the app is closed. Tap the bench to collect.")
     }
@@ -90,6 +95,14 @@ class Chrome(private val game: Game, private val here: Nav) {
         if (festival) g.sprite("icons/festival", x + 30f, y + 7f)
         if (world.merchantHere()) g.sprite("icons/merchant", x + if (festival) 46f else 30f, y + 7f)
         if (goalsClick) open(Panel.GOALS)
+        // The level badge opens the skill tree; a badge counts unspent points.
+        val ly = game.engine.safeTop + 2
+        val pts = world.skillPoints
+        if (pts > 0) {
+            g.sprite("ui/badge", 90f, ly + 2f)
+            g.text(pts.coerceAtMost(9).toString(), 90, ly - 2, Gfx.WHITE, align = 0, shadow = false)
+        }
+        if (ui.clickable("hud-level", 2, ly, 92, 14)) open(Panel.SKILLS)
     }
 
     /** Nav bar, panels and overlays. [tipLift] raises tips above screen trays. */
@@ -131,6 +144,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.CART -> panels.cart()
             Panel.FIELD -> panels.field(target?.toIntOrNull() ?: return)
             Panel.WORKERS -> panels.workers()
+            Panel.SKILLS -> panels.skills(atBench = target == "bench")
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -185,6 +199,20 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.WorkerHired -> { game.sfx.play("unlock"); game.haptics.heavy(); hud.toast("${world.state.workers[e.worker]?.name} joined your farm!") }
             is WorldEvent.WorkerLevelUp -> { game.sfx.play("levelup"); hud.toast("${world.state.workers[e.worker]?.name} reached level ${e.level}") }
             is WorldEvent.WorkerHungry -> hud.toast("${world.state.workers[e.worker]?.name} is hungry: put crops in the Silo")
+            is WorldEvent.SkillLearned -> {
+                game.sfx.play("unlock"); game.haptics.tick()
+                com.ditherfarm.game.SKILLS[e.skill]?.let { hud.toast("${it.name} rank ${e.rank}") }
+            }
+            is WorldEvent.Respecced -> { game.sfx.play("coin"); hud.toast("Skills reset: points are back (-${e.coins} coins)") }
+            is WorldEvent.TonicUsed -> {
+                game.sfx.play(if (e.item == "rain_totem") "water" else "craft"); game.haptics.heavy()
+                hud.toast(when (e.item) {
+                    "growth_tonic" -> "Every crop grew two hours"
+                    "energy_brew" -> "+${com.ditherfarm.game.TONIC_ENERGY} energy"
+                    "rain_totem" -> "A shower waters every crop"
+                    else -> "Lucky for ${(com.ditherfarm.game.LUCK_SECONDS / 60).toInt()} minutes: better crops"
+                })
+            }
             is WorldEvent.TruckReturned -> { game.sfx.play("sell"); game.haptics.heavy(); hud.toast("The truck is back: +${e.coins} coins") }
             is WorldEvent.Collected -> { game.sfx.play("pickup"); game.haptics.tick(); hud.tip("collect", "Machines keep working while you are away. Tap the bubble to collect.") }
             is WorldEvent.ZoneUnlocked -> { game.sfx.play("unlock"); hud.toast("A new part of the forest is open!") }

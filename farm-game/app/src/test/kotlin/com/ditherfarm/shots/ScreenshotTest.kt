@@ -13,6 +13,7 @@ import com.ditherfarm.game.addCartRule
 import com.ditherfarm.game.build
 import com.ditherfarm.game.buyBlock
 import com.ditherfarm.game.buildingsOn
+import com.ditherfarm.game.learn
 import com.ditherfarm.game.assign
 import com.ditherfarm.game.crate
 import com.ditherfarm.game.hire
@@ -412,5 +413,22 @@ class ScreenshotTest {
             w.events.clear()
             g.farm.centerOnTile(13, 12)
         }, size = 540 to 585, zoom = 2)
+    }
+    @Test fun skillsPanel() {
+        render("panel_skills", setup = { g ->
+            toLevel(g, 12)
+            val w = g.world
+            listOf("quick_sprout", "quick_sprout", "bountiful", "star_grower").forEach { w.learn(it) }
+            w.events.clear()
+            g.farm.showPanel("skills")
+        })
+    }
+
+    @Test fun tonicsTab() {
+        render("panel_tonics", setup = { g ->
+            toLevel(g, 12)
+            g.world.add("energy_brew", 2)
+            g.farm.showPanel("tonics")
+        })
     }
 }

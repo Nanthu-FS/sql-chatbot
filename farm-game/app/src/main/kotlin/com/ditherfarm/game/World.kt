@@ -51,6 +51,9 @@ sealed class WorldEvent {
     data class FixturePlaced(val vertex: Int, val item: String) : WorldEvent()
     data class FixtureRemoved(val vertex: Int, val item: String) : WorldEvent()
     data class WorkerHired(val worker: String) : WorldEvent()
+    data class SkillLearned(val skill: String, val rank: Int) : WorldEvent()
+    data class Respecced(val coins: Int) : WorldEvent()
+    data class TonicUsed(val item: String) : WorldEvent()
     data class WorkerLevelUp(val worker: String, val level: Int) : WorldEvent()
     data class WorkerActed(val worker: String, val plot: Int, val kind: WorkKind) : WorldEvent()
     data class WorkerHungry(val worker: String) : WorldEvent()
@@ -144,7 +147,7 @@ class World(val data: GameData, val state: GameState) {
             if (p.withered || p.scorched) continue
             val def = data.crop(id)
             if (p.growth >= def.growMinutes) continue
-            p.growth += dt * (if (p.watered) 1.0 else DRY_SPEED)
+            p.growth += dt * growRate(p.watered)
             if (p.watered) p.cared = true
             if (p.growth >= def.growMinutes) events += WorldEvent.Ripened(p.index)
         }
@@ -396,8 +399,8 @@ class World(val data: GameData, val state: GameState) {
 
     /** Coins for one seed bought at planting time (the Crops page takes 10% off). */
     fun seedPrice(cropId: String): Int {
-        val base = data.crop(cropId).seedPrice
-        return if (hasBonus("seed_discount")) max(1, (base * 0.9).toInt()) else base
+        val base = data.crop(cropId).seedPrice * (1 - skill("bulk_buyer"))
+        return max(1, (if (hasBonus("seed_discount")) base * 0.9 else base).toInt())
     }
 
     fun plant(i: Int, cropId: String): Boolean {
@@ -443,6 +446,7 @@ class World(val data: GameData, val state: GameState) {
         if (into == null && !hasRoom(def.id)) { events += WorldEvent.Blocked("Silo full", i); return false }
         val quality = rollQuality(p)
         var qty = def.yield
+        if (roll(skill("bountiful") + if (lucky) 0.10 else 0.0)) qty++
         var q = quality
         if (p.battered) { if (q == Quality.NORMAL) qty = max(1, qty - 1) else q = Quality.entries[q.ordinal - 1] }
         val first = def.id !in state.discovered
@@ -455,6 +459,7 @@ class World(val data: GameData, val state: GameState) {
             // Leaves and stalks for the Compost Bin.
             if (rng().chance(0.15) && hasRoom("plant_scraps")) add("plant_scraps", 1)
         }
+        if (roll(skill("seed_saver"))) add(def.seedItem, 1)
         val xp = (ceil(def.xp * q.mult).toInt() + if (first) 10 else 0).let { if (auto) (it + 1) / 2 else it }
         p.harvests++
         state.bump("harvested", qty.toLong())
@@ -474,8 +479,9 @@ class World(val data: GameData, val state: GameState) {
     private fun rollQuality(p: PlotState): Quality {
         val care = if (p.cared) 1 else 0
         val l = state.level
-        val gold = min(0.50, 0.01 + 0.004 * l + 0.02 * care + p.fertGold)
-        val silver = min(0.90 - gold, 0.10 + 0.008 * l + 0.06 * care + p.fertSilver)
+        val luck = if (lucky) 0.10 else 0.0
+        val gold = min(0.50, 0.01 + 0.004 * l + 0.02 * care + p.fertGold + skill("star_grower") + luck)
+        val silver = min(0.90 - gold, 0.10 + 0.008 * l + 0.06 * care + p.fertSilver + 1.5 * skill("star_grower"))
         val r = rng().nextDouble()
         return when { r < gold -> Quality.GOLD; r < gold + silver -> Quality.SILVER; else -> Quality.NORMAL }
     }
@@ -515,7 +521,7 @@ class World(val data: GameData, val state: GameState) {
     }
 
     /** Collection page bonus: ores sell for 5% more once the Mine page is complete. */
-    private fun bonusMult(id: String) = if (id.endsWith("_ore") && hasBonus("ore_price")) 1.05 else 1.0
+    private fun bonusMult(id: String) = sellSkillMult() * if (id.endsWith("_ore") && hasBonus("ore_price")) 1.05 else 1.0
 
     /** Current sell price of one unit of [key] (quality included). */
     fun unitPrice(key: String): Int {
@@ -640,15 +646,16 @@ class World(val data: GameData, val state: GameState) {
         val o = s.order ?: return false
         if (!canDeliver(slot)) { events += WorldEvent.Blocked("Missing items"); return false }
         o.lines.forEach { removeAny(it.item, it.qty) }
-        state.coins += o.coins
+        val coins = (o.coins * (1 + skill("charmer"))).roundToInt()
+        state.coins += coins
         val v = data.villagers.firstOrNull { it.id == o.villager }
         val fav = o.lines.count { v != null && it.item in v.favorites }
         state.friendship[o.villager] = (state.friendship[o.villager] ?: 0) + 10 + 5 * o.lines.size + 5 * fav + if (o.big) 20 else 0
         s.order = null
         s.nextAt = state.minutes + orderDelayMinutes()
         state.bump("orders")
-        state.bump("coins_earned", o.coins.toLong())
-        events += WorldEvent.OrderDelivered(slot, o.coins, o.xp)
+        state.bump("coins_earned", coins.toLong())
+        events += WorldEvent.OrderDelivered(slot, coins, o.xp)
         gainXp(o.xp)
         return true
     }

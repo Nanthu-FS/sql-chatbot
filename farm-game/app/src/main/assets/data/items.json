@@ -1,5 +1,5 @@
 {
- "_doc": "Master items (GAME_DESIGN \u00a716). price = base sell price before market swing (0 = not sellable). storage: silo (crops), barn (everything else), none (seeds, tools, instant pickups).",
+ "_doc": "Master items (GAME_DESIGN §16). price = base sell price before market swing (0 = not sellable). storage: silo (crops), barn (everything else), none (seeds, tools, instant pickups).",
  "items": [
   {
    "id": "wheat",
@@ -923,6 +923,34 @@
    "name": "Gold Sprinkler",
    "category": "fixture",
    "price": 600,
+   "storage": "barn"
+  },
+  {
+   "id": "energy_brew",
+   "name": "Energy Brew",
+   "category": "tonic",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "growth_tonic",
+   "name": "Growth Tonic",
+   "category": "tonic",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "rain_totem",
+   "name": "Rain Totem",
+   "category": "tonic",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "lucky_charm",
+   "name": "Lucky Charm",
+   "category": "tonic",
+   "price": 0,
    "storage": "barn"
   }
  ]

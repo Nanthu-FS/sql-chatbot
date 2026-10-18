@@ -67,13 +67,14 @@ fun World.merchantBought(slot: Int) = state.merchantDay == time.dayIndex && slot
 fun World.buyFromMerchant(slot: Int): Boolean {
     val offer = merchantStock().getOrNull(slot) ?: return false
     if (merchantBought(slot)) return false
-    if (state.coins < offer.price) { events += WorldEvent.Blocked("Not enough coins"); return false }
+    val price = merchantPrice(offer)
+    if (state.coins < price) { events += WorldEvent.Blocked("Not enough coins"); return false }
     if (!hasRoom(offer.item)) { events += WorldEvent.Blocked("No room"); return false }
     if (state.merchantDay != time.dayIndex) { state.merchantDay = time.dayIndex; state.merchantBought.clear() }
-    state.coins -= offer.price
+    state.coins -= price
     state.merchantBought += slot
     add(offer.item, offer.qty)
-    events += WorldEvent.Bought(offer.item, offer.qty, offer.price)
+    events += WorldEvent.Bought(offer.item, offer.qty, price)
     return true
 }
 

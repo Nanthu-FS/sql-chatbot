@@ -207,12 +207,12 @@ fun World.chopBlocker(i: Int): String? {
 /** One axe swing. Returns true if it landed. */
 fun World.chop(i: Int): Boolean {
     chopBlocker(i)?.let { events += WorldEvent.Blocked(it); return false }
-    spendEnergy(SWING_ENERGY)
+    if (!roll(skill("light_swing"))) spendEnergy(SWING_ENERGY)
     stingIfHive(i)
     val s = spot(i)
     val tier = toolTier(Tool.AXE)
     val rng = rng()
-    val crit = rng.chance(data.tools.crit[tier])
+    val crit = rng.chance(data.tools.crit[tier] + skill("sharp_edge"))
     val dmg = data.tools.damage[tier] * if (crit) 2 else 1
     s.damage += dmg
     val hp = treeHp(i)
@@ -235,6 +235,7 @@ private fun World.fell(i: Int, rng: Rng) {
                 def.extras.forEach { (item, p) -> if (rng.chance(p)) drop(item, 1) }
                 if (rng.chance(def.seedChance)) drop(def.seed, 1)
                 if (toolTier(Tool.AXE) >= 2 && rng.chance(if (toolTier(Tool.AXE) >= 3) 0.2 else 0.1)) drop("wood", 1)
+                if (roll(skill("timber"))) drop("wood", 1)
             }
             drops.forEach { (k, n) -> add(k, n) }
             s.stage = TreeStage.STUMP

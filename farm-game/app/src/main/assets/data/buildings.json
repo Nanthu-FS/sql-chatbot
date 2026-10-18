@@ -1,5 +1,5 @@
 {
- "_doc": "Buildings (GAME_DESIGN \u00a711). screen: farm/forest/mine. cost.coins is coins. queue = max queued batches. prebuilt buildings exist from the start.",
+ "_doc": "Buildings (GAME_DESIGN §11). screen: farm/forest/mine. cost.coins is coins. queue = max queued batches. prebuilt buildings exist from the start.",
  "buildings": [
   {
    "id": "workbench",
@@ -33,7 +33,11 @@
     "tool_sickle_3",
     "tool_can_1",
     "tool_can_2",
-    "tool_can_3"
+    "tool_can_3",
+    "wb_energy_brew",
+    "wb_growth_tonic",
+    "wb_rain_totem",
+    "wb_lucky_charm"
    ],
    "queue": 1,
    "prebuilt": true,

@@ -79,6 +79,18 @@ import com.ditherfarm.game.workerAppetite
 import com.ditherfarm.game.workerLevelCost
 import com.ditherfarm.game.workerOn
 import com.ditherfarm.game.workerPlotsPerMinute
+import com.ditherfarm.game.BRANCHES
+import com.ditherfarm.game.TONICS
+import com.ditherfarm.game.learn
+import com.ditherfarm.game.merchantPrice
+import com.ditherfarm.game.queueSize
+import com.ditherfarm.game.rank
+import com.ditherfarm.game.respec
+import com.ditherfarm.game.respecCost
+import com.ditherfarm.game.skillBlocker
+import com.ditherfarm.game.skillPoints
+import com.ditherfarm.game.useBlocker
+import com.ditherfarm.game.useTonic
 
 /** Modal panels opened from the HUD. Each draw call returns false when the panel should close. */
 class Panels(private val game: Game, private val hud: Hud) {
@@ -87,9 +99,12 @@ class Panels(private val game: Game, private val hud: Hud) {
     private val world get() = game.world
 
     private var barnTab = 0
-    private var benchTab = 0
+    internal var benchTab = 0
     /** Called with a fixture item when the player taps PLACE in the Barn. */
     var onPlace: ((String) -> Unit)? = null
+    /** Called when the Workbench's SKILLS button is tapped. */
+    var onSkills: (() -> Unit)? = null
+    private var skillTab = 0
     private var selected: String? = null
     private var confirmNewGame = 0
 
@@ -190,6 +205,13 @@ class Panels(private val game: Game, private val hud: Hud) {
             bx -= 48
             if (ui.button("sell-1", bx, y + 34, 44, 18, "SELL 1", style = "gold")) {
                 if (world.sell(key, 1) > 0) game.sfx.play("coin")
+            }
+        }
+        if (baseId(key) in TONICS) {
+            bx -= 44
+            val why = world.useBlocker(baseId(key))
+            if (ui.button("use", bx, y + 34, 40, 18, "USE", style = if (why == null) "green" else "grey")) {
+                if (why != null) hud.toast(why) else world.useTonic(baseId(key))
             }
         }
         if (Fixture.of(baseId(key)) != null) {
@@ -319,7 +341,7 @@ class Panels(private val game: Game, private val hud: Hud) {
     // -------------------------------------------------------------- level up
     fun levelUp(level: Int, coins: Int): Boolean {
         val unlocks = world.data.crops.values.filter { it.unlockLevel == level }.map { it.id }
-        val ph = 92 + if (unlocks.isEmpty()) 0 else 24
+        val ph = 102 + if (unlocks.isEmpty()) 0 else 24
         val pw = 200
         val w = game.engine.w
         val x = (w - pw) / 2
@@ -330,8 +352,9 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.text("LEVEL $level!", w / 2, y + 40, Gfx.GOLD, align = 0)
         g.sprite("icons/coin", (w / 2 - 14).toFloat(), (y + 58).toFloat())
         g.text("+$coins", w / 2 - 6, y + 54, Gfx.INK, outline = 0, shadow = false)
+        g.text("+1 SKILL POINT", w / 2, y + 66, 0xFF68386C.toInt(), align = 0, outline = 0, shadow = false)
         unlocks.forEachIndexed { i, id ->
-            g.sprite("items/seed_$id", (w / 2 - unlocks.size * 10 + i * 20 + 10).toFloat(), (y + 76).toFloat())
+            g.sprite("items/seed_$id", (w / 2 - unlocks.size * 10 + i * 20 + 10).toFloat(), (y + 86).toFloat())
         }
         return !ui.button("lvl-ok", w / 2 - 24, y + ph - 22, 48, 16, "YAY!", style = "gold")
     }
@@ -408,7 +431,7 @@ class Panels(private val game: Game, private val hud: Hud) {
     private fun queueStrip(id: String, x: Int, y: Int, w: Int) {
         val b = world.building(id)
         val def = world.data.buildings[id]
-        val q = def?.queue ?: 1
+        val q = world.queueSize(id)
         for (i in 0 until q) {
             val job = b.jobs.getOrNull(i)
             val sx = x + i * 24
@@ -486,14 +509,15 @@ class Panels(private val game: Game, private val hud: Hud) {
         val maxH = game.engine.h - game.engine.safeTop - game.engine.safeBottom - hud.topHeight - hud.bottomHeight - 12
         val (x, y, pw, ph) = frame("WORKBENCH", maxH).toList()
         if (closeButton(x, y, pw)) return false
+        if (ui.button("bench-skills", x + pw - 84, y + 4, 58, 14, "SKILLS", style = "wood")) onSkills?.invoke()
         queueStrip("workbench", x + 8, y + 22, pw - 16)
-        benchTab = ui.tabs("bench-tabs", x + 8, y + 48, pw - 16, listOf("PARTS", "FARM", "TOOLS"), benchTab)
+        benchTab = ui.tabs("bench-tabs", x + 8, y + 48, pw - 16, listOf("PARTS", "FARM", "TONICS", "TOOLS"), benchTab)
         val top = y + 66
         val listH = y + ph - 8 - top
         val farmItems = setOf("wb_quality_fertilizer", "wb_scarecrow", "wb_lightning_rod", "wb_copper_sprinkler", "wb_iron_sprinkler", "wb_gold_sprinkler")
         val all = world.recipesFor("workbench")
         val c = g.canvas
-        if (benchTab == 2) {
+        if (benchTab == 3) {
             Tool.entries.forEachIndexed { i, tool ->
                 val ry = top + i * 36
                 val next = world.nextToolRecipe(tool)
@@ -508,7 +532,8 @@ class Panels(private val game: Game, private val hud: Hud) {
             }
             return true
         }
-        val list = all.filter { !it.id.startsWith("tool_") && ((benchTab == 1) == (it.id in farmItems)) }
+        val tab = { r: RecipeDef -> when { r.outputs.keys.any { it in TONICS } -> 2; r.id in farmItems -> 1; else -> 0 } }
+        val list = all.filter { !it.id.startsWith("tool_") && tab(it) == benchTab }
         val off = ui.scroll("bench-$benchTab", x + 6, top, pw - 12, listH, list.size * 36)
         c.save(); c.clipRect(x + 6, top, x + pw - 6, top + listH)
         list.forEachIndexed { i, r ->
@@ -773,9 +798,9 @@ class Panels(private val game: Game, private val hud: Hud) {
             ui.slot("offer-$i", cx, cy, icon(o.item, big = true), o.qty, false, 32)
             g.text(world.data.name(o.item).uppercase().take(12), cx + 36, cy + 2, Gfx.INK, outline = 0, shadow = false)
             g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
-            g.text(Ui.compact(o.price), cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
+            g.text(Ui.compact(world.merchantPrice(o)), cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
             if (world.merchantBought(i)) g.text("SOLD", cx + cw - 30, cy + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
-            else if (ui.button("buy-$i", cx + cw - 48, cy + 20, 40, 14, "BUY", style = if (world.state.coins >= o.price) "green" else "grey")) world.buyFromMerchant(i)
+            else if (ui.button("buy-$i", cx + cw - 48, cy + 20, 40, 14, "BUY", style = if (world.state.coins >= world.merchantPrice(o)) "green" else "grey")) world.buyFromMerchant(i)
         }
         return true
     }
@@ -855,6 +880,47 @@ class Panels(private val game: Game, private val hud: Hud) {
             val next = if (hand == null) free.firstOrNull() else free.firstOrNull { it.id > hand.id } ?: free.firstOrNull()
             hand?.let { world.assign(it.id, -1) }
             if (next != null && next !== hand) world.assign(next.id, block)
+        }
+        return true
+    }
+
+    // ------------------------------------------------------------------ skills
+    /** The skill tree: a tab per branch, four skills each. Respec only at the Workbench ([atBench]). */
+    fun skills(atBench: Boolean): Boolean {
+        val (x, y, pw, ph) = frame("SKILLS", maxPanelH).toList()
+        if (closeButton(x, y, pw)) return false
+        val pts = world.skillPoints
+        g.text("$pts POINT${if (pts == 1) "" else "S"} TO SPEND", x + 10, y + 22, if (pts > 0) 0xFF3E8948.toInt() else Gfx.INK, outline = 0, shadow = false)
+        if (atBench) {
+            val cost = world.respecCost()
+            if (ui.button("respec", x + pw - 92, y + 19, 82, 14, "RESET ${Ui.compact(cost)}", style = "red",
+                    enabled = world.state.skills.isNotEmpty() && world.state.coins >= cost)) world.respec()
+        } else g.text("RESET AT THE WORKBENCH", x + pw - 10, y + 22, Gfx.GREY, align = 1, outline = 0, shadow = false)
+        skillTab = ui.tabs("skill-tabs", x + 8, y + 36, pw - 16, BRANCHES.map { it.short }, skillTab)
+        val br = BRANCHES[skillTab]
+        g.sprite("icons_big/skill_branch_${br.id}", (x + 24).toFloat(), (y + 72).toFloat())
+        g.text(br.name.uppercase(), x + 44, y + 64, Gfx.INK, outline = 0, shadow = false)
+        g.text("${br.skills.sumOf { world.rank(it.id) }} POINTS IN THIS BRANCH", x + 44, y + 75, Gfx.GREY, outline = 0, shadow = false)
+        val rowH = 50
+        br.skills.forEachIndexed { i, s ->
+            val ry = y + 92 + i * rowH
+            val rank = world.rank(s.id)
+            val why = world.skillBlocker(s.id)
+            val locked = rank == 0 && why != null && why.startsWith("Learn")
+            g.slice9("ui/slot", x + 8, ry, x + pw - 8, ry + rowH - 4, 4)
+            g.sprite("icons_big/skill_${s.id}", (x + 26).toFloat(), (ry + 20).toFloat(), if (locked) 90 else 255)
+            for (k in 0 until s.ranks) {
+                val px = x + 18 + k * 7
+                g.rect(px, ry + 37, px + 5, ry + 42, Gfx.INK)
+                g.rect(px + 1, ry + 38, px + 4, ry + 41, if (k < rank) Gfx.GOLD else 0xFF8B9BB4.toInt())
+            }
+            g.text(s.name.uppercase(), x + 46, ry + 4, if (locked) Gfx.GREY else Gfx.INK, outline = 0, shadow = false)
+            val lines = hud.wrap((if (locked) why!! else s.desc + " a rank").uppercase(), pw - 120)
+            lines.take(2).forEachIndexed { li, l -> g.text(l, x + 46, ry + 16 + li * 10, Gfx.GREY, outline = 0, shadow = false) }
+            val label = if (rank >= s.ranks) "MAX" else "LEARN"
+            if (ui.button("learn-${s.id}", x + pw - 64, ry + 14, 52, 16, label, style = if (why == null) "green" else "grey")) {
+                if (why == null) world.learn(s.id) else hud.toast(why)
+            }
         }
         return true
     }

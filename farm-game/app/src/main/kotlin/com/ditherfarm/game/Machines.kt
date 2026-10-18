@@ -122,16 +122,16 @@ fun World.recipeBlocker(r: RecipeDef): String? {
     return when {
         !b.built -> "Build the ${def?.name ?: r.building} first"
         r.unlockLevel > state.level -> "Unlocks at level ${r.unlockLevel}"
-        b.jobs.size >= (def?.queue ?: 1) -> "Queue is full"
+        b.jobs.size >= queueSize(r.building) -> "Queue is full"
         state.coins < r.coins -> "Not enough coins"
         r.inputs.any { (k, v) -> available(k) < v } -> "Missing ingredients"
-        r.fuel > 0 && b.fuel < r.fuel -> "Needs coal"
+        r.fuel > 0 && b.fuel < fuelUse(r) -> "Needs coal"
         else -> null
     }
 }
 
 /** Game minutes a batch takes (the Goods page makes machines 5% faster). */
-fun World.jobMinutes(r: RecipeDef) = r.gameMinutes * if (hasBonus("machine_speed")) 0.95 else 1.0
+fun World.jobMinutes(r: RecipeDef) = r.gameMinutes * (1 - skill("overclock")) * if (hasBonus("machine_speed")) 0.95 else 1.0
 
 /** Queues one batch: takes inputs (and fuel) now, schedules after the last queued job. */
 fun World.enqueue(recipeId: String): Boolean {
@@ -140,7 +140,7 @@ fun World.enqueue(recipeId: String): Boolean {
     val b = building(r.building)
     state.coins -= r.coins
     r.inputs.forEach { (k, v) -> if (k == "#crop") takeAnyCrops(v) else removeAny(k, v) }
-    b.fuel -= r.fuel
+    b.fuel -= fuelUse(r)
     val start = max(state.minutes, b.jobs.lastOrNull()?.end ?: 0.0)
     b.jobs += Job(r.id, start, start + jobMinutes(r))
     events += WorldEvent.JobQueued(r.building, r.id)
@@ -166,7 +166,7 @@ fun World.cancelLast(id: String): Boolean {
     b.jobs.removeAt(b.jobs.size - 1)
     state.coins += r.coins
     r.inputs.forEach { (k, v) -> add(if (k == "#crop") "wheat" else k, v) }
-    b.fuel += r.fuel
+    b.fuel += fuelUse(r)
     return true
 }
 
@@ -196,10 +196,10 @@ internal fun World.tickMachines() {
             }
             // Producers (no inputs, e.g. the Beehive or Drill Rig) restart themselves, back to back
             // from the end of the last batch so offline time is not lost.
-            if (!b.built || b.jobs.isNotEmpty() || b.tray.values.sum() >= def.trayCap) break
+            if (!b.built || b.jobs.isNotEmpty() || b.tray.values.sum() >= trayCap(b.id)) break
             val auto = def.recipes.mapNotNull { data.recipes[it] }.firstOrNull { it.inputs.isEmpty() && it.unlockLevel <= state.level } ?: break
-            if (b.fuel < auto.fuel) break
-            b.fuel -= auto.fuel
+            if (b.fuel < fuelUse(auto)) break
+            b.fuel -= fuelUse(auto)
             val start = if (lastEnd >= 0) lastEnd else state.minutes
             b.jobs += Job(auto.id, start, start + jobMinutes(auto))
             if (b.jobs[0].end > state.minutes) break

@@ -185,7 +185,7 @@ fun World.mineBlocker(node: String?): String? {
 /** Swing at a cell the caller already checked with [mineBlocker]; returns drops when it breaks. */
 private fun World.hit(cell: Cell, depth: Int, where: Int, quarry: Boolean): Map<String, Int>? {
     val def = data.mine.nodes.getValue(cell.node!!)
-    spendEnergy(SWING_ENERGY)
+    if (!roll(skill("steady_hands"))) spendEnergy(SWING_ENERGY)
     val rng = rng()
     val tier = pickTier()
     val crit = rng.chance(data.tools.crit[tier])
@@ -199,6 +199,8 @@ private fun World.hit(cell: Cell, depth: Int, where: Int, quarry: Boolean): Map<
     def.bonus.forEach { (k, p) -> if (rng.chance(p)) drop(k, 1) }
     if (def.id == "geode_rock") { drops.remove("geode"); drop(data.mine.band(max(1, depth)).geode, 1) }
     if (depth > 0 && def.id != "stone" && def.id != "rubble" && rng.chance(depth / 100.0)) drops.keys.firstOrNull()?.let { drop(it, 1) }
+    if (def.id != "stone" && def.id != "rubble" && def.id != "crate" && roll(skill("prospector"))) drops.keys.firstOrNull()?.let { drop(it, 1) }
+    if (def.id != "rubble" && def.id != "crate" && roll(skill("geologist"))) drop(if (depth > 0) data.mine.band(depth).geode else "geode", 1)
     if (def.id == "crate") {
         when (rng.nextInt(3)) {
             0 -> state.coins += 20 + rng.nextInt(41)
@@ -385,7 +387,7 @@ fun World.mineFloor(i: Int): Boolean {
         m.opened += i
         maybeRumble(i)
         if (i == m.ladder) { m.ladderFound = true; events += WorldEvent.LadderFound(i) }
-        else if (!m.ladderFound && m.breaks >= 10 && m.ladder >= 0) {
+        else if (!m.ladderFound && m.breaks >= 10 - skill("ladder_sense").toInt() && m.ladder >= 0) {
             // Pity rule: the ladder moves under the rock just broken.
             m.ladder = i; m.ladderFound = true; events += WorldEvent.LadderFound(i)
         }
