@@ -903,6 +903,27 @@
    "category": "mineral",
    "price": 200,
    "storage": "barn"
+  },
+  {
+   "id": "copper_sprinkler",
+   "name": "Copper Sprinkler",
+   "category": "fixture",
+   "price": 60,
+   "storage": "barn"
+  },
+  {
+   "id": "iron_sprinkler",
+   "name": "Iron Sprinkler",
+   "category": "fixture",
+   "price": 180,
+   "storage": "barn"
+  },
+  {
+   "id": "gold_sprinkler",
+   "name": "Gold Sprinkler",
+   "category": "fixture",
+   "price": 600,
+   "storage": "barn"
   }
  ]
 }

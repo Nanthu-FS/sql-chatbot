@@ -48,6 +48,9 @@ sealed class WorldEvent {
     data class StopUnlocked(val floor: Int) : WorldEvent()
     data class GateOpened(val floor: Int, val chest: Map<String, Int>) : WorldEvent()
     data class GeodeCracked(val geode: String, val out: Map<String, Int>) : WorldEvent()
+    data class FixturePlaced(val vertex: Int, val item: String) : WorldEvent()
+    data class FixtureRemoved(val vertex: Int, val item: String) : WorldEvent()
+    data class ShedRan(val shed: String, val plots: Int) : WorldEvent()
 }
 
 /**
@@ -59,6 +62,8 @@ class World(val data: GameData, val state: GameState) {
     val events = ArrayList<WorldEvent>()
     val time get() = GameTime(state.minutes)
     val level get() = state.level
+
+    init { syncGreenhouse() }
 
     // ------------------------------------------------------------------ time
     /** Advances real time; returns false if nothing ran (dt <= 0). */
@@ -102,6 +107,7 @@ class World(val data: GameData, val state: GameState) {
         tickOrders()
         tickMachines()
         tickQuarry()
+        tickSheds()
     }
 
     private fun grow(dt: Double) {
@@ -125,7 +131,7 @@ class World(val data: GameData, val state: GameState) {
             var withered = 0
             for (p in state.plots) {
                 val id = p.crop ?: continue
-                if (p.withered || p.scorched) continue
+                if (p.withered || p.scorched || FieldLayout.isGreenhouse(p.index)) continue
                 val def = data.crop(id)
                 val mature = p.growth >= def.growMinutes
                 if (!mature && t.season !in def.seasons) { p.withered = true; withered++ }
@@ -135,7 +141,8 @@ class World(val data: GameData, val state: GameState) {
         state.weather = if (day == 0) Weather.SUNNY else state.forecast
         if (state.weather.stormy) state.lastStormDay = day
         state.forecast = rollWeather(day + 1)
-        for (p in state.plots) p.watered = p.crop != null && state.weather.waters
+        // Rain waters the field (not the greenhouse); sprinklers water what they cover.
+        for (p in state.plots) p.watered = p.crop != null && ((state.weather.waters && !FieldLayout.isGreenhouse(p.index)) || covered(p.index, FixtureKind.WATER))
         for (k in state.glut.keys.toList()) state.glut[k] = state.glut[k]!! * 0.5
         forestDawn(day)
         events += WorldEvent.DayStarted(day, state.weather)
@@ -162,13 +169,15 @@ class World(val data: GameData, val state: GameState) {
 
     private fun stormStrike() {
         val rng = rng()
-        val planted = state.plots.filter { it.owned && it.crop != null && !it.withered && !it.scorched }
+        val planted = state.plots.filter { it.owned && it.crop != null && !it.withered && !it.scorched && !FieldLayout.isGreenhouse(it.index) }
         val strikes = min(3, 1 + planted.size / 16)
-        val scorched = planted.shuffled(kotlin.random.Random(rng.nextLong())).take(if (planted.isEmpty()) 0 else strikes)
+        // Lightning rods protect what they cover; scarecrows keep the wind off.
+        val exposed = planted.filter { !covered(it.index, FixtureKind.LIGHTNING) }
+        val scorched = exposed.shuffled(kotlin.random.Random(rng.nextLong())).take(if (exposed.isEmpty()) 0 else strikes)
         scorched.forEach { it.scorched = true }
         val battered = ArrayList<Int>()
         for (p in planted) {
-            if (p.scorched) continue
+            if (p.scorched || covered(p.index, FixtureKind.WIND)) continue
             val def = data.crop(p.crop!!)
             if (p.growth < def.growMinutes && rng.chance(0.15)) { p.battered = true; battered += p.index }
         }
@@ -300,7 +309,8 @@ class World(val data: GameData, val state: GameState) {
 
     // ------------------------------------------------------------------ farm
     fun plot(i: Int) = state.plots[i]
-    val ownedPlots get() = state.plots.count { it.owned }
+    /** Owned field plots (the greenhouse is not counted). */
+    val ownedPlots get() = (0 until FieldLayout.FIELD).count { state.plots[it].owned }
 
     fun isReady(p: PlotState): Boolean {
         val id = p.crop ?: return false
@@ -337,7 +347,7 @@ class World(val data: GameData, val state: GameState) {
             !p.owned -> "Buy this plot first"
             !p.empty -> "Plot is busy"
             def.unlockLevel > state.level -> "Unlocks at level ${def.unlockLevel}"
-            time.season !in def.seasons -> "Not in season"
+            time.season !in def.seasons && !FieldLayout.isGreenhouse(i) -> "Not in season"
             count(def.seedItem) <= 0 && state.coins < def.seedPrice -> "Not enough coins"
             else -> null
         }
@@ -350,7 +360,8 @@ class World(val data: GameData, val state: GameState) {
         val p = plot(i)
         p.clear()
         p.crop = cropId
-        p.watered = p.watered || state.weather.waters
+        p.lastCrop = cropId
+        p.watered = p.watered || (state.weather.waters && !FieldLayout.isGreenhouse(i)) || covered(i, FixtureKind.WATER)
         state.bump("planted")
         events += WorldEvent.Planted(i, cropId)
         return true
@@ -377,7 +388,8 @@ class World(val data: GameData, val state: GameState) {
         return true
     }
 
-    fun harvest(i: Int): Boolean {
+    /** Harvests a ready plot. [auto] harvests (sheds) give half XP. */
+    fun harvest(i: Int, auto: Boolean = false): Boolean {
         val p = plot(i)
         if (!isReady(p)) return false
         val def = data.crop(p.crop!!)
@@ -388,7 +400,7 @@ class World(val data: GameData, val state: GameState) {
         if (p.battered) { if (q == Quality.NORMAL) qty = max(1, qty - 1) else q = Quality.entries[q.ordinal - 1] }
         val first = def.id !in state.discovered
         add(q.key(def.id), qty)
-        val xp = ceil(def.xp * q.mult).toInt() + if (first) 10 else 0
+        val xp = (ceil(def.xp * q.mult).toInt() + if (first) 10 else 0).let { if (auto) (it + 1) / 2 else it }
         p.harvests++
         state.bump("harvested", qty.toLong())
         state.bump("harvest_${def.id}", qty.toLong())
@@ -427,7 +439,7 @@ class World(val data: GameData, val state: GameState) {
     /** Price of the next plot (k = owned + 1), or null when at the cap or the maximum. */
     fun nextPlotPrice(): Int? {
         val k = ownedPlots + 1
-        if (k > state.plots.size || k > plotCap) return null
+        if (k > FieldLayout.FIELD || k > plotCap) return null
         return niceRound(80 * 1.125.pow(k - 7))
     }
 
@@ -622,7 +634,7 @@ class World(val data: GameData, val state: GameState) {
         const val DRY_SPEED = 0.6
         const val STEP_MINUTES = 15.0
         const val OFFLINE_CAP_SECONDS = 24 * 3600.0
-        const val PLOT_COUNT = 48
+        const val PLOT_COUNT = FieldLayout.FIELD
         val HEARTS = intArrayOf(100, 250, 500, 850, 1300)
 
         /** A fresh save with the starting kit (GAME_DESIGN §17). */
@@ -630,7 +642,7 @@ class World(val data: GameData, val state: GameState) {
             val s = GameState(seed)
             s.coins = 250
             s.energy = 100.0
-            repeat(PLOT_COUNT) { s.plots.add(PlotState(it)) }
+            repeat(FieldLayout.TOTAL) { s.plots.add(PlotState(it)) }
             for (i in 0 until 6) s.plots[i].owned = true
             for (i in 0 until 2) s.plots[i].apply { crop = "wheat"; growth = data.crop("wheat").growMinutes; cared = true }
             val w = World(data, s)

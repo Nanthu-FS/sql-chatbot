@@ -26,6 +26,8 @@ class PlotState(val index: Int) {
     var fertSilver = 0.0
     var fertGold = 0.0
     var harvests = 0
+    /** Last crop planted here; the Planter Shed replants it. */
+    var lastCrop: String? = null
 
     val empty get() = crop == null && !withered && !scorched
     val needsClearing get() = withered || scorched
@@ -39,6 +41,7 @@ class PlotState(val index: Int) {
         put("i", index); put("owned", owned); crop?.let { put("crop", it) }; put("growth", growth)
         put("watered", watered); put("cared", cared); put("withered", withered); put("scorched", scorched)
         put("battered", battered); put("fs", fertSilver); put("fg", fertGold); put("h", harvests)
+        lastCrop?.let { put("lc", it) }
     }
 
     companion object {
@@ -47,6 +50,7 @@ class PlotState(val index: Int) {
             growth = o.optDouble("growth", 0.0); watered = o.optBoolean("watered"); cared = o.optBoolean("cared")
             withered = o.optBoolean("withered"); scorched = o.optBoolean("scorched"); battered = o.optBoolean("battered")
             fertSilver = o.optDouble("fs", 0.0); fertGold = o.optDouble("fg", 0.0); harvests = o.optInt("h")
+            lastCrop = if (o.has("lc")) o.getString("lc") else null
         }
     }
 }
@@ -128,6 +132,14 @@ class GameState(var seed: Long) {
     val tools = HashMap<String, Int>()
     var forest = ForestState()
     var mine = MineState()
+    /** Field vertex → fixture item (sprinklers, scarecrows, lightning rods). */
+    val fixtures = HashMap<Int, String>()
+    var planterMode = PlanterMode.REPLANT
+    var planterSeed: String? = null
+    /** Shed id → game minute of its next run, plots handled last run, and whether it is blocked. */
+    val shedNext = HashMap<String, Double>()
+    val shedLast = HashMap<String, Int>()
+    val shedBlocked = HashMap<String, Boolean>()
 
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
@@ -156,6 +168,10 @@ class GameState(var seed: Long) {
         put("tools", JSONObject(tools as Map<*, *>))
         put("forest", forest.toJson())
         put("mine", mine.toJson())
+        put("fixtures", JSONObject().apply { fixtures.forEach { (k, v) -> put(k.toString(), v) } })
+        put("planter", JSONObject().apply { put("mode", planterMode.name); planterSeed?.let { put("seed", it) } })
+        put("shedNext", JSONObject(shedNext as Map<*, *>))
+        put("shedLast", JSONObject(shedLast as Map<*, *>))
     }
 
     companion object {
@@ -191,6 +207,12 @@ class GameState(var seed: Long) {
             o.optJSONObject("tools")?.toIntMap()?.forEach { (k, v) -> tools[k] = v }
             o.optJSONObject("forest")?.let { forest = ForestState.fromJson(it) }
             o.optJSONObject("mine")?.let { mine = MineState.fromJson(it) }
+            o.optJSONObject("fixtures")?.let { f -> f.keys().forEach { fixtures[it.toInt()] = f.getString(it) } }
+            o.optJSONObject("planter")?.let { p ->
+                planterMode = PlanterMode.valueOf(p.optString("mode", "REPLANT")); planterSeed = if (p.has("seed")) p.getString("seed") else null
+            }
+            o.optJSONObject("shedNext")?.let { m -> m.keys().forEach { shedNext[it] = m.getDouble(it) } }
+            o.optJSONObject("shedLast")?.toIntMap()?.forEach { (k, v) -> shedLast[k] = v }
         }
     }
 }

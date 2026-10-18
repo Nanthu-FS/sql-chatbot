@@ -326,6 +326,52 @@
    "queue": 1,
    "prebuilt": false,
    "sprite": "buildings/geode_anvil"
+  },
+  {
+   "id": "greenhouse",
+   "name": "Greenhouse",
+   "screen": "farm",
+   "unlock": 12,
+   "cost": {
+    "coins": 25000,
+    "plank": 100,
+    "stone": 60,
+    "iron_bar": 15,
+    "glass": 20
+   },
+   "recipes": [],
+   "queue": 1,
+   "fixed": true
+  },
+  {
+   "id": "harvest_shed",
+   "name": "Harvest Shed",
+   "screen": "farm",
+   "unlock": 16,
+   "cost": {
+    "coins": 3000,
+    "plank": 25,
+    "iron_bar": 10,
+    "copper_bar": 4,
+    "cooking_oil": 3
+   },
+   "recipes": [],
+   "queue": 1
+  },
+  {
+   "id": "planter_shed",
+   "name": "Planter Shed",
+   "screen": "farm",
+   "unlock": 18,
+   "cost": {
+    "coins": 3500,
+    "plank": 25,
+    "iron_bar": 12,
+    "brick": 6,
+    "cooking_oil": 3
+   },
+   "recipes": [],
+   "queue": 1
   }
  ]
 }

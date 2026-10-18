@@ -1093,6 +1093,53 @@
    "minutes": 10,
    "unlock": 15,
    "fuel": 1.7
+  },
+  {
+   "id": "wb_copper_sprinkler",
+   "building": "workbench",
+   "inputs": {
+    "copper_bar": 2,
+    "plank": 1
+   },
+   "outputs": {
+    "copper_sprinkler": 1
+   },
+   "minutes": 4,
+   "unlock": 6,
+   "coins": 50,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_iron_sprinkler",
+   "building": "workbench",
+   "inputs": {
+    "iron_bar": 2,
+    "copper_bar": 1,
+    "quartz": 1
+   },
+   "outputs": {
+    "iron_sprinkler": 1
+   },
+   "minutes": 8,
+   "unlock": 12,
+   "coins": 150,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_gold_sprinkler",
+   "building": "workbench",
+   "inputs": {
+    "gold_bar": 2,
+    "iron_bar": 1,
+    "diamond": 1
+   },
+   "outputs": {
+    "gold_sprinkler": 1
+   },
+   "minutes": 15,
+   "unlock": 24,
+   "coins": 500,
+   "fuel": 0.0
   }
  ]
 }

@@ -417,7 +417,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         benchTab = ui.tabs("bench-tabs", x + 8, y + 48, pw - 16, listOf("PARTS", "FARM", "TOOLS"), benchTab)
         val top = y + 66
         val listH = y + ph - 8 - top
-        val farmItems = setOf("wb_quality_fertilizer", "wb_scarecrow", "wb_lightning_rod")
+        val farmItems = setOf("wb_quality_fertilizer", "wb_scarecrow", "wb_lightning_rod", "wb_copper_sprinkler", "wb_iron_sprinkler", "wb_gold_sprinkler")
         val all = world.recipesFor("workbench")
         val c = g.canvas
         if (benchTab == 2) {

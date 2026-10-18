@@ -100,6 +100,7 @@ fun World.build(id: String): Boolean {
     val def = data.buildings.getValue(id)
     pay(def.cost)
     building(id).built = true
+    if (id == "greenhouse") syncGreenhouse()
     state.bump("built")
     events += WorldEvent.Built(id)
     gainXp(max(5, (def.cost["coins"] ?: 0) / 50))
