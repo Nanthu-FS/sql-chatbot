@@ -5,6 +5,23 @@ import com.ditherfarm.engine.Gfx
 import com.ditherfarm.game.Quality
 import com.ditherfarm.game.Storage
 import com.ditherfarm.game.Time
+import com.ditherfarm.game.RecipeDef
+import com.ditherfarm.game.Tool
+import com.ditherfarm.game.addFuel
+import com.ditherfarm.game.available
+import com.ditherfarm.game.build
+import com.ditherfarm.game.buildBlocker
+import com.ditherfarm.game.building
+import com.ditherfarm.game.cancelLast
+import com.ditherfarm.game.collect
+import com.ditherfarm.game.enqueue
+import com.ditherfarm.game.jobProgress
+import com.ditherfarm.game.nextToolRecipe
+import com.ditherfarm.game.recipeBlocker
+import com.ditherfarm.game.recipesFor
+import com.ditherfarm.game.secondsLeft
+import com.ditherfarm.game.toolTier
+import com.ditherfarm.game.trayCount
 import com.ditherfarm.game.baseId
 
 /** Modal panels opened from the HUD. Each draw call returns false when the panel should close. */
@@ -14,6 +31,7 @@ class Panels(private val game: Game, private val hud: Hud) {
     private val world get() = game.world
 
     private var barnTab = 0
+    private var benchTab = 0
     private var selected: String? = null
     private var confirmNewGame = 0
 
@@ -251,4 +269,176 @@ class Panels(private val game: Game, private val hud: Hud) {
         return !ui.button("lvl-ok", w / 2 - 24, y + ph - 22, 48, 16, "YAY!", style = "gold")
     }
 
+
+    // ------------------------------------------------------------ machines
+    /** Sprite for a building: its own art, else a fitting icon. */
+    fun buildingSprite(id: String): String {
+        val own = "buildings/$id"
+        if (game.assets.has(own)) return own
+        return when (id) {
+            "workbench" -> "icons_big/craft"; "windmill" -> "icons_big/settings"; "sawmill" -> "icons_big/tool_axe"
+            "furnace" -> "icons_big/warning"; "beehive" -> "icons_big/gift"; "compost_bin" -> "icons_big/fertilizer"
+            else -> "icons_big/build"
+        }
+    }
+
+    private fun outputIcon(r: RecipeDef): String {
+        val out = r.outputs.keys.first()
+        if (out.startsWith("@tool:")) return toolIcon(out.removePrefix("@tool:"))
+        return icon(out)
+    }
+
+    private fun toolIcon(tool: String) = "icons/" + when (tool) { "can" -> "tool_water_can"; else -> "tool_$tool" }
+
+    private fun recipeName(r: RecipeDef): String {
+        r.name?.let { return it.uppercase() }
+        val out = r.outputs.keys.first()
+        if (out.startsWith("@tool:")) return "${world.data.tools.names[r.outputs.values.first()]} ${out.removePrefix("@tool:")}".uppercase()
+        val n = r.outputs.values.first()
+        return (if (n > 1) "${n}x " else "") + world.data.name(out).uppercase()
+    }
+
+    /** One recipe row: output, name, inputs with have/need, time and a MAKE button. */
+    private fun recipeRow(r: RecipeDef, x: Int, y: Int, w: Int, label: String = "MAKE"): Boolean {
+        val locked = r.unlockLevel > world.level
+        g.slice9("ui/slot", x, y, x + w, y + 34, 4)
+        g.sprite(if (locked) "icons/lock" else outputIcon(r), (x + 12).toFloat(), (y + 12).toFloat())
+        g.text(if (locked) "LEVEL ${r.unlockLevel}" else recipeName(r).take(20), x + 24, y + 4, Gfx.INK, outline = 0, shadow = false)
+        var ix = x + 24
+        for ((k, v) in r.inputs) {
+            val have = world.available(k)
+            g.sprite(if (k == "#crop") "icons/harvest" else icon(k), (ix + 6).toFloat(), (y + 22).toFloat())
+            val t = "$have/$v"
+            g.text(t, ix + 13, y + 18, if (have >= v) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
+            ix += 16 + g.textWidth(t)
+        }
+        if (r.coins > 0) {
+            g.sprite("icons/coin", (ix + 6).toFloat(), (y + 22).toFloat())
+            g.text("${r.coins}", ix + 13, y + 18, if (world.state.coins >= r.coins) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
+        }
+        val mins = r.minutes
+        g.text(if (mins < 1) "${(mins * 60).toInt()}S" else "${mins.toInt()}M", x + w - 62, y + 4, Gfx.GREY, outline = 0, shadow = false)
+        val blocker = world.recipeBlocker(r)
+        val clicked = ui.button("make-${r.id}", x + w - 48, y + 15, 42, 15, label, style = if (blocker == null) "green" else "grey")
+        if (clicked) {
+            if (blocker != null) { hud.toast(blocker); game.sfx.play("error") }
+            else if (world.enqueue(r.id)) { game.sfx.play("craft"); game.haptics.click() }
+        }
+        return clicked
+    }
+
+    private fun queueStrip(id: String, x: Int, y: Int, w: Int) {
+        val b = world.building(id)
+        val def = world.data.buildings[id]
+        val q = def?.queue ?: 1
+        for (i in 0 until q) {
+            val job = b.jobs.getOrNull(i)
+            val sx = x + i * 24
+            g.slice9("ui/slot", sx, y, sx + 22, y + 22, 4)
+            job?.let { j -> world.data.recipes[j.recipe]?.let { g.sprite(outputIcon(it), (sx + 11).toFloat(), (y + 11).toFloat()) } }
+        }
+        val qx = x + q * 24 + 4
+        if (b.jobs.isNotEmpty()) {
+            ui.bar(qx, y + 3, w - (qx - x) - 64, world.jobProgress(id), "blue")
+            val s = world.secondsLeft(id)?.toInt() ?: 0
+            g.text("%d:%02d".format(s / 60, s % 60), qx, y + 12, Gfx.INK, outline = 0, shadow = false)
+            if (ui.button("cancel", x + w - 60, y + 3, 16, 16, null, "ui/x", "red")) { if (world.cancelLast(id)) game.sfx.play("close") }
+        } else {
+            g.text("IDLE", qx, y + 7, Gfx.GREY, outline = 0, shadow = false)
+        }
+        val ready = world.trayCount(id)
+        if (ui.button("collect", x + w - 40, y + 3, 40, 16, if (ready > 0) "x$ready" else "-", style = if (ready > 0) "gold" else "grey")) {
+            if (ready > 0) world.collect(id)
+        }
+    }
+
+    fun machine(id: String): Boolean {
+        val def = world.data.buildings[id] ?: return false
+        val recipes = world.recipesFor(id)
+        val maxH = game.engine.h - game.engine.safeTop - game.engine.safeBottom - hud.topHeight - hud.bottomHeight - 12
+        val fuel = def.fuelTank > 0
+        val (x, y, pw, ph) = frame(def.name.uppercase(), minOf(maxH, 66 + (if (fuel) 20 else 0) + recipes.size * 36)).toList()
+        if (closeButton(x, y, pw)) return false
+        queueStrip(id, x + 8, y + 22, pw - 16)
+        var top = y + 50
+        if (fuel) {
+            val b = world.building(id)
+            g.sprite("items/coal", (x + 16).toFloat(), (top + 6).toFloat())
+            ui.bar(x + 26, top + 3, pw - 100, (b.fuel / def.fuelTank).toFloat(), "red")
+            g.text("%.1f".format(b.fuel), x + pw - 70, top + 2, Gfx.INK, outline = 0, shadow = false)
+            if (ui.button("fuel", x + pw - 46, top, 38, 14, "+COAL", style = "wood")) {
+                if (world.addFuel(id, 5) > 0) game.sfx.play("drip") else hud.toast("No coal")
+            }
+            top += 20
+        }
+        val listH = y + ph - 8 - top
+        val off = ui.scroll("recipes-$id", x + 6, top, pw - 12, listH, recipes.size * 36)
+        val c = g.canvas
+        c.save(); c.clipRect(x + 6, top, x + pw - 6, top + listH)
+        recipes.forEachIndexed { i, r ->
+            val ry = top + i * 36 - off
+            if (ry + 34 < top || ry > top + listH) return@forEachIndexed
+            recipeRow(r, x + 8, ry, pw - 20)
+        }
+        c.restore()
+        return true
+    }
+
+    fun build(id: String): Boolean {
+        val def = world.data.buildings[id] ?: return false
+        val rows = def.cost.size
+        val (x, y, pw, ph) = frame("BUILD ${def.name.uppercase()}", 92 + rows * 14, pw = 210).toList()
+        if (closeButton(x, y, pw)) return false
+        g.sprite(buildingSprite(id), (x + 30).toFloat(), (y + 46).toFloat())
+        def.cost.entries.forEachIndexed { i, (k, v) ->
+            val ry = y + 26 + i * 14
+            val have = if (k == "coins") world.state.coins else world.count(k, anyQuality = true)
+            g.sprite(if (k == "coins") "icons/coin" else icon(k), (x + 62).toFloat(), (ry + 5).toFloat())
+            g.text("$v ${if (k == "coins") "COINS" else world.data.name(k).uppercase()}".take(20), x + 72, ry + 1, if (have >= v) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
+        }
+        val blocker = world.buildBlocker(id)
+        if (blocker != null) g.text(blocker.uppercase(), x + pw / 2, y + ph - 36, Gfx.RED, align = 0, outline = 0, shadow = false)
+        if (ui.button("build-$id", x + pw / 2 - 40, y + ph - 22, 80, 16, "BUILD", style = if (blocker == null) "green" else "grey")) {
+            if (world.build(id)) return false
+        }
+        return true
+    }
+
+    fun workbench(): Boolean {
+        val maxH = game.engine.h - game.engine.safeTop - game.engine.safeBottom - hud.topHeight - hud.bottomHeight - 12
+        val (x, y, pw, ph) = frame("WORKBENCH", maxH).toList()
+        if (closeButton(x, y, pw)) return false
+        queueStrip("workbench", x + 8, y + 22, pw - 16)
+        benchTab = ui.tabs("bench-tabs", x + 8, y + 48, pw - 16, listOf("PARTS", "FARM", "TOOLS"), benchTab)
+        val top = y + 66
+        val listH = y + ph - 8 - top
+        val farmItems = setOf("wb_quality_fertilizer", "wb_scarecrow", "wb_lightning_rod")
+        val all = world.recipesFor("workbench")
+        val c = g.canvas
+        if (benchTab == 2) {
+            Tool.entries.forEachIndexed { i, tool ->
+                val ry = top + i * 36
+                val next = world.nextToolRecipe(tool)
+                if (next == null) {
+                    g.slice9("ui/slot", x + 8, ry, x + pw - 12, ry + 34, 4)
+                    g.sprite(toolIcon(tool.name.lowercase()), (x + 20).toFloat(), (ry + 12).toFloat())
+                    g.text("GOLD ${tool.label.uppercase()} - MAX", x + 32, ry + 12, Gfx.INK, outline = 0, shadow = false)
+                } else {
+                    recipeRow(next, x + 8, ry, pw - 20, "UPGRADE")
+                    g.text(world.data.tools.names[world.toolTier(tool)].uppercase(), x + 8 + pw - 20 - 104, ry + 4, Gfx.GREY, outline = 0, shadow = false)
+                }
+            }
+            return true
+        }
+        val list = all.filter { !it.id.startsWith("tool_") && ((benchTab == 1) == (it.id in farmItems)) }
+        val off = ui.scroll("bench-$benchTab", x + 6, top, pw - 12, listH, list.size * 36)
+        c.save(); c.clipRect(x + 6, top, x + pw - 6, top + listH)
+        list.forEachIndexed { i, r ->
+            val ry = top + i * 36 - off
+            if (ry + 34 < top || ry > top + listH) return@forEachIndexed
+            recipeRow(r, x + 8, ry, pw - 20)
+        }
+        c.restore()
+        return true
+    }
 }

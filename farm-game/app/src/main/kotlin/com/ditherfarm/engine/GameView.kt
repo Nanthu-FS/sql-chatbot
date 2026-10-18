@@ -56,6 +56,7 @@ class GameView(ctx: Context, private val engine: Engine, private val onResized: 
         dst.set(0, 0, bw * scale, bh * scale)
         engine.router.scale = scale.toFloat()
         engine.resize(bw, bh)
+        engine.frameBitmap = b
         updateSafeArea()
         onResized(bw, bh)
     }

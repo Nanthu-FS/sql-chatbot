@@ -12,6 +12,12 @@ import com.ditherfarm.game.Quality
 import com.ditherfarm.game.Season
 import com.ditherfarm.game.Weather
 import com.ditherfarm.game.WorldEvent
+import com.ditherfarm.game.build
+import com.ditherfarm.game.buildingsOn
+import com.ditherfarm.game.collect
+import com.ditherfarm.game.isBuilt
+import com.ditherfarm.game.jobProgress
+import com.ditherfarm.game.trayCount
 import kotlin.math.abs
 import kotlin.math.sin
 import com.ditherfarm.engine.Weather as Sky
@@ -24,8 +30,8 @@ import com.ditherfarm.engine.Weather as Sky
 class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListener {
     override val cols = MAP
     override val rows = MAP
-    private val hud = Hud(game)
-    private val panels = Panels(game, hud)
+    val chrome = Chrome(game, Nav.FARM)
+    private val hud get() = chrome.hud
     override val hudTop get() = hud.topHeight
     override val hudBottom get() = hud.bottomHeight
 
@@ -52,15 +58,16 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     }
     private val buildingAt = Building.entries.associateBy { key(it.c, it.r) }
 
+    /** Fixed slots for farm machines, assigned in unlock order. */
+    private val slotTiles = listOf(6 to 14, 8 to 15, 10 to 15, 12 to 15, 14 to 14, 17 to 11, 2 to 12, 12 to 3, 15 to 2, 6 to 3, 18 to 4, 2 to 3)
+    private val machines get() = world.buildingsOn("farm").filter { !it.prebuilt }
+    private fun machineAt(c: Int, r: Int) = machines.withIndex().firstOrNull { (i, _) -> slotTiles.getOrNull(i) == (c to r) }?.value
+
     private class Prop(val sprite: String, val x: Float, val y: Float, val sway: Boolean)
     private val props = ArrayList<Prop>()
     private val lanterns = listOf(FIELD_C0 - 1 to FIELD_R0 - 1, FIELD_C0 + FIELD_COLS to FIELD_R0 + FIELD_ROWS, 4 to 7, 16 to 7)
 
     // --- interaction state -----------------------------------------------------
-    private enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, BUY, LEVEL_UP }
-    private var panel = Panel.NONE
-    private var buyPlot = -1
-    private val levelUps = ArrayDeque<Pair<Int, Int>>()
     private var trayOpen = false
     private var seed: String? = null
     private var paintAction: Action? = null
@@ -109,7 +116,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private fun scatterProps() {
         props.clear()
         for (r in 0 until rows) for (c in 0 until cols) {
-            if (key(c, r) in buildingAt || (c to r) in lanterns) continue
+            if (key(c, r) in buildingAt || (c to r) in lanterns || (c to r) in slotTiles) continue
             if (plotAt.containsKey(key(c, r)) && world.plot(plotAt[key(c, r)]!!).owned) continue
             val t = terrain(c, r)
             val roll = Noise.rand(c, r, 91)
@@ -144,7 +151,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     override fun update(dt: Float) {
         super.update(dt)
-        hud.update(dt)
+        chrome.update(dt)
         if (infoTime > 0) infoTime -= dt
         if (flashTime > 0) flashTime -= dt
         weather.kind = when (world.state.weather) {
@@ -191,6 +198,26 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 game.gfx.sprite(b.sprite, x, y - 12 + bob)
             }
         }
+        machines.forEachIndexed { i, def ->
+            val (c, r) = slotTiles.getOrNull(i) ?: return@forEachIndexed
+            val x = Iso.x(c, r).toFloat()
+            val y = Iso.centerY(c, r).toFloat()
+            val built = world.isBuilt(def.id)
+            if (!built && def.unlockLevel > world.level) return@forEachIndexed
+            list.add(y) {
+                val g = game.gfx
+                if (built) {
+                    g.sprite("tiles/shadow", x, y - 6)
+                    g.sprite(chrome.panels.buildingSprite(def.id), x, y - 12)
+                    val ready = world.trayCount(def.id)
+                    if (ready > 0) g.sprite("icons/ready", x + 10, y - 30 + sin(time * 5f) * 2f)
+                    else if (world.jobProgress(def.id) > 0f) g.sprite("fx/sparkle", x + 10, y - 26, (120 + sin(time * 3f) * 80).toInt())
+                } else {
+                    g.sprite("tiles/cursor", Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat(), (sin(time * 4f) * 50 + 140).toInt())
+                    g.sprite("icons_big/build", x, y - 10 + sin(time * 3f) * 1.5f, 200)
+                }
+            }
+        }
         plotTiles.forEachIndexed { i, (c, r) ->
             val p = world.plot(i)
             if (!p.owned) return@forEachIndexed
@@ -232,65 +259,10 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     }
 
     override fun drawHud(g: Gfx) {
-        // Info bubble over a growing plot.
         if (infoTime > 0 && infoPlot >= 0) drawInfo(g)
-        hud.drawTop()
-        if (trayOpen) drawSeedTray(g)
-        val badges = mapOf(Nav.ORDERS to world.state.orders.indices.count { world.canDeliver(it) })
-        when (hud.drawBottom(Nav.FARM, badges)) {
-            Nav.FARM -> centerOnTile(FIELD_C0 + FIELD_COLS / 2, FIELD_R0 + FIELD_ROWS / 2)
-            Nav.FOREST, Nav.MINE -> hud.toast("Coming in the next update!")
-            Nav.BARN -> open(Panel.BARN)
-            Nav.ORDERS -> open(Panel.ORDERS)
-            Nav.MARKET -> open(Panel.MARKET)
-            Nav.MENU -> open(Panel.SETTINGS)
-            null -> {}
-        }
-        drawPanel(g)
-        hud.drawOverlays(tipVisible = panel == Panel.NONE, tipLift = if (trayOpen) 2 * 34 + 22 else 0)
-    }
-
-    private fun open(p: Panel) {
-        panels.reset()
-        trayOpen = false
-        panel = p
-        game.sfx.play("open")
-        if (p == Panel.MARKET) hud.tip("market", "Prices change every day. A green arrow means today is a good day to sell.")
-    }
-
-    private fun drawPanel(g: Gfx) {
-        val keep = when (panel) {
-            Panel.NONE -> { levelUps.firstOrNull()?.let { panel = Panel.LEVEL_UP }; true }
-            Panel.BARN -> panels.barn()
-            Panel.MARKET -> panels.market()
-            Panel.ORDERS -> panels.orders()
-            Panel.SETTINGS -> panels.settings()
-            Panel.BUY -> buyDialog(g)
-            Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
-        }
-        if (!keep) {
-            if (panel == Panel.LEVEL_UP) levelUps.removeFirstOrNull()
-            panel = Panel.NONE
-            game.sfx.play("close")
-        }
-    }
-
-    private fun buyDialog(g: Gfx): Boolean {
-        val price = world.nextPlotPrice() ?: return false
-        val w = game.engine.w
-        val pw = 180; val ph = 70
-        val x = (w - pw) / 2; val y = game.engine.h / 2 - ph / 2
-        val outside = ui.modal(x, y, pw, ph)
-        ui.panel(x, y, pw, ph)
-        g.text("BUY THIS LAND?", w / 2, y + 10, Gfx.GOLD, align = 0)
-        g.sprite("icons/coin", (w / 2 - 12).toFloat(), (y + 30).toFloat())
-        g.text("$price", w / 2 - 4, y + 26, Gfx.INK, outline = 0, shadow = false)
-        if (ui.button("buy-yes", x + 14, y + ph - 24, 70, 16, "BUY", style = if (world.state.coins >= price) "green" else "grey")) {
-            if (world.buyPlot(buyPlot)) { game.sfx.play("buy"); game.haptics.heavy(); return false }
-            game.sfx.play("error")
-        }
-        if (ui.button("buy-no", x + pw - 84, y + ph - 24, 70, 16, "LATER", style = "red") || outside) return false
-        return true
+        chrome.drawTop()
+        if (trayOpen && !chrome.isOpen) drawSeedTray(g)
+        chrome.drawBottom(tipLift = if (trayOpen) 2 * 34 + 22 else 0)
     }
 
     private fun drawSeedTray(g: Gfx) {
@@ -373,11 +345,18 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     override fun onTileTap(c: Int, r: Int) {
         buildingAt[key(c, r)]?.let { b ->
             when (b) {
-                Building.BARN, Building.SILO -> open(Panel.BARN)
-                Building.MARKET -> open(Panel.MARKET)
-                Building.ORDERS -> open(Panel.ORDERS)
+                Building.BARN, Building.SILO -> chrome.open(Chrome.Panel.BARN)
+                Building.MARKET -> chrome.open(Chrome.Panel.MARKET)
+                Building.ORDERS -> chrome.open(Chrome.Panel.ORDERS)
                 Building.WELL -> hud.toast("The well keeps your can full")
-                Building.WORKBENCH -> hud.toast("Workbench opens in the next update")
+                Building.WORKBENCH -> if (world.trayCount("workbench") > 0) world.collect("workbench") else chrome.open(Chrome.Panel.WORKBENCH)
+            }
+            return
+        }
+        machineAt(c, r)?.let { def ->
+            when {
+                world.isBuilt(def.id) -> if (world.trayCount(def.id) > 0) world.collect(def.id) else chrome.open(Chrome.Panel.MACHINE, def.id)
+                def.unlockLevel <= world.level -> chrome.open(Chrome.Panel.BUILD, def.id)
             }
             return
         }
@@ -385,8 +364,11 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         val p = world.plot(i)
         if (!p.owned) {
             if (i == world.ownedPlots) {
-                if (world.nextPlotPrice() == null) hud.toast("Reach level ${world.level + 1} to buy more land")
-                else { buyPlot = i; open(Panel.BUY) }
+                val price = world.nextPlotPrice()
+                if (price == null) hud.toast("Reach level ${world.level + 1} to buy more land")
+                else chrome.confirm("BUY THIS LAND?", "Plot ${i + 1} costs $price coins.", "BUY") {
+                    if (world.buyPlot(i)) { game.sfx.play("buy"); game.haptics.heavy() }
+                }
             }
             return
         }
@@ -415,20 +397,25 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     fun toast(text: String) = hud.toast(text)
 
+    fun recenter() = centerOnTile(FIELD_C0 + FIELD_COLS / 2, FIELD_R0 + FIELD_ROWS / 2)
+
     /** Map tile of plot [i]. */
     fun plotTile(i: Int) = plotTiles[i]
 
     /** Opens a panel by name; used by screenshot tests. */
     fun showPanel(name: String) {
         when (name) {
-            "barn" -> open(Panel.BARN); "market" -> open(Panel.MARKET); "orders" -> open(Panel.ORDERS)
-            "settings" -> open(Panel.SETTINGS); "tray" -> { trayOpen = true; seed = "carrot" }
+            "barn" -> chrome.open(Chrome.Panel.BARN); "market" -> chrome.open(Chrome.Panel.MARKET); "orders" -> chrome.open(Chrome.Panel.ORDERS)
+            "settings" -> chrome.open(Chrome.Panel.SETTINGS); "workbench" -> chrome.open(Chrome.Panel.WORKBENCH)
+            "tray" -> { trayOpen = true; seed = "carrot" }
+            else -> if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
+            else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))
         }
     }
 
     /** Closes the open panel or tray; false if nothing was open (back leaves the app). */
     fun closePanel(): Boolean {
-        if (panel != Panel.NONE && panel != Panel.LEVEL_UP) { panel = Panel.NONE; return true }
+        if (chrome.close()) return true
         if (trayOpen) { trayOpen = false; return true }
         return false
     }
@@ -440,6 +427,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     }
 
     override fun onWorldEvent(e: WorldEvent) {
+        if (chrome.onEvent(e)) return
         when (e) {
             is WorldEvent.Harvested -> {
                 val (x, y) = plotCenter(e.plot)
@@ -472,32 +460,14 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 hud.tip("land", "Every new plot costs a bit more than the last.")
             }
             is WorldEvent.XpGained -> {}
-            is WorldEvent.LevelUp -> { levelUps.addLast(e.level to e.coins); game.sfx.play("levelup"); game.haptics.heavy() }
-            is WorldEvent.Blocked -> {
-                game.sfx.play("error")
-                if (e.plot >= 0) { val (x, y) = plotCenter(e.plot); fx.floatText(e.reason.uppercase(), x, y - 24, Gfx.RED) } else hud.toast(e.reason)
-            }
-            is WorldEvent.DayStarted -> if (e.day > 0) hud.toast("Day ${world.time.dayOfSeason} - ${e.weather.name.lowercase().replaceFirstChar { it.uppercase() }}")
-            is WorldEvent.SeasonChanged -> {
-                hud.toast("${e.season.label} begins!" + if (e.withered > 0) " ${e.withered} crops withered" else "")
-                invalidateGround()
-            }
+            is WorldEvent.Blocked -> { val (x, y) = plotCenter(e.plot); fx.floatText(e.reason.uppercase(), x, y - 24, Gfx.RED) }
+            is WorldEvent.SeasonChanged -> invalidateGround()
             is WorldEvent.Storm -> {
                 fx.shake(3f)
                 e.scorched.forEach { val (x, y) = plotCenter(it); fx.burst("fx/zap", x, y - 10, 4, speed = 40f) }
             }
-            is WorldEvent.OrderArrived -> {
-                game.sfx.play("order")
-                world.state.orders[e.slot].order?.let { o -> hud.toast("New order from ${world.data.villagers.firstOrNull { it.id == o.villager }?.name ?: o.villager}") }
-            }
-            is WorldEvent.OrderDelivered -> hud.toast("+${e.coins} coins  +${e.xp} XP")
             is WorldEvent.Sold -> {}
             is WorldEvent.Ate -> {}
-            is WorldEvent.Discovered -> hud.toast("New item: ${world.data.name(e.item)}!")
-            is WorldEvent.JobDone -> game.sfx.play("machine_done")
-            is WorldEvent.ToolUpgraded -> { game.sfx.play("unlock"); hud.toast("New ${world.data.tools.names[e.tier]} ${e.tool}!") }
-            is WorldEvent.Built -> { game.sfx.play("craft"); game.haptics.heavy() }
-            is WorldEvent.ZoneUnlocked -> hud.toast("The forest has opened up!")
             else -> {}
         }
     }

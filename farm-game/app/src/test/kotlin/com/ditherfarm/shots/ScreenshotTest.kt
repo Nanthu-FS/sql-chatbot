@@ -9,6 +9,11 @@ import com.ditherfarm.engine.FileAssets
 import com.ditherfarm.game.GameTime
 import com.ditherfarm.game.Season
 import com.ditherfarm.game.Weather
+import com.ditherfarm.game.build
+import com.ditherfarm.game.chop
+import com.ditherfarm.game.enqueue
+import com.ditherfarm.game.forestSpots
+import com.ditherfarm.ui.Nav
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -104,6 +109,31 @@ class ScreenshotTest {
                 p.growth = w.data.crop(id).growMinutes * listOf(0.1, 0.4, 0.8, 1.0, 1.0)[i % 5]
                 p.watered = i % 3 != 0
             }
+        })
+    }
+
+    @Test fun forest() {
+        render("forest", seconds = 1f, setup = { g ->
+            g.world.gainXp(130) // level 3: zone A open
+            g.world.state.tools["axe"] = 1
+            g.goTo(Nav.FOREST)
+            g.engine.screen?.enter()
+            val spots = g.world.forestSpots.filter { it.zone == "A" && it.native == "pine" }
+            g.world.chop(spots[0].index); g.world.chop(spots[0].index)
+            repeat(5) { g.world.chop(spots[1].index) }
+        })
+    }
+
+    @Test fun workbenchPanel() { render("panel_workbench", setup = { g -> g.world.enqueue("wb_plank"); g.farm.showPanel("workbench") }) }
+
+    @Test fun buildPanel() { render("panel_build", setup = { g -> g.world.gainXp(40); g.farm.showPanel("build:windmill") }) }
+
+    @Test fun machinePanel() {
+        render("panel_machine", setup = { g ->
+            val w = g.world
+            w.gainXp(130); w.add("wheat", 40); w.add("wood", 30); w.build("windmill")
+            w.enqueue("flour"); w.enqueue("flour")
+            g.farm.showPanel("machine:windmill")
         })
     }
 

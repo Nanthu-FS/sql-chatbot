@@ -49,10 +49,13 @@ class Engine(val gfx: Gfx, val router: GestureRouter) {
         first.enter()
     }
 
-    /** Switch to [to] with a dither dissolve. [current] is the frame now on screen. */
-    fun go(to: Screen, current: Bitmap) {
+    /** The bitmap the last frame was drawn into (set by GameView; null in tests). */
+    var frameBitmap: Bitmap? = null
+
+    /** Switch to [to] with a dither dissolve from the frame now on screen. */
+    fun go(to: Screen) {
         if (to === screen || next != null) return
-        snapshot = current.copy(Bitmap.Config.ARGB_8888, false)
+        snapshot = frameBitmap?.copy(Bitmap.Config.ARGB_8888, false)
         screen?.exit()
         screen = to
         router.target = to

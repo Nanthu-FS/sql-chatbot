@@ -13,6 +13,8 @@ import com.ditherfarm.game.World
 import com.ditherfarm.game.WorldEvent
 import com.ditherfarm.platform.SaveStore
 import com.ditherfarm.ui.FarmScreen
+import com.ditherfarm.ui.ForestScreen
+import com.ditherfarm.ui.Nav
 import com.ditherfarm.ui.Ui
 import org.json.JSONObject
 
@@ -45,6 +47,7 @@ class Game(val host: Host) {
     private var paused = false
 
     val farm = FarmScreen(this)
+    val forest by lazy { ForestScreen(this) }
 
     init {
         applySettings()
@@ -126,23 +129,48 @@ class Game(val host: Host) {
         sfx.release()
     }
 
-    /** Back button: closes the open panel first. */
-    fun onBack(): Boolean = farm.closePanel()
+    /** Back button: closes the open panel first, then returns to the farm. */
+    fun onBack(): Boolean = when (val s = engine.screen) {
+        is FarmScreen -> s.closePanel()
+        is ForestScreen -> s.closePanel() || run { goTo(Nav.FARM); true }
+        else -> false
+    }
+
+    fun goTo(nav: Nav) {
+        val to = when (nav) {
+            Nav.FARM -> farm
+            Nav.FOREST -> forest
+            else -> { farm.toast("The mine opens in the next update!"); return }
+        }
+        sfx.play("swap")
+        engine.go(to)
+    }
+
+    fun recenter() = when (val s = engine.screen) {
+        is FarmScreen -> s.recenter()
+        is ForestScreen -> s.recenter()
+        else -> Unit
+    }
+
+    fun toast(text: String) = when (val s = engine.screen) {
+        is ForestScreen -> s.chrome.hud.toast(text)
+        else -> farm.toast(text)
+    }
 
     fun exportTo(uri: Uri) {
         save()
         runCatching { host.writeDocument(uri, world.state.toJson().toString(2)) }
-            .onSuccess { farm.toast("Save exported") }.onFailure { farm.toast("Export failed") }
+            .onSuccess { toast("Save exported") }.onFailure { toast("Export failed") }
     }
 
     fun importFrom(uri: Uri) {
         val text = runCatching { host.readDocument(uri) }.getOrNull()
         val state = text?.let { runCatching { GameState.fromJson(JSONObject(it)) }.getOrNull() }
-        if (state == null || state.plots.isEmpty()) { farm.toast("Not a Dither Farm save"); return }
+        if (state == null || state.plots.isEmpty()) { toast("Not a Dither Farm save"); return }
         world = World(data, state)
         applySettings()
         save()
-        farm.toast("Save imported")
+        toast("Save imported")
     }
 
     /** Starts over with a fresh farm (settings menu, confirmed twice). */
