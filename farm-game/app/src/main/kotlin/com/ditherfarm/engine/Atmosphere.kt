@@ -39,7 +39,8 @@ class Lighting {
     /** Darkness 0..1 for a tint from [ambient], used to decide whether lamps are lit. */
     fun darkness(tint: Int): Float = (tint ushr 24) / 255f
 
-    class Light(var x: Float, var y: Float, var radius: Int, var warm: Boolean = true)
+    /** A light in buffer pixels; [round] lights are a halo in the air (lamp heads), the rest a pool on the ground. */
+    class Light(var x: Float, var y: Float, var radius: Int, var warm: Boolean = true, var round: Boolean = false)
 
     /**
      * Applies lighting to [target] (already holding the world). Lights are in buffer pixels.
@@ -51,13 +52,13 @@ class Lighting {
             val lc = ensure(w, h)
             lc.drawColor(tint, PorterDuff.Mode.SRC)
             if (dark > 0.25f) for (l in lights) {
-                val m = mask(l.radius)
+                val m = mask(l.radius, l.round)
                 lc.drawBitmap(m, l.x - l.radius, l.y - l.radius, cut)
             }
             target.drawBitmap(layer!!, 0f, 0f, plain)
             if (dark > 0.25f) for (l in lights) if (l.warm) {
-                glow.alpha = (22 * dark).toInt()
-                target.drawBitmap(mask(l.radius), l.x - l.radius, l.y - l.radius, glow)
+                glow.alpha = (40 * dark).toInt()
+                target.drawBitmap(mask(l.radius, l.round), l.x - l.radius, l.y - l.radius, glow)
             }
         }
         if (flash > 0f) {
@@ -79,20 +80,17 @@ class Lighting {
         return layerCanvas!!
     }
 
-    /** Round light with a Bayer-dithered falloff; opaque = full light. */
-    private fun mask(r: Int): Bitmap = lightMasks.getOrPut(r) {
+    /** Light with a smooth falloff (opaque = full light): a round halo, or iso-squashed to lie on the ground. */
+    private fun mask(r: Int, round: Boolean): Bitmap = lightMasks.getOrPut(if (round) -r else r) {
         val size = r * 2
         val b = Bitmap.createBitmap(size, size, Bitmap.Config.ARGB_8888)
-        val bayer = intArrayOf(0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5)
         for (y in 0 until size) for (x in 0 until size) {
-            // Iso-squashed circle so pools of light sit flat on the ground.
             val dx = (x - r + 0.5f) / r
-            val dy = (y - r + 0.5f) / (r * 0.75f)
+            val dy = (y - r + 0.5f) / (if (round) r.toFloat() else r * 0.75f)
             val d = dx * dx + dy * dy
             if (d >= 1f) continue
-            val level = ((1f - d) * 22f).toInt()
-            val on = bayer[(y % 4) * 4 + (x % 4)] < level
-            if (on) b.setPixel(x, y, 0xFFFF9040.toInt())
+            val a = ((1f - d) * (1f - d) * 255f).toInt().coerceIn(0, 255)
+            b.setPixel(x, y, (a shl 24) or 0xFF9040)
         }
         b
     }

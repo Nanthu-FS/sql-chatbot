@@ -120,6 +120,21 @@ class ScreenshotTest {
         })
     }
 
+    /** Clear night by the village: small lamp halos and lit windows, no light pools. */
+    @Test fun farmNight() {
+        render("farm_night", seconds = 0.5f, setup = { g ->
+            g.world.state.minutes = GameTime.of(1, Season.SPRING, 2, 22.5).minutes
+            g.world.state.lastDayRolled = g.world.time.dayIndex
+            g.world.state.weather = Weather.SUNNY
+            g.farm.centerOnTile(12, 22)
+        })
+    }
+
+    /** A long toast wraps instead of running off the screen. */
+    @Test fun longToast() {
+        render("toast_long", seconds = 0.3f, setup = { g -> g.farm.toast("The truck is empty. Farmhands fill it from fields set to Truck.") })
+    }
+
     @Test fun farmGrown() {
         render("farm_grown", seconds = 1f, setup = { g ->
             val w = g.world

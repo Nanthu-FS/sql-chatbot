@@ -393,10 +393,11 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             list.add(y) {
                 val g = game.gfx
                 g.sprite(if (game.assets.has("deco/field_sign")) "deco/field_sign" else "trees/signpost", x, y)
+                // Written on the board: the field's letter, or its level or price while it is not yours.
                 if (world.blockOwned(b)) g.text(FieldLayout.name(b), x.toInt(), (y - 15).toInt(), Gfx.WHITE, align = 0)
                 else {
                     val locked = world.level < FieldLayout.UNLOCK[b]
-                    g.text(if (locked) "L${FieldLayout.UNLOCK[b]}" else Ui.compact(FieldLayout.PRICE[b]), x.toInt(), (y - 26).toInt(), if (locked) Gfx.GREY else Gfx.GOLD, align = 0)
+                    g.text(if (locked) "L${FieldLayout.UNLOCK[b]}" else Ui.compact(FieldLayout.PRICE[b]), x.toInt(), (y - 15).toInt(), if (locked) 0xFFC0CBDC.toInt() else Gfx.GOLD, align = 0)
                 }
             }
         }
@@ -473,7 +474,22 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     }
 
     override fun worldLights(out: MutableList<Lighting.Light>) {
-        for ((c, r) in lanterns) out += Lighting.Light(Iso.x(c, r).toFloat(), Iso.centerY(c, r).toFloat() - 8, 28)
+        // A small halo round each lamp head; no pool painted on the ground.
+        for ((c, r) in lanterns) out += Lighting.Light(Iso.x(c, r).toFloat(), Iso.centerY(c, r).toFloat() - LAMP_HEAD, 9, round = true)
+    }
+
+    override fun drawEmissive(g: Gfx, night: Float) {
+        val a = (night * 255).toInt()
+        for ((c, r) in lanterns) {
+            val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()
+            if (inView(x, y)) g.sprite("deco/lantern_lit", x, y, a)
+        }
+        // Lit windows in the village and the bunkhouse.
+        val houses = FarmMap.COTTAGES.mapIndexed { k, t -> t to "buildings/cottage_" + "abc"[k % 3] } + (FarmMap.BUNKHOUSE to "buildings/cottage_c")
+        for ((t, sprite) in houses) {
+            val x = Iso.x(t.first, t.second).toFloat(); val y = Iso.centerY(t.first, t.second).toFloat()
+            if (inView(x, y, 48f) && game.assets.has("${sprite}_lit")) g.sprite("${sprite}_lit", x, y, a)
+        }
     }
 
     override fun drawHud(g: Gfx) {
@@ -826,6 +842,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         val GH_R0 = FarmMap.GREENHOUSE.second
         const val GH_WALL = 22f
         const val GREENHOUSE_LEVEL = 12
+        /** Height of a lantern's glass above its foot. */
+        const val LAMP_HEAD = 11f
         val MERCHANT_TILE = FarmMap.MERCHANT
         private fun key(c: Int, r: Int) = c.toLong() shl 32 or (r.toLong() and 0xFFFFFFFF)
     }

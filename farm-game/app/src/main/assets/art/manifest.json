@@ -27,11 +27,23 @@
   "ax": 21,
   "ay": 33
  },
+ "buildings/cottage_a_lit": {
+  "ax": 21,
+  "ay": 33
+ },
  "buildings/cottage_b": {
   "ax": 21,
   "ay": 33
  },
+ "buildings/cottage_b_lit": {
+  "ax": 21,
+  "ay": 33
+ },
  "buildings/cottage_c": {
+  "ax": 21,
+  "ay": 31
+ },
+ "buildings/cottage_c_lit": {
   "ax": 21,
   "ay": 31
  },
@@ -464,6 +476,10 @@
   "ay": 12
  },
  "deco/lantern": {
+  "ax": 4,
+  "ay": 13
+ },
+ "deco/lantern_lit": {
   "ax": 4,
   "ay": 13
  },

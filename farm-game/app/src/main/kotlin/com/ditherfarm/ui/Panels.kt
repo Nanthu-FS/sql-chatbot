@@ -488,9 +488,11 @@ class Panels(private val game: Game, private val hud: Hud) {
     fun build(id: String): Boolean {
         val def = world.data.buildings[id] ?: return false
         val rows = def.cost.size
-        val (x, y, pw, ph) = frame("BUILD ${def.name.uppercase()}", 92 + rows * 14, pw = 210).toList()
+        // The art stands below the title; tall buildings (Windmill, Silo) make the panel taller.
+        val art = game.assets[buildingSprite(id)]
+        val (x, y, pw, ph) = frame("BUILD ${def.name.uppercase()}", maxOf(92 + rows * 14, 24 + art.bmp.height + 46), pw = 210).toList()
         if (closeButton(x, y, pw)) return false
-        g.sprite(buildingSprite(id), (x + 30).toFloat(), (y + 46).toFloat())
+        g.sprite(art, (x + 30).toFloat(), (y + 22 + art.ay).toFloat())
         def.cost.entries.forEachIndexed { i, (k, v) ->
             val ry = y + 26 + i * 14
             val have = if (k == "coins") world.state.coins else world.count(k, anyQuality = true)

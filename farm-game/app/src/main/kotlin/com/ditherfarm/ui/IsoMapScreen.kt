@@ -81,6 +81,9 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     /** Light sources in world pixels (lanterns, furnaces, mine lamps). Add new Light objects each call. */
     open fun worldLights(out: MutableList<Lighting.Light>) {}
 
+    /** Glowing parts drawn over the night tint in world space; [night] 0..1 is how dark it is. */
+    open fun drawEmissive(g: Gfx, night: Float) {}
+
     abstract fun drawHud(g: Gfx)
 
     /** World-pixel tap before tile picking (e.g. corners between plots); return true if handled. */
@@ -136,7 +139,17 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
             l.y = (l.y - cam.y) * cam.zoom
             l.radius *= cam.zoom
         }
-        lighting.apply(c, game.engine.w, game.engine.h, lighting.ambient(hour()), lights, weather.flash)
+        val tint = lighting.ambient(hour())
+        lighting.apply(c, game.engine.w, game.engine.h, tint, lights, weather.flash)
+        // Things that glow (lit windows, lamp glass) go over the night tint.
+        val night = ((lighting.darkness(tint) - 0.25f) / 0.4f).coerceIn(0f, 1f)
+        if (night > 0f) {
+            c.save()
+            c.translate((-cam.snapX() + shake).toFloat(), -cam.snapY().toFloat())
+            c.scale(cam.zoom.toFloat(), cam.zoom.toFloat())
+            drawEmissive(g, night)
+            c.restore()
+        }
         weather.draw(g, game.engine.w, game.engine.h)
         fx.drawText(g, { (it - cam.x) * cam.zoom }, { (it - cam.y) * cam.zoom })
 

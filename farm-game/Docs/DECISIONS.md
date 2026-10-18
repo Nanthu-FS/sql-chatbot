@@ -62,5 +62,16 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 - **Farmhand look:** style D3 "tall" (11x21 body, hand-placed pixels: collar, buttons, pocket, knee patches, boot soles), picked from five options (`Docs/farmhand_styles.png`).
 - **Audio:** sound effects vary in pitch and have variants; ambient loops (birds, wind, crickets, forest, mine drips); weather ambience (rain, thunder, snowy wind); lo-fi, very calm background music (replaces the earlier "SFX only"), with toggles.
 
+## Playtest round 2 (owner feedback)
+- **Fixes:** long toasts wrap to two lines; a locked or for-sale field shows its level or price on its sign board; street lamps get a small soft glow (no painted ground circle) and house windows light at night; tall art never covers panel titles.
+- **Energy:** planting, watering and harvesting are free; chopping and mining still cost energy.
+- **Unlocks (hybrid + guided):** one guided quest at a time (Grandpa's notebook) with a pointer and a reward. Tools, the quarry and mine, forest zones and machine blueprints unlock by doing (the stone axe within about 15 minutes, after chopping); machines also need their level. Levels still gate crops, machines and buildings, fields and farmhands, villagers and orders. Pace: level 5 on day 1, level 10 after about a week, level 20 near a month.
+- **Orders:** only ask for items the player can get right now with their current tools, buildings and zones, in amounts they can make.
+- **Tools:** stone tools at the Workbench; iron and gold tools at the village Blacksmith (opens with village tier 1, gold work from tier 2).
+- **Big goal: restore the valley.** Four whole-village tiers over about 3-4 weeks: wooden huts, stone, brick, concrete. Each tier rebuilds every house and road (dirt, gravel, cobbles, paved) and the village grows (4, 6, 8, 10 houses). Tiers are paid with bundles of goods plus coins, donated a bit at a time. Rewards: new villagers and orders, farm perks, and shops (tier 1 Seed shop and Blacksmith, tier 2 Carpenter and gold work, tier 3 Cafe). Art variations for the tiers are shown before they are built.
+- **Small goals:** a goal chip on the HUD shows a goal the player pins (a village bundle, an achievement, a field or building to save for, chores or the contract); three daily chores each real day with a streak; one truck contract each real week.
+- **Maps:** the Forest becomes a big map like the farm with a tree wall; the Mine surface and floors are filled (cliffs, cave walls) so no void shows.
+
 ## Later (not v1)
+- New areas opened by the village: a lake with fishing, a ranch with animals, an orchard hill, a beach.
 - Farm animals.

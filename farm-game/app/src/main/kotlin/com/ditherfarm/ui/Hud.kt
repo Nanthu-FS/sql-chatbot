@@ -28,7 +28,7 @@ class Hud(private val game: Game) {
     val topHeight = 34
     val bottomHeight = 46
 
-    fun toast(text: String) { toastText = text; toastTime = 2.2f }
+    fun toast(text: String) { toastText = text; toastTime = if (text.length > 34) 3.4f else 2.2f }
 
     /** Shows a tutorial tip once per save. */
     fun tip(key: String, text: String) {
@@ -116,12 +116,15 @@ class Hud(private val game: Game) {
         val tipLines = if (tip != null && tipVisible) wrap(tip, w - 40) else emptyList()
         val tipH = if (tipLines.isEmpty()) 0 else 12 + tipLines.size * 10 + 6
         // Toasts sit just above the nav bar (and above any tip), clear of HUD chips and panel titles.
+        // Long ones wrap (at most two lines) so nothing runs off the screen edges.
         toastText?.let { text ->
             if (toastTime > 0) {
-                val tw = g.textWidth(text) + 14
-                val y = h - game.engine.safeBottom - bottomHeight - tipLift - tipH - 18
-                ui.pill(w / 2 - tw / 2, y, tw, 14)
-                g.text(text, w / 2, y + 3, Gfx.WHITE, align = 0)
+                val lines = wrap(text, w - 36).take(2)
+                val tw = lines.maxOf { g.textWidth(it) } + 14
+                val th = 4 + lines.size * 10
+                val y = h - game.engine.safeBottom - bottomHeight - tipLift - tipH - 8 - th
+                ui.pill(w / 2 - tw / 2, y, tw, th)
+                lines.forEachIndexed { i, l -> g.text(l, w / 2, y + 3 + i * 10, Gfx.WHITE, align = 0) }
             }
         }
         if (tip != null && tipVisible) {
