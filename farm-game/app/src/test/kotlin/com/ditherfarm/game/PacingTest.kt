@@ -83,4 +83,18 @@ class PacingTest {
         println("PACING:\n" + report.joinToString("\n"))
         assertTrue("too slow: ${report.last()}", w.level >= 14)
     }
+
+    @Test fun playedSaveRoundTripsExactly() {
+        val w = World.newGame(data, 9)
+        repeat(3 * 8) { w.session(); w.advance(3600.0) }
+        w.state.fixtures[FieldLayout.vertex(2, 2)] = "scarecrow"
+        w.state.cartRules += CartRule("wheat", 2, 15)
+        val first = w.state.toJson().toString()
+        val again = GameState.fromJson(org.json.JSONObject(first)).toJson().toString()
+        assertTrue("save changed on reload", first == again)
+        // And the reloaded world keeps running.
+        val back = World(data, GameState.fromJson(org.json.JSONObject(first)))
+        back.advance(3600.0)
+        assertTrue(back.level >= w.level)
+    }
 }
