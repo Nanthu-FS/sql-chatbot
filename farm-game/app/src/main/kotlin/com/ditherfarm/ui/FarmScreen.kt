@@ -334,8 +334,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             list.add(y) {
                 val g = game.gfx
                 if (built) {
-                    g.sprite("tiles/shadow", x, y - 6)
-                    g.sprite(chrome.panels.buildingSprite(def.id), x, y - 12)
+                    chrome.panels.drawBuilding(def.id, x, y, world.time.season == Season.WINTER)
                     val ready = world.trayCount(def.id)
                     if (ready > 0) g.sprite("icons/ready", x + 10, y - 30 + sin(time * 5f) * 2f)
                     else if (world.jobProgress(def.id) > 0f) g.sprite("fx/sparkle", x + 10, y - 26, (120 + sin(time * 3f) * 80).toInt())

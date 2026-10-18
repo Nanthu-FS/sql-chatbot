@@ -322,6 +322,17 @@ class Panels(private val game: Game, private val hud: Hud) {
 
 
     // ------------------------------------------------------------ machines
+    /** Draws a machine on its tile: its own art standing on the tile centre, else an icon on a shadow. */
+    fun drawBuilding(id: String, x: Float, y: Float, winter: Boolean) {
+        val own = "buildings/$id"
+        if (game.assets.has(own)) {
+            g.sprite(if (winter && game.assets.has("${own}_snow")) "${own}_snow" else own, x, y)
+        } else {
+            g.sprite("tiles/shadow", x, y - 6)
+            g.sprite(buildingSprite(id), x, y - 12)
+        }
+    }
+
     /** Sprite for a building: its own art, else a fitting icon. */
     fun buildingSprite(id: String): String {
         val own = "buildings/$id"

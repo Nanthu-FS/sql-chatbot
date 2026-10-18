@@ -192,8 +192,7 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         val def = slotMachine(spotIndex) ?: return
         val g = game.gfx
         if (world.isBuilt(def.id)) {
-            g.sprite("tiles/shadow", x, y - 6)
-            g.sprite(chrome.panels.buildingSprite(def.id), x, y - 12)
+            chrome.panels.drawBuilding(def.id, x, y, world.time.season == Season.WINTER)
             if (world.trayCount(def.id) > 0) g.sprite("icons/ready", x + 10, y - 30 + sin(time * 5f) * 2f)
             else if (world.jobProgress(def.id) > 0f) g.sprite("fx/sparkle", x + 10, y - 26, (120 + sin(time * 3f) * 80).toInt())
         } else if (def.unlockLevel <= world.level) {
