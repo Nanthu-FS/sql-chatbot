@@ -57,7 +57,17 @@ class Chrome(private val game: Game, private val here: Nav) {
         return true
     }
 
-    fun update(dt: Float) = hud.update(dt)
+    fun update(dt: Float) {
+        hud.update(dt)
+        // Situational tips (each shows once).
+        val s = world.state
+        when {
+            s.energy < 20 -> hud.tip("energy", "Low energy! Tap the energy bar to eat, or come back later.")
+            s.forecast.stormy -> hud.tip("storm", "Storm tomorrow! Lightning rods catch strikes and scarecrows block the wind.")
+            world.used(com.ditherfarm.game.Storage.BARN) >= world.capacity(com.ditherfarm.game.Storage.BARN) * 0.9 ->
+                hud.tip("barn-full", "Barn almost full! Sell goods or upgrade it from the Barn panel.")
+        }
+    }
 
     private var giftShown = false
 
@@ -153,22 +163,32 @@ class Chrome(private val game: Game, private val here: Nav) {
                 game.sfx.play("order")
                 world.state.orders[e.slot].order?.let { o -> hud.toast("New order from ${world.data.villagers.firstOrNull { it.id == o.villager }?.name ?: o.villager}") }
             }
-            is WorldEvent.OrderDelivered -> hud.toast("+${e.coins} coins  +${e.xp} XP")
+            is WorldEvent.OrderDelivered -> {
+                hud.toast("+${e.coins} coins  +${e.xp} XP")
+                hud.tip("orders", "Orders pay coins, XP and friendship. More villagers visit as you level up.")
+            }
             is WorldEvent.Discovered -> hud.toast("New item: ${world.data.name(e.item)}!")
             is WorldEvent.JobDone -> game.sfx.play("machine_done")
             is WorldEvent.ToolUpgraded -> { game.sfx.play("unlock"); hud.toast("New ${world.data.tools.names[e.tier]} ${e.tool}!") }
-            is WorldEvent.Built -> { game.sfx.play("craft"); game.haptics.heavy(); hud.toast("${world.data.buildings[e.building]?.name} built!") }
+            is WorldEvent.Built -> {
+                game.sfx.play("craft"); game.haptics.heavy(); hud.toast("${world.data.buildings[e.building]?.name} built!")
+                if (e.building == "sawmill") hud.tip("sawmill", "Turn Wood into Planks here. Planks build almost everything.")
+            }
             is WorldEvent.AchievementReady -> { game.sfx.play("unlock"); hud.toast("Goal reached: ${world.data.goals.achievements.firstOrNull { it.id == e.id }?.name}!") }
             is WorldEvent.AchievementClaimed, is WorldEvent.PageClaimed, is WorldEvent.GiftClaimed, is WorldEvent.FestivalWon -> { game.sfx.play("coin"); game.haptics.heavy() }
             is WorldEvent.FestivalStarted -> { game.sfx.play("order"); hud.toast("The ${e.name} has begun!") }
             is WorldEvent.Bought -> { game.sfx.play("buy"); game.haptics.tick() }
             is WorldEvent.CartSold -> hud.toast("Market Cart sold ${e.units} for ${e.coins} coins")
             is WorldEvent.ShedRan -> hud.toast(if (e.shed == "harvest_shed") "Harvest Shed picked ${e.plots} plots" else "Planter Shed sowed ${e.plots} plots")
-            is WorldEvent.Collected -> { game.sfx.play("pickup"); game.haptics.tick() }
+            is WorldEvent.Collected -> { game.sfx.play("pickup"); game.haptics.tick(); hud.tip("collect", "Machines keep working while you are away. Tap the bubble to collect.") }
             is WorldEvent.ZoneUnlocked -> { game.sfx.play("unlock"); hud.toast("A new part of the forest is open!") }
             is WorldEvent.DayStarted -> if (e.day > 0) hud.toast("Day ${world.time.dayOfSeason} - ${e.weather.name.lowercase().replaceFirstChar { it.uppercase() }}")
             is WorldEvent.SeasonChanged -> hud.toast("${e.season.label} begins!" + if (e.withered > 0) " ${e.withered} crops withered" else "")
-            is WorldEvent.Blocked -> { game.sfx.play("error"); if (e.plot < 0) hud.toast(e.reason) else return false }
+            is WorldEvent.Blocked -> {
+                game.sfx.play("error")
+                if (e.reason.startsWith("Needs") && e.reason.endsWith("axe")) hud.tip("axe", "Harder trees need a better axe. Upgrade tools at the Workbench on your farm.")
+                if (e.plot < 0) hud.toast(e.reason) else return false
+            }
             else -> return false
         }
         return true
