@@ -101,7 +101,7 @@ class WorldTest {
         w.gainXp(40)
         assertEquals(2, w.level)
         assertEquals(coins + 120, w.state.coins)
-        assertEquals(105.0, w.state.energy, 0.001)
+        assertEquals(w.data.level(2).maxEnergy.toDouble(), w.state.energy, 0.001)
     }
 
     @Test fun deliveringAScriptedOrderPays() {
@@ -166,13 +166,15 @@ class WorldTest {
         assertEquals(GameState.VERSION, back.state.version)
     }
 
-    @Test fun energyRegeneratesOverNinetyMinutes() {
+    @Test fun energyRefillsInFortyFiveMinutes() {
         val w = fresh()
+        val max = w.maxEnergy.toDouble()
+        assertEquals("level 1 bar", 150.0, max, 0.001)
         w.state.energy = 0.0
-        w.advance(45 * 60.0)
-        assertEquals(50.0, w.state.energy, 0.5)
-        w.advance(60 * 60.0)
-        assertEquals(100.0, w.state.energy, 0.001)
+        w.advance(ENERGY_REFILL_MINUTES / 2 * 60.0)
+        assertEquals(max / 2, w.state.energy, 0.5)
+        w.advance(ENERGY_REFILL_MINUTES * 60.0)
+        assertEquals(max, w.state.energy, 0.001)
     }
 
     @Test fun offlineCatchUpIsCapped() {

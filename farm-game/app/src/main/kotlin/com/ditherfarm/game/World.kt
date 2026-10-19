@@ -252,9 +252,10 @@ class World(val data: GameData, val state: GameState) {
     // ---------------------------------------------------------------- energy
     val maxEnergy get() = data.level(state.level).maxEnergy + if (hasBonus("max_energy")) 10 else 0
 
+    /** Energy refills from empty to full in [ENERGY_REFILL_MINUTES] real minutes, online or away. */
     private fun regenEnergy(realSeconds: Double) {
         val max = maxEnergy.toDouble()
-        if (state.energy < max) state.energy = min(max, state.energy + realSeconds / 60.0 * max / 90.0)
+        if (state.energy < max) state.energy = min(max, state.energy + realSeconds / 60.0 * max / ENERGY_REFILL_MINUTES)
     }
 
     fun spendEnergy(n: Int): Boolean {
@@ -756,3 +757,6 @@ class World(val data: GameData, val state: GameState) {
         }
     }
 }
+
+/** Real minutes for energy to refill from empty to full (playtest round 5; was 90). */
+const val ENERGY_REFILL_MINUTES = 45.0

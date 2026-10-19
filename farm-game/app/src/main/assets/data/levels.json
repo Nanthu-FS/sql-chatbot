@@ -5,7 +5,7 @@
    "level": 1,
    "xpToNext": 30,
    "totalXp": 0,
-   "maxEnergy": 100,
+   "maxEnergy": 150,
    "plotCap": 6,
    "orderSlots": 3,
    "levelUpCoins": 0
@@ -14,7 +14,7 @@
    "level": 2,
    "xpToNext": 60,
    "totalXp": 30,
-   "maxEnergy": 105,
+   "maxEnergy": 160,
    "plotCap": 8,
    "orderSlots": 3,
    "levelUpCoins": 120
@@ -23,7 +23,7 @@
    "level": 3,
    "xpToNext": 110,
    "totalXp": 90,
-   "maxEnergy": 110,
+   "maxEnergy": 165,
    "plotCap": 10,
    "orderSlots": 3,
    "levelUpCoins": 230
@@ -32,7 +32,7 @@
    "level": 4,
    "xpToNext": 170,
    "totalXp": 200,
-   "maxEnergy": 115,
+   "maxEnergy": 170,
    "plotCap": 12,
    "orderSlots": 3,
    "levelUpCoins": 370
@@ -41,7 +41,7 @@
    "level": 5,
    "xpToNext": 540,
    "totalXp": 370,
-   "maxEnergy": 120,
+   "maxEnergy": 180,
    "plotCap": 14,
    "orderSlots": 4,
    "levelUpCoins": 530
@@ -50,7 +50,7 @@
    "level": 6,
    "xpToNext": 690,
    "totalXp": 910,
-   "maxEnergy": 125,
+   "maxEnergy": 190,
    "plotCap": 16,
    "orderSlots": 4,
    "levelUpCoins": 700
@@ -59,7 +59,7 @@
    "level": 7,
    "xpToNext": 830,
    "totalXp": 1600,
-   "maxEnergy": 130,
+   "maxEnergy": 195,
    "plotCap": 18,
    "orderSlots": 4,
    "levelUpCoins": 900
@@ -68,7 +68,7 @@
    "level": 8,
    "xpToNext": 940,
    "totalXp": 2430,
-   "maxEnergy": 135,
+   "maxEnergy": 200,
    "plotCap": 20,
    "orderSlots": 4,
    "levelUpCoins": 1100
@@ -77,7 +77,7 @@
    "level": 9,
    "xpToNext": 1040,
    "totalXp": 3370,
-   "maxEnergy": 140,
+   "maxEnergy": 210,
    "plotCap": 22,
    "orderSlots": 4,
    "levelUpCoins": 1350
@@ -86,7 +86,7 @@
    "level": 10,
    "xpToNext": 1120,
    "totalXp": 4410,
-   "maxEnergy": 145,
+   "maxEnergy": 220,
    "plotCap": 24,
    "orderSlots": 5,
    "levelUpCoins": 1600
@@ -95,7 +95,7 @@
    "level": 11,
    "xpToNext": 1380,
    "totalXp": 5530,
-   "maxEnergy": 150,
+   "maxEnergy": 225,
    "plotCap": 26,
    "orderSlots": 5,
    "levelUpCoins": 1850
@@ -104,7 +104,7 @@
    "level": 12,
    "xpToNext": 1680,
    "totalXp": 6910,
-   "maxEnergy": 155,
+   "maxEnergy": 230,
    "plotCap": 28,
    "orderSlots": 5,
    "levelUpCoins": 2150
@@ -113,7 +113,7 @@
    "level": 13,
    "xpToNext": 2000,
    "totalXp": 8590,
-   "maxEnergy": 160,
+   "maxEnergy": 240,
    "plotCap": 30,
    "orderSlots": 5,
    "levelUpCoins": 2400
@@ -122,7 +122,7 @@
    "level": 14,
    "xpToNext": 2320,
    "totalXp": 10590,
-   "maxEnergy": 165,
+   "maxEnergy": 250,
    "plotCap": 32,
    "orderSlots": 5,
    "levelUpCoins": 2750
@@ -131,7 +131,7 @@
    "level": 15,
    "xpToNext": 2720,
    "totalXp": 12910,
-   "maxEnergy": 170,
+   "maxEnergy": 255,
    "plotCap": 34,
    "orderSlots": 6,
    "levelUpCoins": 3050
@@ -140,7 +140,7 @@
    "level": 16,
    "xpToNext": 3200,
    "totalXp": 15630,
-   "maxEnergy": 175,
+   "maxEnergy": 260,
    "plotCap": 36,
    "orderSlots": 6,
    "levelUpCoins": 3400
@@ -149,7 +149,7 @@
    "level": 17,
    "xpToNext": 3760,
    "totalXp": 18830,
-   "maxEnergy": 180,
+   "maxEnergy": 270,
    "plotCap": 38,
    "orderSlots": 6,
    "levelUpCoins": 3700
@@ -158,7 +158,7 @@
    "level": 18,
    "xpToNext": 4400,
    "totalXp": 22590,
-   "maxEnergy": 185,
+   "maxEnergy": 280,
    "plotCap": 40,
    "orderSlots": 6,
    "levelUpCoins": 4100
@@ -167,7 +167,7 @@
    "level": 19,
    "xpToNext": 5120,
    "totalXp": 26990,
-   "maxEnergy": 190,
+   "maxEnergy": 285,
    "plotCap": 42,
    "orderSlots": 6,
    "levelUpCoins": 4450
@@ -176,7 +176,7 @@
    "level": 20,
    "xpToNext": 5920,
    "totalXp": 32110,
-   "maxEnergy": 195,
+   "maxEnergy": 290,
    "plotCap": 44,
    "orderSlots": 6,
    "levelUpCoins": 4850
@@ -185,7 +185,7 @@
    "level": 21,
    "xpToNext": 6880,
    "totalXp": 38030,
-   "maxEnergy": 200,
+   "maxEnergy": 300,
    "plotCap": 46,
    "orderSlots": 6,
    "levelUpCoins": 5200
@@ -194,7 +194,7 @@
    "level": 22,
    "xpToNext": 8080,
    "totalXp": 44910,
-   "maxEnergy": 205,
+   "maxEnergy": 310,
    "plotCap": 48,
    "orderSlots": 6,
    "levelUpCoins": 5600
@@ -203,7 +203,7 @@
    "level": 23,
    "xpToNext": 9440,
    "totalXp": 52990,
-   "maxEnergy": 210,
+   "maxEnergy": 315,
    "plotCap": 48,
    "orderSlots": 6,
    "levelUpCoins": 6050
@@ -212,7 +212,7 @@
    "level": 24,
    "xpToNext": 11120,
    "totalXp": 62430,
-   "maxEnergy": 215,
+   "maxEnergy": 320,
    "plotCap": 48,
    "orderSlots": 6,
    "levelUpCoins": 6450
@@ -221,7 +221,7 @@
    "level": 25,
    "xpToNext": 13040,
    "totalXp": 73550,
-   "maxEnergy": 220,
+   "maxEnergy": 330,
    "plotCap": 48,
    "orderSlots": 6,
    "levelUpCoins": 6900
@@ -230,7 +230,7 @@
    "level": 26,
    "xpToNext": 15360,
    "totalXp": 86590,
-   "maxEnergy": 225,
+   "maxEnergy": 340,
    "plotCap": 48,
    "orderSlots": 6,
    "levelUpCoins": 7350
@@ -239,7 +239,7 @@
    "level": 27,
    "xpToNext": 18240,
    "totalXp": 101950,
-   "maxEnergy": 230,
+   "maxEnergy": 345,
    "plotCap": 48,
    "orderSlots": 6,
    "levelUpCoins": 7800
@@ -248,7 +248,7 @@
    "level": 28,
    "xpToNext": 21680,
    "totalXp": 120190,
-   "maxEnergy": 235,
+   "maxEnergy": 350,
    "plotCap": 48,
    "orderSlots": 6,
    "levelUpCoins": 8250
@@ -257,7 +257,7 @@
    "level": 29,
    "xpToNext": 25840,
    "totalXp": 141870,
-   "maxEnergy": 240,
+   "maxEnergy": 360,
    "plotCap": 48,
    "orderSlots": 6,
    "levelUpCoins": 8750
@@ -266,7 +266,7 @@
    "level": 30,
    "xpToNext": 0,
    "totalXp": 167710,
-   "maxEnergy": 245,
+   "maxEnergy": 370,
    "plotCap": 48,
    "orderSlots": 6,
    "levelUpCoins": 9250

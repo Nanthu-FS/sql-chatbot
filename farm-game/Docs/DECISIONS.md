@@ -86,7 +86,8 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 
 ## Round 5 features (owner picks)
 - **Farmhands:** one visit tends a whole plot (harvest, clear, replant, water), every 6 real seconds at level 1 and about 10% faster each level (was 12 s for a single action). A level-1 farmhand keeps a 16-plot field in about 1.6 minutes (was about 10). The panel shows PLOTS/MIN.
-- Next, one at a time with an agent playtest each: more energy (bar +50%, refill twice as fast), a pet (the player picks a dog or a cat at level 4 and names it; it follows them between screens and brings a small daily gift), then farm decorations (bought with coins, placed on free grass, some with a small bonus).
+- **Energy:** the bar is 50% bigger at every level (150 at level 1, 370 at level 30) and refills from empty in 45 real minutes (was 90), online or away.
+- Next, one at a time with an agent playtest each: a pet (the player picks a dog or a cat at level 4 and names it; it follows them between screens and brings a small daily gift), then farm decorations (bought with coins, placed on free grass, some with a small bonus).
 
 ## Later (not v1)
 - New areas opened by the village: a lake with fishing, a ranch with animals, an orchard hill, a beach.
