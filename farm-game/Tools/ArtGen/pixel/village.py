@@ -738,8 +738,7 @@ def main():
     for heading in ("se", "ne"):
         for frame in (0, 1):
             emit(veh, f"harvester_{heading}_{frame}", harvester(heading, frame))
-            emit(veh, f"truck_{heading}_{frame}", truck(heading, frame))
-    emit(veh, "truck_load", truck_load())
+    # The pickup truck and its load are hand-pixeled in farm_hand.py (art round 5).
 
     emit(bld, "cottage_a", cottage_a())
     emit(bld, "cottage_b", cottage_b())

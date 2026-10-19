@@ -570,8 +570,9 @@ def workbench(winter):
     return solids
 
 
-BUILDINGS = [("barn", barn), ("silo", silo), ("market", market), ("orders", orders),
-             ("well", well), ("workbench", workbench)]
+# The market stall, well and workbench are hand-pixeled in farm_hand.py (art round 5); their
+# ray-cast models stay for previews.
+BUILDINGS = [("barn", barn), ("silo", silo), ("orders", orders)]
 
 
 def main():

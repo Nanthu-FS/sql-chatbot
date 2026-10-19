@@ -196,8 +196,8 @@
  },
  "buildings/market": {
   "ax": 15,
-  "ay": 27,
-  "bh": 35
+  "ay": 31,
+  "bh": 40
  },
  "buildings/market_cart": {
   "ax": 10,
@@ -206,8 +206,8 @@
  },
  "buildings/market_snow": {
   "ax": 15,
-  "ay": 27,
-  "bh": 35
+  "ay": 31,
+  "bh": 40
  },
  "buildings/merchant_cart": {
   "ax": 14,
@@ -306,14 +306,14 @@
   "bh": 36
  },
  "buildings/well": {
-  "ax": 11,
-  "ay": 20,
-  "bh": 27
+  "ax": 14,
+  "ay": 31,
+  "bh": 34
  },
  "buildings/well_snow": {
-  "ax": 11,
-  "ay": 20,
-  "bh": 27
+  "ax": 14,
+  "ay": 31,
+  "bh": 34
  },
  "buildings/windmill": {
   "ax": 16,
@@ -326,14 +326,14 @@
   "bh": 29
  },
  "buildings/workbench": {
-  "ax": 10,
-  "ay": 16,
-  "bh": 23
+  "ax": 12,
+  "ay": 18,
+  "bh": 26
  },
  "buildings/workbench_snow": {
-  "ax": 10,
-  "ay": 16,
-  "bh": 23
+  "ax": 12,
+  "ay": 18,
+  "bh": 26
  },
  "crops/cabbage_0": {
   "ax": 7,
@@ -4522,28 +4522,28 @@
   "bh": 20
  },
  "vehicles/truck_load": {
-  "ax": 10,
-  "ay": 13,
-  "bh": 12
+  "ax": 16,
+  "ay": 18,
+  "bh": 21
  },
  "vehicles/truck_ne_0": {
-  "ax": 15,
-  "ay": 14,
-  "bh": 21
+  "ax": 17,
+  "ay": 16,
+  "bh": 26
  },
  "vehicles/truck_ne_1": {
-  "ax": 15,
-  "ay": 14,
-  "bh": 21
+  "ax": 17,
+  "ay": 16,
+  "bh": 26
  },
  "vehicles/truck_se_0": {
-  "ax": 15,
-  "ay": 14,
-  "bh": 22
+  "ax": 19,
+  "ay": 16,
+  "bh": 26
  },
  "vehicles/truck_se_1": {
-  "ax": 15,
-  "ay": 14,
-  "bh": 22
+  "ax": 19,
+  "ay": 16,
+  "bh": 26
  }
 }

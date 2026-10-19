@@ -23,9 +23,6 @@ from _pix import Sprites, finish, new  # noqa: E402
 
 # name: (module, folder, scale)
 SCALE = {
-    "workbench": ("buildings", "buildings", 0.55),
-    "well": ("buildings", "buildings", 0.7),
-    "market": ("buildings", "buildings", 0.72),
     "orders": ("buildings", "buildings", 0.7),
     "compost_bin": ("machines_farm", "buildings", 0.6),
     "bakery_oven": ("machines_farm", "buildings", 0.6),
@@ -46,7 +43,6 @@ SCALE = {
     "logging_hut": ("machines_wild", "buildings", 0.9),
     "tree_nursery": ("machines_wild", "buildings", 0.72),
     "harvester": ("village", "vehicles", 0.7),
-    "truck": ("village", "vehicles", 0.66),
     "crate": ("village", "deco", 0.72),
 }
 

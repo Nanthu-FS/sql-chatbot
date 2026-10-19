@@ -7,18 +7,20 @@ the farm: the barn's red-and-cream trim on every building and vehicle, the wheat
 nothing is copied from them.
 
   vehicles/truck_se_0/1, truck_ne_0/1   the red pickup, driving down-right / away up-right
+  vehicles/truck_load                   produce crates in its bed (drawn on the parked truck)
   buildings/workbench(_snow)            the farmyard workbench
   buildings/well(_snow)                 the stone well
   buildings/market(_snow)               the market stall
 
 Pivot = the ground centre of the footprint.
 """
+import json
 import os
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from _iso import Iso, soften  # noqa: E402
-from _pix import finish  # noqa: E402
+from _pix import Sprites, finish  # noqa: E402
 
 # Paint (top / left face / right face).
 RED = ("red", "red_d", "purple")
@@ -46,26 +48,26 @@ def truck_se(frame):
     c = Iso(40, 34, 12, 14)
     c.box(0.5, 11.5, 0.5, 4.5, 1, 2.5, *DARK, lit=False)                      # chassis
     # Bed: red sides with cream stakes and rim, the wheat emblem, a wooden floor inside.
-    c.box(0, 6.6, 0, W, 2, 7, "cream", "red_d", "purple")
-    c.box(0.4, 6.6, 0.4, W - 0.4, 2.6, 6.6, "brown", "brown_l", "brown_d", lit=False)
+    c.box(0, 6.6, 0, W, 2, 6, "cream", "red_d", "purple")
+    c.box(0.4, 6.6, 0.4, W - 0.4, 2.6, 5.6, "brown", "brown_l", "brown_d", lit=False)
     for i in range(3):
         c.uline(0.6, 6.4, 1.3 + i * 1.2, 2.6, "brown_d")                      # floor planks
     for u in (0.3, 6.2):
-        c.zline(u, W, 2, 7, "cream")                                          # stakes
-    x, y = c.p(2.4, W, 6.4)
+        c.zline(u, W, 2, 6, "cream")                                          # stakes
+    x, y = c.p(2.4, W, 5.8)
     c.wheat(x, y)
     # Cab: red, cream roof, windows with a glint, door seam and handle.
-    c.box(6.6, 9.6, 0, W, 2, 11, "cream", "red", "red_d")
-    c.box(6.9, 9.3, W - 0.01, W, 6.6, 9.8, "blue_d", "blue_d", "blue_d", lit=False)
-    c.box(9.59, 9.6, 0.5, W - 0.5, 7.0, 10.2, "blue_d", "blue_d", "blue_d", lit=False)
-    x, y = c.p(7.2, W, 9.3)
+    c.box(6.6, 9.6, 0, W, 2, 10, "cream", "red", "red_d")
+    c.box(6.9, 9.3, W - 0.01, W, 6.2, 9.0, "blue_d", "blue_d", "blue_d", lit=False)
+    c.box(9.59, 9.6, 0.5, W - 0.5, 6.4, 9.4, "blue_d", "blue_d", "blue_d", lit=False)
+    x, y = c.p(7.2, W, 8.5)
     c.dot(x, y, "cyan"); c.dot(x + 1, y, "white"); c.dot(x + 2, y + 1, "cyan")
-    x, y = c.p(9.6, 1.0, 9.7)
+    x, y = c.p(9.6, 1.0, 8.9)
     c.dot(x, y, "white"); c.dot(x - 1, y + 1, "cyan")
-    x, y = c.p(9.6, W, 6.6)                                                   # pillar between windows
+    x, y = c.p(9.6, W, 6.2)                                                   # pillar between windows
     for k in range(4):
         c.dot(x - 1, y - k, "red"); c.dot(x - 2, y - k, "red_d")
-    c.zline(6.9, W, 2.4, 10, "red_d")
+    c.zline(6.9, W, 2.4, 9.2, "red_d")
     x, y = c.p(7.6, W, 5.6)
     c.dot(x, y, "cream"); c.dot(x + 1, y, "cream")
     # Bonnet: red, cream stripe, grille, lamps, cream bumper.
@@ -79,7 +81,7 @@ def truck_se(frame):
         x, y = c.p(L, v, 5.0)
         c.dot(x - 1, y, "yellow"); c.dot(x - 2, y, "white")
     c.box(L, L + 0.25, 0.2, W - 0.2, 1.8, 2.6, "cream", "cream", "tan")
-    c.box(9.2, 9.5, W, W + 0.5, 8, 9.2, *IRON)                                # mirror
+    c.box(9.2, 9.5, W, W + 0.5, 7.4, 8.6, *IRON)                                # mirror
     x, y = c.p(0.1, W, 5.5)
     c.dot(x, y, "pink_r"); c.dot(x + 1, y, "pink_r")                          # tail lamp
     for u in (2.4, 9.7):
@@ -95,24 +97,24 @@ def truck_ne(frame):
     c = Iso(40, 34, 22, 8)
     c.box(0.5, 4.5, 0.5, 11.5, 1, 2.5, *DARK, lit=False)
     # Length runs along v here: bonnet at the far end (small v), cab, then the bed nearest.
-    c.box(0, W, 0, 2.6, 2, 6.6, "red", "red", "red_d")                       # bonnet
-    c.box(0, W, 2.6, 5.6, 2, 11, "cream", "red", "red_d")                    # cab
-    c.box(W - 0.01, W, 3.0, 5.2, 6.6, 9.8, "blue_d", "blue_d", "blue_d", lit=False)
-    x, y = c.p(W, 3.4, 9.4)
+    c.box(0, W, 0, 2.6, 2, 6, "red", "red", "red_d")                         # bonnet
+    c.box(0, W, 2.6, 5.6, 2, 8.8, "cream", "red", "red_d")                   # cab
+    c.box(W - 0.01, W, 3.0, 5.2, 5.6, 8.0, "blue_d", "blue_d", "blue_d", lit=False)
+    x, y = c.p(W, 3.4, 7.6)
     c.dot(x - 1, y, "cyan"); c.dot(x - 2, y + 1, "white")
-    x, y = c.p(0.8, 5.59, 10.2)                                              # rear window
+    x, y = c.p(0.8, 5.59, 8.2)                                              # rear window
     for i in range(6):
         c.dot(x + i, y + i // 2, "blue_d"); c.dot(x + i, y + i // 2 + 1, "blue_d")
     c.dot(x + 1, y + 1, "cyan")
-    c.box(0, W, 5.6, L, 2, 7, "cream", "red", "red_d")                       # bed
-    c.box(0.4, W - 0.4, 5.6, L - 0.4, 2.6, 6.6, "brown", "brown_l", "brown_d", lit=False)
-    c.vline(W, round(L - 5.6), 5.6, 4.6, "cream")                            # side stripe
+    c.box(0, W, 5.6, L, 2, 6, "cream", "red", "red_d")                       # bed
+    c.box(0.4, W - 0.4, 5.6, L - 0.4, 2.6, 5.6, "brown", "brown_l", "brown_d", lit=False)
+    c.vline(W, round(L - 5.6), 5.6, 4.2, "cream")                            # side stripe
     for i in range(3):
         c.vline(0.8 + i * 1.2, round(L - 6.2), 5.8, 2.6, "brown_d")
-    x, y = c.p(W / 2 - 0.4, L, 6.6)                                          # tailgate emblem
+    x, y = c.p(W / 2 - 0.4, L, 5.8)                                          # tailgate emblem
     c.wheat(x - 2, y)
     for u in (0.4, W - 0.8):                                                 # tail lamps
-        x, y = c.p(u, L, 5.4)
+        x, y = c.p(u, L, 4.8)
         c.dot(x, y, "pink_r"); c.dot(x + 1, y, "pink_r")
     c.box(0.2, W - 0.2, L, L + 0.25, 1.8, 2.6, "cream", "cream", "tan")      # bumper
     for v in (3.2, 9.6):
@@ -130,37 +132,37 @@ def workbench(winter):
     U, V = 7, 3
     top = "white" if winter else "tan"
     for u, v in ((0.2, 2.4), (6.4, 2.4), (6.4, 0.2)):                        # red legs
-        c.box(u, u + 0.5, v, v + 0.5, 0, 7, "red", "red_d", "purple")
-    c.box(0.4, 6.6, 0.4, 2.6, 2, 2.8, *WOOD_D)                                # bottom shelf
-    c.box(0.8, 4.0, 0.8, 2.2, 2.8, 4.4, "tan", "brown_l", "brown")          # planks on it
-    c.uline(0.8, 4.0, 2.2, 3.6, "brown")
-    c.box(0, U, 0, V, 7, 8.6, top, "red", "red_d")                            # top with a red apron
-    c.uline(0, U, 1, 8.6, "brown_l" if not winter else "grey_l")              # plank seams
-    c.uline(0, U, 2, 8.6, "brown_l" if not winter else "grey_l")
-    c.uline(0, U, V, 7.6, "cream")                                            # cream trim on the apron
-    c.box(2, 5, V - 0.01, V, 4.6, 6.8, "red_d", "red_d", "red_d", lit=False)  # drawer
-    x, y = c.p(3.5, V, 5.6)
+        c.box(u, u + 0.5, v, v + 0.5, 0, 6, "red", "red_d", "purple")
+    c.box(0.4, 6.6, 0.4, 2.6, 1.6, 2.4, *WOOD_D)                                # bottom shelf
+    c.box(0.8, 4.0, 0.8, 2.2, 2.4, 3.8, "tan", "brown_l", "brown")          # planks on it
+    c.uline(0.8, 4.0, 2.2, 3.1, "brown")
+    c.box(0, U, 0, V, 6, 7.6, top, "red", "red_d")                            # top with a red apron
+    c.uline(0, U, 1, 7.6, "brown_l" if not winter else "grey_l")              # plank seams
+    c.uline(0, U, 2, 7.6, "brown_l" if not winter else "grey_l")
+    c.uline(0, U, V, 6.6, "cream")                                            # cream trim on the apron
+    c.box(2, 5, V - 0.01, V, 3.8, 5.8, "red_d", "red_d", "red_d", lit=False)  # drawer
+    x, y = c.p(3.5, V, 4.8)
     c.dot(x, y, "cream"); c.dot(x + 1, y, "cream")
     # Tool board at the back, cream with a red frame, tools hanging on it.
-    c.box(0, U, -0.5, 0, 8.6, 15.5, "red", "cream", "tan_d")
-    c.uline(0, U, 0, 15.0, "red")
-    c.zline(0.1, 0, 8.6, 15.4, "red")
-    c.zline(U - 0.1, 0, 8.6, 15.4, "red")
-    x, y = c.p(1.0, 0, 14.0)                                                  # hammer
+    c.box(0, U, -0.5, 0, 7.6, 11.8, "red", "cream", "tan_d")
+    c.uline(0, U, 0, 11.3, "red")
+    c.zline(0.1, 0, 7.6, 11.7, "red")
+    c.zline(U - 0.1, 0, 7.6, 11.7, "red")
+    x, y = c.p(1.0, 0, 10.6)                                                  # hammer
     for i in range(3):
         c.dot(x + i, y, "grey_l"); c.dot(x + i, y + 1, "grey")
-    for i in range(4):
+    for i in range(3):
         c.dot(x + 1, y + 2 + i, "brown")
-    x, y = c.p(2.6, 0, 13.6)                                                  # saw
+    x, y = c.p(2.6, 0, 10.2)                                                  # saw
     c.dot(x, y, "red"); c.dot(x + 1, y, "red"); c.dot(x, y + 1, "red_d")
     for i in range(6):
         c.dot(x + 2 + i, y + i // 2, "grey_l"); c.dot(x + 2 + i, y + i // 2 + 1, "grey" if i % 2 else "grey_d")
-    x, y = c.p(5.4, 0, 14.2)                                                  # wrench
+    x, y = c.p(5.4, 0, 10.8)                                                  # wrench
     c.dot(x - 1, y, "grey"); c.dot(x + 1, y, "grey"); c.dot(x, y + 1, "grey")
-    for i in range(4):
+    for i in range(3):
         c.dot(x, y + 2 + i, "grey_d")
-    c.box(5.4, 6.7, 1.0, 2.2, 8.6, 10.2, *IRON)                               # vice
-    c.box(1.0, 1.6, 1.2, 1.8, 8.6, 10.6, "yellow", "amber", "orange")        # oil can
+    c.box(5.4, 6.7, 1.0, 2.2, 7.6, 9.2, *IRON)                               # vice
+    c.box(1.0, 1.6, 1.2, 1.8, 7.6, 9.6, "yellow", "amber", "orange")        # oil can
     soften(c.im)
     return c, c.pivot(U / 2, V / 2)
 
@@ -171,16 +173,16 @@ def well(winter):
     """Stone drum, cream posts, a red shingle roof with cream trim, red bucket on its rope."""
     c = Iso(40, 46, 20, 30)
     cx, cy = c.p(0, 0, 0)
-    rx, ry, hgt = 10, 5, 9
+    rx, ry, hgt = 10, 5, 6
     for z in range(hgt + 1):
         c.ellipse(cx, cy - z, rx, ry, "grey" if z < hgt else "grey_l")
-    for z in (3, 6):                                                          # mortar courses
+    for z in (2, 4):                                                          # mortar courses
         for x in range(cx - rx + 1, cx + rx):
             dx = (x - cx) / rx
             c.dot(x, round(cy - z + ry * (1 - dx * dx) ** 0.5), "grey_d")
     for x in range(cx - rx + 3, cx + rx - 1, 4):                              # staggered joints
-        for z0 in (0, 3, 6):
-            xx = x + (2 if (z0 // 3) % 2 else 0)
+        for z0 in (0, 2, 4):
+            xx = x + (2 if (z0 // 2) % 2 else 0)
             if abs(xx - cx) >= rx - 1:
                 continue
             dx = (xx - cx) / rx
@@ -195,11 +197,11 @@ def well(winter):
         c.ellipse(cx + 1, cy - hgt + 1, rx - 4, ry - 2, "blue")
         c.dot(cx - 3, cy - hgt - 1, "cyan"); c.dot(cx - 2, cy - hgt - 1, "cyan")
     for px_ in (cx - 8, cx + 8):                                              # cream posts
-        for z in range(hgt, hgt + 14):
+        for z in range(hgt, hgt + 10):
             c.dot(px_, cy - z, "cream"); c.dot(px_ + 1, cy - z, "tan")
     for x in range(cx - 8, cx + 10):                                          # crossbeam
-        c.dot(x, cy - hgt - 13, "cream"); c.dot(x, cy - hgt - 12, "tan_d")
-    for z in range(hgt + 4, hgt + 12):
+        c.dot(x, cy - hgt - 9, "cream"); c.dot(x, cy - hgt - 8, "tan_d")
+    for z in range(hgt + 4, hgt + 8):
         c.dot(cx, cy - z, "tan")                                              # rope
     c.ellipse(cx, cy - hgt - 3, 2, 1, "pink")                                 # red bucket, cream hoops
     for z in range(hgt + 1, hgt + 4):
@@ -209,21 +211,21 @@ def well(winter):
     for x in range(cx - 2, cx + 3):
         c.dot(x, cy - hgt - 2, "cream")
     for i in range(3):                                                        # crank
-        c.dot(cx + 10 + i, cy - hgt - 12, "grey")
-    c.dot(cx + 12, cy - hgt - 11, "grey"); c.dot(cx + 12, cy - hgt - 10, "red")
+        c.dot(cx + 10 + i, cy - hgt - 8, "grey")
+    c.dot(cx + 12, cy - hgt - 7, "grey"); c.dot(cx + 12, cy - hgt - 6, "red")
     # Roof: red shingle rows, cream eave board and ridge cap (the barn's colours).
     base, lip, seam = ("white", "white", "grey_l") if winter else ("red", "pink", "red_d")
-    rows = 4
+    rows = 3
     for row in range(rows):
-        y = cy - hgt - 16 - row * 2
-        half = 12 - row * 3
+        y = cy - hgt - 12 - row * 2
+        half = 12 - row * 4
         for x in range(cx - half, cx + half + 2):
             c.dot(x, y, lip)
             c.dot(x, y + 1, seam if (x + row * 2) % 4 == 0 else base)
     for x in range(cx - 12, cx + 14):
-        c.dot(x, cy - hgt - 14, "cream"); c.dot(x, cy - hgt - 13, "tan_d")     # eave board
+        c.dot(x, cy - hgt - 10, "cream"); c.dot(x, cy - hgt - 9, "tan_d")      # eave board
     for x in range(cx - 3, cx + 5):
-        c.dot(x, cy - hgt - 16 - rows * 2, "cream")                           # ridge cap
+        c.dot(x, cy - hgt - 12 - rows * 2, "cream")                           # ridge cap
     soften(c.im)
     return c, (cx, cy + ry)
 
@@ -235,7 +237,7 @@ def market(winter):
     c = Iso(52, 60, 22, 40)
     U, V = 8, 4
     for u, v in ((0, V - 0.4), (U - 0.4, V - 0.4), (U - 0.4, 0)):            # cream posts
-        c.box(u, u + 0.4, v, v + 0.4, 0, 19, *CREAM)
+        c.box(u, u + 0.4, v, v + 0.4, 0, 16, *CREAM)
     c.box(0, U, 0, V, 0, 9, "cream", "red", "red_d")                         # counter
     for k in range(1, U):
         c.zline(k, V, 0.6, 8.4, "red_d")                                     # front boards
@@ -250,29 +252,66 @@ def market(winter):
     stripes = ("white", "grey_l") if winter else ("red", "cream")
     for k in range(U * 2):                                                   # striped awning
         u = k * 0.5
-        c.poly([(u, -0.4, 22), (u + 0.5, -0.4, 22), (u + 0.5, V + 0.6, 18), (u, V + 0.6, 18)], stripes[(k // 2) % 2])
+        c.poly([(u, -0.4, 18.5), (u + 0.5, -0.4, 18.5), (u + 0.5, V + 0.6, 15), (u, V + 0.6, 15)], stripes[(k // 2) % 2])
     for k in range(U * 2):                                                   # scalloped valance
         u = k * 0.5
-        x, y = c.p(u, V + 0.6, 18)
+        x, y = c.p(u, V + 0.6, 15)
         col = ("grey_l" if winter else "red_d") if (k // 2) % 2 == 0 else ("grey" if winter else "tan")
         c.dot(x, y + 1, col); c.dot(x + 1, y + 1, col)
         if k % 2 == 0:
             c.dot(x, y + 2, col)
     if not winter:
-        c.box(U - 0.01, U, -0.4, V + 0.6, 18, 22, "purple", "purple", "red_d", lit=False)
+        c.box(U - 0.01, U, -0.4, V + 0.6, 15, 18.5, "purple", "purple", "red_d", lit=False)
     # The painted sign on top of the awning: FRESH with the wheat emblem.
-    sx, sy = c.p(U / 2, -0.4, 22)
-    sx -= 13; sy -= 9
+    sx, sy = c.p(U / 2, -0.4, 18.5)
+    sx -= 13; sy -= 8
     for x in range(sx, sx + 28):
-        for y in range(sy, sy + 8):
-            edge = x in (sx, sx + 27) or y in (sy, sy + 7)
+        for y in range(sy, sy + 7):
+            edge = x in (sx, sx + 27) or y in (sy, sy + 6)
             c.dot(x, y, "red_d" if edge else "cream")
-    c.text(sx + 2, sy + 2, "FRESH", "red")
+    c.text(sx + 2, sy + 1, "FRESH", "red")
     c.wheat(sx + 22, sy + 1)
     for x in (sx + 4, sx + 23):
-        c.dot(x, sy + 8, "brown"); c.dot(x, sy + 9, "brown")
+        c.dot(x, sy + 7, "brown"); c.dot(x, sy + 8, "brown")
     soften(c.im)
     return c, c.pivot(U / 2, V / 2)
+
+
+def truck_load():
+    """Crates of produce in the bed of the parked (down-right) truck, on the truck's own pivot."""
+    L, W = 12, 5
+    c = Iso(40, 34, 12, 14)
+    for u0, v0, z0 in ((0.6, 0.6, 2.6), (3.4, 0.6, 2.6), (0.6, 0.6, 5.8)):
+        c.box(u0, u0 + 2.6, v0, v0 + 3.6, z0, z0 + 3.2, "tan", "brown_l", "brown")
+        c.uline(u0, u0 + 2.6, v0 + 3.6, z0 + 1.6, "brown")
+    for u, v, light, dark in ((1.2, 1.4, "pink", "red"), (2.2, 2.6, "amber", "orange"), (4.2, 1.6, "green", "green_d"), (5.0, 2.8, "pink", "red")):
+        x, y = c.p(u, v, 9.4 if u < 3.4 else 6.2)
+        c.dot(x, y, light); c.dot(x + 1, y, dark); c.dot(x, y + 1, dark); c.dot(x + 1, y + 1, dark)
+    return c, c.pivot(L / 2, W / 2)
+
+
+def emit(sp, name, made):
+    cnv, (px, py) = made
+    x0, y0, x1, y1 = cnv.im.getbbox()
+    body, pad = finish(cnv.im.crop((x0, y0, x1, y1)))
+    sp.save(name, body, px - x0 + pad, py - y0 + pad)
+
+
+def main():
+    art = sys.argv[1]
+    veh = Sprites(art, "vehicles")
+    bld = Sprites(art, "buildings")
+    for f in (0, 1):
+        emit(veh, f"truck_se_{f}", truck_se(f))
+        emit(veh, f"truck_ne_{f}", truck_ne(f))
+    emit(veh, "truck_load", truck_load())
+    for name, fn in (("workbench", workbench), ("well", well), ("market", market)):
+        emit(bld, name, fn(False))
+        emit(bld, name + "_snow", fn(True))
+    pivots = {}
+    for sp in (veh, bld):
+        pivots.update(sp.pivots)
+    print(json.dumps(pivots))
 
 
 PROPS = [("vehicles/truck_se_0", lambda: truck_se(0)), ("vehicles/truck_ne_0", lambda: truck_ne(0)),
@@ -311,5 +350,8 @@ def preview(out):
     sheet.resize((sheet.width * 5, sheet.height * 5), Image.NEAREST).save(out)
 
 
-if __name__ == "__main__" and len(sys.argv) > 2 and sys.argv[1] == "--preview":
-    preview(sys.argv[2])
+if __name__ == "__main__":
+    if len(sys.argv) > 2 and sys.argv[1] == "--preview":
+        preview(sys.argv[2])
+    else:
+        main()
