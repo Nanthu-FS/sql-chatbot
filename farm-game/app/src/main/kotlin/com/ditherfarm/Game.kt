@@ -61,17 +61,25 @@ class Game(val host: Host) {
         engine.start(farm)
     }
 
+    /** The first saved farm that loads, newest candidate first (see [SaveStore.candidates]); a new farm when none does. */
     private fun loadOrCreate(): World {
         for (text in store.candidates()) {
-            val state = runCatching { GameState.fromJson(JSONObject(text)) }.getOrNull() ?: continue
-            if (state.plots.isEmpty()) continue
-            val w = World(data, state)
-            val away = (host.nowMs() - state.lastSavedMs) / 1000.0
-            if (state.lastSavedMs > 0 && away > 5) catchUpSummary(w, away)
+            val w = parseWorld(text) ?: continue
+            val away = (host.nowMs() - w.state.lastSavedMs) / 1000.0
+            if (w.state.lastSavedMs > 0 && away > 5) catchUpSummary(w, away)
             return w
         }
         return fresh()
     }
+
+    /**
+     * The farm in save [text], or null when the text is not a playable save. A save that parses
+     * but fails to build (a damaged or foreign file) must not stop the game from starting.
+     */
+    private fun parseWorld(text: String): World? = runCatching {
+        val state = GameState.fromJson(JSONObject(text))
+        if (state.plots.isEmpty()) null else World(data, state)
+    }.getOrNull()
 
     /** A new farm; the first login gift comes tomorrow. */
     private fun fresh() = World.newGame(data, host.nowMs()).also { it.state.giftDay = today() }
@@ -233,9 +241,9 @@ class Game(val host: Host) {
 
     fun importFrom(uri: Uri) {
         val text = runCatching { host.readDocument(uri) }.getOrNull()
-        val state = text?.let { runCatching { GameState.fromJson(JSONObject(it)) }.getOrNull() }
-        if (state == null || state.plots.isEmpty()) { toast("Not a Dither Farm save"); return }
-        world = World(data, state)
+        val imported = text?.let { parseWorld(it) }
+        if (imported == null) { toast("Not a Dither Farm save"); return }
+        world = imported
         applySettings()
         save()
         toast("Save imported")
