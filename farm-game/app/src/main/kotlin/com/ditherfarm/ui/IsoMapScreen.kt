@@ -100,6 +100,9 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     /** Clock hour for lighting (return 12 for always-lit places). */
     abstract fun hour(): Float
 
+    /** Clock hour for the colour grade, or null for none (underground). */
+    open fun gradeHour(): Float? = hour()
+
     /** Add standing world objects (plots, crops, trees, rocks, machines, props). */
     abstract fun collect(list: DrawList)
 
@@ -182,6 +185,7 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
             l.y = (l.y - cam.y) * cam.zoom
             l.radius *= cam.zoom
         }
+        gradeHour()?.let { lighting.grade(c, game.engine.w, game.engine.h, it) }
         val tint = lighting.ambient(hour())
         lighting.apply(c, game.engine.w, game.engine.h, tint, lights, weather.flash)
         // Things that glow (lit windows, lamp glass) go over the night tint.

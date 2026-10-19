@@ -138,6 +138,8 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
     }
 
     override fun seasonIndex() = if (under) 0 else world.time.season.ordinal
+    override fun gradeHour(): Float? = if (under) null else world.time.hour
+
     override fun hour() = when {
         !under -> world.time.hour
         m.dark -> 23f

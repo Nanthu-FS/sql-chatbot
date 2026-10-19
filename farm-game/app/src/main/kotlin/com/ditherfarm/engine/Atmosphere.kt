@@ -36,6 +36,31 @@ class Lighting {
         return lerpColor(cols[i], cols[i + 1], t)
     }
 
+    private val overlay = Paint().apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.OVERLAY) }
+    private val screen = Paint().apply { xfermode = PorterDuffXfermode(PorterDuff.Mode.SCREEN) }
+
+    /**
+     * Colour grade for a clock hour, crisp (whole-screen blends, no blur): warm light laid over
+     * the scene (golden at sunrise and dusk, soft at noon) and a faint cool lift in the shadows.
+     */
+    fun grade(target: Canvas, w: Int, h: Int, hour: Float) {
+        val keys = floatArrayOf(0f, 5f, 6.5f, 9f, 13f, 16.5f, 18.5f, 20f, 24f)
+        val warm = intArrayOf(
+            0x00000000, 0x00000000, 0x44FF9A6A, 0x26FFD08A, 0x1EFFE6B0, 0x2EFFC070, 0x40FF8A4A, 0x00000000, 0x00000000,
+        )
+        val cool = intArrayOf(
+            0x22203C90, 0x22203C90, 0x18284890, 0x14284890, 0x12284890, 0x14284890, 0x18304080, 0x22203C90, 0x22203C90,
+        )
+        val hh = ((hour % 24f) + 24f) % 24f
+        var i = 0
+        while (i < keys.size - 2 && hh > keys[i + 1]) i++
+        val t = ((hh - keys[i]) / (keys[i + 1] - keys[i])).coerceIn(0f, 1f)
+        val wc = lerpColor(warm[i], warm[i + 1], t)
+        val cc = lerpColor(cool[i], cool[i + 1], t)
+        if ((wc ushr 24) > 0) { overlay.color = wc; target.drawRect(0f, 0f, w.toFloat(), h.toFloat(), overlay) }
+        if ((cc ushr 24) > 0) { screen.color = cc; target.drawRect(0f, 0f, w.toFloat(), h.toFloat(), screen) }
+    }
+
     /** Darkness 0..1 for a tint from [ambient], used to decide whether lamps are lit. */
     fun darkness(tint: Int): Float = (tint ushr 24) / 255f
 
