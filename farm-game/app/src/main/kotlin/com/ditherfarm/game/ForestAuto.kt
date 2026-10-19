@@ -58,7 +58,7 @@ internal fun World.runHut() {
         val stump = forestSpots.firstOrNull { sp -> sp.kind == SpotKind.TREE && zoneOpen(sp.zone) && treeStage(sp.index) == TreeStage.STUMP && spot(sp.index).tree != "ancient_oak" }
         if (stump != null) {
             val s = spot(stump.index)
-            b.put("wood", 1)
+            b.put("wood", 2)
             s.tree = null; s.stage = TreeStage.EMPTY; s.damage = 0; s.since = state.minutes
         }
     }

@@ -311,7 +311,7 @@ private fun World.fell(i: Int, rng: Rng) {
             if (rng.chance(birdNestChance(s.tree))) openBirdNest(i, rng)
         }
         TreeStage.STUMP -> {
-            add("wood", 1)
+            add("wood", 2)
             if (rng.chance(0.01)) add("old_coin", 1)
             if ((s.tree == "oak" || s.tree == "birch") && rng.chance(0.05)) add("wild_mushroom", 1)
             s.tree = null; s.stage = TreeStage.EMPTY; s.damage = 0; s.since = state.minutes
@@ -405,8 +405,8 @@ internal fun World.forestDawn(day: Int) {
             SpotKind.TREE -> {
                 treeStage(sp.index)
                 val idleDays = (state.minutes - s.since) / Time.MINUTES_PER_DAY
-                if (s.stage == TreeStage.STUMP && idleDays >= 3) { s.stage = TreeStage.EMPTY; s.tree = null; s.since = state.minutes }
-                else if (s.stage == TreeStage.EMPTY && idleDays >= 2 && sp.native != null) {
+                if (s.stage == TreeStage.STUMP && idleDays >= 1) { s.stage = TreeStage.EMPTY; s.tree = null; s.since = state.minutes }
+                else if (s.stage == TreeStage.EMPTY && sp.native != null) {
                     val def = data.trees.getValue(sp.native)
                     s.tree = def.id; s.stage = TreeStage.SAPLING; s.plantedAt = state.minutes
                     s.growMinutes = Time.realSecondsToGameMinutes(def.growMinutes * 60)
@@ -421,11 +421,11 @@ internal fun World.forestDawn(day: Int) {
     }
     hiveDawn(day, rng)
     // Fallen branches on free tiles of open zones.
-    val spawn = if (state.weather.stormy) 4 else 2
+    val spawn = if (state.weather.stormy) 5 else 3
     f.branches.removeAll { ForestLayout.zoneOf(it / 1000, it % 1000) == null }
     val tiles = ForestLayout.clearingTiles
     repeat(spawn) {
-        if (f.branches.size >= 6) return@repeat
+        if (f.branches.size >= 8) return@repeat
         val (c, r) = tiles[rng.nextInt(tiles.size)]
         if (ForestLayout.zoneOf(c, r) in f.zones && forestSpots.none { it.c == c && it.r == r }) f.branches += c * 1000 + r
     }

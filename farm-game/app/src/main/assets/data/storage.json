@@ -3,13 +3,13 @@
  "barn": [
   {
    "level": 1,
-   "capacity": 100,
+   "capacity": 200,
    "unlock": 1,
    "cost": {}
   },
   {
    "level": 2,
-   "capacity": 125,
+   "capacity": 250,
    "unlock": 3,
    "cost": {
     "plank": 6,
@@ -19,7 +19,7 @@
   },
   {
    "level": 3,
-   "capacity": 150,
+   "capacity": 300,
    "unlock": 6,
    "cost": {
     "plank": 10,
@@ -30,7 +30,7 @@
   },
   {
    "level": 4,
-   "capacity": 175,
+   "capacity": 350,
    "unlock": 8,
    "cost": {
     "plank": 14,
@@ -41,7 +41,7 @@
   },
   {
    "level": 5,
-   "capacity": 200,
+   "capacity": 400,
    "unlock": 11,
    "cost": {
     "plank": 18,
@@ -53,7 +53,7 @@
   },
   {
    "level": 6,
-   "capacity": 250,
+   "capacity": 500,
    "unlock": 14,
    "cost": {
     "plank": 22,
@@ -65,7 +65,7 @@
   },
   {
    "level": 7,
-   "capacity": 300,
+   "capacity": 600,
    "unlock": 17,
    "cost": {
     "plank": 26,
@@ -77,7 +77,7 @@
   },
   {
    "level": 8,
-   "capacity": 350,
+   "capacity": 700,
    "unlock": 20,
    "cost": {
     "plank": 30,
@@ -90,7 +90,7 @@
   },
   {
    "level": 9,
-   "capacity": 425,
+   "capacity": 850,
    "unlock": 24,
    "cost": {
     "plank": 35,
@@ -103,7 +103,7 @@
   },
   {
    "level": 10,
-   "capacity": 500,
+   "capacity": 1000,
    "unlock": 28,
    "cost": {
     "plank": 40,
@@ -118,13 +118,13 @@
  "silo": [
   {
    "level": 1,
-   "capacity": 75,
+   "capacity": 110,
    "unlock": 1,
    "cost": {}
   },
   {
    "level": 2,
-   "capacity": 100,
+   "capacity": 150,
    "unlock": 2,
    "cost": {
     "stone": 12,
@@ -134,7 +134,7 @@
   },
   {
    "level": 3,
-   "capacity": 125,
+   "capacity": 190,
    "unlock": 5,
    "cost": {
     "stone": 20,
@@ -144,7 +144,7 @@
   },
   {
    "level": 4,
-   "capacity": 150,
+   "capacity": 225,
    "unlock": 7,
    "cost": {
     "stone": 30,
@@ -155,7 +155,7 @@
   },
   {
    "level": 5,
-   "capacity": 175,
+   "capacity": 260,
    "unlock": 10,
    "cost": {
     "stone": 40,
@@ -167,7 +167,7 @@
   },
   {
    "level": 6,
-   "capacity": 200,
+   "capacity": 300,
    "unlock": 13,
    "cost": {
     "stone": 50,
@@ -179,7 +179,7 @@
   },
   {
    "level": 7,
-   "capacity": 250,
+   "capacity": 375,
    "unlock": 16,
    "cost": {
     "stone": 65,
@@ -192,7 +192,7 @@
   },
   {
    "level": 8,
-   "capacity": 300,
+   "capacity": 450,
    "unlock": 19,
    "cost": {
     "stone": 80,
@@ -205,7 +205,7 @@
   },
   {
    "level": 9,
-   "capacity": 350,
+   "capacity": 525,
    "unlock": 23,
    "cost": {
     "stone": 100,
@@ -218,7 +218,7 @@
   },
   {
    "level": 10,
-   "capacity": 400,
+   "capacity": 600,
    "unlock": 27,
    "cost": {
     "stone": 120,

@@ -6,14 +6,14 @@
    "minAxe": 0,
    "hp": 5,
    "wood": [
-    2,
-    3
+    3,
+    5
    ],
    "hardwood": [
     0,
     0
    ],
-   "growMinutes": 30,
+   "growMinutes": 12,
    "xp": 2,
    "seed": "pinecone",
    "seedChance": 0.25,
@@ -33,14 +33,14 @@
    "minAxe": 0,
    "hp": 6,
    "wood": [
-    2,
-    4
+    3,
+    5
    ],
    "hardwood": [
     0,
     0
    ],
-   "growMinutes": 40,
+   "growMinutes": 15,
    "xp": 3,
    "seed": "birch_seed",
    "seedChance": 0.25,
@@ -56,14 +56,14 @@
    "minAxe": 1,
    "hp": 12,
    "wood": [
-    2,
-    3
+    3,
+    4
    ],
    "hardwood": [
     1,
     2
    ],
-   "growMinutes": 80,
+   "growMinutes": 30,
    "xp": 6,
    "seed": "acorn",
    "seedChance": 0.3,
@@ -80,13 +80,13 @@
    "hp": 20,
    "wood": [
     2,
-    2
+    3
    ],
    "hardwood": [
     2,
     3
    ],
-   "growMinutes": 120,
+   "growMinutes": 45,
    "xp": 10,
    "seed": "maple_seed",
    "seedChance": 0.3,
@@ -106,14 +106,14 @@
    "minAxe": 3,
    "hp": 60,
    "wood": [
-    8,
-    8
+    10,
+    10
    ],
    "hardwood": [
     6,
     6
    ],
-   "growMinutes": 280,
+   "growMinutes": 120,
    "xp": 40,
    "seed": "golden_acorn",
    "seedChance": 0.15,

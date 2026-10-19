@@ -48,7 +48,7 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 - Events: a travelling merchant (rare seeds and tools), one festival per season with a mini-goal, and a daily login gift.
 
 ## Balance (from simulation)
-- The XP curve is shorter than the design table from level 4 on (`levels.json` is authoritative). A bot that checks in hourly, 8 times a day, reaches L5 on day 2, L10 by day 5 and about L18 after three weeks (`PacingTest`).
+- The XP curve is shorter than the design table from level 4 on (`levels.json` is authoritative). A bot that checks in hourly, 8 times a day, reaches L5 on day 1, about L15 after a week and about L22 after three weeks (`PacingTest`, playtest round 4).
 - `ProgressionTest` checks that every item a building, recipe, tool, zone or gate needs can be obtained by the level it unlocks.
 
 ## Playtest round 1 (owner feedback)
@@ -67,7 +67,7 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 ## Playtest round 2 (owner feedback)
 - **Fixes:** long toasts wrap to two lines; a locked or for-sale field shows its level or price on its sign board; street lamps get a small soft glow (no painted ground circle) and house windows light at night; tall art never covers panel titles.
 - **Energy:** planting, watering and harvesting are free; chopping and mining still cost energy.
-- **Unlocks (hybrid + guided):** one guided quest at a time (Grandpa's notebook) with a pointer and a reward. Tools, the quarry and mine, forest zones and machine blueprints unlock by doing (the stone axe within about 15 minutes, after chopping); machines also need their level. Levels still gate crops, machines and buildings, fields and farmhands, villagers and orders. Pace: level 5 on day 1, level 10 after about a week, level 20 near a month.
+- **Unlocks (hybrid + guided):** one guided quest at a time (Grandpa's notebook) with a pointer and a reward. Tools, the quarry and mine, forest zones and machine blueprints unlock by doing (the stone axe within about 15 minutes, after chopping); machines also need their level. Levels still gate crops, machines and buildings, fields and farmhands, villagers and orders. Pace: level 5 on day 1, about level 15 after a week, level 20 within three weeks (round 4; was level 10 after a week).
 - **Orders:** only ask for items the player can get right now with their current tools, buildings and zones, in amounts they can make.
 - **Tools:** stone tools at the Workbench; iron and gold tools at the village Blacksmith (opens with village tier 1, gold work from tier 2).
 - **Big goal: restore the valley.** Four whole-village tiers over about 3-4 weeks: wooden huts, stone, brick, concrete. Each tier rebuilds every house and road (dirt, gravel, cobbles, paved) and the village grows (4, 6, 8, 10 houses). Tiers are paid with bundles of goods plus coins, donated a bit at a time. Rewards: new villagers and orders, farm perks, and shops (tier 1 Seed shop and Blacksmith, tier 2 Carpenter and gold work, tier 3 Cafe). Art variations for the tiers are shown before they are built.
@@ -78,6 +78,10 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 
 ## Agent playtest (round 3)
 - A Haiku agent played 30 turns through the play harness (`Tools/jvm-check/play.sh`). Fixed from its report: taps, holds and slides pick the frontmost tree, crop, rock or building under the finger (not the ground tile behind tall art); chop and mining progress shows as a bar over the tree or rock; tips fit the moment (harvest when something is ripe, else plant) and close by themselves after 10 seconds; the water quest counts all watering so far; a Barn or Silo upgrade says what it still needs; names in panels fit their rows instead of being cut at a fixed length; the quarry gate says the stones come from forest rocks.
+
+## Playtest round 4 (owner feedback)
+- Wood was too scarce and trees and quarry rocks took too long to come back: trees regrow about 2.5x faster (pine 12 real minutes, birch 15, oak 30, maple 45, ancient oak 120), a stump rots after one day (was three) and an empty tree spot reseeds at the next dawn (was after two days). Trees drop more wood (pine and birch 3-5, oak 3-4, maple 2-3, ancient oak 10), a stump gives 2 wood (the Logging Hut too), and 3 branches fall a day (5 in a storm, up to 8 lying about). Quarry rocks come back in about 8, 7 and 6 real minutes by quarry level (were 20, 17, 14).
+- The Barn and Silo filled too fast: Barn capacity doubled (200 at level 1, 1000 at level 10); Silo 1.5x (110 to 600), since the Silo is what paces a busy farm. The casual bot (`PacingTest`) now reaches L6 on day 1, about L15 after a week and L22 after three weeks (was L10 and L16).
 
 ## Later (not v1)
 - New areas opened by the village: a lake with fishing, a ranch with animals, an orchard hill, a beach.

@@ -217,7 +217,7 @@
    "unlock": 3,
    "cost": {},
    "spots": 12,
-   "respawnMinutes": 20,
+   "respawnMinutes": 8,
    "weights": {
     "stone": 60,
     "coal_rock": 20,
@@ -234,7 +234,7 @@
     "stone": 30
    },
    "spots": 16,
-   "respawnMinutes": 17,
+   "respawnMinutes": 7,
    "weights": {
     "stone": 50,
     "coal_rock": 20,
@@ -253,7 +253,7 @@
     "stone": 40
    },
    "spots": 20,
-   "respawnMinutes": 14,
+   "respawnMinutes": 6,
    "weights": {
     "stone": 42,
     "coal_rock": 18,

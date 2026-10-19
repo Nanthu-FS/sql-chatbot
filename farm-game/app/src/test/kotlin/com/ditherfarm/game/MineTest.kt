@@ -36,9 +36,10 @@ class MineTest {
         val stone = w.count("stone")
         while (w.mine.quarry[i].node != null) assertTrue(w.mineQuarry(i))
         assertTrue(w.count("stone") > stone)
-        w.advance(10 * 60.0)
+        // Rocks come back in about 8 real minutes (6.4 to 9.6 with jitter).
+        w.advance(5 * 60.0)
         assertNull("still regrowing", w.mine.quarry[i].node)
-        w.advance(20 * 60.0)
+        w.advance(5 * 60.0)
         assertNotNull(w.mine.quarry[i].node)
     }
 

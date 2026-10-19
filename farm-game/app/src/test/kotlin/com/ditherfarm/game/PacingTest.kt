@@ -78,12 +78,13 @@ class PacingTest {
             }
             w.advance(16 * 3600.0 - 8 * 3600.0 + 8 * 3600.0) // overnight (capped catch-up)
             if (day in listOf(1, 2, 3, 5, 7, 10, 14, 21)) report += "day $day: L${w.level} coins=${w.state.coins} plots=${w.ownedPlots} built=${data.buildings.keys.count { w.isBuilt(it) }}"
-            // Targets (Docs/DECISIONS.md, round 2): level 5 on day 1, level 10 after about a week.
+            // Targets (Docs/DECISIONS.md, playtest round 4): level 5 on day 1, about level 15 after a
+            // week (bigger Barn and Silo, faster trees and quarry), level 20 within three weeks.
             if (day == 1) assertTrue("level 5 on day 1: L${w.level}", w.level >= 5)
-            if (day == 7) assertTrue("about level 10 after a week: L${w.level}", w.level in 9..12)
+            if (day == 7) assertTrue("about level 15 after a week: L${w.level}", w.level in 13..17)
         }
         println("PACING:\n" + report.joinToString("\n"))
-        assertTrue("too slow: ${report.last()}", w.level >= 14)
+        assertTrue("too slow: ${report.last()}", w.level >= 20)
     }
 
     @Test fun playedSaveRoundTripsExactly() {
