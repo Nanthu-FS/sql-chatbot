@@ -35,6 +35,8 @@ tasks.test {
     // -Passets=<dir> renders the shots with another asset folder (art previews before they land).
     systemProperty("assets.dir", (project.findProperty("assets") as String?) ?: app.resolve("main/assets").absolutePath)
     // gradle test -Pshots writes 3x PNGs of each rendered screen to build/shots.
+    // gradle test -Pplay=<dir> --tests '*PlayTest*' plays one turn of the game from <dir> (see PlayTest).
+    (project.findProperty("play") as String?)?.let { systemProperty("play.dir", it); outputs.upToDateWhen { false } }
     if (project.hasProperty("shots")) systemProperty("shots.out", (project.findProperty("shotsOut") as String?) ?: layout.buildDirectory.dir("shots").get().asFile.absolutePath)
     testLogging {
         events("failed")
