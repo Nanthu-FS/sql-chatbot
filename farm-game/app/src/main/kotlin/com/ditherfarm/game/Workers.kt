@@ -68,8 +68,9 @@ class TruckState {
 
 enum class WorkKind { HARVEST, CLEAR, PLANT, WATER }
 
-/** Real seconds between actions: 12 s at level 1, about 10% faster each level, never under 1 s. */
-fun workerSeconds(level: Int) = max(1.0, 12.0 * 0.9.pow(level - 1))
+/** Real seconds between visits (each tends a whole plot): 6 s at level 1, about 10% faster each
+ *  level, never under 1 s (playtest round 4; was 12 s a single action). */
+fun workerSeconds(level: Int) = max(1.0, 6.0 * 0.9.pow(level - 1))
 
 /** Crops eaten each game day: 1 at levels 1-9, 2 at 10-19, 3 at 20-25. */
 fun workerAppetite(level: Int) = when { level >= 20 -> 3; level >= 10 -> 2; else -> 1 }
@@ -126,25 +127,28 @@ fun World.assign(id: String, field: Int): Boolean {
 private fun World.workStep(w: WorkerState): Boolean {
     val field = w.field
     val crate = crate(field)
-    val crateFull = crate.values.sum() >= CRATE_CAP
+    fun crateFull() = crate.values.sum() >= CRATE_CAP
+    fun dry(i: Int) = plot(i).let { p -> p.crop != null && !p.needsClearing && !p.watered && !isReady(p) }
     val plots = FieldLayout.plotsOf(field)
     val crop = state.fields[field].crop
-    // Priority: harvest ripe crops, clear dead plots, replant, then water.
-    val target = plots.firstOrNull { !crateFull && isReady(plot(it)) }?.let { it to WorkKind.HARVEST }
-        ?: plots.firstOrNull { plot(it).needsClearing }?.let { it to WorkKind.CLEAR }
-        ?: crop?.let { c -> plots.firstOrNull { plot(it).empty && canReplant(it, c) }?.let { it to WorkKind.PLANT } }
-        ?: plots.firstOrNull { val p = plot(it); p.crop != null && !p.needsClearing && !p.watered && !isReady(p) }?.let { it to WorkKind.WATER }
+    // One visit tends a whole plot (playtest round 4): harvest, clear, replant, then water it.
+    // Ripe plots come first, then dead ones, then empty ones, then dry ones.
+    val i = plots.firstOrNull { !crateFull() && isReady(plot(it)) }
+        ?: plots.firstOrNull { plot(it).needsClearing }
+        ?: crop?.let { c -> plots.firstOrNull { plot(it).empty && canReplant(it, c) } }
+        ?: plots.firstOrNull { dry(it) }
         ?: return false
-    val (i, kind) = target
+    val kind = plot(i).let { p ->
+        when { !crateFull() && isReady(p) -> WorkKind.HARVEST; p.needsClearing -> WorkKind.CLEAR; p.empty -> WorkKind.PLANT; else -> WorkKind.WATER }
+    }
     // Announced first so screens can tell the farmhand's harvest from the player's.
     val acted = WorldEvent.WorkerActed(w.id, i, kind)
     events += acted
-    val done = when (kind) {
-        WorkKind.HARVEST -> harvest(i, auto = true, into = crate)
-        WorkKind.CLEAR -> clearPlot(i)
-        WorkKind.PLANT -> plant(i, crop!!)
-        WorkKind.WATER -> water(i)
-    }
+    var done = false
+    if (!crateFull() && isReady(plot(i))) done = harvest(i, auto = true, into = crate) || done
+    if (plot(i).needsClearing) done = clearPlot(i) || done
+    if (crop != null && plot(i).empty && canReplant(i, crop)) done = plant(i, crop) || done
+    if (dry(i)) done = water(i) || done
     if (done) { w.lastPlot = i; state.bump("worker_actions") } else events.remove(acted)
     return done
 }

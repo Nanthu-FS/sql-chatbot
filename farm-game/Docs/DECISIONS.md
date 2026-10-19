@@ -84,6 +84,10 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 - Playtest fixes: the water marker over dry crops is a teardrop, not a blue diamond that read as a gem; the new-chores and truck-contract toasts say "Tap the trophy" (the Goals panel opens from the trophy chip; there is no Goals button). The locked Mine button no longer opens the Mine (a Kotlin `?.let { ...; null } ?: nav` slip let it through; `TouchPlayTest` taps it now). The quarry shows its rocks as soon as its notebook step opens it (no hidden level-3 gate that left tapped spots saying "still growing back"), and forest rocks restock 2 stones a dawn, up to 3.
 - The Barn and Silo filled too fast: Barn capacity doubled (200 at level 1, 1000 at level 10); Silo 1.5x (110 to 600), since the Silo is what paces a busy farm. The casual bot (`PacingTest`) now reaches L6 on day 1, about L15 after a week and L22 after three weeks (was L10 and L16).
 
+## Round 5 features (owner picks)
+- **Farmhands:** one visit tends a whole plot (harvest, clear, replant, water), every 6 real seconds at level 1 and about 10% faster each level (was 12 s for a single action). A level-1 farmhand keeps a 16-plot field in about 1.6 minutes (was about 10). The panel shows PLOTS/MIN.
+- Next, one at a time with an agent playtest each: more energy (bar +50%, refill twice as fast), a pet (the player picks a dog or a cat at level 4 and names it; it follows them between screens and brings a small daily gift), then farm decorations (bought with coins, placed on free grass, some with a small bonus).
+
 ## Later (not v1)
 - New areas opened by the village: a lake with fishing, a ranch with animals, an orchard hill, a beach.
 - Farm animals.

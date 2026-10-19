@@ -8,6 +8,7 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
+import com.ditherfarm.game.SCENES
 import com.ditherfarm.shots.ScreenshotTest
 import com.ditherfarm.ui.Chrome
 import com.ditherfarm.ui.FarmScreen
@@ -39,6 +40,11 @@ import java.io.File
  *       back                 the phone's back button
  *       shot                 an extra screenshot now
  *     Lines starting with # are ignored.
+ *     On the first turn only, <dir>/setup.txt (if present) prepares the farm first, one per line:
+ *       skipstory            the opening and story scenes count as seen (named "Tester")
+ *       level N              the player is at level N
+ *       coins N              N more coins
+ *       item ID N            N of item ID in storage
  *  3. saves the farm and writes <dir>/shots/turn_NNN.png (2x), turn_NNN_grid.png (the same with a
  *     30-pixel coordinate grid) and <dir>/state.txt (what is on screen and in the farm).
  */
@@ -83,6 +89,7 @@ class PlayTest {
         touch = TestTouch(game, canvas, startClock)
         game.engine.resize(w, h)
         game.engine.screen?.enter()
+        if (turn == 1) File(dir, "setup.txt").takeIf { it.isFile }?.let { setup(it.readLines()) }
         when (meta["screen"]) {
             "FOREST" -> { game.goTo(Nav.FOREST); game.engine.screen?.enter() }
             "MINE" -> { game.goTo(Nav.MINE); game.engine.screen?.enter() }
@@ -124,6 +131,24 @@ class PlayTest {
         val sc = when (game.engine.screen) { is ForestScreen -> "FOREST"; is MineScreen -> "MINE"; else -> "FARM" }
         val c = screen.cam
         File(dir, "meta.txt").writeText("turn=$turn\nclock=$clock\nscreen=$sc\ncamx=${c.x}\ncamy=${c.y}\nzoom=${c.zoom}\n")
+    }
+
+    private fun setup(lines: List<String>) {
+        val w = game.world
+        for (raw in lines) {
+            val p = raw.trim().split(Regex("\\s+"))
+            when (p[0].lowercase()) {
+                "skipstory" -> { w.state.storySeen.addAll(SCENES.map { it.id }); if (w.state.playerName.isBlank()) w.state.playerName = "Tester"; game.farm.chrome.reset() }
+                "level" -> w.gainXp(w.data.level(p[1].toInt()).totalXp - w.state.xp)
+                "coins" -> w.state.coins += p[1].toInt()
+                "item" -> w.add(p[1], p[2].toInt())
+                "" -> {}
+                else -> log += "unknown setup: $raw"
+            }
+            log += "setup: $raw"
+        }
+        w.events.clear()
+        frames(3)
     }
 
     private fun restoreCamera(meta: Map<String, String>) {

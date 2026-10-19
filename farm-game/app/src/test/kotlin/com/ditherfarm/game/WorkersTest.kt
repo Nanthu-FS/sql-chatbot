@@ -43,6 +43,21 @@ class WorkersTest {
         assertTrue("harvest went to crate/truck: $moved", moved >= 16)
     }
 
+    @Test fun levelOneFarmhandTendsAFieldInUnderTwoMinutes() {
+        val w = fresh()
+        w.hire("rosa")
+        w.state.fields[0].crop = "wheat"
+        w.add("seed_wheat", 40)
+        w.add("carrot", 10) // food
+        val plots = FieldLayout.plotsOf(0).toList()
+        for (i in plots) w.plot(i).apply { clear(); crop = "wheat"; growth = data.crop("wheat").growMinutes }
+        assertTrue(w.assign("rosa", 0))
+        // One visit harvests, replants and waters a plot, every 6 s at level 1.
+        w.advance(plots.size * workerSeconds(1) + 5)
+        assertTrue("all replanted", plots.all { w.plot(it).crop == "wheat" && !w.isReady(w.plot(it)) })
+        assertTrue("all watered", plots.all { w.plot(it).watered })
+    }
+
     @Test fun harvesterRoutesSiloFieldsAndTruckSells() {
         val w = fresh()
         w.crate(0)["carrot"] = 5
