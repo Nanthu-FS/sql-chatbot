@@ -26,6 +26,9 @@ class Hud(private val game: Game) {
     private var toastTime = 0f
     private var tipText: String? = null
     private var tipKey: String? = null
+    /** Seconds the tip stays up while visible; it then counts as read, so the next tip can show. */
+    private var tipTime = 0f
+    private var tipShown = false
     private var displayedCoins = -1f
 
     val topHeight = 34
@@ -33,14 +36,21 @@ class Hud(private val game: Game) {
 
     fun toast(text: String) { toastText = text; toastTime = if (text.length > 34) 3.4f else 2.2f }
 
-    /** Shows a tutorial tip once per save. */
+    /** Shows a tutorial tip once per save; it closes when tapped or after [TIP_SECONDS] on screen. */
     fun tip(key: String, text: String) {
         if (key in world.state.tips || tipKey != null) return
-        tipKey = key; tipText = text
+        tipKey = key; tipText = text; tipTime = TIP_SECONDS
+    }
+
+    private fun dismissTip() {
+        tipKey?.let { world.state.tips += it }
+        tipKey = null; tipText = null
     }
 
     fun update(dt: Float) {
         if (toastTime > 0) toastTime -= dt
+        if (tipText != null && tipShown) { tipTime -= dt; if (tipTime <= 0f) dismissTip() }
+        tipShown = false
         val target = world.state.coins.toFloat()
         displayedCoins = if (displayedCoins < 0) target else displayedCoins + (target - displayedCoins) * minOf(1f, dt * 8f)
         if (kotlin.math.abs(target - displayedCoins) < 0.5f) displayedCoins = target
@@ -148,10 +158,8 @@ class Hud(private val game: Game) {
             val y = h - game.engine.safeBottom - bottomHeight - bh - 6 - tipLift
             g.slice9("ui/bubble", 10, y, w - 10, y + bh, 5)
             lines.forEachIndexed { i, l -> g.text(l, 18, y + 6 + i * 10, Gfx.INK, outline = 0, shadow = false) }
-            if (ui.clickable("tip", 10, y, w - 20, bh)) {
-                tipKey?.let { world.state.tips += it }
-                tipKey = null; tipText = null
-            }
+            tipShown = true
+            if (ui.clickable("tip", 10, y, w - 20, bh)) dismissTip()
         }
         game.awaySummary?.let { text ->
             val lines = listOf("WHILE YOU WERE AWAY") + wrap(text, 200)
@@ -178,6 +186,9 @@ class Hud(private val game: Game) {
     }
 
     companion object {
+        /** How long a tutorial tip stays on screen before it closes by itself. */
+        const val TIP_SECONDS = 10f
+
         fun seasonIcon(s: Season) = when (s) {
             Season.SPRING -> "icons/season_spring"
             Season.SUMMER -> "icons/season_summer"

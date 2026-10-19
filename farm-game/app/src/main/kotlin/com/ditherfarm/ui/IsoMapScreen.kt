@@ -10,8 +10,10 @@ import com.ditherfarm.engine.Iso
 import com.ditherfarm.engine.Lighting
 import com.ditherfarm.engine.Raised
 import com.ditherfarm.engine.Screen
+import com.ditherfarm.engine.Sprite
 import com.ditherfarm.engine.Terrain
 import com.ditherfarm.engine.Weather
+import kotlin.math.floor
 
 /** World-space draw calls sorted back-to-front by ground depth (iso y of the object's base). */
 class DrawList {
@@ -36,6 +38,9 @@ class DrawList {
         val BY_DEPTH = Comparator<Entry> { a, b -> a.depth.compareTo(b.depth) }
     }
 }
+
+/** Alpha from which a sprite pixel counts as solid for taps (cast shadows are fainter). */
+private const val SOLID_ALPHA = 200
 
 /**
  * Base for the Farm, Forest and Mine screens: a painted isometric island with a
@@ -180,6 +185,7 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
         g.inWorld = true
         c.drawBitmap(ground!!, -painter.originX.toFloat(), -(painter.originY + m * Iso.TH).toFloat(), g.paint)
         drawGroundLayer(g)
+        hitCount = 0
         collect(drawList)
         drawList.flush()
         fx.drawWorld(g)
@@ -227,9 +233,68 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     fun toBufferX(wx: Float) = (wx - cam.x) * cam.zoom
     fun toBufferY(wy: Float) = (wy - cam.y) * cam.zoom
 
+    /** A sprite drawn this frame that taps on its solid pixels should reach, and the tile it stands on. */
+    private class Hit {
+        var c = 0
+        var r = 0
+        var sprite: Sprite? = null
+        var x = 0f
+        var y = 0f
+        var depth = 0f
+    }
+
+    private val hits = ArrayList<Hit>()
+    private var hitCount = 0
+
+    /**
+     * Marks [sprite], drawn this frame with its pivot at world (x, y), as standing on tile (c, r): a
+     * tap, hold or slide on its solid pixels picks that tile, even where tall art (a tree's crown, a
+     * ripe crop) rises over the tiles behind it. The frontmost sprite wins. Call it from [collect].
+     */
+    protected fun hitSprite(c: Int, r: Int, sprite: String, x: Float, y: Float, depth: Float = y) {
+        if (!game.assets.has(sprite)) return
+        if (hitCount == hits.size) hits += Hit()
+        hits[hitCount++].also { it.c = c; it.r = r; it.sprite = game.assets[sprite]; it.x = x; it.y = y; it.depth = depth }
+    }
+
+    private fun solidAt(h: Hit, wx: Float, wy: Float): Boolean {
+        val s = h.sprite ?: return false
+        val lx = floor(wx).toInt() - (Math.round(h.x) - s.ax)
+        val ly = floor(wy).toInt() - (Math.round(h.y) - s.ay)
+        if (lx !in 0 until s.w || ly !in 0 until s.h) return false
+        // Cast shadows are see-through (alpha about 90-150) and do not count.
+        return (s.bmp.getPixel(lx, ly) ushr 24) >= SOLID_ALPHA
+    }
+
+    /** The tile under buffer point (x, y) into [pick]: the frontmost registered sprite there, else the ground tile. */
     private fun tileAt(x: Float, y: Float): Boolean {
-        Iso.pick(cam.toWorldX(x), cam.toWorldY(y), pick)
+        val wx = cam.toWorldX(x)
+        val wy = cam.toWorldY(y)
+        var best: Hit? = null
+        for (k in 0 until hitCount) {
+            val h = hits[k]
+            if ((best == null || h.depth >= best.depth) && solidAt(h, wx, wy)) best = h
+        }
+        if (best != null) { pick[0] = best.c; pick[1] = best.r; return true }
+        Iso.pick(wx, wy, pick)
         return pick[0] in 0 until cols && pick[1] in 0 until rows
+    }
+
+    /**
+     * A health bar over something being chopped or mined: [left] of [total], centred on [x] with its
+     * bottom at world [y] (just above the art). Dark frame, green fill turning gold then red as it drops.
+     */
+    protected fun drawHpBar(g: Gfx, x: Float, y: Float, left: Int, total: Int) {
+        if (total <= 0) return
+        val w = 22
+        val l = x.toInt() - w / 2
+        val t = y.toInt() - 5
+        g.rect(l - 1, t - 1, l + w + 1, t + 5, Gfx.INK)
+        g.rect(l, t, l + w, t + 4, 0xFF3A4466.toInt())
+        val f = left.coerceIn(0, total).toFloat() / total
+        val fill = when { f > 0.5f -> 0xFF63C74D.toInt(); f > 0.25f -> 0xFFFEAE34.toInt(); else -> 0xFFE43B44.toInt() }
+        g.rect(l, t, l + Math.round(w * f), t + 4, fill)
+        g.rect(l, t, l + Math.round(w * f), t + 1, 0x55FFFFFF)
     }
 
     // --- input routing: HUD first, then the world ---------------------------------

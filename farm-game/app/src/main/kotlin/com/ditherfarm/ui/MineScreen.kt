@@ -255,20 +255,23 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         val g = game.gfx
         val sx = shake[i]?.let { if (((it * 60).toInt() % 2) == 0) 1f else -1f } ?: 0f
         if (hidden && damage == 0) {
-            g.sprite(pick("rocks/rock", "deco/rock"), x + sx, y, 110)
+            g.sprite(rockArt(i, node, damage, hidden), x + sx, y, 110)
             g.text("?", x.toInt(), (y - 16).toInt(), Gfx.WHITE, align = 0)
             return
         }
-        g.sprite(variant(rockSprite(node), i), x + sx, y)
+        val art = rockArt(i, node, damage, hidden)
+        g.sprite(art, x + sx, y)
         val hp = world.data.mine.nodes[node]?.hp ?: return
         if (damage > 0) {
             val crack = if (damage * 2 >= hp) "rocks/crack_2" else "rocks/crack_1"
             if (game.assets.has(crack)) g.sprite(crack, x + sx, y)
-            val w = 16
-            g.rect((x - w / 2).toInt(), (y + 3).toInt(), (x + w / 2).toInt(), (y + 5).toInt(), Gfx.INK)
-            g.rect((x - w / 2).toInt(), (y + 3).toInt(), (x - w / 2 + w * (hp - damage) / hp).toInt(), (y + 5).toInt(), 0xFFFEAE34.toInt())
+            drawHpBar(g, x, y - spriteTop(art) - 2, hp - damage, hp)
         }
     }
+
+    /** The art of rock [node] in cell [i]: an unknown grey rock while it is hidden in the dark. */
+    private fun rockArt(i: Int, node: String, damage: Int, hidden: Boolean): String =
+        if (hidden && damage == 0) pick("rocks/rock", "deco/rock") else variant(rockSprite(node), i)
 
     /** A surface prop: its sprite, where it stands, and whether it is in the dark front wall (shaded). */
     private class SurfaceProp(val sprite: String, val x: Float, val y: Float, val front: Boolean)
@@ -311,6 +314,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             val (x, y) = center(i)
             val cell = world.quarryNode(i) ?: continue
             if (!inView(x, y, ROCK_PAD)) continue
+            cell.node?.let { node -> tileOf(i).let { (c, r) -> hitSprite(c, r, rockArt(i, node, cell.damage, hidden = false), x, y) } }
             list.add(y) {
                 val node = cell.node
                 if (node == null) { if (game.assets.has("rocks/rubble")) g.sprite("rocks/rubble", x, y, 150) }
@@ -370,7 +374,10 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             }
             val cell = m.cells[i]
             val node = cell.node
-            if (node != null) list.add(y) { drawRock(i, node, cell.damage, x, y, hidden = !world.lit(i)) }
+            if (node != null) {
+                hitSprite(c, r, rockArt(i, node, cell.damage, hidden = !world.lit(i)), x, y)
+                list.add(y) { drawRock(i, node, cell.damage, x, y, hidden = !world.lit(i)) }
+            }
             if (i in m.torches) list.add(y + 0.1f) { g.sprite(pick("rocks/torch_wall", "deco/lantern"), x, y) }
             if (i in m.markers) list.add(y + 0.15f) { drawMarker(i, x, y) }
         }

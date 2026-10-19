@@ -180,6 +180,14 @@ class Panels(private val game: Game, private val hud: Hud) {
         return intArrayOf(x, y, pw, ph)
     }
 
+    /** [s] if it fits in [maxW] pixels, else cut at the last whole letter that fits with a dot. */
+    private fun fit(s: String, maxW: Int): String {
+        if (g.textWidth(s) <= maxW) return s
+        var n = s.length
+        while (n > 1 && g.textWidth(s.take(n) + ".") > maxW) n--
+        return s.take(n).trimEnd() + "."
+    }
+
     private fun closeButton(x: Int, y: Int, pw: Int): Boolean =
         ui.button("close", x + pw - 22, y + 5, 16, 14, null, "ui/x", "red")
 
@@ -297,7 +305,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (i % 2 == 0) g.rect(x + 8, ry, x + pw - 8, ry + rowH - 1, 0x22B86F50)
             g.sprite(icon(k), (x + 18).toFloat(), (ry + rowH / 2).toFloat())
             Quality.of(k).icon?.let { g.sprite(it, (x + 12).toFloat(), (ry + 6).toFloat()) }
-            g.text("${world.count(k)}x ${world.data.name(k).uppercase()}".take(18), x + 30, ry + 4, Gfx.INK, outline = 0, shadow = false)
+            g.text(fit("${world.count(k)}x ${world.data.name(k).uppercase()}", pw - 104), x + 30, ry + 4, Gfx.INK, outline = 0, shadow = false)
             val unit = world.unitPrice(k)
             g.text("${unit}c", x + 30, ry + 13, Gfx.INK, outline = 0, shadow = false)
             val trend = world.trend(baseId(k))
@@ -454,7 +462,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val locked = r.unlockLevel > world.level
         g.slice9("ui/slot", x, y, x + w, y + 34, 4)
         g.sprite(if (locked) "icons/lock" else outputIcon(r), (x + 12).toFloat(), (y + 12).toFloat())
-        g.text(if (locked) "LEVEL ${r.unlockLevel}" else recipeName(r).take(20), x + 24, y + 4, Gfx.INK, outline = 0, shadow = false)
+        g.text(if (locked) "LEVEL ${r.unlockLevel}" else fit(recipeName(r), w - 24 - 66), x + 24, y + 4, Gfx.INK, outline = 0, shadow = false)
         var ix = x + 24
         for ((k, v) in r.inputs) {
             val have = world.available(k)
@@ -547,7 +555,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             val ry = y + 26 + i * 14
             val have = if (k == "coins") world.state.coins else world.count(k, anyQuality = true)
             g.sprite(if (k == "coins") "icons/coin" else icon(k), (x + 62).toFloat(), (ry + 5).toFloat())
-            g.text("$v ${if (k == "coins") "COINS" else world.data.name(k).uppercase()}".take(20), x + 72, ry + 1, if (have >= v) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
+            g.text(fit("$v ${if (k == "coins") "COINS" else world.data.name(k).uppercase()}", pw - 82), x + 72, ry + 1, if (have >= v) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
         }
         val blocker = world.buildBlocker(id)
         if (blocker != null) g.text(blocker.uppercase(), x + pw / 2, y + ph - 36, Gfx.RED, align = 0, outline = 0, shadow = false)
@@ -629,7 +637,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         if (lastGeode.isNotEmpty()) {
             val (k, n) = lastGeode.entries.first()
             g.sprite(icon(k), (x + 16).toFloat(), (ry + 4).toFloat())
-            g.text("GOT $n ${world.data.name(k).uppercase()}".take(28), x + 26, ry, 0xFF3E8948.toInt(), outline = 0, shadow = false)
+            g.text(fit("GOT $n ${world.data.name(k).uppercase()}", pw - 36), x + 26, ry, 0xFF3E8948.toInt(), outline = 0, shadow = false)
         } else g.text("FEE PER CRACK. GEMS ARE RARE!", x + pw / 2, ry, Gfx.INK, align = 0, outline = 0, shadow = false)
         return true
     }
@@ -929,7 +937,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             val cx = x + 10 + (i % 2) * cw
             val cy = y + 24 + (i / 2) * 40
             ui.slot("offer-$i", cx, cy, icon(o.item, big = true), o.qty, false, 32)
-            g.text(world.data.name(o.item).uppercase().take(12), cx + 36, cy + 2, Gfx.INK, outline = 0, shadow = false)
+            g.text(fit(world.data.name(o.item).uppercase(), cw - 40), cx + 36, cy + 2, Gfx.INK, outline = 0, shadow = false)
             g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
             g.text(Ui.compact(world.merchantPrice(o)), cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
             if (world.merchantBought(i)) g.text("SOLD", cx + cw - 30, cy + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
@@ -965,7 +973,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         rules.forEachIndexed { i, r ->
             g.slice9("ui/slot", x + 8, ry, x + pw - 8, ry + 30, 4)
             g.sprite(icon(r.item), (x + 20).toFloat(), (ry + 15).toFloat())
-            g.text(world.data.name(r.item).uppercase().take(12), x + 32, ry + 4, Gfx.INK, outline = 0, shadow = false)
+            g.text(fit(world.data.name(r.item).uppercase(), pw - 186), x + 32, ry + 4, Gfx.INK, outline = 0, shadow = false)
             g.text("${world.percentOfBase(r.item)}% TODAY", x + 32, ry + 16, Gfx.GREY, outline = 0, shadow = false)
             if (ui.button("cond-$i", x + pw - 150, ry + 7, 44, 16, CartRule.CONDITIONS[r.cond], style = "wood")) r.cond = (r.cond + 1) % CartRule.CONDITIONS.size
             if (ui.button("keep-$i-m", x + pw - 102, ry + 7, 14, 16, "-", style = "wood")) r.keep = maxOf(0, r.keep - 5)

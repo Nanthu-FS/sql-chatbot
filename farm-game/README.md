@@ -33,7 +33,7 @@ cd farm-game
 ./gradlew testDebugUnitTest    # rules tests + rendering smoke tests
 ```
 
-Without the Android SDK, `Tools/jvm-check` compiles the app and runs its tests on a plain JVM, and can save screenshots of rendered screens (see its README).
+Without the Android SDK, `Tools/jvm-check` compiles the app and runs its tests on a plain JVM, and can save screenshots of rendered screens (see its README). `Tools/jvm-check/play.sh <dir>` plays the real game one turn at a time (taps, slides, waits listed in `<dir>/actions.txt`) and saves a screenshot and a state summary, for playtesting without a phone.
 
 ## Project layout
 ```

@@ -76,6 +76,9 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 
 - **Story (round 3):** Goldcrest Bank's smug loan officer, Mr. Sterling, refuses the farmer a loan under the government's Rural Growth Scheme because the village "gives nothing back"; the farmer vows to make the valley the best farming village. Portrait dialogue: the opening in the bank's office, then the officer visits the village after each rebuild (rating C, then B) and at the concrete town approves the loan (50,000 coins) and the valley is named Best Farming Village. The player picks one of four farmer looks and types a name at the start. Older saves skip the scenes behind them; Settings replays the opening.
 
+## Agent playtest (round 3)
+- A Haiku agent played 30 turns through the play harness (`Tools/jvm-check/play.sh`). Fixed from its report: taps, holds and slides pick the frontmost tree, crop, rock or building under the finger (not the ground tile behind tall art); chop and mining progress shows as a bar over the tree or rock; tips fit the moment (harvest when something is ripe, else plant) and close by themselves after 10 seconds; the water quest counts all watering so far; a Barn or Silo upgrade says what it still needs; names in panels fit their rows instead of being cut at a fixed length; the quarry gate says the stones come from forest rocks.
+
 ## Later (not v1)
 - New areas opened by the village: a lake with fishing, a ranch with animals, an orchard hill, a beach.
 - Farm animals.

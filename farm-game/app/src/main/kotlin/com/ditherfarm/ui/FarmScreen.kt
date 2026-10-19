@@ -150,8 +150,12 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         recenter()
         weather.onThunder = { game.sfx.play("thunder") }
         scatterProps()
-        hud.tip("harvest", "Hold a ripe crop, then slide across the others to harvest them all.")
+        // The first tip fits the field: harvesting when something is ripe, else planting.
+        if (world.state.plots.any { it.owned && world.isReady(it) }) tipHarvest() else tipPlant()
     }
+
+    private fun tipHarvest() = hud.tip("harvest", "Tap a ripe crop to harvest it. Or hold one and slide across the others to harvest them all.")
+    private fun tipPlant() = hud.tip("plant", "Tap an empty plot to plant seeds. Watered crops grow faster.")
 
     private val treeKinds = listOf("pine", "oak", "birch", "maple", "pine", "oak")
 
@@ -423,6 +427,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val y = Iso.centerY(b.c, b.r).toFloat()
             if (!inView(x, y, 64f)) continue
             val art = "buildings/" + b.name.lowercase()
+            hitSprite(b.c, b.r, art, x, y)
             list.add(y) {
                 val bob = if (b == Building.ORDERS && world.state.orders.indices.any { world.canDeliver(it) }) sin(time * 6f) * 1.5f else 0f
                 if (game.assets.has(art)) {
@@ -440,6 +445,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val y = Iso.centerY(c, r).toFloat()
             val built = world.isBuilt(def.id)
             if (!built && def.unlockLevel > world.level) return@forEachIndexed
+            if (built) hitSprite(c, r, "buildings/${def.id}", x, y)
             list.add(y) {
                 val g = game.gfx
                 if (built) {
@@ -461,7 +467,9 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val top = Iso.y(c, r).toFloat()
             val cy = Iso.centerY(c, r).toFloat()
             if (!inView(x, top)) return@forEachIndexed
-            if (p.crop != null) list.add(cy) { drawPlot(i, p, x, cy) }
+            val crop = cropSprite(p) ?: return@forEachIndexed
+            hitSprite(c, r, crop, x, cy)
+            list.add(cy) { drawPlot(i, p, x, cy) }
         }
     }
 
@@ -492,12 +500,18 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         return world.plot(i).owned
     }
 
+    /** The crop art standing on plot [p], or null when nothing grows there. */
+    private fun cropSprite(p: PlotState): String? {
+        val crop = p.crop ?: return null
+        return if (p.needsClearing) "crops/${crop}_dead" else "crops/${crop}_${world.stage(p)}"
+    }
+
     /** The crop on plot [i] and its status marks; sorted by its base like everything standing. */
     private fun drawPlot(i: Int, p: PlotState, x: Float, cy: Float) {
         val g = game.gfx
         val crop = p.crop
         if (crop != null) {
-            val sprite = if (p.needsClearing) "crops/${crop}_dead" else "crops/${crop}_${world.stage(p)}"
+            val sprite = cropSprite(p)!!
             val pop = if (i == flashPlot && flashTime > 0) 1f + flashTime * 0.4f else 1f
             g.spriteScaled(sprite, x, cy, pop, 2f - pop)
             val bob = sin(time * 5f + i) * 1.5f
@@ -839,7 +853,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 fx.floatText("+${e.qty}", x, y - 26, Gfx.WHITE, icon = "items/${e.crop}")
                 if (e.quality != Quality.NORMAL) fx.rise(e.quality.icon!!, x + 10, y - 20)
                 flash(e.plot)
-                hud.tip("plant", "Tap an empty plot to plant seeds. Watered crops grow faster.")
+                if (world.state.plots.any { it.owned && world.isReady(it) }) tipHarvest() else tipPlant()
             }
             is WorldEvent.Planted -> {
                 val (x, y) = plotCenter(e.plot)

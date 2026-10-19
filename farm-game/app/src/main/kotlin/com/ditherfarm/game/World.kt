@@ -371,8 +371,17 @@ class World(val data: GameData, val state: GameState) {
         return t.unlockLevel <= state.level && t.cost.all { (k, v) -> if (k == "coins") state.coins >= v else count(k, anyQuality = true) >= v }
     }
 
+    /** Why [s] cannot be upgraded right now (the first thing missing), or null if it can. */
+    fun upgradeBlocker(s: Storage): String? {
+        val t = upgradeCost(s) ?: return "Fully upgraded"
+        if (t.unlockLevel > state.level) return "Upgrade unlocks at level ${t.unlockLevel}"
+        val missing = t.cost.entries.firstOrNull { (k, v) -> if (k == "coins") state.coins < v else count(k, anyQuality = true) < v } ?: return null
+        val (k, v) = missing
+        return if (k == "coins") "Upgrade needs $v coins" else "Upgrade needs $v ${data.name(k)} (have ${count(k, anyQuality = true)})"
+    }
+
     fun upgrade(s: Storage): Boolean {
-        if (!canUpgrade(s)) { events += WorldEvent.Blocked("Can't upgrade yet"); return false }
+        if (!canUpgrade(s)) { events += WorldEvent.Blocked(upgradeBlocker(s) ?: "Can't upgrade yet"); return false }
         val t = upgradeCost(s)!!
         t.cost.forEach { (k, v) -> if (k == "coins") state.coins -= v else removeAny(k, v) }
         if (s == Storage.BARN) state.barnLevel++ else state.siloLevel++

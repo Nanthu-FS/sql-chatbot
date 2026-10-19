@@ -14,7 +14,7 @@ val FEATS: Map<String, Feat> = mapOf(
     "tool_hoe_1" to Feat("planted", 30, "Plant 30 crops"),
     "tool_sickle_1" to Feat("harvested", 40, "Harvest 40 crops"),
     "tool_can_1" to Feat("watered", 40, "Water 40 crops"),
-    "quarry" to Feat("forest_stone", 8, "Pick up 8 stones in the forest"),
+    "quarry" to Feat("forest_stone", 8, "Pick up 8 stones from forest rocks"),
     "zone_B" to Feat("fells_zone_A", 12, "Chop 12 trees in the Edge Grove"),
     "zone_C" to Feat("fells_zone_B", 25, "Chop 25 trees in the second grove"),
     "zone_D" to Feat("fells_zone_C", 35, "Chop 35 trees in the third grove"),
@@ -80,7 +80,8 @@ private fun yes(b: Boolean) = (if (b) 1L else 0L) to 1L
 
 val QUESTS = listOf(
     Quest("plant", "Plant wheat on 6 plots", Pointer.FIELD, mapOf("coins" to 30, "xp" to 10), "planted", 6),
-    Quest("water", "Water the crops you planted", Pointer.FIELD, mapOf("coins" to 20, "xp" to 10), "watered", 6),
+    // Counts every crop watered so far: watering while planting counts, so the six new crops are enough.
+    Quest("water", "Water the crops you planted", Pointer.FIELD, mapOf("coins" to 20, "xp" to 10), check = { minOf(state.stat("watered"), 6L) to 6L }),
     Quest("harvest", "Harvest 6 crops", Pointer.FIELD, mapOf("coins" to 40, "xp" to 15), "harvested", 6),
     Quest("sell", "Sell 5 crops at the Market", Pointer.MARKET, mapOf("coins" to 30, "xp" to 10), "crops_sold", 5),
     Quest("chop", "Go to the forest and chop down 2 trees", Pointer.TREE, mapOf("coins" to 30, "xp" to 15), "fells", 2),
@@ -88,7 +89,7 @@ val QUESTS = listOf(
     Quest("trees5", "Chop down 5 trees in all", Pointer.TREE, mapOf("wood" to 5, "xp" to 15), check = { minOf(state.stat("fells"), 5L) to 5L }),
     Quest("axe", "Craft a Stone Axe at the Workbench", Pointer.WORKBENCH, mapOf("coins" to 50, "xp" to 25), check = { yes(toolTier(Tool.AXE) >= 1) }),
     Quest("order", "Deliver an order from the board", Pointer.ORDERS, mapOf("coins" to 40, "xp" to 20), "orders", 1),
-    Quest("quarry", "Pick up 8 stones in the forest to open the quarry", Pointer.ROCK, mapOf("coins" to 30, "xp" to 15), check = { yes(quarryOpen) }),
+    Quest("quarry", "Pick up 8 stones from forest rocks to open the quarry", Pointer.ROCK, mapOf("coins" to 30, "xp" to 15), check = { yes(quarryOpen) }),
     Quest("mine", "Break 5 rocks in the quarry", Pointer.MINE, mapOf("coins" to 50, "xp" to 20), "rocks_broken", 5),
     Quest("pickaxe", "Craft a Stone Pickaxe", Pointer.WORKBENCH, mapOf("coins" to 60, "xp" to 25), check = { yes(toolTier(Tool.PICKAXE) >= 1) }),
     Quest("windmill", "Build the Windmill", Pointer.WINDMILL, mapOf("coins" to 80, "xp" to 30), check = { yes(isBuilt("windmill")) }),

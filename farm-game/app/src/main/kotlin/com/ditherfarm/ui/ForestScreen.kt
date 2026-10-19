@@ -9,6 +9,7 @@ import com.ditherfarm.engine.Noise
 import com.ditherfarm.engine.Terrain
 import com.ditherfarm.game.ForestLayout
 import com.ditherfarm.game.Season
+import com.ditherfarm.game.ForestSpot
 import com.ditherfarm.game.SpotKind
 import com.ditherfarm.game.Pointer
 import com.ditherfarm.game.pointer
@@ -184,6 +185,20 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         return if (game.assets.has(v)) v else base
     }
 
+    /** The art standing on spot [sp] right now (what a tap on it should reach), or null if none. */
+    private fun spotSprite(sp: ForestSpot, open: Boolean): String? {
+        if (!open) return if (sp.kind != SpotKind.SLOT) pick("trees/brambles", "deco/bush_berry") else null
+        val st = world.spot(sp.index)
+        return when (sp.kind) {
+            SpotKind.TREE -> st.tree?.let { t -> world.treeStage(sp.index).takeIf { it != TreeStage.EMPTY }?.let { treeSprite(t, it) } }
+            SpotKind.BUSH -> if (st.stock > 0) pick("trees/berry_bush", "deco/bush_berry") else pick("trees/berry_bush_empty", "deco/bush")
+            SpotKind.APPLE -> if (st.stock > 0) pick("trees/apple_tree", "deco/bush_berry") else pick("trees/apple_tree_empty", "deco/bush")
+            SpotKind.MUSHROOM -> if (st.stock > 0) pick("trees/mushroom_spot", "deco/mushrooms") else null
+            SpotKind.ROCK -> if (st.stock > 0) "deco/rock_big" else null
+            SpotKind.SLOT -> null
+        }
+    }
+
     private fun treeSprite(tree: String, stage: TreeStage): String = when (stage) {
         TreeStage.SAPLING -> "trees/${tree}_sapling"
         TreeStage.YOUNG -> "trees/${tree}_young"
@@ -223,6 +238,7 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
             // Off-screen spots add nothing: their closures and draws would all land outside the buffer.
             if (!inView(x, y, SPOT_PAD)) continue
             val open = world.zoneOpen(sp.zone)
+            spotSprite(sp, open)?.let { hitSprite(sp.c, sp.r, it, x, y) }
             list.add(y) {
                 if (!open) {
                     if (sp.kind != SpotKind.SLOT) g.sprite(if (game.assets.has("trees/brambles")) "trees/brambles" else "deco/bush_berry", x, y)
@@ -242,11 +258,10 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
                             g.sprite("items/honey", x, y - 74 + sin(time * 4f) * 2f)
                             if ((time * 3).toInt() % 2 == 0) g.rect((x + 10 + sin(time * 7f) * 5).toInt(), (y - 30 + sin(time * 5f) * 3).toInt(), (x + 11 + sin(time * 7f) * 5).toInt(), (y - 29 + sin(time * 5f) * 3).toInt(), Gfx.GOLD)
                         }
+                        // Chop progress over the crown, so it is seen while swinging.
                         if (st.damage > 0) {
                             val hp = world.treeHp(sp.index)
-                            val w = 16
-                            g.rect((x - w / 2).toInt(), (y + 3).toInt(), (x + w / 2).toInt(), (y + 5).toInt(), 0xFF181425.toInt())
-                            g.rect((x - w / 2).toInt(), (y + 3).toInt(), (x - w / 2 + w * (hp - st.damage) / hp).toInt(), (y + 5).toInt(), 0xFF63C74D.toInt())
+                            drawHpBar(g, x, y - spriteTop(treeSprite(tree, stage)) - 2, hp - st.damage, hp)
                         }
                     }
                     SpotKind.BUSH -> g.sprite(if (st.stock > 0) pick("trees/berry_bush", "deco/bush_berry") else pick("trees/berry_bush_empty", "deco/bush"), x, y)
