@@ -38,6 +38,8 @@ class Game(val host: Host) {
     val router = GestureRouter(slopPx = 10f * host.density)
     val engine = Engine(gfx, router)
     val sfx = Sfx(host.assetSource.assetManager)
+    /** The farm pet on screen (it follows the player from screen to screen). */
+    val pet = com.ditherfarm.ui.PetWalker(this)
     val haptics = Haptics(host.context)
     val soundscape = Soundscape(host.assetSource.assetManager)
     val store = SaveStore(host.saveDir)

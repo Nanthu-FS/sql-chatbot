@@ -97,6 +97,10 @@ import com.ditherfarm.game.workerAppetite
 import com.ditherfarm.game.workerLevelCost
 import com.ditherfarm.game.workerOn
 import com.ditherfarm.game.workerPlotsPerMinute
+import com.ditherfarm.game.PET_NAME_MAX
+import com.ditherfarm.game.PetKind
+import com.ditherfarm.game.adoptPet
+import com.ditherfarm.game.petOffered
 import com.ditherfarm.game.BRANCHES
 import com.ditherfarm.game.TONICS
 import com.ditherfarm.game.learn
@@ -962,6 +966,60 @@ class Panels(private val game: Game, private val hud: Hud) {
         val reward = "+$coins COINS  +$xp XP" + items.entries.joinToString("") { (k, v) -> "  +$v ${world.data.name(k).uppercase()}" }
         g.text(reward.take(36), w / 2, y + 76, Gfx.INK, align = 0, outline = 0, shadow = false)
         if (ui.button("gift-claim", w / 2 - 30, y + ph - 24, 60, 16, "CLAIM", style = "gold")) { world.claimGift(today); return false }
+        return true
+    }
+
+    // ------------------------------------------------------------------ pet
+    private var petPick: PetKind? = null
+    private val petName = StringBuilder()
+
+    /** Two strays turned up: keep one, name it (a suggested name is filled in), then ADOPT. */
+    fun pet(): Boolean {
+        if (!world.petOffered) return false
+        val w = game.engine.w
+        val pw = w - 16
+        val ph = 300
+        val x = 8
+        val y = (game.engine.h - ph) / 2
+        ui.modal(x, y, pw, ph)
+        ui.panel(x, y, pw, ph)
+        g.text("TWO STRAYS TURNED UP!", w / 2, y + 8, Gfx.GOLD, align = 0)
+        g.text("KEEP ONE. IT FOLLOWS YOU", w / 2, y + 22, Gfx.INK, align = 0, outline = 0, shadow = false)
+        g.text("AND BRINGS A GIFT EACH DAY.", w / 2, y + 32, Gfx.INK, align = 0, outline = 0, shadow = false)
+        PetKind.entries.forEachIndexed { i, kind ->
+            val cx = w / 2 + if (i == 0) -50 else 50
+            val cy = y + 76
+            g.slice9(if (petPick == kind) "ui/slot_sel" else "ui/slot", cx - 36, cy - 30, cx + 36, cy + 30, 4)
+            g.spriteScaled("pets/${kind.id}_sit", cx.toFloat(), (cy + 16).toFloat(), 3f, 3f)
+            g.text(kind.name, cx, cy + 34, Gfx.INK, align = 0, outline = 0, shadow = false)
+            if (ui.clickable("pet-$i", cx - 36, cy - 30, 72, 60)) {
+                val other = PetKind.entries.first { it != kind }.defaultName
+                if (petName.isEmpty() || petName.toString() == other) { petName.setLength(0); petName.append(kind.defaultName) }
+                petPick = kind
+            }
+        }
+        // Name field and key grid (as in the story's name entry).
+        val ny = y + 124
+        ui.pill(w / 2 - 70, ny, 140, 16)
+        g.text(if (petName.isEmpty()) "PICK ONE, THEN NAME IT" else "$petName", w / 2, ny + 4, if (petName.isEmpty()) Gfx.GREY else Gfx.WHITE, align = 0)
+        val kw = 22
+        StoryPanel.KEYS.forEachIndexed { r, row ->
+            val rowW = row.length * (kw + 2) + if (r == 2) 2 * (kw + 2) else 0
+            var kx = (w - rowW) / 2
+            val ky = ny + 24 + r * 22
+            for (ch in row) {
+                if (ui.button("pkey-$ch", kx, ky, kw, 20, ch.toString(), style = "wood") && petName.length < PET_NAME_MAX) petName.append(ch)
+                kx += kw + 2
+            }
+            if (r == 2 && ui.button("pkey-del", kx, ky, kw * 2 + 2, 20, "DEL", style = "red") && petName.isNotEmpty()) petName.setLength(petName.length - 1)
+        }
+        val ok = petPick != null && petName.isNotBlank()
+        if (ui.button("pet-later", x + 12, y + ph - 28, 70, 18, "LATER", style = "grey")) return false
+        if (ui.button("pet-adopt", x + pw - 112, y + ph - 28, 100, 18, "ADOPT", style = if (ok) "gold" else "grey") && ok) {
+            world.adoptPet(petPick!!, petName.toString())
+            petPick = null; petName.setLength(0)
+            return false
+        }
         return true
     }
 

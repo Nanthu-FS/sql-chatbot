@@ -141,6 +141,8 @@ class GameState(var seed: Long) {
     /** Hired farmhands by id, the truck and when the harvester next does its round. */
     val workers = LinkedHashMap<String, WorkerState>()
     var truck = TruckState()
+    /** The farm pet, once adopted (Pet.kt). */
+    var pet = PetState()
     var harvesterNext = 0.0
     /** Timed building id → game minute of its next run, and whether it is blocked (tray full). */
     val shedNext = HashMap<String, Double>()
@@ -218,6 +220,7 @@ class GameState(var seed: Long) {
         put("fields", JSONArray().apply { fields.forEach { put(it.toJson()) } })
         put("workers", JSONArray().apply { workers.values.forEach { put(it.toJson()) } })
         put("truck", truck.toJson())
+        put("pet", pet.toJson())
         put("harvesterNext", harvesterNext)
         put("shedNext", JSONObject(shedNext as Map<*, *>))
         put("achievements", JSONObject(achievements as Map<*, *>))
@@ -281,6 +284,7 @@ class GameState(var seed: Long) {
             o.optJSONArray("fields")?.objects()?.forEach { fields += FieldState.fromJson(it) }
             o.optJSONArray("workers")?.objects()?.forEach { val w = WorkerState.fromJson(it); workers[w.id] = w }
             o.optJSONObject("truck")?.let { truck = TruckState.fromJson(it) }
+            o.optJSONObject("pet")?.let { pet = PetState.fromJson(it) }
             harvesterNext = o.optDouble("harvesterNext", 0.0)
             o.optJSONObject("shedNext")?.let { m -> m.keys().forEach { shedNext[it] = m.getDouble(it) } }
             o.optJSONObject("achievements")?.toIntMap()?.forEach { (k, v) -> achievements[k] = v }

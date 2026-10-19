@@ -87,7 +87,8 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 ## Round 5 features (owner picks)
 - **Farmhands:** one visit tends a whole plot (harvest, clear, replant, water), every 6 real seconds at level 1 and about 10% faster each level (was 12 s for a single action). A level-1 farmhand keeps a 16-plot field in about 1.6 minutes (was about 10). The panel shows PLOTS/MIN.
 - **Energy:** the bar is 50% bigger at every level (150 at level 1, 370 at level 30) and refills from empty in 45 real minutes (was 90), online or away.
-- Next, one at a time with an agent playtest each: a pet (the player picks a dog or a cat at level 4 and names it; it follows them between screens and brings a small daily gift), then farm decorations (bought with coins, placed on free grass, some with a small bonus).
+- **Pet:** at level 4 two strays (a tan farm dog and an orange tabby cat, both in the farm's red collar, hand-pixeled in `pixel/pets.py`) wait by the well, and the adoption panel opens once by itself; the player keeps one and names it (BISCUIT or MISO is filled in). The pet trots after the view on the farm, forest and mine and sits when it catches up. Each dawn it finds one gift (1-3 of: seeds the player can grow, stone, wood, fibre or coins; 8% a quartz, amethyst or old coin), shown by the ripe-crop sparkle over its head, which waits (it does not stack) until tapped; a tap with nothing waiting gets a wag and hearts. Adoption brings a welcome gift.
+- Next: farm decorations (bought with coins, placed on free grass, some with a small bonus).
 
 ## Later (not v1)
 - New areas opened by the village: a lake with fishing, a ranch with animals, an orchard hill, a beach.

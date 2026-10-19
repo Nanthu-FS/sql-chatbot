@@ -40,6 +40,8 @@ sealed class WorldEvent {
     data class TreePlanted(val spot: Int, val tree: String) : WorldEvent()
     data class ZoneUnlocked(val zone: String) : WorldEvent()
     data class BirdNest(val spot: Int, val item: String, val qty: Int) : WorldEvent()
+    data class PetAdopted(val kind: PetKind, val name: String) : WorldEvent()
+    data class PetGift(val items: Map<String, Int>) : WorldEvent()
     data class Mined(val cell: Int, val quarry: Boolean, val node: String, val crit: Boolean, val hpLeft: Int) : WorldEvent()
     data class RockBroken(val cell: Int, val quarry: Boolean, val node: String, val drops: Map<String, Int>, val xp: Int) : WorldEvent()
     data class HollowKnock(val cell: Int, val onLadder: Boolean) : WorldEvent()
@@ -204,6 +206,7 @@ class World(val data: GameData, val state: GameState) {
         for (k in state.glut.keys.toList()) state.glut[k] = state.glut[k]!! * 0.5
         forestDawn(day)
         workersDawn()
+        petDawn(day)
         festivalDawn()
         runMarketCart()
         events += WorldEvent.DayStarted(day, state.weather)

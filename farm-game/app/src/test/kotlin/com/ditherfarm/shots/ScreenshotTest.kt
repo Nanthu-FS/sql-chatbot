@@ -10,6 +10,7 @@ import com.ditherfarm.game.GameTime
 import com.ditherfarm.game.Season
 import com.ditherfarm.game.Weather
 import com.ditherfarm.game.addCartRule
+import com.ditherfarm.game.adoptPet
 import com.ditherfarm.game.build
 import com.ditherfarm.game.buyBlock
 import com.ditherfarm.game.buildingsOn
@@ -489,6 +490,22 @@ class ScreenshotTest {
             g.farm.centerOnTile(13, 12)
         }, size = 540 to 585, zoom = 2)
     }
+    @Test fun petAdoption() {
+        render("panel_pet", setup = { g ->
+            toLevel(g, com.ditherfarm.game.PET_LEVEL)
+            g.world.events.clear()
+            g.farm.showPanel("pet")
+        })
+    }
+
+    @Test fun farmPet() {
+        render("farm_pet", seconds = 2f, setup = { g ->
+            toLevel(g, com.ditherfarm.game.PET_LEVEL)
+            g.world.adoptPet(com.ditherfarm.game.PetKind.DOG, "Biscuit")
+            g.world.events.clear()
+        }, zoom = 2)
+    }
+
     @Test fun skillsPanel() {
         render("panel_skills", setup = { g ->
             toLevel(g, 12)

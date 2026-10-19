@@ -3557,6 +3557,46 @@
   "ay": 22,
   "bh": 25
  },
+ "pets/cat_ne_0": {
+  "ax": 8,
+  "ay": 10
+ },
+ "pets/cat_ne_1": {
+  "ax": 8,
+  "ay": 10
+ },
+ "pets/cat_se_0": {
+  "ax": 8,
+  "ay": 10
+ },
+ "pets/cat_se_1": {
+  "ax": 8,
+  "ay": 10
+ },
+ "pets/cat_sit": {
+  "ax": 7,
+  "ay": 11
+ },
+ "pets/dog_ne_0": {
+  "ax": 8,
+  "ay": 10
+ },
+ "pets/dog_ne_1": {
+  "ax": 8,
+  "ay": 10
+ },
+ "pets/dog_se_0": {
+  "ax": 8,
+  "ay": 10
+ },
+ "pets/dog_se_1": {
+  "ax": 8,
+  "ay": 10
+ },
+ "pets/dog_sit": {
+  "ax": 7,
+  "ay": 11
+ },
  "portraits/bram": {
   "ax": 17,
   "ay": 17,

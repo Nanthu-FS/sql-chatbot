@@ -130,6 +130,9 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
 
     /** World-pixel tap before tile picking (e.g. corners between plots); return true if handled. */
     open fun onWorldTap(wx: Float, wy: Float): Boolean = false
+    /** A toast from the pet (its gift, a wag); the adoption panel when the strays are tapped. */
+    open fun petToast(msg: String) {}
+    open fun openPetPanel() {}
     open fun onTileTap(c: Int, r: Int) {}
     open fun onTileLongPress(c: Int, r: Int) {}
     open fun onTilePaint(c: Int, r: Int) {}
@@ -159,6 +162,7 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
         time += dt
         syncView()
         cam.update(dt)
+        game.pet.update(this, dt)
         fx.update(dt)
         weather.update(dt, game.engine.w, game.engine.h)
     }
@@ -187,6 +191,7 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
         drawGroundLayer(g)
         hitCount = 0
         collect(drawList)
+        game.pet.collect(drawList, this)
         drawList.flush()
         fx.drawWorld(g)
         g.inWorld = false
@@ -307,6 +312,7 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     override fun hudUp(x: Float, y: Float) = ui.pointerUp(x, y)
 
     override fun tap(x: Float, y: Float) {
+        game.pet.tap(this, cam.toWorldX(x), cam.toWorldY(y)) { openPetPanel() }?.let { if (it.isNotEmpty()) petToast(it); return }
         if (onWorldTap(cam.toWorldX(x), cam.toWorldY(y))) return
         if (tileAt(x, y)) onTileTap(pick[0], pick[1])
     }
