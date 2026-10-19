@@ -116,6 +116,7 @@ class ProgressionTest {
             check("recipe ${r.id}", r.inputs.keys, maxOf(r.unlockLevel, b.unlockLevel))
         }
         for (z in data.zones) check("zone ${z.id}", z.cost.keys, z.unlockLevel)
+        for (t in data.valley) for (b in t.bundles) check("village tier ${t.tier} bundle ${b.id}", b.items.keys, t.level)
         for (q in data.mine.quarry) check("quarry ${q.level}", q.cost.keys, q.unlockLevel)
         for (g in data.mine.gates) g.item?.let { check("gate ${g.floor}", listOf(it), g.level) }
         for (t in Tool.entries) for (tier in 1..3) {

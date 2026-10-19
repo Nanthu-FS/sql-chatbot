@@ -26,7 +26,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS }
 
     var panel = Panel.NONE
         private set
@@ -50,6 +50,7 @@ class Chrome(private val game: Game, private val here: Nav) {
         this.target = target
         game.sfx.play("open")
         if (p == Panel.MARKET) hud.tip("market", "Prices change every day. A green arrow means today is a good day to sell.")
+        if (p == Panel.VILLAGE) hud.tip("village", "Give goods and coins a bit at a time. When every bundle is done, rebuild the whole village.")
         if (p == Panel.SKILLS) hud.tip("skills", "Every level gives a skill point. Skills in a branch unlock in order.")
         if (p == Panel.WORKERS) hud.tip("workers", "Farmhands work one field each: they harvest into its crate, replant its crop and water. They eat crops from the Silo each morning.")
         if (p == Panel.WORKBENCH) hud.tip("workbench", "Crafts keep running while the app is closed. Tap the bench to collect.")
@@ -169,6 +170,8 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.FIELD -> panels.field(target?.toIntOrNull() ?: return)
             Panel.WORKERS -> panels.workers()
             Panel.SKILLS -> panels.skills(atBench = target == "bench")
+            Panel.VILLAGE -> panels.village()
+            Panel.SEEDS -> panels.seeds()
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -223,6 +226,11 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.WorkerHired -> { game.sfx.play("unlock"); game.haptics.heavy(); hud.toast("${world.state.workers[e.worker]?.name} joined your farm!") }
             is WorldEvent.WorkerLevelUp -> { game.sfx.play("levelup"); hud.toast("${world.state.workers[e.worker]?.name} reached level ${e.level}") }
             is WorldEvent.WorkerHungry -> hud.toast("${world.state.workers[e.worker]?.name} is hungry: put crops in the Silo")
+            is WorldEvent.Donated -> { game.haptics.tick(); hud.toast(if (e.bundle == "coins") "${e.units} coins for the village. Thank you!" else "${e.units} given to the village. Thank you!") }
+            is WorldEvent.VillageRebuilt -> {
+                game.sfx.play("levelup"); game.haptics.heavy()
+                hud.toast("The village is rebuilt: ${com.ditherfarm.game.VILLAGE_TIERS[e.tier]}!")
+            }
             is WorldEvent.FeatDone -> {
                 game.sfx.play("unlock"); game.haptics.heavy()
                 val k = e.key

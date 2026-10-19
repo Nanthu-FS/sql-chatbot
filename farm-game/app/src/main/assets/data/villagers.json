@@ -1,5 +1,5 @@
 {
- "_doc": "Villagers who post orders (GAME_DESIGN \u00a714).",
+ "_doc": "Villagers who post orders (GAME_DESIGN §14).",
  "villagers": [
   {
    "id": "mara",
@@ -102,6 +102,48 @@
     "honey",
     "cabbage_pickles",
     "amethyst"
+   ]
+  },
+  {
+   "id": "rook",
+   "name": "Rook",
+   "role": "Blacksmith",
+   "unlock": 5,
+   "tier": 1,
+   "favorites": [
+    "iron_bar",
+    "copper_bar",
+    "coal",
+    "stone",
+    "hardwood"
+   ]
+  },
+  {
+   "id": "willa",
+   "name": "Willa",
+   "role": "Carpenter",
+   "unlock": 10,
+   "tier": 2,
+   "favorites": [
+    "plank",
+    "beam",
+    "hardwood",
+    "nails",
+    "wood"
+   ]
+  },
+  {
+   "id": "coco",
+   "name": "Coco",
+   "role": "Cafe owner",
+   "unlock": 15,
+   "tier": 3,
+   "favorites": [
+    "bread",
+    "pumpkin_pie",
+    "veggie_stew",
+    "strawberry_jam",
+    "carrot_juice"
    ]
   }
  ]

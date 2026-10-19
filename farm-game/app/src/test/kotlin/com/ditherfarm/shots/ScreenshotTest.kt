@@ -14,6 +14,7 @@ import com.ditherfarm.game.build
 import com.ditherfarm.game.buyBlock
 import com.ditherfarm.game.buildingsOn
 import com.ditherfarm.game.learn
+import com.ditherfarm.game.donate
 import com.ditherfarm.game.knowEverything
 import com.ditherfarm.game.assign
 import com.ditherfarm.game.crate
@@ -446,5 +447,23 @@ class ScreenshotTest {
             g.world.add("energy_brew", 2)
             g.farm.showPanel("tonics")
         })
+    }
+    /** The village panel and the village at its last tier (concrete town, paved streets, shops). */
+    @Test fun villagePanel() {
+        render("panel_village", setup = { g ->
+            toLevel(g, 6)
+            g.world.add("stone", 60); g.world.donate("stone")
+            g.world.events.clear()
+            g.farm.showPanel("village")
+        })
+    }
+
+    @Test fun villageTiers() {
+        for (t in 0..3) render("village_tier_$t", seconds = 0.4f, setup = { g ->
+            toLevel(g, 16)
+            g.world.state.villageTier = t
+            g.farm.enter()
+            g.farm.centerOnTile(11, 28)
+        }, zoom = 2)
     }
 }

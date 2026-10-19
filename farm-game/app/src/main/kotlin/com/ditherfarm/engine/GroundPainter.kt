@@ -33,7 +33,7 @@ object Noise {
     }
 }
 
-enum class Terrain { NONE, GRASS, DIRT, PATH, SAND, WATER, FOREST, STONE, CAVE }
+enum class Terrain { NONE, GRASS, DIRT, PATH, SAND, WATER, FOREST, STONE, CAVE, GRAVEL, COBBLE, PAVED }
 
 /**
  * Paints a whole isometric map into one bitmap, pixel by pixel: dithered colour
@@ -77,6 +77,7 @@ class GroundPainter(private val seed: Int = 7) {
             val t = ter[y * w + x] ?: continue
             val ramp = ramps.of(t)
             val wx = (x - originX).toFloat()
+            if (t == Terrain.COBBLE || t == Terrain.PAVED) { px[y * w + x] = laid(t, wx, y.toFloat(), ramp); continue }
             val n = Noise.fbm(wx * 0.045f, y * 0.09f, seed + t.ordinal * 17) * 0.85f + Noise.rand(x, y, seed) * 0.15f
             val f = n * (ramp.size - 1) * 1.25f - 0.12f
             val i = floor(f).toInt().coerceIn(0, ramp.size - 1)
@@ -173,6 +174,9 @@ class GroundPainter(private val seed: Int = 7) {
             Terrain.WATER -> intArrayOf(0xFF124E89.toInt(), 0xFF0099DB.toInt(), 0xFF0099DB.toInt(), 0xFF2CE8F5.toInt())
             Terrain.STONE -> intArrayOf(0xFF3A4466.toInt(), 0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
             Terrain.CAVE -> intArrayOf(0xFF181425.toInt(), 0xFF262B44.toInt(), 0xFF3A4466.toInt(), 0xFF5A6988.toInt())
+            Terrain.GRAVEL -> intArrayOf(0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
+            Terrain.COBBLE -> intArrayOf(0xFF3A4466.toInt(), 0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
+            Terrain.PAVED -> intArrayOf(0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
             Terrain.NONE -> intArrayOf(0)
         }
 
@@ -197,6 +201,8 @@ class GroundPainter(private val seed: Int = 7) {
                     roll < 0.70f -> pebble(0xFF5A6988.toInt(), 0xFF8B9BB4.toInt())
                     else -> null
                 }
+                Terrain.GRAVEL -> if (roll < 0.6f) pebble(dark, of(t).last()) else null
+                Terrain.COBBLE, Terrain.PAVED -> null
                 Terrain.PATH, Terrain.DIRT, Terrain.SAND -> when {
                     roll < 0.35f -> pebble(dark, of(t).last())
                     roll < 0.5f -> listOf(Triple(0, 0, dark), Triple(1, 0, dark))
@@ -224,6 +230,30 @@ class GroundPainter(private val seed: Int = 7) {
         private fun leaf(a: Int, b: Int) = listOf(Triple(0, 0, a), Triple(1, 0, b))
         private fun crack(a: Int) = listOf(Triple(0, 0, a), Triple(1, 1, a), Triple(2, 1, a), Triple(3, 2, a))
         private fun mushroom() = listOf(Triple(0, 0, 0xFFE43B44.toInt()), Triple(1, 0, 0xFFE43B44.toInt()), Triple(0, 1, 0xFFEAD4AA.toInt()))
+    }
+
+    /**
+     * Laid surfaces follow the tile grid instead of noise: cobbles three to a tile edge with dark
+     * joints and a lit corner, paving slabs two to a tile edge with thin seams.
+     */
+    private fun laid(t: Terrain, wx: Float, wy: Float, ramp: IntArray): Int {
+        val c = (wy / Iso.HH + wx / Iso.HW) / 2f
+        val r = (wy / Iso.HH - wx / Iso.HW) / 2f
+        return if (t == Terrain.COBBLE) {
+            val row = floor(r * 3f).toInt()
+            val fa = (c * 3f + if (row % 2 == 0) 0f else 0.5f).let { it - floor(it) }
+            val fb = r * 3f - floor(r * 3f)
+            val stone = floor(c * 3f + if (row % 2 == 0) 0f else 0.5f).toInt() * 31 + row * 17
+            when {
+                fa < 0.14f || fb < 0.16f -> ramp[0]
+                fa > 0.7f && fb > 0.62f -> ramp[3]
+                else -> if (Noise.rand(stone, row, seed) > 0.45f) ramp[2] else ramp[1]
+            }
+        } else {
+            val fa = c * 2f - floor(c * 2f)
+            val fb = r * 2f - floor(r * 2f)
+            if (fa < 0.06f || fb < 0.06f) ramp[0] else if (Noise.rand(wx.toInt(), wy.toInt(), seed) > 0.85f) ramp[2] else ramp[1]
+        }
     }
 
     companion object {

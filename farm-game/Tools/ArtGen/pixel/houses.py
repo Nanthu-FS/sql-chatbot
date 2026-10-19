@@ -91,14 +91,39 @@ def shop(kind):
     raise ValueError(kind)
 
 
+# Villagers who move in with the tiers: portraits recoloured from existing ones.
+NEWCOMERS = {
+    "rook": ("bram", {"red": "slate", "red_d": "slate_d", "pink": "grey", "brown": "ink", "brown_l": "brown_d"}),
+    "willa": ("juniper", {"green": "amber", "green_d": "clay", "green_dd": "rust", "blue": "green", "blue_d": "green_d"}),
+    "coco": ("sela", {"purple": "red_d", "magenta": "pink", "blue": "magenta", "blue_d": "purple", "cyan": "pink"}),
+}
+
+
+def recolour(art, pt):
+    from PIL import Image
+    manifest = json.load(open(os.path.join(art, "manifest.json")))
+    for new_id, (src, swap) in NEWCOMERS.items():
+        im = Image.open(os.path.join(art, "portraits", src + ".png")).convert("RGBA")
+        px = im.load()
+        for y in range(im.height):
+            for x in range(im.width):
+                name = RGB.get(px[x, y][:3])
+                if px[x, y][3] and name in swap:
+                    px[x, y] = E[swap[name]]
+        p = manifest["portraits/" + src]
+        pt.save(new_id, im, p["ax"], p["ay"])
+
+
 def main():
     sp = Sprites(sys.argv[1], "buildings")
+    pt = Sprites(sys.argv[1], "portraits")
+    recolour(sys.argv[1], pt)
     for t, tier in enumerate(TIERS):
         for i, (_, spec) in enumerate(T.STYLES[tier]):
             emit_with_night(sp, f"house_{t}_{'abc'[i]}", lambda spec=spec: T.house(spec))
     for kind in ("seed", "smith", "carpenter", "cafe"):
         emit_with_night(sp, f"shop_{kind}", lambda kind=kind: shop(kind))
-    print(json.dumps(sp.pivots))
+    print(json.dumps({**sp.pivots, **pt.pivots}))
 
 
 main()

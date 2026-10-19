@@ -18,6 +18,7 @@ class ScaleTest {
     private val bands = listOf(
         Band("people/", 22, 27, "a farmhand is a little over half a cottage"),
         Band("buildings/cottage_", 38, 48, "the reference house"),
+        Band("buildings/(house_|shop_)", 34, 52, "village houses and shops: cottage-sized, two storeys a little taller"),
         Band("buildings/barn", 60, 72, "the barn is the biggest building"),
         Band("buildings/(silo|windmill)", 50, 66, "tall farm buildings"),
         Band("buildings/drill_rig", 36, 52, "a derrick, taller than a cottage"),

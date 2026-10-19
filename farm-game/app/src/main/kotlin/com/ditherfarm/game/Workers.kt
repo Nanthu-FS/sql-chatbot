@@ -225,7 +225,7 @@ internal fun World.runHarvester(): Int {
         for (k in crate.keys.toList()) {
             var n = crate[k] ?: 0
             while (n > 0) {
-                val ok = if (toTruck) !state.truck.away && truckLoad() < TRUCK_CAP else hasRoom(k)
+                val ok = if (toTruck) !state.truck.away && truckLoad() < truckCap else hasRoom(k)
                 if (!ok) break
                 if (toTruck) state.truck.load[k] = (state.truck.load[k] ?: 0) + 1 else add(k, 1)
                 n--; moved++

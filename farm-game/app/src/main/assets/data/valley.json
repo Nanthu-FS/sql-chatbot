@@ -1,0 +1,32 @@
+{
+ "_doc": "Restore the valley (Docs/DECISIONS.md, round 2). Each tier rebuilds the whole village: bundles of goods plus coins, donated a bit at a time, from the given level.",
+ "tiers": [
+  {
+   "tier": 1, "name": "Stone village", "level": 5, "coins": 3000,
+   "bundles": [
+    {"id": "stone", "name": "Quarry stone", "items": {"stone": 120, "clay": 15}},
+    {"id": "wood", "name": "Builder's wood", "items": {"wood": 80, "plank": 30}},
+    {"id": "harvest", "name": "Harvest gift", "items": {"wheat": 60, "carrot": 40, "corn": 30}}
+   ],
+   "rewards": ["Seed shop opens", "Blacksmith: iron tools", "+1 order slot", "Rook moves in", "2 new houses"]
+  },
+  {
+   "tier": 2, "name": "Brick village", "level": 10, "coins": 12000,
+   "bundles": [
+    {"id": "kiln", "name": "Kiln works", "items": {"brick": 40, "coal": 40}},
+    {"id": "iron", "name": "Timber and iron", "items": {"plank": 80, "iron_bar": 15, "nails": 40}},
+    {"id": "basket", "name": "Market basket", "items": {"bread": 10, "potato": 50, "tomato": 40, "strawberry_jam": 5}}
+   ],
+   "rewards": ["Carpenter: buildings and fields cost 15% less", "Blacksmith: gold tools", "Orders pay 10% more", "Willa moves in", "2 new houses"]
+  },
+  {
+   "tier": 3, "name": "Concrete town", "level": 15, "coins": 40000,
+   "bundles": [
+    {"id": "glass", "name": "Glass and steel", "items": {"glass": 30, "iron_bar": 30, "gold_bar": 6}},
+    {"id": "works", "name": "Engineering", "items": {"gear": 15, "beam": 15, "cooking_oil": 8}},
+    {"id": "feast", "name": "Town feast", "items": {"pumpkin_pie": 6, "veggie_stew": 8, "carrot_juice": 8}}
+   ],
+   "rewards": ["Cafe: dishes sell for 25% more", "The truck carries 50% more", "+10% XP", "Coco moves in", "2 new houses"]
+  }
+ ]
+}

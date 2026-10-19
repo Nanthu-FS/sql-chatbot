@@ -20,20 +20,10 @@
     "wb_scarecrow",
     "wb_lightning_rod",
     "tool_hoe_1",
-    "tool_hoe_2",
-    "tool_hoe_3",
     "tool_axe_1",
-    "tool_axe_2",
-    "tool_axe_3",
     "tool_pickaxe_1",
-    "tool_pickaxe_2",
-    "tool_pickaxe_3",
     "tool_sickle_1",
-    "tool_sickle_2",
-    "tool_sickle_3",
     "tool_can_1",
-    "tool_can_2",
-    "tool_can_3",
     "wb_energy_brew",
     "wb_growth_tonic",
     "wb_rain_totem",
@@ -415,6 +405,26 @@
    "queue": 1,
    "prebuilt": false,
    "sprite": "buildings/tree_nursery"
+  },
+  {
+   "id": "blacksmith",
+   "name": "Blacksmith",
+   "screen": "village",
+   "unlock": 1,
+   "cost": {},
+   "queue": 2,
+   "recipes": [
+    "tool_hoe_2",
+    "tool_hoe_3",
+    "tool_axe_2",
+    "tool_axe_3",
+    "tool_pickaxe_2",
+    "tool_pickaxe_3",
+    "tool_sickle_2",
+    "tool_sickle_3",
+    "tool_can_2",
+    "tool_can_3"
+   ]
   }
  ]
 }

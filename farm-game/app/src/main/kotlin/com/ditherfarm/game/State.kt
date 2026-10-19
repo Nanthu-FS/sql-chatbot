@@ -170,6 +170,9 @@ class GameState(var seed: Long) {
     var questIndex = 0
     var questBase = 0L
     val featsSeen = LinkedHashSet<String>()
+    /** Village tier reached (0 wooden huts .. 3 concrete town) and donations towards the next ("bundle:item", "coins"). */
+    var villageTier = 0
+    val donated = LinkedHashMap<String, Int>()
 
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
@@ -210,6 +213,7 @@ class GameState(var seed: Long) {
         put("cartRules", cartRulesToJson(cartRules))
         put("skills", JSONObject(skills as Map<*, *>)); put("luck", luckUntil)
         put("quest", questIndex); put("questBase", questBase); put("feats", JSONArray(featsSeen.toList()))
+        put("village", villageTier); put("donated", JSONObject(donated as Map<*, *>))
         put("cartLog", JSONArray().apply { cartLog.forEach { put(it.toJson()) } })
         put("events", JSONObject().apply {
             put("giftDay", giftDay); put("giftStreak", giftStreak); put("merchantDay", merchantDay)
@@ -266,6 +270,8 @@ class GameState(var seed: Long) {
             o.optJSONObject("skills")?.toIntMap()?.forEach { (k, v) -> skills[k] = v }
             luckUntil = o.optDouble("luck", 0.0)
             questIndex = o.optInt("quest", 0); questBase = o.optLong("questBase", 0L)
+            villageTier = o.optInt("village", 0)
+            o.optJSONObject("donated")?.toIntMap()?.forEach { (k, v) -> donated[k] = v }
             o.optJSONArray("feats")?.let { a -> for (k in 0 until a.length()) featsSeen += a.getString(k) }
             o.optJSONArray("cartLog")?.objects()?.forEach { cartLog += CartDay(it.getInt("day"), it.getInt("units"), it.getInt("coins")) }
             o.optJSONObject("events")?.let { e ->

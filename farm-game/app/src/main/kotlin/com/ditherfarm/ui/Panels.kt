@@ -67,7 +67,22 @@ import com.ditherfarm.game.gateBlocker
 import com.ditherfarm.game.CRATE_CAP
 import com.ditherfarm.game.FARMHANDS
 import com.ditherfarm.game.FieldLayout
-import com.ditherfarm.game.TRUCK_CAP
+import com.ditherfarm.game.truckCap
+import com.ditherfarm.game.SEED_PACK
+import com.ditherfarm.game.VILLAGE_TIERS
+import com.ditherfarm.game.buildCost
+import com.ditherfarm.game.buySeedPack
+import com.ditherfarm.game.bundleDone
+import com.ditherfarm.game.coinsDonated
+import com.ditherfarm.game.donate
+import com.ditherfarm.game.donateCoins
+import com.ditherfarm.game.donated
+import com.ditherfarm.game.nextTier
+import com.ditherfarm.game.rebuild
+import com.ditherfarm.game.rebuildBlocker
+import com.ditherfarm.game.seedPackPrice
+import com.ditherfarm.game.tierProgress
+import com.ditherfarm.game.villageTier
 import com.ditherfarm.game.WORKER_MAX_LEVEL
 import com.ditherfarm.game.assign
 import com.ditherfarm.game.blockOwned
@@ -493,7 +508,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val (x, y, pw, ph) = frame("BUILD ${def.name.uppercase()}", maxOf(92 + rows * 14, 24 + art.bmp.height + 46), pw = 210).toList()
         if (closeButton(x, y, pw)) return false
         g.sprite(art, (x + 30).toFloat(), (y + 22 + art.ay).toFloat())
-        def.cost.entries.forEachIndexed { i, (k, v) ->
+        world.buildCost(id).entries.forEachIndexed { i, (k, v) ->
             val ry = y + 26 + i * 14
             val have = if (k == "coins") world.state.coins else world.count(k, anyQuality = true)
             g.sprite(if (k == "coins") "icons/coin" else icon(k), (x + 62).toFloat(), (ry + 5).toFloat())
@@ -527,6 +542,12 @@ class Panels(private val game: Game, private val hud: Hud) {
                     g.slice9("ui/slot", x + 8, ry, x + pw - 12, ry + 34, 4)
                     g.sprite(toolIcon(tool.name.lowercase()), (x + 20).toFloat(), (ry + 12).toFloat())
                     g.text("GOLD ${tool.label.uppercase()} - MAX", x + 32, ry + 12, Gfx.INK, outline = 0, shadow = false)
+                } else if (next.building != "workbench") {
+                    // Iron and gold tools are forged at the village Blacksmith.
+                    g.slice9("ui/slot", x + 8, ry, x + pw - 12, ry + 34, 4)
+                    g.sprite(toolIcon(tool.name.lowercase()), (x + 20).toFloat(), (ry + 12).toFloat())
+                    g.text("NEXT ${tool.label.uppercase()}: AT THE BLACKSMITH", x + 32, ry + 6, Gfx.INK, outline = 0, shadow = false)
+                    g.text(if (world.villageTier >= 1) "IN THE VILLAGE" else "OPENS WITH THE STONE VILLAGE", x + 32, ry + 18, Gfx.GREY, outline = 0, shadow = false)
                 } else {
                     recipeRow(next, x + 8, ry, pw - 20, "UPGRADE")
                     g.text(world.data.tools.names[world.toolTier(tool)].uppercase(), x + 8 + pw - 20 - 104, ry + 4, Gfx.GREY, outline = 0, shadow = false)
@@ -886,6 +907,83 @@ class Panels(private val game: Game, private val hud: Hud) {
         return true
     }
 
+    // ------------------------------------------------------------------ the valley
+    /** Restore the valley: the next tier's bundles and coins, donated a bit at a time, then REBUILD. */
+    fun village(): Boolean {
+        val (x, y, pw, ph) = frame("RESTORE THE VALLEY", maxPanelH).toList()
+        if (closeButton(x, y, pw)) return false
+        val tier = world.villageTier
+        val next = world.nextTier
+        g.text("NOW: ${VILLAGE_TIERS[tier].uppercase()}", x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
+        if (next == null) {
+            g.text("THE TOWN IS FINISHED. THANK YOU!", x + pw / 2, y + ph / 2, 0xFF3E8948.toInt(), align = 0, outline = 0, shadow = false)
+            return true
+        }
+        g.text("NEXT: ${next.name.uppercase()}" + if (world.level < next.level) " (LEVEL ${next.level})" else "", x + 10, y + 33, 0xFF68386C.toInt(), outline = 0, shadow = false)
+        val (have, need) = world.tierProgress()
+        ui.bar(x + 10, y + 45, pw - 20, have.toFloat() / need, "gold", 8)
+        var ry = y + 60
+        for (b in next.bundles) {
+            val done = world.bundleDone(b)
+            val rowH = 40
+            g.slice9(if (done) "ui/slot_sel" else "ui/slot", x + 8, ry, x + pw - 8, ry + rowH - 4, 4)
+            g.text(b.name.uppercase() + if (done) "  DONE" else "", x + 14, ry + 4, if (done) 0xFF3E8948.toInt() else Gfx.INK, outline = 0, shadow = false)
+            var ix = x + 14
+            for ((k, n) in b.items) {
+                val got = minOf(world.donated(b.id, k), n)
+                g.sprite(icon(k), (ix + 6).toFloat(), (ry + 24).toFloat())
+                val label = "${Ui.compact(got)}/${Ui.compact(n)}"
+                g.text(label, ix + 14, ry + 20, if (got >= n) 0xFF3E8948.toInt() else Gfx.INK, outline = 0, shadow = false)
+                ix += 18 + g.textWidth(label)
+            }
+            val can = !done && b.items.any { (k, n) -> world.donated(b.id, k) < n && world.count(k, anyQuality = true) > 0 }
+            if (!done && ui.button("give-${b.id}", x + pw - 58, ry + 16, 46, 16, "GIVE", style = if (can) "green" else "grey")) {
+                if (world.donate(b.id) > 0) game.sfx.play("coin") else game.sfx.play("error")
+            }
+            ry += rowH
+        }
+        // Coins.
+        val coins = minOf(world.coinsDonated(), next.coins)
+        g.slice9(if (coins >= next.coins) "ui/slot_sel" else "ui/slot", x + 8, ry, x + pw - 8, ry + 28, 4)
+        g.sprite("icons/coin", (x + 20).toFloat(), (ry + 14).toFloat())
+        g.text("${Ui.compact(coins)}/${Ui.compact(next.coins)} COINS", x + 30, ry + 10, if (coins >= next.coins) 0xFF3E8948.toInt() else Gfx.INK, outline = 0, shadow = false)
+        if (coins < next.coins && ui.button("give-coins", x + pw - 58, ry + 6, 46, 16, "GIVE", style = if (world.state.coins > 0) "gold" else "grey")) {
+            if (world.donateCoins() > 0) game.sfx.play("coin")
+        }
+        ry += 34
+        g.text("BRINGS:", x + 10, ry, Gfx.GREY, outline = 0, shadow = false)
+        val lines = next.rewards.flatMap { hud.wrap(("- " + it).uppercase(), pw - 24) }
+        lines.forEachIndexed { i, l -> g.text(l, x + 12, ry + 11 + i * 10, Gfx.INK, outline = 0, shadow = false) }
+        val why = world.rebuildBlocker()
+        if (ui.button("rebuild", x + pw / 2 - 50, y + ph - 26, 100, 18, "REBUILD!", style = if (why == null) "gold" else "grey")) {
+            if (why != null) hud.toast(why) else if (world.rebuild()) return false
+        }
+        return true
+    }
+
+    /** The Seed shop: packs of ten seeds, 20% under the planting price. */
+    fun seeds(): Boolean {
+        val crops = world.data.crops.values.filter { world.cropUnlocked(it.id) }.sortedBy { it.unlockLevel }
+        val rowH = 26
+        val (x, y, pw, ph) = frame("SEED SHOP", minOf(maxPanelH, 40 + crops.size * rowH)).toList()
+        if (closeButton(x, y, pw)) return false
+        g.text("PACKS OF $SEED_PACK, 20% OFF", x + 10, y + 22, Gfx.GREY, outline = 0, shadow = false)
+        val top = y + 34
+        val off = ui.scroll("seed-list", x + 6, top, pw - 12, ph - 40, crops.size * rowH)
+        val c = g.canvas
+        c.save(); c.clipRect(x + 6, top, x + pw - 6, top + ph - 40)
+        crops.forEachIndexed { i, crop ->
+            val ry = top + i * rowH - off
+            g.sprite(icon(crop.seedItem), (x + 18).toFloat(), (ry + 11).toFloat())
+            g.text("${world.data.name(crop.id).uppercase()}  x${world.count(crop.seedItem)}", x + 30, ry + 2, Gfx.INK, outline = 0, shadow = false)
+            g.sprite("icons/coin", (x + 34).toFloat(), (ry + 17).toFloat())
+            g.text("${world.seedPackPrice(crop.id)}", x + 41, ry + 13, Gfx.INK, outline = 0, shadow = false)
+            if (ui.button("seedpack-${crop.id}", x + pw - 64, ry + 3, 52, 16, "BUY $SEED_PACK", style = if (world.state.coins >= world.seedPackPrice(crop.id)) "green" else "grey")) world.buySeedPack(crop.id)
+        }
+        c.restore()
+        return true
+    }
+
     // ------------------------------------------------------------------ skills
     /** The skill tree: a tab per branch, four skills each. Respec only at the Workbench ([atBench]). */
     fun skills(atBench: Boolean): Boolean {
@@ -935,7 +1033,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         if (closeButton(x, y, pw)) return false
         val t = world.state.truck
         val truck = if (t.away) world.truckSecondsLeft().toInt().let { "TRUCK IN TOWN, BACK IN %d:%02d".format(it / 60, it % 60) }
-            else "TRUCK ${world.truckLoad()}/$TRUCK_CAP" + if (t.lastTrip > 0) "  LAST TRIP ${t.lastTrip} COINS" else ""
+            else "TRUCK ${world.truckLoad()}/${world.truckCap}" + if (t.lastTrip > 0) "  LAST TRIP ${t.lastTrip} COINS" else ""
         g.text(truck, x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
         FARMHANDS.forEachIndexed { i, d ->
             val ry = y + 34 + i * rowH

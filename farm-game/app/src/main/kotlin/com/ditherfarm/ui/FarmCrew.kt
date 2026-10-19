@@ -4,7 +4,7 @@ import com.ditherfarm.Game
 import com.ditherfarm.engine.Gfx
 import com.ditherfarm.engine.Iso
 import com.ditherfarm.game.FieldLayout
-import com.ditherfarm.game.TRUCK_CAP
+import com.ditherfarm.game.truckCap
 import com.ditherfarm.game.TRUCK_TRIP_SECONDS
 import com.ditherfarm.game.WorkKind
 import com.ditherfarm.game.blockOwned
@@ -228,7 +228,7 @@ internal class FarmCrew(private val game: Game, private val screen: FarmScreen) 
             g.sprite(if (back) "vehicles/truck_ne_$f" else "vehicles/truck_se_$f", x, y, flipX = back)
             if (!t.away && load > 0) {
                 g.sprite("vehicles/truck_load", x, y)
-                val full = load >= TRUCK_CAP
+                val full = load >= world.truckCap
                 val bob = sin(time * 4f) * 1.5f
                 val top = screen.spriteTop("vehicles/truck_se_0")
                 g.sprite("icons/sell", x + 2, y - top - 4 + bob)

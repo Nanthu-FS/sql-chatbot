@@ -93,7 +93,7 @@ fun World.buildBlocker(id: String): String? {
         isBuilt(id) -> "Already built"
         def.unlockLevel > state.level -> "Unlocks at level ${def.unlockLevel}"
         featBlocker(id) != null -> "Blueprint: " + featBlocker(id)
-        !canAfford(def.cost) -> "Not enough materials"
+        !canAfford(buildCost(id)) -> "Not enough materials"
         else -> null
     }
 }
@@ -101,7 +101,7 @@ fun World.buildBlocker(id: String): String? {
 fun World.build(id: String): Boolean {
     buildBlocker(id)?.let { events += WorldEvent.Blocked(it); return false }
     val def = data.buildings.getValue(id)
-    pay(def.cost)
+    pay(buildCost(id))
     building(id).built = true
     if (id == "greenhouse") syncGreenhouse()
     state.bump("built")
@@ -124,6 +124,7 @@ fun World.recipeBlocker(r: RecipeDef): String? {
         !b.built -> "Build the ${def?.name ?: r.building} first"
         r.unlockLevel > state.level -> "Unlocks at level ${r.unlockLevel}"
         featBlocker(r.id) != null -> featBlocker(r.id)
+        r.building == "blacksmith" && r.id.endsWith("_3") && state.villageTier < 2 -> "Gold work comes with the brick village"
         b.jobs.size >= queueSize(r.building) -> "Queue is full"
         state.coins < r.coins -> "Not enough coins"
         r.inputs.any { (k, v) -> available(k) < v } -> "Missing ingredients"

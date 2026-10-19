@@ -38,7 +38,8 @@ class LevelDef(
 
 class StorageTier(val level: Int, val capacity: Int, val unlockLevel: Int, val cost: Map<String, Int>)
 
-class VillagerDef(val id: String, val name: String, val role: String, val unlockLevel: Int, val favorites: Set<String>)
+/** [tier]: the village tier they move in with (0 = from the start, by level). */
+class VillagerDef(val id: String, val name: String, val role: String, val unlockLevel: Int, val favorites: Set<String>, val tier: Int = 0)
 
 class TreeDef(
     val id: String,
@@ -84,6 +85,7 @@ class GameData(
     val tools: ToolTiers = ToolTiers(listOf(1, 2, 3, 6), listOf(0.05, 0.08, 0.12, 0.15), listOf("Wood", "Stone", "Iron", "Gold")),
     val mine: MineData = MineData.EMPTY,
     val goals: GoalsData = GoalsData.EMPTY,
+    val valley: List<TierDef> = emptyList(),
 ) {
     val maxLevel get() = levels.size
     val forestLayout: List<ForestSpot> by lazy { ForestLayout.build(zones) }
@@ -120,7 +122,7 @@ class GameData(
                 StorageTier(o.getInt("level"), o.getInt("capacity"), o.getInt("unlock"), o.getJSONObject("cost").toIntMap())
             }
             val villagers = JSONObject(read("villagers.json")).getJSONArray("villagers").objects().map { o ->
-                VillagerDef(o.getString("id"), o.getString("name"), o.getString("role"), o.getInt("unlock"), o.getJSONArray("favorites").strings().toSet())
+                VillagerDef(o.getString("id"), o.getString("name"), o.getString("role"), o.getInt("unlock"), o.getJSONArray("favorites").strings().toSet(), o.optInt("tier", 0))
             }
             val buildings = JSONObject(read("buildings.json")).getJSONArray("buildings").objects().map { o ->
                 BuildingDef(
@@ -160,7 +162,7 @@ class GameData(
                 (0 until t.getJSONArray("crit").length()).map { t.getJSONArray("crit").getDouble(it) },
                 t.getJSONArray("names").strings(),
             )
-            return GameData(crops, items, levels, tiers("barn"), tiers("silo"), villagers, buildings, recipes, trees, zones, tools, MineData.parse(read("mine.json")), GoalsData.parse(read("goals.json")))
+            return GameData(crops, items, levels, tiers("barn"), tiers("silo"), villagers, buildings, recipes, trees, zones, tools, MineData.parse(read("mine.json")), GoalsData.parse(read("goals.json")), TierDef.parse(read("valley.json")))
         }
     }
 }

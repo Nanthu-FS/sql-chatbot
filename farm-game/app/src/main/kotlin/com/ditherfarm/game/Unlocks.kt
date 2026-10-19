@@ -65,7 +65,7 @@ internal fun World.checkFeats() {
 
 // ------------------------------------------------------------------ Grandpa's notebook
 /** Where a quest's pointer points. */
-enum class Pointer { NONE, FIELD, MARKET, ORDERS, WORKBENCH, FOREST, TREE, ROCK, MINE, WINDMILL, FIELD_B, SAWMILL, BUNKHOUSE, TRUCK }
+enum class Pointer { NONE, FIELD, MARKET, ORDERS, WORKBENCH, FOREST, TREE, ROCK, MINE, WINDMILL, FIELD_B, SAWMILL, BUNKHOUSE, TRUCK, VILLAGE }
 
 /**
  * One guided step. A [stat] quest counts that stat from when the quest started (needs [n] more);
@@ -99,6 +99,8 @@ val QUESTS = listOf(
     Quest("hire", "Hire a farmhand at the bunkhouse", Pointer.BUNKHOUSE, mapOf("coins" to 100, "xp" to 30), check = { yes(state.workers.isNotEmpty()) }),
     Quest("assign", "Give your farmhand a field to work", Pointer.BUNKHOUSE, mapOf("coins" to 50, "xp" to 20), check = { yes(state.workers.values.any { it.field >= 0 }) }),
     Quest("truck", "Send the truck to town", Pointer.TRUCK, mapOf("coins" to 100, "xp" to 30), "truck_trips", 1),
+    Quest("donate", "Give goods to restore the village (tap a house)", Pointer.VILLAGE, mapOf("coins" to 100, "xp" to 30), "donated", 1),
+    Quest("stone_village", "Rebuild the village in stone", Pointer.VILLAGE, mapOf("coins" to 500, "xp" to 100), check = { yes(state.villageTier >= 1) }),
 )
 
 val World.quest: Quest? get() = QUESTS.getOrNull(state.questIndex)

@@ -32,6 +32,16 @@ object FarmMap {
     // Village along the Forest road.
     val ORDERS = 14 to 27
     val COTTAGES = listOf(14 to 24, 9 to 26, 14 to 31, 9 to 31)
+    /** Village house plots in the order they fill: four huts to start, two more with each tier. */
+    val HOUSES = COTTAGES + listOf(9 to 21, 14 to 34, 9 to 36, 15 to 28, 7 to 24, 7 to 29)
+    fun houseCount(tier: Int) = 4 + 2 * tier
+    /** Style of house k (a, b or c): the village mixes the three styles of its tier. */
+    fun houseStyle(k: Int) = "abc"[(k * 2 + k / 3) % 3]
+    // Shops the village tiers bring.
+    val SHOP_SEED = 16 to 35
+    val SHOP_SMITH = 8 to 33
+    val SHOP_CARPENTER = 16 to 38
+    val SHOP_CAFE = 9 to 18
     val SIGN_FOREST = 13 to 37
     val SIGN_MINE = 37 to 10
 
@@ -67,6 +77,9 @@ object FarmMap {
     fun isForestRoad(c: Int, r: Int) = (c == 11 || c == 12) && r >= 16
     fun isBridge(c: Int, r: Int) = isMineRoad(c, r) && isRiver(c, r)
     fun isRoad(c: Int, r: Int) = !isWall(c, r) && (isMainRoad(c, r) || isMineRoad(c, r) || isForestRoad(c, r) || farmyard(c, r))
+    /** The roads the village rebuilds (dirt, gravel, cobbles, paved); the farmyard stays packed dirt. */
+    fun isStreet(c: Int, r: Int) = !isWall(c, r) && (isMainRoad(c, r) || isMineRoad(c, r) || isForestRoad(c, r))
+    fun streetTerrain(tier: Int) = when (tier) { 0 -> Terrain.PATH; 1 -> Terrain.GRAVEL; 2 -> Terrain.COBBLE; else -> Terrain.PAVED }
 
     /** Packed dirt around the farmstead buildings. */
     private fun farmyard(c: Int, r: Int) = c in 10..16 && r in 10..14 && (c + r) % 7 != 0
@@ -77,9 +90,10 @@ object FarmMap {
 
     fun inPasture(c: Int, r: Int) = c in PASTURE_C && r in PASTURE_R
 
-    fun terrain(c: Int, r: Int, yard: (Int, Int) -> Boolean): Terrain = when {
+    fun terrain(c: Int, r: Int, tier: Int = 0, yard: (Int, Int) -> Boolean): Terrain = when {
         isWall(c, r) -> Terrain.FOREST
         isRiver(c, r) -> Terrain.WATER
+        isStreet(c, r) -> streetTerrain(tier)
         isRoad(c, r) -> Terrain.PATH
         isBank(c, r) -> Terrain.SAND
         yard(c, r) -> Terrain.DIRT

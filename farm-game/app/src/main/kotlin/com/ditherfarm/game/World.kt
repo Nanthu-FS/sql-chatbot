@@ -53,6 +53,8 @@ sealed class WorldEvent {
     data class WorkerHired(val worker: String) : WorldEvent()
     data class SkillLearned(val skill: String, val rank: Int) : WorldEvent()
     data class FeatDone(val key: String) : WorldEvent()
+    data class Donated(val bundle: String, val units: Int) : WorldEvent()
+    data class VillageRebuilt(val tier: Int) : WorldEvent()
     data class QuestDone(val quest: String) : WorldEvent()
     data class Respecced(val coins: Int) : WorldEvent()
     data class TonicUsed(val item: String) : WorldEvent()
@@ -273,8 +275,9 @@ class World(val data: GameData, val state: GameState) {
     }
 
     // -------------------------------------------------------------- progress
-    fun gainXp(n: Int) {
-        if (n <= 0) return
+    fun gainXp(amount: Int) {
+        if (amount <= 0) return
+        val n = (amount * xpMult()).roundToInt()
         state.xp += n
         events += WorldEvent.XpGained(n)
         while (state.level < data.maxLevel && state.xp >= data.level(state.level + 1).totalXp) {
@@ -533,7 +536,7 @@ class World(val data: GameData, val state: GameState) {
     }
 
     /** Collection page bonus: ores sell for 5% more once the Mine page is complete. */
-    private fun bonusMult(id: String) = sellSkillMult() * if (id.endsWith("_ore") && hasBonus("ore_price")) 1.05 else 1.0
+    private fun bonusMult(id: String) = sellSkillMult() * cafeMult(id) * if (id.endsWith("_ore") && hasBonus("ore_price")) 1.05 else 1.0
 
     /** Current sell price of one unit of [key] (quality included). */
     fun unitPrice(key: String): Int {
@@ -585,7 +588,7 @@ class World(val data: GameData, val state: GameState) {
 
     // ---------------------------------------------------------------- orders
     fun ensureOrderSlots() {
-        val want = data.level(state.level).orderSlots
+        val want = data.level(state.level).orderSlots + villageOrderSlots
         while (state.orders.size < want) state.orders.add(OrderSlot().apply { nextAt = state.minutes })
     }
 
@@ -601,7 +604,7 @@ class World(val data: GameData, val state: GameState) {
         }
     }
 
-    fun villagersUnlocked() = data.villagers.filter { it.unlockLevel <= state.level }
+    fun villagersUnlocked() = data.villagers.filter { it.unlockLevel <= state.level && it.tier <= state.villageTier }
 
     /** Builds a random order from items the player has obtained (GAME_DESIGN §14). */
     fun generateOrder(): Order? {
@@ -660,7 +663,7 @@ class World(val data: GameData, val state: GameState) {
         val o = s.order ?: return false
         if (!canDeliver(slot)) { events += WorldEvent.Blocked("Missing items"); return false }
         o.lines.forEach { removeAny(it.item, it.qty) }
-        val coins = (o.coins * (1 + skill("charmer"))).roundToInt()
+        val coins = (o.coins * (1 + skill("charmer")) * orderPayMult()).roundToInt()
         state.coins += coins
         val v = data.villagers.firstOrNull { it.id == o.villager }
         val fav = o.lines.count { v != null && it.item in v.favorites }

@@ -31,8 +31,10 @@ import com.ditherfarm.game.isBuilt
 import com.ditherfarm.game.jobProgress
 import com.ditherfarm.game.trayCount
 import com.ditherfarm.game.pointer
+import com.ditherfarm.game.villageTier
 import com.ditherfarm.game.FARMHANDS
-import com.ditherfarm.game.TRUCK_CAP
+import com.ditherfarm.game.truckCap
+import com.ditherfarm.game.blockPrice
 import com.ditherfarm.game.sendTruck
 import com.ditherfarm.game.truckLoad
 import com.ditherfarm.game.truckSecondsLeft
@@ -111,7 +113,20 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     /** Plot of the farmhand job just announced: its result events stay quiet (the crew shows them). */
     private var workerPlot = -1
 
-    override fun terrain(c: Int, r: Int): Terrain = FarmMap.terrain(c, r) { cc, rr -> isYard(cc, rr) }
+    override fun terrain(c: Int, r: Int): Terrain = FarmMap.terrain(c, r, world.villageTier) { cc, rr -> isYard(cc, rr) }
+
+    /** Village houses standing now (sprite per plot) and the shops the tiers have brought. */
+    private fun houses(): List<Pair<Pair<Int, Int>, String>> {
+        val t = world.villageTier
+        return FarmMap.HOUSES.take(FarmMap.houseCount(t)).mapIndexed { k, tile -> tile to "buildings/house_${t}_${FarmMap.houseStyle(k)}" }
+    }
+
+    private fun shops(): List<Pair<Pair<Int, Int>, String>> = listOfNotNull(
+        (FarmMap.SHOP_SEED to "buildings/shop_seed").takeIf { world.villageTier >= 1 },
+        (FarmMap.SHOP_SMITH to "buildings/shop_smith").takeIf { world.villageTier >= 1 },
+        (FarmMap.SHOP_CARPENTER to "buildings/shop_carpenter").takeIf { world.villageTier >= 2 },
+        (FarmMap.SHOP_CAFE to "buildings/shop_cafe").takeIf { world.villageTier >= 3 },
+    )
 
     /** Dirt under owned plots and one tile around them; the rest of the field stays meadow. */
     private fun isYard(c: Int, r: Int): Boolean {
@@ -147,7 +162,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
         for (b in 0 until FieldLayout.BLOCKS) FarmCrew.crateTile(b).let { reserved += key(it.first, it.second) }
         for (dc in 0..1) for (dr in 0..1) reserved += key(FarmMap.TRUCK.first + dc, FarmMap.TRUCK.second + dr)
-        FarmMap.COTTAGES.forEach { reserved += key(it.first, it.second) }
+        (FarmMap.HOUSES + listOf(FarmMap.SHOP_SEED, FarmMap.SHOP_SMITH, FarmMap.SHOP_CARPENTER, FarmMap.SHOP_CAFE)).forEach { reserved += key(it.first, it.second) }
         for (r in 0 until rows) for (c in 0 until cols) {
             if (FarmMap.isRiver(c, r)) waterTiles += c to r
             if (key(c, r) in buildingAt || (c to r) in lanterns || (c to r) in slotTiles || key(c, r) in reserved) continue
@@ -207,7 +222,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         props += at(36 to 15, "deco/trough", "deco/log")
         props += at(FarmMap.SIGN_FOREST, "deco/sign_forest", "trees/signpost")
         props += at(FarmMap.SIGN_MINE, "deco/sign_mine", "trees/signpost")
-        FarmMap.COTTAGES.forEachIndexed { k, t -> props += at(t, "buildings/cottage_" + "abc"[k % 3], "buildings/well") }
+        for ((t, sprite) in houses() + shops()) props += at(t, sprite, "buildings/cottage_a")
         props += at(FarmMap.BUNKHOUSE, "buildings/cottage_c", "buildings/well")
     }
 
@@ -399,7 +414,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 if (world.blockOwned(b)) g.text(FieldLayout.name(b), x.toInt(), (y - 15).toInt(), Gfx.WHITE, align = 0)
                 else {
                     val locked = world.level < FieldLayout.UNLOCK[b]
-                    g.text(if (locked) "L${FieldLayout.UNLOCK[b]}" else Ui.compact(FieldLayout.PRICE[b]), x.toInt(), (y - 15).toInt(), if (locked) 0xFFC0CBDC.toInt() else Gfx.GOLD, align = 0)
+                    g.text(if (locked) "L${FieldLayout.UNLOCK[b]}" else Ui.compact(world.blockPrice(b)), x.toInt(), (y - 15).toInt(), if (locked) 0xFFC0CBDC.toInt() else Gfx.GOLD, align = 0)
                 }
             }
         }
@@ -461,6 +476,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             com.ditherfarm.game.Pointer.FIELD_B -> (FarmMap.BLOCKS[1].first - 1 to FarmMap.BLOCKS[1].second - 1) to "deco/field_sign"
             com.ditherfarm.game.Pointer.BUNKHOUSE -> FarmMap.BUNKHOUSE to "buildings/cottage_c"
             com.ditherfarm.game.Pointer.TRUCK -> FarmMap.TRUCK to "vehicles/truck_se_0"
+            com.ditherfarm.game.Pointer.VILLAGE -> FarmMap.HOUSES[0] to "buildings/house_${world.villageTier}_a"
             else -> return
         }
         val x = Iso.x(tile.first, tile.second).toFloat(); val y = Iso.centerY(tile.first, tile.second).toFloat()
@@ -505,7 +521,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             if (inView(x, y)) g.sprite("deco/lantern_lit", x, y, a)
         }
         // Lit windows in the village and the bunkhouse.
-        val houses = FarmMap.COTTAGES.mapIndexed { k, t -> t to "buildings/cottage_" + "abc"[k % 3] } + (FarmMap.BUNKHOUSE to "buildings/cottage_c")
+        val houses = houses() + shops() + (FarmMap.BUNKHOUSE to "buildings/cottage_c")
         for ((t, sprite) in houses) {
             val x = Iso.x(t.first, t.second).toFloat(); val y = Iso.centerY(t.first, t.second).toFloat()
             if (inView(x, y, 48f) && game.assets.has("${sprite}_lit")) g.sprite("${sprite}_lit", x, y, a)
@@ -670,6 +686,13 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
         if ((c to r) == MERCHANT_TILE && world.merchantHere()) { chrome.open(Chrome.Panel.MERCHANT); return }
         if ((c to r) == FarmMap.BUNKHOUSE) { chrome.open(Chrome.Panel.WORKERS); return }
+        if ((c to r) in FarmMap.HOUSES.take(FarmMap.houseCount(world.villageTier))) { chrome.open(Chrome.Panel.VILLAGE); return }
+        when (c to r) {
+            FarmMap.SHOP_SEED -> if (world.villageTier >= 1) { chrome.open(Chrome.Panel.SEEDS); return }
+            FarmMap.SHOP_SMITH -> if (world.villageTier >= 1) { chrome.open(Chrome.Panel.MACHINE, "blacksmith"); return }
+            FarmMap.SHOP_CARPENTER -> if (world.villageTier >= 2) { hud.toast("Willa's workshop: buildings and fields cost 15% less"); return }
+            FarmMap.SHOP_CAFE -> if (world.villageTier >= 3) { hud.toast("Coco's cafe: dishes sell for 25% more at the Market"); return }
+        }
         if (FarmCrew.isTruck(c, r)) { tapTruck(); return }
         machineAt(c, r)?.let { def ->
             when {
@@ -711,7 +734,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         when {
             t.away -> world.truckSecondsLeft().toInt().let { hud.toast("The truck is in town: back in %d:%02d".format(it / 60, it % 60)) }
             load == 0 -> hud.toast("The truck is empty. Farmhands fill it from fields set to Truck.")
-            else -> chrome.confirm("SEND TRUCK?", "Sell $load crops in town for about ${world.truckValue()} coins?" + if (load >= TRUCK_CAP) " It is full." else "", "SEND") {
+            else -> chrome.confirm("SEND TRUCK?", "Sell $load crops in town for about ${world.truckValue()} coins?" + if (load >= world.truckCap) " It is full." else "", "SEND") {
                 world.sendTruck()
             }
         }
@@ -720,7 +743,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private fun offerBlock(b: Int) {
         val name = FieldLayout.name(b)
         if (world.level < FieldLayout.UNLOCK[b]) { hud.toast("Field $name unlocks at level ${FieldLayout.UNLOCK[b]}"); return }
-        chrome.confirm("FIELD $name", "Buy this field of ${FieldLayout.PER_BLOCK} plots for ${FieldLayout.PRICE[b]} coins?", "BUY") {
+        chrome.confirm("FIELD $name", "Buy this field of ${FieldLayout.PER_BLOCK} plots for ${world.blockPrice(b)} coins?", "BUY") {
             if (world.buyBlock(b)) { game.sfx.play("buy"); game.haptics.heavy() }
         }
     }
@@ -758,6 +781,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "place" -> startPlacing("copper_sprinkler")
             "workers" -> chrome.open(Chrome.Panel.WORKERS)
             "skills" -> chrome.open(Chrome.Panel.SKILLS, "bench")
+            "village" -> chrome.open(Chrome.Panel.VILLAGE)
             "tonics" -> { chrome.open(Chrome.Panel.WORKBENCH); chrome.panels.benchTab = 2 }
             "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART)
             else -> if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
@@ -781,6 +805,14 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     override fun onWorldEvent(e: WorldEvent) {
         if (e is WorldEvent.Built && e.building == "greenhouse") invalidateGround()
+        if (e is WorldEvent.VillageRebuilt) {
+            // Every house and road changes at once, in a cloud of dust.
+            invalidateGround()
+            scatterProps()
+            fx.shake(3f)
+            for ((t, _) in houses() + shops()) fx.burst("fx/dust", Iso.x(t.first, t.second).toFloat(), Iso.centerY(t.first, t.second) - 10f, 10, speed = 50f, gravity = 20f, life = 0.9f)
+            centerOnTile(11, 27)
+        }
         if (chrome.onEvent(e)) return
         // A farmhand's own harvest, planting, watering or clearing: the crew shows it when they get there.
         val quiet = when (e) {

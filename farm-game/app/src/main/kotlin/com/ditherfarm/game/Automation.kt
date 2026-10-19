@@ -76,13 +76,13 @@ fun World.blockBlocker(block: Int): String? = when {
     block !in 0 until FieldLayout.BLOCKS -> "No such field"
     blockOwned(block) -> "Already yours"
     state.level < FieldLayout.UNLOCK[block] -> "Field ${FieldLayout.name(block)} unlocks at level ${FieldLayout.UNLOCK[block]}"
-    state.coins < FieldLayout.PRICE[block] -> "Needs ${FieldLayout.PRICE[block]} coins"
+    state.coins < blockPrice(block) -> "Needs ${blockPrice(block)} coins"
     else -> null
 }
 
 fun World.buyBlock(block: Int): Boolean {
     blockBlocker(block)?.let { events += WorldEvent.Blocked(it); return false }
-    val price = FieldLayout.PRICE[block]
+    val price = blockPrice(block)
     state.coins -= price
     for (i in FieldLayout.plotsOf(block)) state.plots[i].owned = true
     gainXp(maxOf(10, price / 50))

@@ -2867,6 +2867,10 @@
   "ax": 17,
   "ay": 17
  },
+ "portraits/coco": {
+  "ax": 17,
+  "ay": 17
+ },
  "portraits/fennel": {
   "ax": 17,
   "ay": 17
@@ -2907,11 +2911,19 @@
   "ax": 17,
   "ay": 17
  },
+ "portraits/rook": {
+  "ax": 17,
+  "ay": 17
+ },
  "portraits/sela": {
   "ax": 17,
   "ay": 17
  },
  "portraits/tobias": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/willa": {
   "ax": 17,
   "ay": 17
  },

@@ -170,7 +170,7 @@
   },
   {
    "id": "tool_hoe_2",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "iron_bar": 3,
     "plank": 3,
@@ -186,7 +186,7 @@
   },
   {
    "id": "tool_hoe_3",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "gold_bar": 3,
     "iron_bar": 2,
@@ -217,7 +217,7 @@
   },
   {
    "id": "tool_axe_2",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "iron_bar": 5,
     "plank": 4,
@@ -233,7 +233,7 @@
   },
   {
    "id": "tool_axe_3",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "gold_bar": 4,
     "iron_bar": 3,
@@ -264,7 +264,7 @@
   },
   {
    "id": "tool_pickaxe_2",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "iron_bar": 5,
     "plank": 4,
@@ -280,7 +280,7 @@
   },
   {
    "id": "tool_pickaxe_3",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "gold_bar": 4,
     "iron_bar": 3,
@@ -312,7 +312,7 @@
   },
   {
    "id": "tool_sickle_2",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "iron_bar": 3,
     "plank": 3,
@@ -328,7 +328,7 @@
   },
   {
    "id": "tool_sickle_3",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "gold_bar": 3,
     "iron_bar": 2,
@@ -360,7 +360,7 @@
   },
   {
    "id": "tool_can_2",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "iron_bar": 4,
     "copper_bar": 2,
@@ -376,7 +376,7 @@
   },
   {
    "id": "tool_can_3",
-   "building": "workbench",
+   "building": "blacksmith",
    "inputs": {
     "gold_bar": 3,
     "iron_bar": 3,
