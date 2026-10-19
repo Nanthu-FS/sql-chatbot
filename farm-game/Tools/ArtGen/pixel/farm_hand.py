@@ -11,6 +11,9 @@ nothing is copied from them.
   buildings/workbench(_snow)            the farmyard workbench
   buildings/well(_snow)                 the stone well
   buildings/market(_snow)               the market stall
+  buildings/barn(_snow)                 the barn, with DITHER FARM painted on its roof
+  buildings/silo(_snow)                 the silo
+  buildings/orders(_snow)               the orders notice board
 
 Pivot = the ground centre of the footprint.
 """
@@ -290,6 +293,234 @@ def truck_load():
     return c, c.pivot(L / 2, W / 2)
 
 
+# ---------------------------------------------------------------- barn (2x2)
+
+def barn(winter):
+    """Red board walls on a stone footing with cream corner trim and eave band, X-brace doors and
+    a hay loft in the gable end, loft windows and a wheat barn-quilt on the long wall, a slate roof
+    with the farm's name painted on it, cream rake boards and ridge, and a cream cupola carrying
+    the wheat emblem."""
+    U, V = 8, 6                     # half-size: the long side runs along u
+    WH, PK = 21, 10                 # wall height, roof peak above the eaves
+    R = WH + PK
+    ze = WH - PK / V                # eave height one unit out
+    c = Iso(80, 88, 40, 62)
+    roof, shade, seam = (("white", "grey_l", "grey_l") if winter else ("slate", "slate_d", "slate_d"))
+    # Back slope (only its underside sliver shows past the gable), walls, footing.
+    c.poly([(-U - 1, 0, R), (U + 1, 0, R), (U + 1, -V - 1, ze), (-U - 1, -V - 1, ze)], "slate_d")
+    c.box(-U, U, -V, V, 0, 2, "grey_l", "grey", "grey_d", lit=False)
+    c.box(-U, U, -V, V, 2, WH, "red", "red", "red_d", lit=False)
+    for u in range(-U + 3, U, 3):
+        c.zline(u, V, 0.4, 1.6, "grey_d")
+    c.uline(-U, U, V, 1, "grey_d")
+    for u in range(-U + 2, U, 2):
+        c.zline(u, V, 2, WH, "red_d")                                   # board seams
+    for v in range(-V + 2, V, 2):
+        c.zline(U, v, 2, WH + PK * (1 - abs(v) / V) - 1, "purple")
+    c.poly([(U, -V, WH), (U, V, WH), (U, 0, R)], "red_d")               # gable end
+    for v in range(-V + 2, V, 2):
+        c.zline(U, v, WH, WH + PK * (1 - abs(v) / V) - 1, "purple")
+    # Cream trim: corner boards, the eave band and the gable's belt board.
+    c.zline(U, V, 0, WH, "cream", dx=-1); c.zline(U, V, 0, WH, "tan")
+    c.zline(-U, V, 0, WH, "cream"); c.zline(-U, V, 0, WH, "cream", dx=1)
+    c.zline(U, -V, 0, WH, "tan", dx=-1); c.zline(U, -V, 0, WH, "tan", dx=-2)
+    c.uline(-U, U, V, WH, "cream")
+    c.vline(U, 2 * V, -V, WH, "tan")
+    # Big doors in the gable end: cream frame, red leaves, cream X braces.
+    c.poly([(U, -3.5, 2), (U, 3.5, 2), (U, 3.5, 14), (U, -3.5, 14)], "cream")
+    for v0, v1 in ((-3, -0.25), (0.25, 3)):
+        c.poly([(U, v0, 2), (U, v1, 2), (U, v1, 13.4), (U, v0, 13.4)], "red")
+        c.line((U, v0, 2), (U, v1, 13.4), "cream")
+        c.line((U, v1, 2), (U, v0, 13.4), "cream")
+    c.dot(*c.p(U, 0.6, 8), "grey_d"); c.dot(*c.p(U, -0.6, 8), "grey_d")  # handles
+    # Hay loft: cream frame, dark inside, hay spilling over the sill.
+    c.poly([(U, -2, WH + 0.8), (U, 2, WH + 0.8), (U, 2, WH + 5.4), (U, -2, WH + 5.4)], "cream")
+    c.poly([(U, -1.5, WH + 1.3), (U, 1.5, WH + 1.3), (U, 1.5, WH + 4.8), (U, -1.5, WH + 4.8)], "brown_d")
+    for v, k in ((-1.2, 2), (-0.6, 3), (0, 2), (0.6, 3), (1.2, 2)):
+        x, y = c.p(U, v, WH + 1.3)
+        for j in range(k):
+            c.dot(x, y - j, "yellow" if j else "amber")
+    for u0 in (-U + 2, U - 4.5):                                        # loft windows
+        c.poly([(u0, V, 9), (u0 + 2.5, V, 9), (u0 + 2.5, V, 15), (u0, V, 15)], "cream")
+        c.poly([(u0 + 0.5, V, 9.6), (u0 + 2, V, 9.6), (u0 + 2, V, 14.4), (u0 + 0.5, V, 14.4)], "slate_d")
+        c.zline(u0 + 1.25, V, 9.6, 14.4, "cream")
+    x, y = c.p(0, V, 12)                                            # barn-quilt diamond
+    for dy in range(-5, 6):
+        half = 5 - abs(dy)
+        for dx in range(-half, half + 1):
+            edge = abs(dx) == half
+            c.dot(x + dx, y + dy + (dx + 6) // 2 - 3, "red_d" if edge else "cream")
+    c.wheat(x - 2, y - 3)
+    # Front slope: shingle rows, cream fascia at the eave and cream rake boards, cream ridge.
+    c.poly([(-U - 1, 0, R), (U + 1, 0, R), (U + 1, V + 1, ze), (-U - 1, V + 1, ze)], roof)
+    for k in range(1, V + 1):
+        if k in (1, V):                                                 # (clear under the name)
+            c.uline(-U - 1, U + 1, k * 1.0 + 0.2, R - PK * (k + 0.2) / V, seam if k % 2 else shade)
+    c.uline(-U - 1, U + 1, V + 1, ze, "cream"); c.uline(-U - 1, U + 1, V + 1, ze - 1, "tan")
+    c.line((U + 1, 0, R + 1), (U + 1, V + 1, ze), "cream")
+    c.line((U + 1, 0, R + 1), (U + 1, -V - 1, ze), "cream")
+    c.line((U + 1, 0, R), (U + 1, -V - 1, ze - 1), "tan")
+    c.uline(-U - 1, U + 1, 0, R + 1, "cream")
+    ink = "grey" if winter else "cream"                                  # the name shows through the snow
+    c.text_u(-U + 0.6, 2.6, R - PK * 2.6 / V + 1, "DITHER", ink, shadow=None if winter else shade)
+    c.text_u(-U + 2.6, 5.0, R - PK * 5.0 / V + 1, "FARM", ink, shadow=None if winter else shade)
+    # Cupola: cream box with the wheat on its face, red pyramid cap, weathervane.
+    c.box(-1.6, 1.6, -1.6, 1.6, R - 3, R + 4, "cream", "cream", "tan")
+    c.wheat(*c.p(-1.2, 1.6, R + 3))
+    cap = ("white", "grey_l") if winter else ("red", "red_d")
+    c.poly([(-2.2, 2.2, R + 4), (2.2, 2.2, R + 4), (0, 0, R + 9)], cap[0])
+    c.poly([(2.2, -2.2, R + 4), (2.2, 2.2, R + 4), (0, 0, R + 9)], cap[1])
+    c.uline(-2.2, 2.2, 2.2, R + 4, "cream"); c.vline(2.2, 4.4, -2.2, R + 4, "tan")
+    c.zline(0, 0, R + 9, R + 13, "grey_d")
+    x, y = c.p(0, 0, R + 12)
+    for i in range(-3, 4):
+        c.dot(x + i, y, "grey")
+    c.dot(x + 3, y - 1, "red"); c.dot(x + 3, y + 1, "red"); c.dot(x + 4, y, "red")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+# ---------------------------------------------------------------- silo (1x1)
+
+def silo(winter):
+    """A round tower on a stone ring: cream body with red hoops, a red dome with a cream eave and
+    finial, a ladder, a cream-framed hatch and the wheat emblem on a red roundel."""
+    body, hoop = ("white", "cream", "tan", "tan_d"), ("pink", "red", "red_d", "purple")
+    dome = ("white", "grey_l") if winter else ("red", "red_d")
+    c = Iso(40, 80, 20, 70)
+    cx, cy = c.p(0, 0, 0)
+    rx, ry, H, D = 11, 5.5, 36, 9
+
+    def band(dx, ramp):
+        return ramp[0] if dx < -0.55 else ramp[1] if dx < 0.15 else ramp[2] if dx < 0.7 else ramp[3]
+
+    def ring(z, ramp, r=rx, filled=False):
+        rr = r * ry / rx
+        for x in range(cx - r, cx + r + 1):
+            dx = (x - cx) / r
+            s = max(0.0, 1 - dx * dx) ** 0.5
+            col = band(dx, ramp)
+            y1 = round(cy - z + rr * s)
+            if filled:
+                for y in range(round(cy - z - rr * s), y1 + 1):
+                    c.dot(x, y, col)
+            else:
+                c.dot(x, y1, col)
+
+    stone = ("grey_l", "grey", "grey_d", "slate")
+    for z in range(H + 1):
+        ramp = stone if z < 6 else hoop if (z % 10 in (4, 5)) else body
+        ring(z, ramp)
+    for x in range(cx - rx + 2, cx + rx - 1, 3):                        # stone joints
+        dx = (x - cx) / rx
+        y = round(cy + ry * (1 - dx * dx) ** 0.5)
+        c.dot(x, y - 3, "grey_d"); c.dot(x + 1, y - 1, "grey_d")
+    # Dome: stacked shrinking discs, a cream eave ring and a finial.
+    for k in range(D + 1):
+        r = max(1, round(rx * (1 - (k / (D + 0.5)) ** 2) ** 0.5))
+        ring(H + k, (dome[0], dome[0], dome[1], dome[1]) if k < D - 2 else (dome[0],) * 4, r=r, filled=True)
+    ring(H, ("white", "cream", "tan", "tan"))
+    c.zline(0, 0, H + D + 1, H + D + 4, "cream")
+    c.dot(cx, cy - H - D - 4, "white")
+    # Ladder on the right.
+    lx = cx + 6
+    for z in range(4, H + 1):
+        y = round(cy - z + ry * (1 - (6 / rx) ** 2) ** 0.5)
+        c.dot(lx, y, "grey_d"); c.dot(lx + 3, y, "grey_d")
+        if z % 3 == 0:
+            c.dot(lx + 1, y, "grey"); c.dot(lx + 2, y, "grey")
+    # Hatch at the foot, the wheat on a roundel up top.
+    hx = cx - 4
+    for z in range(1, 9):
+        y = round(cy - z + ry * (1 - (4 / rx) ** 2) ** 0.5)
+        for i in range(5):
+            edge = i in (0, 4) or z == 8
+            c.dot(hx + i, y + (i // 3), "cream" if edge else "slate_d")
+    x, y = cx - 3, cy - 26 + 2
+    rcol = hoop[1]
+    c.ellipse(x, y, 4, 4, rcol)
+    c.wheat(x - 2, y - 3)
+    soften(c.im)
+    return c, (cx, cy)
+
+
+# ---------------------------------------------------------------- orders board (1x1)
+
+def orders(winter):
+    """A notice board: red posts with cream caps, a red-framed cork board with pinned order notes
+    (one marked urgent with a red !), a little red shingle roof with a cream ridge."""
+    c = Iso(36, 40, 18, 30)
+    B = 3.6
+    for u in (-B - 0.5, B):                                             # red posts
+        c.box(u, u + 0.5, -0.3, 0.2, 0, 16, "red", "red", "red_d")
+    c.box(-B, B, -0.25, 0.15, 5, 15, "red", "red", "red_d", lit=False)  # frame
+    c.poly([(-B + 0.5, 0.15, 5.6), (B - 0.5, 0.15, 5.6), (B - 0.5, 0.15, 14.4), (-B + 0.5, 0.15, 14.4)], "tan")
+    for u in (-1.5, 1.0):                                               # cork flecks
+        x, y = c.p(u, 0.15, 7)
+        c.dot(x, y, "tan_d"); c.dot(x + 3, y + 3, "tan_d")
+    notes = [(-2.8, 13.8, "white", False), (-0.4, 13.6, "yellow", False), (1.4, 13.8, "white", True),
+             (-2.2, 9.4, "pink", False), (0.6, 9.2, "cream", False)]
+    for u0, ztop, col, urgent in notes:
+        x, y = c.p(u0, 0.15, ztop)
+        for i in range(4):
+            for j in range(4 if not urgent else 5):
+                c.dot(x + i, y + j + i // 2, col)
+        if urgent:
+            c.dot(x + 1, y, "red"); c.dot(x + 1, y + 1, "red"); c.dot(x + 1, y + 2, "red"); c.dot(x + 2, y + 4, "red")
+        else:
+            c.dot(x + 1, y, "red")                                      # pin
+            c.dot(x, y + 2, "grey"); c.dot(x + 1, y + 2, "grey"); c.dot(x + 2, y + 3, "grey"); c.dot(x + 3, y + 3, "grey")
+    # Roof: red shingles, cream ridge and eave, the gable end in dark red.
+    sh = ("white", "grey_l") if winter else ("red", "red_d")
+    c.poly([(B + 1, 0, 19), (B + 1, -1.6, 16), (B + 1, 1.6, 16)], "purple")
+    c.poly([(-B - 1, 0, 19), (B + 1, 0, 19), (B + 1, 1.6, 16), (-B - 1, 1.6, 16)], sh[0])
+    c.uline(-B - 1, B + 1, 0.8, 17.5, sh[1])
+    c.uline(-B - 1, B + 1, 1.6, 16, "cream")
+    c.uline(-B - 1, B + 1, 0, 19.6, "cream")
+    c.line((B + 1, 0, 19.6), (B + 1, -1.6, 16), "cream")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def preview2(out):
+    """Batch 2 (barn, silo, orders board): today's sprite then the hand-pixeled options, 5x."""
+    from PIL import Image, ImageDraw
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    import polish
+    art = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "app", "src", "main", "assets", "art")
+    man = json.load(open(os.path.join(art, "manifest.json")))
+    hand = Image.open(os.path.join(art, "people/hana_se_idle.png")).convert("RGBA")
+    hp = man["people/hana_se_idle"]
+    rows = [[("buildings/barn", None, 2, "NOW"), ("buildings/barn", lambda: barn(False), 2, "new"),
+             ("buildings/barn", lambda: barn(True), 2, "winter")],
+            [("buildings/silo", None, 1, "NOW"), ("buildings/silo", lambda: silo(False), 1, "new"),
+             ("buildings/silo", lambda: silo(True), 1, "winter"), ("buildings/orders", None, 1, "NOW"),
+             ("buildings/orders", lambda: orders(False), 1, "new")]]
+    cws, ch = (150, 120), 104
+    sheet = Image.new("RGBA", (600, ch * 2), (62, 137, 72, 255))
+    d = ImageDraw.Draw(sheet)
+    for ri, row in enumerate(rows):
+        cw = cws[ri]
+        for i, (name, fn, tiles, label) in enumerate(row):
+            ax, ay = i * cw + cw // 2 + 6, ri * ch + ch - 20
+            d.text((i * cw + 4, ri * ch + 2), label, fill=(255, 255, 255, 255))
+            t = 16 * tiles
+            d.line([(ax - 2 * t, ay), (ax, ay - t), (ax + 2 * t, ay), (ax, ay + t), (ax - 2 * t, ay)], fill=(48, 110, 60, 255))
+            sheet.alpha_composite(hand, (ax - 2 * t + 4 - hp["ax"], ay + t // 2 - hp["ay"]))
+            if fn is None:
+                im = Image.open(os.path.join(art, name + ".png")).convert("RGBA")
+                p = man[name]
+                sheet.alpha_composite(im, (ax - p["ax"], ay - p["ay"]))
+            else:
+                cnv, (px_, py_) = fn()
+                x0, y0, x1, y1 = cnv.im.getbbox()
+                body, pad = finish(cnv.im.crop((x0, y0, x1, y1)))
+                sys.stderr.write("%s bh %d\n" % (name, body.height))
+                body = polish.polish(body, "world", name)
+                sheet.alpha_composite(body, (ax - (px_ - x0 + pad), ay - (py_ - y0 + pad)))
+    sheet.resize((sheet.width * 4, sheet.height * 4), Image.NEAREST).save(out)
+
+
 def emit(sp, name, made):
     cnv, (px, py) = made
     x0, y0, x1, y1 = cnv.im.getbbox()
@@ -305,7 +536,7 @@ def main():
         emit(veh, f"truck_se_{f}", truck_se(f))
         emit(veh, f"truck_ne_{f}", truck_ne(f))
     emit(veh, "truck_load", truck_load())
-    for name, fn in (("workbench", workbench), ("well", well), ("market", market)):
+    for name, fn in (("barn", barn), ("silo", silo), ("orders", orders), ("workbench", workbench), ("well", well), ("market", market)):
         emit(bld, name, fn(False))
         emit(bld, name + "_snow", fn(True))
     pivots = {}
@@ -353,5 +584,7 @@ def preview(out):
 if __name__ == "__main__":
     if len(sys.argv) > 2 and sys.argv[1] == "--preview":
         preview(sys.argv[2])
+    elif len(sys.argv) > 2 and sys.argv[1] == "--preview2":
+        preview2(sys.argv[2])
     else:
         main()

@@ -5,14 +5,14 @@
   "bh": 34
  },
  "buildings/barn": {
-  "ax": 32,
-  "ay": 51,
-  "bh": 67
+  "ax": 33,
+  "ay": 46,
+  "bh": 62
  },
  "buildings/barn_snow": {
-  "ax": 32,
-  "ay": 51,
-  "bh": 67
+  "ax": 33,
+  "ay": 46,
+  "bh": 62
  },
  "buildings/beehive": {
   "ax": 11,
@@ -220,14 +220,14 @@
   "bh": 27
  },
  "buildings/orders": {
-  "ax": 12,
+  "ax": 14,
   "ay": 25,
-  "bh": 30
+  "bh": 32
  },
  "buildings/orders_snow": {
-  "ax": 12,
+  "ax": 14,
   "ay": 25,
-  "bh": 30
+  "bh": 32
  },
  "buildings/planter_shed": {
   "ax": 15,
@@ -286,14 +286,14 @@
   "ay": 34
  },
  "buildings/silo": {
-  "ax": 16,
-  "ay": 52,
-  "bh": 61
+  "ax": 13,
+  "ay": 51,
+  "bh": 60
  },
  "buildings/silo_snow": {
-  "ax": 16,
-  "ay": 52,
-  "bh": 61
+  "ax": 13,
+  "ay": 51,
+  "bh": 60
  },
  "buildings/syrup_kettle": {
   "ax": 9,

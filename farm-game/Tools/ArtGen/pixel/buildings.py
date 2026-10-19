@@ -570,9 +570,9 @@ def workbench(winter):
     return solids
 
 
-# The market stall, well and workbench are hand-pixeled in farm_hand.py (art round 5); their
-# ray-cast models stay for previews.
-BUILDINGS = [("barn", barn), ("silo", silo), ("orders", orders)]
+# All of these are hand-pixeled in farm_hand.py now (art round 5); the ray-cast models stay for
+# previews and comparison.
+BUILDINGS = []
 
 
 def main():

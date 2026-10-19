@@ -29,7 +29,7 @@ FONT = {
     "M": ["101", "111", "111", "101", "101"], "N": ["101", "111", "111", "111", "101"],
     "O": ["010", "101", "101", "101", "010"], "R": ["110", "101", "110", "101", "101"],
     "S": ["011", "100", "010", "001", "110"], "T": ["111", "010", "010", "010", "010"],
-    "W": ["101", "101", "111", "111", "101"], "0": ["111", "101", "101", "101", "111"],
+    "W": ["101", "101", "111", "111", "101"], "G": ["011", "100", "101", "101", "011"], "0": ["111", "101", "101", "101", "111"],
     "1": ["010", "110", "010", "010", "111"], "2": ["110", "001", "010", "100", "111"],
     "3": ["110", "001", "010", "001", "110"], "5": ["111", "100", "110", "001", "110"],
     "C2": ["011", "100", "100", "100", "011"], " ": ["000", "000", "000", "000", "000"],
@@ -117,6 +117,25 @@ class Iso:
                             self.dot(x + i, y + j + 1, shadow)
                         self.dot(x + i, y + j, col)
             x += 4
+
+    def text_u(self, u, v, z, s, col, shadow=None):
+        """Painted letters on a +v face or slope, running along +u: each letter upright (crisp at
+        3x5) and stepped two pixels lower than the last, like the face; the top-left of the first
+        letter at (u, v, z)."""
+        x0, y0 = self.p(u, v, z)
+        for k, ch in enumerate(s.upper()):
+            g = FONT.get(ch, FONT[" "])
+            for j, row in enumerate(g):
+                for i, b in enumerate(row):
+                    if b == "1":
+                        x, y = x0 + 4 * k + i, y0 + 2 * k + j
+                        if shadow:
+                            self.dot(x, y + 1, shadow)
+                        self.dot(x, y, col)
+
+    def line(self, a, b, col):
+        """A straight pixel line between two world points."""
+        self.d.line([self.p(*a), self.p(*b)], fill=self.c(col))
 
     def wheat(self, x, y, light="yellow", mid="amber", stem="brown_l"):
         """The wheat-sheaf emblem with its top-left at pixel (x, y)."""
