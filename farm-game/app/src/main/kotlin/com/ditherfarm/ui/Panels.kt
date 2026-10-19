@@ -1307,7 +1307,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.text("${ws.name.uppercase()}  LV ${ws.level}", tx, ry + 4, Gfx.INK, outline = 0, shadow = false)
             if (ws.hungry) g.text("HUNGRY - NEEDS SILO CROPS", tx, ry + 15, Gfx.RED, outline = 0, shadow = false)
             else g.text("${workerPlotsPerMinute(ws.level)} PLOTS/MIN, EATS ${workerAppetite(ws.level)}/DAY", tx, ry + 15, Gfx.GREY, outline = 0, shadow = false)
-            g.text(if (ws.field >= 0) "WORKS FIELD ${FieldLayout.name(ws.field)}" else "RESTING", tx, ry + 26, Gfx.INK, outline = 0, shadow = false)
+            g.text(if (ws.field >= 0) "WORKS FIELD ${FieldLayout.name(ws.field)}" else "IDLE - PICK A FIELD", tx, ry + 26, Gfx.INK, outline = 0, shadow = false)
             if (ui.button("wfield-${d.id}", bx, ry + 2, 62, 16, if (ws.field >= 0) "FIELD ${FieldLayout.name(ws.field)}" else "NO FIELD", style = "wood")) {
                 val options = listOf(-1) + (0 until FieldLayout.BLOCKS).filter { b -> world.blockOwned(b) && world.workerOn(b).let { it == null || it === ws } }
                 world.assign(d.id, options[(options.indexOf(ws.field) + 1) % options.size])

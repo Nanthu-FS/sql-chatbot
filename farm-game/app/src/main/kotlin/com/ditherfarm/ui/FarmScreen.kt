@@ -431,6 +431,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             if (winter && game.assets.has("${sprite}_snow")) sprite = "${sprite}_snow"
             else if (p.tree && fall && game.assets.has("${sprite}_fall")) sprite = "${sprite}_fall"
             list.add(p.y + p.x * 0.001f) { game.gfx.sprite(sprite, p.x, p.y) }
+            // Taps on the bunkhouse's walls and roof reach it, not just its base tile.
+            if (p.sprite == "buildings/cottage_c") hitSprite(FarmMap.BUNKHOUSE.first, FarmMap.BUNKHOUSE.second, p.sprite, p.x, p.y)
         }
         bridge?.let { (x, y) -> if (inView(x, y)) list.add(y - 6f) { game.gfx.sprite(if (game.assets.has("deco/bridge")) "deco/bridge" else "deco/log", x, y) } }
         // Field signs: a letter on owned fields, a price on the ones for sale.

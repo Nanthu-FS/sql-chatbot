@@ -20,7 +20,7 @@ val FARMHANDS = listOf(
 
 const val WORKER_MAX_LEVEL = 25
 /** Crops a field's crate holds before its farmhand stops harvesting and waits for the harvester. */
-const val CRATE_CAP = 40
+const val CRATE_CAP = 60
 const val TRUCK_CAP = 240
 const val TRUCK_TRIP_SECONDS = 120.0
 const val HARVESTER_SECONDS = 60.0
@@ -132,11 +132,11 @@ private fun World.workStep(w: WorkerState): Boolean {
     val plots = FieldLayout.plotsOf(field)
     val crop = state.fields[field].crop
     // One visit tends a whole plot (playtest round 4): harvest, clear, replant, then water it.
-    // Ripe plots come first, then dead ones, then empty ones, then dry ones.
+    // Ripe plots come first, then dead ones, then dry ones (a dry crop grows slower), then empty ones.
     val i = plots.firstOrNull { !crateFull() && isReady(plot(it)) }
         ?: plots.firstOrNull { plot(it).needsClearing }
-        ?: crop?.let { c -> plots.firstOrNull { plot(it).empty && canReplant(it, c) } }
         ?: plots.firstOrNull { dry(it) }
+        ?: crop?.let { c -> plots.firstOrNull { plot(it).empty && canReplant(it, c) } }
         ?: return false
     val kind = plot(i).let { p ->
         when { !crateFull() && isReady(p) -> WorkKind.HARVEST; p.needsClearing -> WorkKind.CLEAR; p.empty -> WorkKind.PLANT; else -> WorkKind.WATER }
@@ -204,7 +204,12 @@ internal fun World.tickWorkers() {
     // Harvester: every minute, crates go on the truck (Truck fields) or into the Silo.
     var at = state.harvesterNext.takeIf { it > 0 } ?: state.minutes
     var guard = 0
-    while (state.minutes >= at && guard++ < 1500) { runHarvester(); at += period(HARVESTER_SECONDS) }
+    while (state.minutes >= at && guard++ < 1500) {
+        runHarvester()
+        // A full truck sets off by itself, so the fields that feed it never stall (round 5).
+        if (!state.truck.away && truckLoad() >= truckCap) sendTruck()
+        at += period(HARVESTER_SECONDS)
+    }
     state.harvesterNext = at
     val t = state.truck
     if (t.away && state.minutes >= t.returnAt) {
