@@ -20,7 +20,9 @@ import com.ditherfarm.game.claimQuest
 import com.ditherfarm.game.dailyClaimable
 import com.ditherfarm.game.donate
 import com.ditherfarm.game.quest
+import com.ditherfarm.game.pendingScene
 import com.ditherfarm.game.rollDaily
+import com.ditherfarm.game.sceneById
 import com.ditherfarm.game.togglePin
 
 /**
@@ -31,11 +33,13 @@ import com.ditherfarm.game.togglePin
 class Chrome(private val game: Game, private val here: Nav) {
     val hud = Hud(game)
     val panels = Panels(game, hud)
+    /** The bank-loan story's scenes (StoryPanel). */
+    val story = StoryPanel(game, hud)
     private val ui get() = game.ui
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY }
 
     var panel = Panel.NONE
         private set
@@ -52,6 +56,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     init {
         panels.onPlace = { item -> panel = Panel.NONE; game.startPlacing(item) }
         panels.onSkills = { open(Panel.SKILLS, "bench") }
+        panels.onStory = { sceneById("opening")?.let { story.start(it, replay = true); open(Panel.STORY) } }
     }
 
     fun open(p: Panel, target: String? = null) {
@@ -83,13 +88,14 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     /** Back button: closes the open panel; false if nothing was open. */
     fun close(): Boolean {
-        if (panel == Panel.NONE || panel == Panel.LEVEL_UP) return false
+        if (panel == Panel.NONE || panel == Panel.LEVEL_UP || panel == Panel.STORY) return panel == Panel.STORY
         panel = Panel.NONE
         return true
     }
 
     fun update(dt: Float) {
         hud.update(dt)
+        story.update(dt)
         world.rollDaily(game.today())
         // Situational tips (each shows once).
         val s = world.state
@@ -192,13 +198,17 @@ class Chrome(private val game: Game, private val here: Nav) {
             null -> {}
         }
         drawPanel()
-        hud.drawOverlays(tipVisible = panel == Panel.NONE, tipLift = tipLift)
+        // Toasts and tips wait while a story scene plays.
+        if (panel != Panel.STORY) hud.drawOverlays(tipVisible = panel == Panel.NONE, tipLift = tipLift)
     }
 
     private fun drawPanel() {
         val keep = when (panel) {
             Panel.NONE -> {
-                if (levelUps.isNotEmpty()) panel = Panel.LEVEL_UP
+                // Story scenes play on the farm (the officer visits the village).
+                val scene = if (here == Nav.FARM) world.pendingScene() else null
+                if (scene != null) { story.start(scene); open(Panel.STORY) }
+                else if (levelUps.isNotEmpty()) panel = Panel.LEVEL_UP
                 else if (!giftShown && world.giftReady(game.today())) { giftShown = true; open(Panel.GIFT) }
                 true
             }
@@ -222,6 +232,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.SKILLS -> panels.skills(atBench = target == "bench")
             Panel.VILLAGE -> panels.village()
             Panel.SEEDS -> panels.seeds()
+            Panel.STORY -> story.draw()
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -298,6 +309,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.ChoreClaimed, is WorldEvent.ContractClaimed -> { game.sfx.play("coin"); game.haptics.tick() }
             is WorldEvent.ChoresFinished -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("All chores done! ${e.streak}-day streak: +${e.coins} coins") }
             is WorldEvent.ContractNew -> hud.toast("A new truck contract is in. See Goals")
+            is WorldEvent.LoanApproved -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Loan approved: +${e.coins} coins!") }
             is WorldEvent.ContractDone -> { game.sfx.play("unlock"); game.haptics.heavy(); hud.toast("Truck contract complete! Claim it in Goals") }
             is WorldEvent.SkillLearned -> {
                 game.sfx.play("unlock"); game.haptics.tick()

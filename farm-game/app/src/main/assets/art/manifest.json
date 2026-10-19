@@ -3363,6 +3363,70 @@
   "ax": 17,
   "ay": 17
  },
+ "portraits/farmer_0": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/farmer_0_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_0_det": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/farmer_0_det_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_1": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/farmer_1_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_1_det": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/farmer_1_det_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_2": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/farmer_2_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_2_det": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/farmer_2_det_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_3": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/farmer_3_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_3_det": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/farmer_3_det_bust": {
+  "ax": 17,
+  "ay": 31
+ },
  "portraits/fennel": {
   "ax": 17,
   "ay": 17
@@ -3398,6 +3462,22 @@
  "portraits/mara": {
   "ax": 17,
   "ay": 17
+ },
+ "portraits/officer": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/officer_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/officer_shock": {
+  "ax": 17,
+  "ay": 17
+ },
+ "portraits/officer_shock_bust": {
+  "ax": 17,
+  "ay": 31
  },
  "portraits/pip": {
   "ax": 17,
@@ -3675,6 +3755,14 @@
   "ax": 5,
   "ay": 28,
   "bh": 31
+ },
+ "scenes/bank": {
+  "ax": 0,
+  "ay": 0
+ },
+ "scenes/bank_desk": {
+  "ax": 0,
+  "ay": 0
  },
  "tiles/cursor": {
   "ax": 16,

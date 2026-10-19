@@ -68,13 +68,17 @@ class ScreenshotTest {
     /** Builds a game, lets [setup] arrange it, runs frames for [seconds] and saves a PNG. */
     private fun render(
         name: String, seconds: Float = 0.6f, setup: (Game) -> Unit = {}, drive: (Game, Float) -> Unit = { _, _ -> },
-        size: Pair<Int, Int> = 270 to 585, zoom: Int = 0,
+        size: Pair<Int, Int> = 270 to 585, zoom: Int = 0, story: Boolean = false,
     ): Game {
         val game = Game(TestHost())
         val (w, h) = size
         game.engine.resize(w, h)
         game.engine.screen?.enter()
+        // Shots are of the game, not the story, unless asked for.
+        val seen = com.ditherfarm.game.SCENES.map { it.id }
+        if (!story) game.world.state.storySeen.addAll(seen)
         setup(game)
+        if (!story) game.world.state.storySeen.addAll(seen)
         if (zoom > 0) (game.engine.screen as? com.ditherfarm.ui.IsoMapScreen)?.cam?.let { cam ->
             cam.minZoom = zoom
             cam.zoomAt(zoom - cam.zoom, w / 2f, h / 2f)
@@ -527,6 +531,27 @@ class ScreenshotTest {
             g.world.togglePin("build:${g.world.data.buildings.values.first { !it.prebuilt && !g.world.isBuilt(it.id) && it.unlockLevel <= 6 }.id}")
             g.world.events.clear()
         })
+    }
+
+    @Test fun storyPicker() {
+        render("story_picker", story = true, seconds = 0.3f)
+    }
+
+    @Test fun storyOpening() {
+        for ((line, tag) in listOf(6 to "officer", 10 to "vow")) render("story_opening_$tag", story = true, seconds = 0.3f, setup = { g ->
+            g.world.state.playerName = "Rosa"; g.world.state.playerLook = 2
+        }, drive = { g, t -> if (t < 0.05f) g.farm.chrome.story.showLine(line) })
+    }
+
+    @Test fun storyVisits() {
+        for ((tier, line) in listOf(1 to 3, 3 to 5)) render("story_tier_$tier", story = true, seconds = 0.3f, setup = { g ->
+            toLevel(g, 16)
+            g.world.state.playerName = "Sam"; g.world.state.playerLook = 0
+            g.world.state.storySeen += "opening"
+            if (tier > 1) g.world.state.storySeen += listOf("tier_1", "tier_2")
+            g.world.state.villageTier = tier
+            g.farm.enter(); g.farm.centerOnTile(11, 28)
+        }, drive = { g, t -> if (t < 0.05f) g.farm.chrome.story.showLine(line) }, zoom = 2)
     }
 
     @Test fun villageTiers() {

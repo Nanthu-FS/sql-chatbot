@@ -63,6 +63,7 @@ sealed class WorldEvent {
     object ContractNew : WorldEvent()
     object ContractDone : WorldEvent()
     data class ContractClaimed(val coins: Int) : WorldEvent()
+    data class LoanApproved(val coins: Int) : WorldEvent()
     data class Respecced(val coins: Int) : WorldEvent()
     data class TonicUsed(val item: String) : WorldEvent()
     data class WorkerLevelUp(val worker: String, val level: Int) : WorldEvent()
@@ -103,6 +104,12 @@ class World(val data: GameData, val state: GameState) {
         if (from < 3) {
             if (state.level >= 4) state.questIndex = QUESTS.size
             for ((k, f) in FEATS + BLUEPRINTS.mapKeys { "bp_" + it.key }) if (met(f)) state.featsSeen += k
+            state.version = GameState.VERSION
+        }
+        // Saves from before the story: the scenes already behind them stay unplayed (the opening
+        // can be watched from Settings).
+        if (from < 4) {
+            for (s in SCENES) if (s.tier <= state.villageTier) state.storySeen += s.id
             state.version = GameState.VERSION
         }
         retireSheds()

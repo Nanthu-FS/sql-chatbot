@@ -46,14 +46,16 @@ class Gfx(val assets: Assets) {
         paint.colorFilter = null
     }
 
-    fun spriteScaled(name: String, x: Float, y: Float, sx: Float, sy: Float, alpha: Int = 255) {
+    fun spriteScaled(name: String, x: Float, y: Float, sx: Float, sy: Float, alpha: Int = 255, filter: android.graphics.ColorFilter? = null) {
         val s = assets[name]
-        if (sx == 1f && sy == 1f) return sprite(s, x, y, alpha)
+        if (sx == 1f && sy == 1f && filter == null) return sprite(s, x, y, alpha)
         dstF.set(x - s.ax * sx, y - s.ay * sy, x + (s.w - s.ax) * sx, y + (s.h - s.ay) * sy)
         dst.set(Math.round(dstF.left), Math.round(dstF.top), Math.round(dstF.right), Math.round(dstF.bottom))
         src.set(0, 0, s.w, s.h)
         paint.alpha = alpha
+        paint.colorFilter = filter
         canvas.drawBitmap(s.bmp, src, dst, paint)
+        paint.colorFilter = null
         paint.alpha = 255
     }
 

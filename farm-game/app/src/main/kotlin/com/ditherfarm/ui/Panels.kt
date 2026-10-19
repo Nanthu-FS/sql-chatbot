@@ -130,6 +130,8 @@ class Panels(private val game: Game, private val hud: Hud) {
     internal var benchTab = 0
     /** Called with a fixture item when the player taps PLACE in the Barn. */
     var onPlace: ((String) -> Unit)? = null
+    /** Called when Settings' STORY button is tapped (replays the opening). */
+    var onStory: (() -> Unit)? = null
     /** Called when the Workbench's SKILLS button is tapped. */
     var onSkills: (() -> Unit)? = null
     private var skillTab = 0
@@ -358,7 +360,7 @@ class Panels(private val game: Game, private val hud: Hud) {
 
     // -------------------------------------------------------------- settings
     fun settings(): Boolean {
-        val (x, y, pw, ph) = frame("SETTINGS", 226).toList()
+        val (x, y, pw, ph) = frame("SETTINGS", 250).toList()
         if (closeButton(x, y, pw)) return false
         val s = world.state
         fun row(i: Int, icon: String, label: String, on: Boolean): Boolean {
@@ -380,6 +382,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             confirmNewGame++
             if (confirmNewGame >= 3) { game.newGame(); confirmNewGame = 0; hud.toast("A fresh start!"); return false }
         }
+        if (ui.button("story", x + 10, by + 48, pw - 20, 18, "STORY: WATCH THE OPENING", "icons/book", "wood")) { onStory?.invoke(); return true }
         g.text("DITHER FARM 0.1", x + pw / 2, y + ph - 30, Gfx.GREY, align = 0, outline = 0, shadow = false)
         g.text("FONT SILKSCREEN (OFL) - ENDESGA 32", x + pw / 2, y + ph - 19, Gfx.GREY, align = 0, outline = 0, shadow = false)
         return true

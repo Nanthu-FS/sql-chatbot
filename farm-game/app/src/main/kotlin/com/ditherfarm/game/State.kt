@@ -182,6 +182,10 @@ class GameState(var seed: Long) {
     /** This week's truck contract, and the goal pinned to the HUD chip ("" for none; see Pins.kt). */
     var contract: Contract? = null
     var pinned = ""
+    /** The story: the farmer's name and look, and the scenes already played (Story.kt). */
+    var playerName = ""
+    var playerLook = 0
+    val storySeen = LinkedHashSet<String>()
 
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
@@ -229,6 +233,7 @@ class GameState(var seed: Long) {
             contract?.let { put("contract", it.toJson()) }
         })
         put("pinned", pinned)
+        put("story", JSONObject().put("name", playerName).put("look", playerLook).put("seen", JSONArray(storySeen.toList())))
         put("cartLog", JSONArray().apply { cartLog.forEach { put(it.toJson()) } })
         put("events", JSONObject().apply {
             put("giftDay", giftDay); put("giftStreak", giftStreak); put("merchantDay", merchantDay)
@@ -239,7 +244,7 @@ class GameState(var seed: Long) {
     }
 
     companion object {
-        const val VERSION = 3
+        const val VERSION = 4
 
         fun fromJson(o: JSONObject): GameState = GameState(o.getLong("seed")).apply {
             version = o.optInt("version", 1)
@@ -293,6 +298,10 @@ class GameState(var seed: Long) {
                 d.optJSONObject("contract")?.let { contract = Contract.fromJson(it) }
             }
             pinned = o.optString("pinned")
+            o.optJSONObject("story")?.let { st ->
+                playerName = st.optString("name"); playerLook = st.optInt("look")
+                st.optJSONArray("seen")?.strings()?.let { storySeen.addAll(it) }
+            }
             o.optJSONArray("feats")?.let { a -> for (k in 0 until a.length()) featsSeen += a.getString(k) }
             o.optJSONArray("cartLog")?.objects()?.forEach { cartLog += CartDay(it.getInt("day"), it.getInt("units"), it.getInt("coins")) }
             o.optJSONObject("events")?.let { e ->

@@ -27,16 +27,9 @@ def col(c):
 
 
 def tone(ramp, v, x, y):
-    """Ramp colour for a fractional level v, checker-dithered between neighbouring steps."""
+    """Ramp colour for a fractional level v: the nearest step (clean, no dither; art round 3)."""
     n = len(ramp) - 1
-    v = max(0.0, min(float(n), v))
-    b = int(v)
-    f = v - b
-    if b >= n or f < 0.3:
-        return col(ramp[b])
-    if f > 0.7:
-        return col(ramp[b + 1])
-    return col(ramp[b + 1]) if (x + y) % 2 == 0 else col(ramp[b])
+    return col(ramp[int(round(max(0.0, min(float(n), v))))])
 
 
 class Canvas:
@@ -143,8 +136,9 @@ BASE = {
 }
 
 
-def paint(spec):
-    """Character map -> finished sprite (Image, pad)."""
+def paint(spec, bust=False):
+    """Character map -> finished sprite (Image, pad). A [bust] is cut out: no tile background,
+    for the story scenes."""
     grid = []
     for row in spec["rows"]:
         full = row + row[::-1] if len(row) == 15 else row
@@ -162,7 +156,8 @@ def paint(spec):
     for x, y in MASK:
         ch = grid[y][x]
         if ch == "_":
-            c.put(x, y, tone(bg, n * (1.0 - 0.8 * y / (H - 1) - 0.2 * x / (W - 1)), x, y))
+            if not bust:
+                c.put(x, y, tone(bg, n * (1.0 - 0.8 * y / (H - 1) - 0.2 * x / (W - 1)), x, y))
             continue
         grp, ov = key[ch]
         groups.setdefault(grp, set()).add((x, y))
@@ -178,7 +173,7 @@ def paint(spec):
             continue
         if any((x + dx, y + dy) in figure for dx, dy in N4):
             c.put(x, y, "ink")
-    return finish(c.im)
+    return finish(c.im, outline=not bust)
 
 
 # ---------------------------------------------------------------- characters
@@ -505,8 +500,255 @@ FENNEL = dict(
            (24, 18): "q", (25, 17): "q", (22, 19): "q", (24, 19): "Q", (20, 23): "Q"},
 )
 
+# ---------------------------------------------------------------- the story (bank loan)
+
+def mood(spec, rows):
+    """The same face with some rows replaced ({row index: row}), e.g. another expression."""
+    out = dict(spec)
+    out["rows"] = [rows.get(i, r) for i, r in enumerate(spec["rows"])]
+    return out
+
+
+SUIT = ["ink", "slate_d", "slate", "grey_d"]
+STRAW = ["brown_l", "tan_d", "tan", "cream"]
+STRAW_BRIM = ["brown", "brown_l", "tan_d"]
+BANDANA = ["red_d", "red", "pink"]
+ORANGE = ["rust", "orange", "amber", "yellow"]
+BEANIE = ["teal_dd", "blue_d", "blue", "cyan"]
+BEANIE_FOLD = ["teal_dd", "teal_dd", "blue_d"]
+OVERALL_TEAL = ["teal_dd", "green_dd", "green_d", "green"]
+
+OFFICER = dict(
+    # Mr. Sterling, the loan officer: slicked black hair, glasses, a smirk, charcoal suit, red tie.
+    rows=[
+        "_______________",
+        "_________HHHHHH",
+        "_______HHHHHHHH",
+        "______HHHHHHHHH",
+        "______HHHHHHHHH",
+        "______HHSSSSSSS",
+        "______HSSSSSSSS",
+        "______HSSSSSSSS",
+        "______HSSbbbbSS",
+        "______SSLLLLLLL",
+        "______SSLckkSLS",
+        "______SSLSweSLS",
+        "______SSLLLLLLS",
+        "______SSSSSSSSn",
+        "______SSSSSSSSS",
+        "_______SSSSSSSSSSSmSSSSS______",
+        "_______SSSSSSmmmmmSSSSSS______",
+        "________SSSSSSS",
+        "_________SSSSSS",
+        "___________SSSS",
+        "_________CCGGGG",
+        "______CCCCCGGGD",
+        "____CCCCCCCCGGD",
+        "___CCCCCCCCCCGD",
+        "__CCCCCCCCCCCGD",
+        "__CCCCCCCCCCCCD",
+        "__CCCCCCCCCCCCD",
+        "__CCCCCCCCCCCCD",
+        "__CCCCCCCCCCCCD",
+        "__CCCCCCCCCCCCD",
+    ],
+    bg=["teal_dd", "blue_d", "blue"],
+    ramps={"hair": HAIR_INK, "skin": SKIN_FAIR, "cloth": SUIT, "cloth2": RED, "collar": CREAM},
+    key={"L": ("acc", "slate_d"), "c": ("skin", "white"), "k": ("skin", "brown_d")},
+    # Smug: the right brow raised.
+    patch={**{(x, 8): "S" for x in range(17, 21)}, **{(x, 7): "b" for x in range(17, 21)}},
+)
+
+OFFICER_SHOCK = mood(OFFICER, {
+    7: "______HSSbbbbSS",
+    8: "______HSSSSSSSS",
+    10: "______SSLSweSLS",
+    11: "______SSLSeeSLS",
+    15: "_______SSSSSSSSoooSSSSSS______",
+    16: "_______SSSSSSSSoooSSSSSS______",
+})
+OFFICER_SHOCK["key"] = dict(OFFICER["key"], o=("skin", "brown_d"))
+OFFICER_SHOCK["patch"] = {(24, 9): "l", (24, 10): "l"}
+
+FARMER_HAT = dict(
+    # Straw hat, brown hair, freckles, denim overalls over a red shirt.
+    rows=[
+        "_______________",
+        "__________AAAAA",
+        "_________AAAAAA",
+        "________AAAAAAA",
+        "_______DDDDDDDD",
+        "___BBBBBBBBBBBB",
+        "______HHHHHHHHH",
+        "______HHSSSSSSS",
+        "______HSSSSSSSS",
+        "______HSSbbbSSS",
+        "______HSSSweSSS",
+        "______HSSSeeSSS",
+        "______HSSrfSSSS",
+        "_______SSSSSSSn",
+        "_______SSSSSSSS",
+        "________SSSSSSS",
+        "________SSSmSSS",
+        "_________SSSmmm",
+        "__________SSSSS",
+        "___________SSSS",
+        "____________SSS",
+        "_________DDDSSS",
+        "______DDCCDDDDD",
+        "____DDDDCCDDDDD",
+        "___DDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+    ],
+    bg=["green_dd", "green_d", "green"],
+    ramps={"hair": HAIR_BROWN, "skin": SKIN_FAIR, "cloth": BLUE, "cloth2": RED, "cap": STRAW, "brim": STRAW_BRIM},
+    patch={(10, 26): "y", (19, 26): "y"},
+)
+
+FARMER_BANDANA = dict(
+    # Red bandana, curly black hair, deep brown skin, denim shirt over a white tee.
+    rows=[
+        "_______________",
+        "__________HHHHH",
+        "________HHHHHHH",
+        "_______HHHHHHHH",
+        "______AAAAAAAAA",
+        "______AAAAAAAAA",
+        "_____HHHSSSSSSS",
+        "_____HHSSSSSSSS",
+        "_____HHSSSSSSSS",
+        "_____HHSSbbbSSS",
+        "_____HHSSSweSSS",
+        "_____HHSSSeeSSS",
+        "______HSSSSSSSS",
+        "______HSSSSSSSn",
+        "_______SSSSSSSS",
+        "________SSSSSSS",
+        "________SSSmSSS",
+        "_________SSSmmm",
+        "__________SSSSS",
+        "___________SSSS",
+        "____________SSS",
+        "_________CCGSSS",
+        "______CCCCCGSSS",
+        "____CCCCCCCCGSS",
+        "___CCCCCCCCCCGS",
+        "__CCCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+    ],
+    bg=["rust", "clay", "tan"],
+    ramps={"hair": HAIR_INK, "skin": SKIN_BROWN, "cloth": BLUE, "cap": BANDANA, "collar": CREAM},
+    patch={(24, 5): "A", (25, 6): "A", (25, 4): "A", (6, 26): "M", (7, 26): "M"},
+)
+
+FARMER_BRAID = dict(
+    # Long amber hair parted in the middle, tan skin, freckles, an orange plaid shirt.
+    rows=[
+        "_______________",
+        "_________HHHHHH",
+        "_______HHHHHHHH",
+        "______HHHHHHHHH",
+        "_____HHHHHHHHHH",
+        "_____HHHHHHHHHS",
+        "_____HHHSSSSSSS",
+        "_____HHSSSSSSSS",
+        "_____HHSSSSSSSS",
+        "_____HHSSbbbSSS",
+        "_____HHSSSweSSS",
+        "_____HHSSSeeSSS",
+        "_____HHSSrfSSSS",
+        "_____HHSSSSSSSn",
+        "_____HHHSSSSSSS",
+        "____HHHHSSSSSSS",
+        "____HHHHSSSmSSS",
+        "____HHHH_SSSmmm",
+        "____HHH___SSSSS",
+        "____HHH____SSSS",
+        "_____HH_____SSS",
+        "_____HH__CCCSSS",
+        "______CCCCCCSSS",
+        "____CCCCCCCCCCC",
+        "___CCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+    ],
+    bg=["teal_dd", "blue_d", "blue"],
+    ramps={"hair": HAIR_AMBER, "skin": SKIN_TAN, "cloth": ORANGE, "cloth2": ["brown_d", "rust", "red_d"]},
+    patch={**{(x, 25): "D" for x in range(3, 27) if x % 2}, **{(x, 28): "D" for x in range(3, 27) if x % 2},
+           **{(x, y): "D" for x in (8, 21) for y in range(23, 30)}},
+)
+
+FARMER_BEANIE = dict(
+    # Teal beanie, short black hair, brown skin, a white tee under teal overalls.
+    rows=[
+        "_______________",
+        "_________AAAAAA",
+        "_______AAAAAAAA",
+        "______AAAAAAAAA",
+        "______AAAAAAAAA",
+        "______BBBBBBBBB",
+        "______HHSSSSSSS",
+        "______HSSSSSSSS",
+        "______HSSbbbSSS",
+        "______SSSSweSSS",
+        "______SSSSeeSSS",
+        "______SSSSSSSSS",
+        "_______SSSSSSSn",
+        "_______SSSSSSSS",
+        "________SSSSSSS",
+        "________SSSmSSS",
+        "_________SSSmmm",
+        "__________SSSSS",
+        "___________SSSS",
+        "____________SSS",
+        "____________SSS",
+        "_________DDDSSS",
+        "______DDCDDDDDD",
+        "____DDDDCDDDDDD",
+        "___DDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+        "__DDDDDDCCCCCCC",
+    ],
+    bg=["amber", "yellow", "white"],
+    ramps={"hair": HAIR_INK, "skin": SKIN_DEEP, "cloth": OVERALL_TEAL, "cloth2": CREAM, "cap": BEANIE, "brim": BEANIE_FOLD},
+    patch={(10, 26): "y", (19, 26): "y"},
+)
+
+
+def determined(spec, brow, eye, mouth):
+    """Brows pulled down at the middle and a flat mouth: the face for "you'll see"."""
+    rows = spec["rows"]
+    b = next(i for i, r in enumerate(rows) if "bbb" in r)
+    m = next(i for i, r in enumerate(rows) if r.rstrip("_").endswith("mmm"))
+    return mood(spec, {b: brow, b + 1: eye, m - 1: rows[m - 1].replace("m", "S"), m: mouth})
+
+
+FARMERS = [FARMER_HAT, FARMER_BANDANA, FARMER_BRAID, FARMER_BEANIE]
+FARMERS_DET = [
+    determined(FARMER_HAT, "______HSbbSSSSS", "______HSSSbeSSS", "_________SSSSmm"),
+    determined(FARMER_BANDANA, "_____HHSbbSSSSS", "_____HHSSSbeSSS", "_________SSSSmm"),
+    determined(FARMER_BRAID, "_____HHSbbSSSSS", "_____HHSSSbeSSS", "____HHHH_SSSSmm"),
+    determined(FARMER_BEANIE, "______HSbbSSSSS", "______SSSSbeSSS", "_________SSSSmm"),
+]
+
 PORTRAITS = [("mara", MARA), ("tobias", TOBIAS), ("ivy", IVY), ("bram", BRAM),
-             ("juniper", JUNIPER), ("pip", PIP), ("sela", SELA), ("fennel", FENNEL)]
+             ("juniper", JUNIPER), ("pip", PIP), ("sela", SELA), ("fennel", FENNEL),
+             ("officer", OFFICER), ("officer_shock", OFFICER_SHOCK)]
+PORTRAITS += [(f"farmer_{i}", f) for i, f in enumerate(FARMERS)]
+PORTRAITS += [(f"farmer_{i}_det", f) for i, f in enumerate(FARMERS_DET)]
 
 
 def main():
@@ -514,6 +756,9 @@ def main():
     for name, spec in PORTRAITS:
         out, pad = paint(spec)
         sp.save(name, out, 15 + pad, 15 + pad)
+        if name.startswith(("officer", "farmer_")):
+            out, pad = paint(spec, bust=True)
+            sp.save(name + "_bust", out, 15 + pad, 29 + pad)
     sp.done()
 
 
