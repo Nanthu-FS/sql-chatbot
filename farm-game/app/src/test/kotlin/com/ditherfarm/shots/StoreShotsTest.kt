@@ -57,6 +57,7 @@ class StoreShotsTest {
         seconds: Float = 0.6f,
         story: Boolean = false,
         zoom: Int = 0,
+        crop: android.graphics.Rect? = null,
         setup: (Game) -> Unit,
         drive: (Game, Float) -> Unit = { _, _ -> },
     ): Game {
@@ -92,7 +93,8 @@ class StoreShotsTest {
             now += (dt * 1000).toLong()
         }
         System.getProperty("shots.out")?.let {
-            val big = Bitmap.createScaledBitmap(bmp, w * 4, h * 4, false)
+            val frame = crop?.let { c -> Bitmap.createBitmap(bmp, c.left, c.top, c.width(), c.height()) } ?: bmp
+            val big = Bitmap.createScaledBitmap(frame, frame.width * 4, frame.height * 4, false)
             File(storeDir(), "$name.png").outputStream().use { out -> big.compress(Bitmap.CompressFormat.PNG, 100, out) }
         }
         return game
@@ -127,34 +129,51 @@ class StoreShotsTest {
     /** A lush summer farm: every plot planted with summer crops, and three farmhands at work. */
     @Test fun storeFarmSummer() {
         shot("store_farm_summer", seconds = 3f, zoom = 2, setup = { g ->
-            toLevel(g, 13)
-            val w = g.world
-            val s = w.state
-            s.coins += 100_000
-            s.minutes = GameTime.of(1, Season.SUMMER, 6, 10.0).minutes
-            s.lastDayRolled = w.time.dayIndex
-            s.weather = Weather.SUNNY
-            val summer = listOf("wheat", "corn", "tomato", "sunflower", "eggplant", "melon", "grapes", "potato", "carrot")
-                .filter { w.data.crops.containsKey(it) && w.data.crop(it).seasons.contains(Season.SUMMER) }
-            for (i in 0 until 40) {
-                val p = s.plots[i]
-                p.owned = true
-                val id = summer[(i * 7) % summer.size]
-                p.crop = id
-                p.growth = w.data.crop(id).growMinutes * listOf(0.1, 0.4, 0.8, 1.0, 1.0)[i % 5]
-                p.watered = i % 3 != 0
-            }
-            w.buyBlock(1)
-            w.hire("rosa"); w.hire("milo"); w.hire("hana")
-            repeat(15) { w.levelUpWorker("rosa") }
-            w.assign("rosa", 0); w.assign("milo", 1)
-            s.fields[0].crop = "wheat"; s.fields[1].crop = "carrot"
-            w.add("seed_wheat", 20); w.add("carrot", 20)
-            for (i in FieldLayout.plotsOf(0)) w.plot(i).apply { clear(); crop = "wheat"; growth = w.data.crop("wheat").growMinutes * if (i % 3 == 0) 1.0 else 0.5 }
-            w.crate(0)["wheat"] = 12
-            w.events.clear()
+            summerFarm(g)
             g.farm.centerOnTile(16, 20)
         })
+    }
+
+    /**
+     * The scene under the feature graphic: the same summer farm at zoom 1, the middle band of the
+     * frame (clear of the HUD) cut to 256x125, saved 4x as feature_scene.png (1024x500).
+     * Tools/ArtGen/feature_graphic.py puts the title over it.
+     */
+    @Test fun storeFeatureScene() {
+        shot("feature_scene", seconds = 3f, zoom = 1, crop = android.graphics.Rect(7, 150, 263, 275), setup = { g ->
+            summerFarm(g)
+            g.farm.centerOnTile(14, 15)
+        })
+    }
+
+    /** Every plot planted with summer crops at mixed growth, two fields worked by farmhands, a crate of wheat. */
+    private fun summerFarm(g: Game) {
+        toLevel(g, 13)
+        val w = g.world
+        val s = w.state
+        s.coins += 100_000
+        s.minutes = GameTime.of(1, Season.SUMMER, 6, 10.0).minutes
+        s.lastDayRolled = w.time.dayIndex
+        s.weather = Weather.SUNNY
+        val summer = listOf("wheat", "corn", "tomato", "sunflower", "eggplant", "melon", "grapes", "potato", "carrot")
+            .filter { w.data.crops.containsKey(it) && w.data.crop(it).seasons.contains(Season.SUMMER) }
+        for (i in 0 until 40) {
+            val p = s.plots[i]
+            p.owned = true
+            val id = summer[(i * 7) % summer.size]
+            p.crop = id
+            p.growth = w.data.crop(id).growMinutes * listOf(0.1, 0.4, 0.8, 1.0, 1.0)[i % 5]
+            p.watered = i % 3 != 0
+        }
+        w.buyBlock(1)
+        w.hire("rosa"); w.hire("milo"); w.hire("hana")
+        repeat(15) { w.levelUpWorker("rosa") }
+        w.assign("rosa", 0); w.assign("milo", 1)
+        s.fields[0].crop = "wheat"; s.fields[1].crop = "carrot"
+        w.add("seed_wheat", 20); w.add("carrot", 20)
+        for (i in FieldLayout.plotsOf(0)) w.plot(i).apply { clear(); crop = "wheat"; growth = w.data.crop("wheat").growMinutes * if (i % 3 == 0) 1.0 else 0.5 }
+        w.crate(0)["wheat"] = 12
+        w.events.clear()
     }
 
     /** The village at the brick tier: brick houses, the carpenter's workshop and the seed shop. */

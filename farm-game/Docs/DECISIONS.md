@@ -5,10 +5,11 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 ## Platform and presentation
 - Native Android (Kotlin, custom Canvas renderer). No Unity.
 - Portrait, isometric view. Tap the farm directly (Hay Day style); there is no avatar.
-- Pixel art: 32px, Endesga-32 palette, checker dithering, black outline, hard drop shadow. Art round 3 (sharp and clean, inspired by a lush reference but without its blur): a wider palette with hue shifting (shadows cooler, highlights warmer), no dithering (clean steps), coloured outlines, crisp see-through cast shadows to the lower right with sun spots under trees, leaf-cluster foliage, and posterised ground patches with grass clumps. World sprites and items get this from Tools/ArtGen/polish.py; UI icons keep the old style. Rocks (picked from three styles): ore-coloured rocks about a farmhand wide and knee high, three shape variants each; ore and stone item icons match. The Mine Mouth is a timber tunnel cut into a grass-topped block that joins the quarry cliffs.
+- Pixel art: 32px, Endesga-32 palette, checker dithering, black outline, hard drop shadow. Art round 3 (sharp and clean, inspired by a lush reference but without its blur): a wider palette with hue shifting (shadows cooler, highlights warmer), no dithering (clean steps), coloured outlines, crisp see-through cast shadows to the lower right with sun spots under trees, leaf-cluster foliage, and posterised ground patches with grass clumps. World sprites and items get this from Tools/ArtGen/polish.py; art round 4 gives UI icons, panels, buttons and villager portraits the same clean look (9-slice sizes and corners unchanged). Rocks (picked from three styles): ore-coloured rocks about a farmhand wide and knee high, three shape variants each; ore and stone item icons match. The Mine Mouth is a timber tunnel cut into a grass-topped block that joins the quarry cliffs.
 - Font: Silkscreen (OFL).
 - SFX only, no music. Haptics with a settings toggle.
 - App name: **Dither Farm**. The APK is built by GitHub Actions.
+- App icon: a red barn with a golden wheat sheaf on sky and meadow, flat pixel art at every density plus an adaptive icon. Store listing: six real screenshots and a feature graphic with the title on the game's wood panel (`Docs/store/`).
 
 ## Time and world
 - 1 in-game day = 20 real minutes. Progress continues while the app is closed (offline catch-up).
@@ -37,11 +38,12 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 ## Buildings, villagers, saves
 - Machines and buildings go into fixed building slots (predefined spots), not free placement.
 - Order board orders come from named villagers with pixel portraits; completing their orders earns friendship points.
-- Saves are local with an automatic backup copy, plus export/import of the save file.
+- Saves are local with an automatic backup copy, plus export/import of the save file. Saves are crash-safe: written to a temp file, forced to disk and renamed into place; the backup only ever holds a whole save; a damaged save falls back to the backup; a save from a newer game version, or a damaged one, is kept as a copy before it is replaced.
 - Minimum Android version: 10 (API 29).
 
 ## Camera, quality, events
 - Every screen pans with drag and zooms with pinch, in pixel-perfect integer zoom steps.
+- Performance (no visual change): screen text and small panel frames are drawn once into cached images, off-screen props are culled, and fixed scenery is worked out once; `FrameTimeTest` reports ms per frame for the farm, forest and a mine floor.
 - Crops come in normal, silver and gold quality; fertilizer and care raise quality and sell price.
 - Events: a travelling merchant (rare seeds and tools), one festival per season with a mini-goal, and a daily login gift.
 

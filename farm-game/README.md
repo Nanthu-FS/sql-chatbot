@@ -49,6 +49,7 @@ app/src/main/assets/
 Tools/ArtGen/  sprite and sound generators
 Tools/jvm-check/  SDK-free compile, test and screenshot harness
 Docs/          design, decisions, art spec, contact sheets
+Docs/store/    store listing: screenshots and the feature graphic
 ```
 
 ## Regenerating art and sound
@@ -59,7 +60,17 @@ node generate.mjs            # all sprites (or: node generate.mjs tiles ui crops
 node sfx.mjs                 # all sound effects (+ variants)
 node music.mjs               # lo-fi music and ambience loops (needs ffmpeg)
 ```
+The launcher icon (every density plus the adaptive icon) comes from `python3 launcher.py`.
+
 Contact sheets for review are written to `Docs/sheets/`. Buildings, machines and vehicles are re-rendered at world scale by `scaled.py` (run by `generate.mjs`); `ScaleTest` fails the build if a sprite leaves its size band, and the `farm_scale` screenshot shows the farmstead for a visual check.
+
+## Store listing
+`Docs/store/` holds six 1080x1920 screenshots (summer farm, brick village, forest grove, mine ores, the bank opening, daily goals) and the 1024x500 feature graphic. All are real frames of the game:
+```sh
+cd farm-game/Tools/jvm-check
+/opt/gradle/bin/gradle test -Pshots --tests '*StoreShotsTest*'   # or your gradle; writes Docs/store/*.png
+cd ../ArtGen && python3 feature_graphic.py                        # title over feature_scene.png
+```
 
 ## Credits
 See [`CREDITS.md`](CREDITS.md).
