@@ -5,8 +5,8 @@ icons/<name>      body 14x14 (hand-tuned for 1x reading on the wood panel and da
 icons_big/<name>  body 28x28 (redrawn with more detail, not an upscale)
 Pivot = centre of the body (+ the finish() pad).
 
-Endesga-32 only, checker dither between ramp steps, lit from the top-left, finished with
-finish() (1px ink outline + hard drop shadow) like every other sprite.
+Endesga-32 only, hard colour steps (no checker dither since art round 4), lit from the top-left,
+finished with finish() (1px ink outline + hard drop shadow) like every other sprite.
 """
 import os, sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # noqa: E401,E702
 from _pix import E, CLEAR, Sprites, new, finish  # noqa: E402
@@ -40,7 +40,7 @@ def col(c):
     return E[c] if isinstance(c, str) else c
 
 
-DITHER = [True]
+DITHER = [False]  # clean steps: the nearest ramp colour, never a checker
 
 
 def tone(ramp, v, x, y):
@@ -1978,7 +1978,6 @@ def main():
     small, big = Sprites(art, "icons"), Sprites(art, "icons_big")
     for name, fn in ICONS.items():
         for sp, n in ((small, 14), (big, 28)):
-            DITHER[0] = n > 14
             body = fn(n).im
             assert body.size == (n, n), (name, body.size)
             out, pad = finish(body)

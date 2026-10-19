@@ -5,8 +5,9 @@ items/<id>, items_big/<id>               four tonics: growth_tonic, lucky_charm,
 
 Every drawing is written once in 14-unit space. A pixel is sampled at its centre
 ((x + 0.5) / k, (y + 0.5) / k) with k = n / 14, so the 28px sprite is the same drawing with
-extra detail (glints, grain, vein lines), not an upscale. The 14px sprites use hard steps,
-the 28px sprites a checker dither. Endesga-32 only, lit from the top-left, finished with
+extra detail (glints, grain, vein lines), not an upscale. The skill icons use hard colour
+steps at both sizes (no checker dither since art round 4); the tonic items keep the 28px
+checker dither they were polished with. Endesga-32 only, lit from the top-left, finished with
 finish() (1px ink outline + hard drop shadow) like the rest of the art. Pivot = body centre
 (+ pad).
 
@@ -63,10 +64,10 @@ def tone(ramp, v, x, y, dither):
 
 
 class Canvas:
-    def __init__(self, n):
+    def __init__(self, n, dither=None):
         self.n = n
         self.k = n / 14.0
-        self.dither = n > 14
+        self.dither = n > 14 if dither is None else dither
         self.im = new(n, n)
         self.px = self.im.load()
 
@@ -636,7 +637,7 @@ def main():
     for name, fn in list(BRANCHES.items()) + [(k, v) for k, v in SKILLS.items()]:
         sid = "skill_" + name
         for sp, n in ((icons, 14), (big, 28)):
-            c = fn(Canvas(n))
+            c = fn(Canvas(n, dither=False))
             out, pad = finish(c.im)
             sp.save(sid, out, n // 2 + pad, n // 2 + pad)
     for name, fn in TONICS.items():

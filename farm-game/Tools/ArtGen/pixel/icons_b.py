@@ -6,7 +6,7 @@ Pivot = centre of the 14/28 body (+ the finish() pad).
 
 Shapes are built from pixel sets (rects, polygons, ellipses, thick lines, char maps) and
 shaded with Endesga-32 ramps lit from the top-left: bevel() for flat boxes and planks,
-dome() for soft round things, cyl() for metal, with checker dither between ramp steps.
+dome() for soft round things, cyl() for metal, with hard colour steps (no checker dither).
 finish() adds the 1px ink outline and the hard drop shadow.
 """
 import os, sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # noqa: E401,E702
@@ -41,16 +41,9 @@ def col(c):
 
 
 def tone(ramp, v, x, y):
-    """Ramp colour for a fractional level v, checker-dithered between steps."""
+    """Ramp colour for a fractional level v: the nearest step (clean, no dither; art round 4)."""
     n = len(ramp) - 1
-    v = max(0.0, min(float(n), v))
-    b = int(v)
-    f = v - b
-    if b >= n or f < 0.3:
-        return ramp[b]
-    if f > 0.7:
-        return ramp[b + 1]
-    return ramp[b + 1] if (x + y) % 2 == 0 else ramp[b]
+    return ramp[int(round(max(0.0, min(float(n), v))))]
 
 
 # ---------------------------------------------------------------- pixel sets

@@ -99,25 +99,31 @@ NEWCOMERS = {
 }
 
 
-def recolour(art, pt):
-    from PIL import Image
-    manifest = json.load(open(os.path.join(art, "manifest.json")))
+def recolour_spec(spec, swap):
+    """A portrait spec with its palette names swapped (background, ramps and key overrides), so
+    the newcomer is painted and polished like any other portrait."""
+    def sw(n):
+        return swap.get(n, n)
+    out = dict(spec)
+    out["bg"] = [sw(n) for n in spec["bg"]]
+    out["ramps"] = {g: [sw(n) for n in r] for g, r in spec["ramps"].items()}
+    out["key"] = {ch: (grp, sw(ov) if ov else ov) for ch, (grp, ov) in spec.get("key", {}).items()}
+    return out
+
+
+def recolour(pt):
+    """Adds the newcomer portraits (painted from the recoloured specs of their source)."""
+    import portraits as P
+    specs = dict(P.PORTRAITS)
     for new_id, (src, swap) in NEWCOMERS.items():
-        im = Image.open(os.path.join(art, "portraits", src + ".png")).convert("RGBA")
-        px = im.load()
-        for y in range(im.height):
-            for x in range(im.width):
-                name = RGB.get(px[x, y][:3])
-                if px[x, y][3] and name in swap:
-                    px[x, y] = E[swap[name]]
-        p = manifest["portraits/" + src]
-        pt.save(new_id, im, p["ax"], p["ay"])
+        im, pad = P.paint(recolour_spec(specs[src], swap))
+        pt.save(new_id, im, 15 + pad, 15 + pad)
 
 
 def main():
     sp = Sprites(sys.argv[1], "buildings")
     pt = Sprites(sys.argv[1], "portraits")
-    recolour(sys.argv[1], pt)
+    recolour(pt)
     for t, tier in enumerate(TIERS):
         for i, (_, spec) in enumerate(T.STYLES[tier]):
             emit_with_night(sp, f"house_{t}_{'abc'[i]}", lambda spec=spec: T.house(spec))

@@ -6,6 +6,9 @@ finish()) and returns a new image; the pivot is unchanged (the canvas only grows
                 shadow toward the lower right (sun from the top left) with dappled sun spots
                 under tree canopies, and a darker contact shadow at the foot.
   kind "item"   inventory items: the same colour work, a small hard shadow.
+  kind "ui"     HUD and panel icons, villager portraits: the item treatment (art round 4).
+  kind "chrome" 9-slice UI frames, buttons, bars and tabs: de-dither and hue shift only. Ink
+                pixels, sizes and corners stay exactly as drawn, so the slice borders hold.
 
 Steps:
   1. De-dither: checkerboard and ordered-dither patterns between two close colours become clean
@@ -234,7 +237,40 @@ def cast_shadow(mask, w, h, tree=False):
     return alpha, nw, nh
 
 
+def chrome(im):
+    """9-slice UI chrome: de-dither and hue-shift the fills, nothing else. Ink pixels keep their
+    colour and place, translucent pixels keep their alpha, and the size does not change."""
+    im = im.convert("RGBA")
+    w, h = im.size
+    src = im.load()
+    solid, glass = {}, {}
+    for y in range(h):
+        for x in range(w):
+            c = src[x, y]
+            if c[3] == 0 or c[:3] == INK:
+                continue
+            if c[3] == 255:
+                solid[(x, y)] = c[:3]
+            else:
+                glass[(x, y)] = c
+    solid = dedither(solid)
+    out = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = out.load()
+    for p, c in solid.items():
+        px[p] = hue_shift(c) + (255,)
+    for p, c in glass.items():
+        px[p] = hue_shift(c[:3]) + (c[3],)
+    for y in range(h):
+        for x in range(w):
+            c = src[x, y]
+            if c[3] > 0 and c[:3] == INK:
+                px[x, y] = c
+    return out
+
+
 def polish(im, kind, name=""):
+    if kind == "chrome":
+        return chrome(im)
     im = im.convert("RGBA")
     w, h = im.size
     fill, line = _strip(im)
@@ -278,8 +314,10 @@ def polish(im, kind, name=""):
 KIND = {
     "buildings": "world", "crops": "world", "deco": "world", "people": "world", "rocks": "world",
     "trees": "world", "vehicles": "world", "items": "item", "items_big": "item",
+    "icons": "ui", "icons_big": "ui", "portraits": "ui", "ui": "chrome",
 }
-SKIP = ("_lit", "rocks/crack_", "rocks/ladder_hole", "deco/fence", "trees/branch_pile")
+# The story busts (*_bust) are cut out and already final; they are not polished.
+SKIP = ("_lit", "rocks/crack_", "rocks/ladder_hole", "deco/fence", "trees/branch_pile", "_bust")
 
 
 def kind_of(name):
