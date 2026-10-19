@@ -671,27 +671,27 @@
   "bh": 20
  },
  "deco/crate_empty": {
-  "ax": 7,
-  "ay": 8,
-  "bh": 13
+  "ax": 9,
+  "ay": 11,
+  "bh": 17
  },
  "deco/crate_full": {
-  "ax": 7,
-  "ay": 9,
-  "bh": 14
+  "ax": 9,
+  "ay": 11,
+  "bh": 17
  },
  "deco/fence_l": {
   "ax": 19,
-  "ay": 9
+  "ay": 10
  },
  "deco/fence_r": {
-  "ax": 2,
-  "ay": 9
+  "ax": 3,
+  "ay": 10
  },
  "deco/field_sign": {
   "ax": 9,
-  "ay": 17,
-  "bh": 20
+  "ay": 20,
+  "bh": 25
  },
  "deco/flowers_blue": {
   "ax": 6,
@@ -735,12 +735,12 @@
  },
  "deco/lantern": {
   "ax": 4,
-  "ay": 13,
-  "bh": 16
+  "ay": 15,
+  "bh": 18
  },
  "deco/lantern_lit": {
   "ax": 4,
-  "ay": 13
+  "ay": 15
  },
  "deco/lightning_rod": {
   "ax": 8,
@@ -4502,24 +4502,24 @@
   "bh": 6
  },
  "vehicles/harvester_ne_0": {
-  "ax": 14,
-  "ay": 13,
-  "bh": 21
+  "ax": 12,
+  "ay": 19,
+  "bh": 26
  },
  "vehicles/harvester_ne_1": {
-  "ax": 14,
-  "ay": 13,
-  "bh": 21
+  "ax": 12,
+  "ay": 19,
+  "bh": 26
  },
  "vehicles/harvester_se_0": {
-  "ax": 14,
-  "ay": 15,
-  "bh": 20
+  "ax": 17,
+  "ay": 16,
+  "bh": 26
  },
  "vehicles/harvester_se_1": {
-  "ax": 14,
-  "ay": 15,
-  "bh": 20
+  "ax": 17,
+  "ay": 16,
+  "bh": 26
  },
  "vehicles/truck_load": {
   "ax": 16,

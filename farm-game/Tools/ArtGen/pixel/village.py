@@ -735,10 +735,8 @@ def main():
     bld = Sprites(art, "buildings")
     deco = Sprites(art, "deco")
 
-    for heading in ("se", "ne"):
-        for frame in (0, 1):
-            emit(veh, f"harvester_{heading}_{frame}", harvester(heading, frame))
-    # The pickup truck and its load are hand-pixeled in farm_hand.py (art round 5).
+    # The pickup truck and its load, the harvester, the field sign and the crates are
+    # hand-pixeled in farm_hand.py (art round 5).
 
     emit(bld, "cottage_a", cottage_a())
     emit(bld, "cottage_b", cottage_b())
@@ -747,9 +745,6 @@ def main():
     emit(deco, "bridge", bridge())
     emit(deco, "sign_forest", signpost(TREE_ICON))
     emit(deco, "sign_mine", signpost(PICK_ICON))
-    emit(deco, "field_sign", field_sign())
-    emit(deco, "crate_empty", crate(False))
-    emit(deco, "crate_full", crate(True))
     emit(deco, "hay_bale", hay_bale())
     emit(deco, "trough", trough())
 

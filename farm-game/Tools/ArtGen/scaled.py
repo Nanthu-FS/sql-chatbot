@@ -41,8 +41,6 @@ SCALE = {
     "merchant_cart": ("machines_wild", "buildings", 0.65),
     "logging_hut": ("machines_wild", "buildings", 0.9),
     "tree_nursery": ("machines_wild", "buildings", 0.72),
-    "harvester": ("village", "vehicles", 0.7),
-    "crate": ("village", "deco", 0.72),
 }
 
 _mods = {}

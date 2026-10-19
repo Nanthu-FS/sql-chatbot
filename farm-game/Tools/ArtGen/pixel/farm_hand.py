@@ -14,6 +14,11 @@ nothing is copied from them.
   buildings/barn(_snow)                 the barn, with DITHER FARM painted on its roof
   buildings/silo(_snow)                 the silo
   buildings/orders(_snow)               the orders notice board
+  vehicles/harvester_se_0/1, _ne_0/1    the yellow combine (its reel turns between frames)
+  deco/crate_empty, crate_full          the field crates
+  deco/field_sign                       a field's sign (the engine letters it)
+  deco/lantern                          the lamp post (night.py picks out its glass for lantern_lit)
+  deco/fence_r, fence_l                 one tile of fence along +col / +row, pivot at the start corner
 
 Pivot = the ground centre of the footprint.
 """
@@ -521,6 +526,245 @@ def preview2(out):
     sheet.resize((sheet.width * 4, sheet.height * 4), Image.NEAREST).save(out)
 
 
+# ---------------------------------------------------------------- harvester
+
+HARVESTER = ("yellow", "amber", "orange")
+
+
+def reel(c, along_v, at, span, z, frame):
+    """The harvester's red reel: cream bats round an axle, a quarter turn apart, turning between
+    frames. along_v: the axle runs along v (at = u) or along u (at = v)."""
+    import math
+    for k in range(4):
+        a = math.pi / 2 * k + (math.pi / 4 if frame else 0)
+        du, dz = 1.6 * math.cos(a), 1.6 * math.sin(a)
+        if along_v:
+            c.vline(at + du, span[1] - span[0], span[0], z + dz, "cream" if dz > -0.5 else "tan")
+        else:
+            c.uline(span[0], span[1], at + du, z + dz, "cream" if dz > -0.5 else "tan")
+    for s in span:
+        if along_v:
+            c.line((at - 1.6, s, z), (at + 1.6, s, z), "red"); c.line((at, s, z - 1.6), (at, s, z + 1.6), "red_d")
+        else:
+            c.line((s, at - 1.6, z), (s, at + 1.6, z), "red"); c.line((s, at, z - 1.6), (s, at, z + 1.6), "red_d")
+
+
+def drum(c, u0, span, frame):
+    """The reel seen from the front-right: a slim red drum whose cream bats move round a step
+    between frames, with a red end ring and grey hub."""
+    v0, v1 = span
+    c.box(u0 + 0.4, u0 + 2.0, v0, v1, 4.4, 7.0, "red", "red_d", "purple", lit=False)
+    for z in ((5.0, 6.4) if frame == 0 else (5.7,)):
+        c.vline(u0 + 2.0, v1 - v0, v0, z, "cream")
+    if frame:
+        c.vline(u0 + 1.2, v1 - v0, v0, 7.0, "cream")
+    x, y = c.p(u0 + 1.2, v1, 5.7)
+    for dx, dy in ((-1, -2), (0, -2), (1, -1), (1, 0), (1, 1), (0, 2), (-1, 2), (-2, 1), (-2, 0), (-2, -1)):
+        c.dot(x + dx, y + dy, "red")
+    c.dot(x, y, "grey_l")
+
+
+def harvester_se(frame):
+    """Driving down-right: a tall toy combine, glass cab up front, the red header and turning reel
+    ahead of it, the unloading pipe folded back along the side."""
+    top, left, right = HARVESTER
+    L, W = 6, 4.4
+    c = Iso(44, 36, 14, 19)
+    c.line((0.6, W, 10.4), (-1.6, W + 0.4, 10.4), "grey"); c.line((0.6, W, 9.8), (-1.6, W + 0.4, 9.8), "grey_d")  # pipe
+    c.box(0.3, L - 0.3, 0.4, W - 0.4, 1, 2.5, *DARK, lit=False)
+    c.box(0, L, 0, W, 2, 9, top, left, right)                                # body
+    c.box(0.3, 3.0, 0.5, W - 0.5, 9, 9.8, top, left, right)                 # grain tank lid
+    c.zline(1.8, 1.0, 9.8, 11.6, "grey_d"); c.dot(*c.p(1.8, 1.0, 11.6), "ink")    # exhaust
+    c.uline(0, L, W, 4.0, "cream")                                           # cream stripe
+    c.wheat(*c.p(0.6, W, 8.2))
+    c.box(3.4, L, 0.7, W - 0.7, 9, 12.2, "cream", "cyan", "blue")            # glass cab, cream roof
+    c.zline(3.5, W - 0.7, 9, 12.2, "cream"); c.zline(L, W - 0.7, 9, 12.2, "cream", dx=-1)
+    x, y = c.p(4.0, W - 0.7, 11.6)
+    c.dot(x, y, "white"); c.dot(x + 1, y + 1, "white")
+    for u in (1.3, 4.4):                                                     # wheels
+        x, y = c.p(u, W, 2)
+        wheel(c, x, y + 1, frame)
+    # Header: red with cream teeth, wider than the body; the reel on arms above it.
+    c.box(L, L + 2, -0.8, W + 0.8, 0.8, 3.0, "red", "red_d", "purple")
+    c.vline(L + 2, W + 1.6, -0.8, 1.2, "cream")                              # cutter bar
+    for v in (-0.8, W + 0.8):
+        c.line((L - 0.2, v, 7.6), (L + 1.2, v, 5.7), "red_d")
+    drum(c, L + 0.2, (-0.8, W + 0.8), frame)
+    soften(c.im)
+    return c, c.pivot(L / 2, W / 2)
+
+
+def harvester_ne(frame):
+    """Driving away up-right: the right side and the back show; the header and reel peek out
+    past the cab at the far end."""
+    top, left, right = HARVESTER
+    L, W = 6, 4.4
+    c = Iso(44, 36, 22, 14)
+    # Length runs along v: header and reel at the far end (small v), the tank at the back.
+    c.box(-0.8, W + 0.8, -2, 0, 0.8, 3.0, "red", "red_d", "purple")
+    reel(c, False, -1.2, (-0.8, W + 0.8), 5.4, frame)
+    c.box(0.4, W - 0.4, 0.3, L - 0.3, 1, 2.5, *DARK, lit=False)
+    c.box(0, W, 0, L, 2, 9.4, top, left, right)
+    c.box(0.7, W - 0.7, 0, 2.6, 9.4, 12.6, "cream", "blue", "cyan")          # glass cab
+    c.zline(W - 0.7, 2.6, 9.4, 12.6, "cream")
+    c.box(0.5, W - 0.5, 3.0, L - 0.3, 9.4, 10.2, top, left, right)           # tank lid
+    c.zline(1.0, 4.6, 10.2, 12.4, "grey_d"); c.dot(*c.p(1.0, 4.6, 12.4), "ink")
+    c.vline(W, L, 0, 4.0, "cream")
+    c.line((W, L - 0.6, 10.0), (W + 0.4, L + 1.6, 10.0), "grey")             # pipe
+    x, y = c.p(W / 2 - 0.4, L, 8.6)
+    c.wheat(x - 2, y)
+    for v in (1.6, 4.7):
+        x, y = c.p(W, v, 2)
+        wheel(c, x, y + 1, frame)
+    soften(c.im)
+    return c, c.pivot(W / 2, L / 2)
+
+
+# ---------------------------------------------------------------- crates, fence, sign, lamp
+
+def crate(full):
+    """A slatted produce crate with cream corner battens and a red stamp; full ones are heaped."""
+    c = Iso(22, 22, 11, 12)
+    S = 3.6
+    c.box(-S / 2, S / 2, -S / 2, S / 2, 0, 5, "tan", "tan", "brown_l")
+    c.poly([(-S / 2 + 0.5, -S / 2 + 0.5, 5), (S / 2 - 0.5, -S / 2 + 0.5, 5), (S / 2 - 0.5, S / 2 - 0.5, 5), (-S / 2 + 0.5, S / 2 - 0.5, 5)], "brown_d")
+    c.uline(-S / 2, S / 2, S / 2, 2.5, "brown_l"); c.vline(S / 2, S, -S / 2, 2.5, "brown_d")   # slat gaps
+    c.zline(S / 2, S / 2, 0, 5, "cream", dx=-1); c.zline(S / 2, S / 2, 0, 5, "tan")
+    c.zline(-S / 2, S / 2, 0, 5, "cream")
+    x, y = c.p(-0.6, S / 2, 4.2)
+    c.dot(x, y, "red"); c.dot(x + 1, y, "red"); c.dot(x, y + 1, "red"); c.dot(x + 1, y + 1, "red_d")
+    if full:
+        for u, v, z, light, dark in ((-0.7, -0.7, 5.6, "orange", "rust"), (0.6, -0.7, 6.2, "pink", "red"),
+                                     (-0.6, 0.6, 5.8, "green", "green_d"), (0.6, 0.6, 5.6, "pink", "red"),
+                                     (0, 0, 6.8, "yellow", "amber")):
+            x, y = c.p(u, v, z)
+            for dx, dy, col in ((0, -1, light), (-1, 0, light), (0, 0, light), (1, 0, dark), (-1, 1, dark), (0, 1, dark), (1, 1, dark)):
+                c.dot(x + dx, y + dy, col)
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def fence(along_u):
+    """One tile of fence from a tile corner: two cream rails between chunky red posts with cream
+    caps. Posts sit flush with both ends, so neighbouring segments share one chunky post."""
+    rail, post = ("white", "cream", "tan"), ("red", "red", "red_d")
+    c = Iso(20, 20, 2 if along_u else 18, 9)
+    ends = ((0, 0.7), (7.3, 8))
+
+    def p_box(a, b):
+        if along_u:
+            c.box(a, b, -0.35, 0.35, 0, 7.5, *post)
+        else:
+            c.box(-0.35, 0.35, a, b, 0, 7.5, *post)
+        x, y = c.p((a + b) / 2, 0, 7.5) if along_u else c.p(0, (a + b) / 2, 7.5)
+        c.dot(x, y, "cream"); c.dot(x - 1, y, "cream")
+    p_box(*ends[0])
+    for z0 in (2.4, 5.2):
+        if along_u:
+            c.box(0.7, 7.3, -0.2, 0.2, z0, z0 + 1.3, *rail)
+        else:
+            c.box(-0.2, 0.2, 0.7, 7.3, z0, z0 + 1.3, *rail)
+    p_box(*ends[1])
+    return c, c.p(0, 0, 0)
+
+
+def field_sign():
+    """A red board in a cream frame on two red legs; the engine letters the board in white."""
+    c = Iso(22, 26, 11, 20)
+    B = 3.4
+    for u in (-B + 0.6, B - 1.1):
+        c.box(u, u + 0.5, -0.2, 0.2, 0, 6, "red_d", "red_d", "purple")
+    c.box(-B, B, -0.2, 0.2, 5, 15.6, "cream", "cream", "tan")
+    c.poly([(-B + 0.6, 0.2, 5.8), (B - 0.6, 0.2, 5.8), (B - 0.6, 0.2, 14.8), (-B + 0.6, 0.2, 14.8)], "red")
+    c.uline(-B + 0.6, B - 0.6, 0.2, 6.6, "red_d")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+LAMP = [
+    "...r...",
+    "..sss..",
+    ".sSSSs.",
+    ".iyyyi.",
+    ".iyWyi.",
+    ".iAyAi.",
+    ".iiiii.",
+    "...rR..",
+    "...rR..",
+    "...rR..",
+    "...rR..",
+    "...rR..",
+    "..sSs..",
+    "..sss..",
+]
+LAMP_KEY = {"r": "red", "R": "red_d", "s": "slate", "S": "slate_d", "i": "ink", "y": "yellow", "W": "white", "A": "amber"}
+
+
+def lantern():
+    """The farm lamp post: a red post, a slate cap and foot, warm glass (picked out at night)."""
+    c = Iso(7, len(LAMP), 3, len(LAMP) - 1)
+    for y, row in enumerate(LAMP):
+        for x, ch in enumerate(row):
+            if ch in LAMP_KEY:
+                c.dot(x, y, LAMP_KEY[ch])
+    return c, (3, len(LAMP) - 1)
+
+
+def preview3(out):
+    """Batch 3 (harvester, crates, fence, field sign, lamp): today's sprite then the options, 5x."""
+    from PIL import Image, ImageDraw
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    import polish
+    art = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "app", "src", "main", "assets", "art")
+    man = json.load(open(os.path.join(art, "manifest.json")))
+    hand = Image.open(os.path.join(art, "people/hana_se_idle.png")).convert("RGBA")
+    hp = man["people/hana_se_idle"]
+    rows = [[("vehicles/harvester_se_0", None, "NOW"), ("vehicles/harvester_se_0", lambda: harvester_se(0), "new"),
+             ("vehicles/harvester_ne_0", lambda: harvester_ne(0), "away")],
+            [("deco/crate_full", None, "NOW"), ("deco/crate_empty", lambda: crate(False), "new"),
+             ("deco/crate_full", lambda: crate(True), "full"), ("deco/field_sign", None, "NOW"),
+             ("deco/field_sign", field_sign, "new"), ("deco/lantern", None, "NOW"), ("deco/lantern", lantern, "new")]]
+    sheet = Image.new("RGBA", (420, 190), (62, 137, 72, 255))
+    d = ImageDraw.Draw(sheet)
+
+    def place(name, fn, ax, ay):
+        if fn is None:
+            im = Image.open(os.path.join(art, name + ".png")).convert("RGBA")
+            p = man[name]
+            sheet.alpha_composite(im, (ax - p["ax"], ay - p["ay"]))
+            return
+        cnv, (px_, py_) = fn()
+        x0, y0, x1, y1 = cnv.im.getbbox()
+        body, pad = finish(cnv.im.crop((x0, y0, x1, y1)))
+        sys.stderr.write("%s bh %d\n" % (name, body.height))
+        if polish.kind_of(name):
+            body = polish.polish(body, polish.kind_of(name), name)
+        sheet.alpha_composite(body, (ax - (px_ - x0 + pad), ay - (py_ - y0 + pad)))
+    for ri, (row, cw) in enumerate(zip(rows, (84, 60))):
+        for i, (name, fn, label) in enumerate(row):
+            ax, ay = i * cw + cw // 2 + 4, ri * 66 + 52
+            d.text((i * cw + 2, ri * 66 + 1), label, fill=(255, 255, 255, 255))
+            sheet.alpha_composite(hand, (ax - 24 - hp["ax"], ay - hp["ay"]))
+            place(name, fn, ax, ay)
+            if name == "deco/field_sign":
+                for dx, dy in ((0, 0), (1, 0), (2, 0), (0, 1), (2, 1), (0, 2), (1, 2), (2, 2), (0, 3), (2, 3), (0, 4), (2, 4)):
+                    sheet.putpixel((ax - 1 + dx, ay - 14 + dy), (255, 255, 255, 255))   # the engine's letter
+    # Fences: a field corner of each paint (today, cream rails, red rails).
+    for k, paint in enumerate((None, "new")):
+        bx, by = 56 + k * 136, 158
+        d.text((bx - 36, by - 16), "fence NOW" if paint is None else "fence " + paint, fill=(255, 255, 255, 255))
+        for i in range(3):
+            for along_u in (True, False):
+                name = "deco/fence_r" if along_u else "deco/fence_l"
+                ox, oy = (bx + 16 * i, by - 8 + 8 * i) if along_u else (bx - 16 * i - 16, by - 8 - 8 * i + 8 * 1 - 8)
+                if along_u:
+                    ox, oy = bx + 16 * i, by - 8 + 8 * i
+                else:
+                    ox, oy = bx - 16 * i, by - 8 + 8 * i
+                place(name, None if paint is None else (lambda a=along_u: fence(a)), ox, oy)
+    sheet.resize((sheet.width * 5, sheet.height * 5), Image.NEAREST).save(out)
+
+
 def emit(sp, name, made):
     cnv, (px, py) = made
     x0, y0, x1, y1 = cnv.im.getbbox()
@@ -536,11 +780,21 @@ def main():
         emit(veh, f"truck_se_{f}", truck_se(f))
         emit(veh, f"truck_ne_{f}", truck_ne(f))
     emit(veh, "truck_load", truck_load())
+    for f in (0, 1):
+        emit(veh, f"harvester_se_{f}", harvester_se(f))
+        emit(veh, f"harvester_ne_{f}", harvester_ne(f))
+    deco = Sprites(art, "deco")
+    emit(deco, "crate_empty", crate(False))
+    emit(deco, "crate_full", crate(True))
+    emit(deco, "field_sign", field_sign())
+    emit(deco, "lantern", lantern())
+    emit(deco, "fence_r", fence(True))
+    emit(deco, "fence_l", fence(False))
     for name, fn in (("barn", barn), ("silo", silo), ("orders", orders), ("workbench", workbench), ("well", well), ("market", market)):
         emit(bld, name, fn(False))
         emit(bld, name + "_snow", fn(True))
     pivots = {}
-    for sp in (veh, bld):
+    for sp in (veh, bld, deco):
         pivots.update(sp.pivots)
     print(json.dumps(pivots))
 
@@ -586,5 +840,7 @@ if __name__ == "__main__":
         preview(sys.argv[2])
     elif len(sys.argv) > 2 and sys.argv[1] == "--preview2":
         preview2(sys.argv[2])
+    elif len(sys.argv) > 2 and sys.argv[1] == "--preview3":
+        preview3(sys.argv[2])
     else:
         main()
