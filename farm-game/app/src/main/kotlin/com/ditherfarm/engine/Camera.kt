@@ -39,6 +39,9 @@ class Camera {
 
     fun setDiamond(cx: Float, cy: Float, halfW: Float, halfH: Float) { diamond = floatArrayOf(cx, cy, halfW, halfH); clamp() }
 
+    /** Back to the plain bounds rectangle. */
+    fun clearDiamond() { diamond = null; clamp() }
+
     /** Visible world rectangle size at the current zoom. */
     val viewWidth get() = viewW / zoom.toFloat()
     val viewHeight get() = viewH / zoom.toFloat()

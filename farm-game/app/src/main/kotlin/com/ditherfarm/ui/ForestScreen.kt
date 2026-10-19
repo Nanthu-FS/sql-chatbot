@@ -61,12 +61,40 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
     private val shake = HashMap<Int, Float>()
     private var holdSpot = -1
     private var holdTimer = 0f
-    private var props = ArrayList<Triple<String, Float, Float>>()
+    /** Scenery; [dark] marks the forest wall, drawn shaded so it reads as background. */
+    private class Prop(val sprite: String, val x: Float, val y: Float, val dark: Boolean)
+    private var props = ArrayList<Prop>()
+    private val shade = android.graphics.LightingColorFilter(0x8C8C9E, 0)
 
     override fun terrain(c: Int, r: Int): Terrain = when {
         ForestLayout.isTrail(c, r) -> Terrain.PATH
-        c + r >= 38 -> Terrain.GRASS
+        ForestLayout.zoneOf(c, r) != null -> Terrain.GRASS
         else -> Terrain.FOREST
+    }
+
+    override val rock = intArrayOf(0xFF181425.toInt(), 0xFF262B44.toInt(), 0xFF3A4466.toInt(), 0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
+    /**
+     * Rock cliffs: rising along the two back edges, and ledges in the wall behind the clearings
+     * (never just in front of one, where they would cover the spots).
+     */
+    override fun level(c: Int, r: Int): Int {
+        if (!ForestLayout.isWall(c, r)) return 0
+        val d = minOf(c, r)
+        val bump = if (Noise.rand(c, r, 331) < 0.3f) 1 else 0
+        when {
+            d <= 1 -> return 3
+            d == 2 -> return 2 + bump
+            d == 3 -> return 1 + bump
+        }
+        if (nearFront(c, r)) return 0
+        val n = Noise.fbm(c * 0.21f, r * 0.21f, 332)
+        return if (n > 0.66f) 2 else if (n > 0.58f) 1 else 0
+    }
+
+    /** A higher tile just in front would wrongly draw under this tile's props. */
+    private fun shadowed(c: Int, r: Int): Boolean {
+        val l = level(c, r)
+        return listOf(1 to 0, 0 to 1, 1 to 1, 2 to 1, 1 to 2, 2 to 2).any { (dc, dr) -> level(c + dc, r + dr) > l }
     }
 
     override fun seasonIndex() = world.time.season.ordinal
@@ -74,7 +102,11 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
 
     override fun enter() {
         super.enter()
+        cam.minZoom = 2
         cam.maxZoom = 3
+        // Keep the whole view on painted ground, like the farm.
+        val n = ForestLayout.SIZE
+        cam.setDiamond(0f, n * Iso.TH / 2f, (n - 2) * Iso.TW / 2f, (n - 2) * Iso.TH / 2f)
         recenter()
         weather.onThunder = { game.sfx.play("thunder") }
         if (props.isEmpty()) scatter()
@@ -82,11 +114,35 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         if (world.state.forest.hive >= 0) hud.tip("hive", "A wild beehive! Tap its tree to smoke the bees out for honey.")
     }
 
-    fun recenter() = centerOnTile(ForestLayout.SIZE - 5, ForestLayout.SIZE - 5)
+    /** The Edge Grove, just up the trail from the entrance. */
+    fun recenter() = centerOnTile(33, 33)
+
+    private val wallTrees = listOf("pine", "oak", "birch", "pine", "oak", "pine")
+
+    /** Wall tile just in front of a clearing: only low shrubs, so trees never hide the spots behind. */
+    private fun nearFront(c: Int, r: Int) = (1..3).any { k -> (0..k).any { j -> !ForestLayout.isWall(c - j, r - (k - j)) } }
 
     private fun scatter() {
         for (r in 0 until rows) for (c in 0 until cols) {
             if (spotAt.containsKey(c * 1000 + r) || ForestLayout.isTrail(c, r)) continue
+            if (ForestLayout.isWall(c, r)) {
+                // Forest wall: trees (on the cliff tops too), shrubs near the clearings, a few boulders.
+                if (shadowed(c, r)) continue
+                val lift = level(c, r) * com.ditherfarm.engine.Raised.LEVEL_PX
+                val roll = Noise.rand(c, r, 311)
+                val x = Iso.x(c, r) + (Noise.rand(c, r, 312) - 0.5f) * 14f
+                val y = Iso.centerY(c, r) + (Noise.rand(c, r, 313) - 0.5f) * 5f - lift
+                val treeChance = if (lift > 0) 0.55f else 0.78f
+                val sprite = when {
+                    nearFront(c, r) -> if (roll < 0.22f) "deco/bush" else if (roll < 0.28f) "deco/rock_big" else null
+                    roll < treeChance -> "trees/" + wallTrees[(Noise.rand(c, r, 314) * wallTrees.size).toInt().coerceIn(0, wallTrees.size - 1)]
+                    roll < 0.84f -> "deco/bush"
+                    roll < 0.87f -> "deco/rock_big"
+                    else -> null
+                } ?: continue
+                props += Prop(sprite, x, y, dark = true)
+                continue
+            }
             val roll = Noise.rand(c, r, 301)
             val sprite = when {
                 roll < 0.18f -> "deco/tallgrass_a"
@@ -95,7 +151,7 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
                 roll < 0.29f -> "deco/log"
                 else -> null
             } ?: continue
-            props += Triple(sprite, Iso.x(c, r) + (Noise.rand(c, r, 302) - 0.5f) * 12f, Iso.centerY(c, r) + (Noise.rand(c, r, 303) - 0.5f) * 5f)
+            props += Prop(sprite, Iso.x(c, r) + (Noise.rand(c, r, 302) - 0.5f) * 12f, Iso.centerY(c, r) + (Noise.rand(c, r, 303) - 0.5f) * 5f, dark = false)
         }
     }
 
@@ -136,9 +192,10 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
     }.let { if (it.isEmpty() || game.assets.has(it)) it else "deco/bush" }
 
     override fun drawGroundLayer(g: Gfx) {
-        // Dim locked zones with a dark dither.
+        // Dim locked clearings (and the trail up to them) with a dark dither.
         for (r in 0 until rows) for (c in 0 until cols) {
-            if (!world.zoneOpen(ForestLayout.zoneOf(c, r))) g.sprite("tiles/shadow", Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat(), 200)
+            val z = ForestLayout.zoneOf(c, r) ?: continue
+            if (!world.zoneOpen(z)) g.sprite("tiles/shadow", Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat(), 200)
         }
         for (b in world.state.forest.branches) {
             val c = b / 1000; val r = b % 1000
@@ -148,11 +205,13 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
 
     override fun collect(list: DrawList) {
         val winter = world.time.season == Season.WINTER
-        for ((sprite, x, y) in props) {
-            var s = sprite
+        for (p in props) {
+            val x = p.x; val y = p.y
+            if (!inView(x, y, 70f)) continue
+            var s = if (p.sprite.startsWith("trees/")) seasonal(p.sprite) else p.sprite
             if (winter && game.assets.has("${s}_snow")) s = "${s}_snow"
-            if (sprite == "deco/tallgrass_a" && sin(time * 2.2f + x * 0.15f) > 0.3f) s = if (winter) "deco/tallgrass_b_snow" else "deco/tallgrass_b"
-            list.add(y + x * 0.001f) { game.gfx.sprite(s, x, y) }
+            if (p.sprite == "deco/tallgrass_a" && sin(time * 2.2f + x * 0.15f) > 0.3f) s = if (winter) "deco/tallgrass_b_snow" else "deco/tallgrass_b"
+            if (p.dark) list.add(y + x * 0.001f) { game.gfx.spriteFiltered(s, x, y, shade) } else list.add(y + x * 0.001f) { game.gfx.sprite(s, x, y) }
         }
         val g = game.gfx
         for (sp in world.forestSpots) {

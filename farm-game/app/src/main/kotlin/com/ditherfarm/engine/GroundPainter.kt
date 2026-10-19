@@ -36,19 +36,38 @@ object Noise {
 enum class Terrain { NONE, GRASS, DIRT, PATH, SAND, WATER, FOREST, STONE, CAVE, GRAVEL, COBBLE, PAVED }
 
 /**
+ * Stepped rock terrain painted with the ground: [level] per tile (0 = ground, each level
+ * [LEVEL_PX] high) and the [rock] ramp (dark to light) for the cliff faces. Tops keep the tile's
+ * own terrain colours, so a raised forest floor reads as a ledge of the same ground.
+ */
+class Raised(val level: (Int, Int) -> Int, val rock: IntArray, val accents: IntArray = IntArray(0)) {
+    companion object { const val LEVEL_PX = 12 }
+}
+
+/**
  * Paints a whole isometric map into one bitmap, pixel by pixel: dithered colour
  * patches from world-space noise, wavy borders between terrains, scattered
  * detail motifs, shore foam and earth cliffs along the front edges so the map
  * reads as a floating diorama. Repaint only when the map or season changes.
  */
 class GroundPainter(private val seed: Int = 7) {
-    /** Bitmap pixel (0,0) is world point (-originX, 0). */
+    /** Bitmap pixel (0,0) is world point (-originX, -originY); originY makes room for raised ground. */
     var originX = 0
+        private set
+    var originY = 0
         private set
 
     private val bayer = intArrayOf(0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5)
 
-    fun paint(cols: Int, rows: Int, season: Int, cliff: Int = 14, terrainAt: (Int, Int) -> Terrain): Bitmap {
+    /**
+     * [raised] adds stepped cliffs; [fade] (world x, y of the ground point) → 0..1 dithers the
+     * ground toward black, e.g. round a cave; [palette] overrides terrain ramps (mine bands).
+     */
+    fun paint(
+        cols: Int, rows: Int, season: Int, cliff: Int = 14, raised: Raised? = null,
+        fade: ((Float, Float) -> Float)? = null, palette: Map<Terrain, IntArray> = emptyMap(),
+        terrainAt: (Int, Int) -> Terrain,
+    ): Bitmap {
         originX = rows * Iso.HW
         val w = (cols + rows) * Iso.HW
         val mapH = (cols + rows) * Iso.HH
@@ -56,7 +75,7 @@ class GroundPainter(private val seed: Int = 7) {
         val px = IntArray(w * h)
         val ter = arrayOfNulls<Terrain>(w * h)
         val pick = IntArray(2)
-        val ramps = Ramps(season)
+        val ramps = Ramps(season, palette)
 
         // Pass 1: terrain per pixel with a noise-warped lookup for wavy borders.
         for (y in 0 until mapH) for (x in 0 until w) {
@@ -141,20 +160,169 @@ class GroundPainter(private val seed: Int = 7) {
                 out[y * w + x] = c
             }
         }
+        // Raised ground goes on a taller canvas: originY rows above world y = 0.
+        var maxLevel = 0
+        if (raised != null) for (r in 0 until rows) for (c in 0 until cols) maxLevel = maxOf(maxLevel, raised.level(c, r))
+        originY = if (maxLevel > 0) maxLevel * Raised.LEVEL_PX + WOB + 2 else 0
+        val h2 = h + originY
+        var img = out
+        if (originY > 0) {
+            img = IntArray(w * h2)
+            System.arraycopy(out, 0, img, originY * w, out.size)
+        }
+        // Ground point under each pixel, for the fade (raised pixels note their own).
+        val groundY = if (fade != null) FloatArray(w * h2) { Float.NaN } else null
+        if (raised != null && maxLevel > 0) paintRaised(img, w, h2, cols, rows, raised, ramps, terrainAt, groundY)
+        if (fade != null) {
+            for (y in 0 until h2) for (x in 0 until w) {
+                val i = y * w + x
+                if (img[i] == 0) continue
+                val gy = groundY!![i].let { if (it.isNaN()) (y - originY).toFloat() else it }
+                val d = fade(x - originX + 0.5f, gy + 0.5f)
+                if (d > 0f && bayer[(y and 3) * 4 + (x and 3)] < (d * 17f).toInt()) img[i] = INK
+            }
+        }
         // Ink outline around the whole island.
-        val fin = out.copyOf()
-        for (y in 0 until h) for (x in 0 until w) {
-            if (out[y * w + x] != 0) continue
-            val n = (x > 0 && out[y * w + x - 1] != 0) || (x < w - 1 && out[y * w + x + 1] != 0) ||
-                (y > 0 && out[(y - 1) * w + x] != 0) || (y < h - 1 && out[(y + 1) * w + x] != 0)
+        val fin = img.copyOf()
+        for (y in 0 until h2) for (x in 0 until w) {
+            if (img[y * w + x] != 0) continue
+            val n = (x > 0 && img[y * w + x - 1] != 0) || (x < w - 1 && img[y * w + x + 1] != 0) ||
+                (y > 0 && img[(y - 1) * w + x] != 0) || (y < h2 - 1 && img[(y + 1) * w + x] != 0)
             if (n) fin[y * w + x] = INK
         }
-        return Bitmap.createBitmap(fin, w, h, Bitmap.Config.ARGB_8888)
+        return Bitmap.createBitmap(fin, w, h2, Bitmap.Config.ARGB_8888)
+    }
+
+    /** Wavy cliff tops: extra height (0..WOB px) that follows world x, the same for every tile. */
+    private fun wob(wx: Int) = (Noise.value(wx * 0.09f, 3.3f, seed + 21) * WOB).toInt()
+
+    /**
+     * Paints each raised tile as a prism, back to front: rock faces with strata and joints that
+     * follow world coordinates (so neighbours join without seams), a cap of the tile's terrain,
+     * a lit rim and a grass lip where the ground in front is lower, an ink line where the
+     * ground behind is lower, and a contact shadow at the foot.
+     */
+    private fun paintRaised(
+        img: IntArray, w: Int, h: Int, cols: Int, rows: Int, raised: Raised, ramps: Ramps,
+        terrainAt: (Int, Int) -> Terrain, groundY: FloatArray?,
+    ) {
+        fun lvl(c: Int, r: Int) = if (c in 0 until cols && r in 0 until rows) raised.level(c, r) else 0
+        val rock = raised.rock
+        val tiles = ArrayList<Int>()
+        for (r in 0 until rows) for (c in 0 until cols) if (raised.level(c, r) > 0) tiles += r * cols + c
+        tiles.sortWith(compareBy({ it % cols + it / cols }, { it % cols }))
+        for (t in tiles) {
+            val c = t % cols
+            val r = t / cols
+            val lv = raised.level(c, r)
+            val terrain = terrainAt(c, r)
+            val cap = ramps.of(terrain)
+            val grassy = terrain == Terrain.GRASS || terrain == Terrain.FOREST
+            val tx = Iso.x(c, r)
+            val ty = Iso.y(c, r)
+            val lowL = lvl(c - 1, r) < lv; val lowR = lvl(c, r - 1) < lv
+            val frontL = lvl(c, r + 1) < lv; val frontR = lvl(c + 1, r) < lv
+            for (dx in -Iso.HW until Iso.HW) {
+                val wx = tx + dx
+                val bx = wx + originX
+                if (bx !in 0 until w) continue
+                val left = dx < 0
+                val adx = if (left) -dx - 0.5f else dx + 0.5f
+                val topG = ty + adx / 2f
+                val botG = ty + Iso.TH - adx / 2f
+                val hgt = lv * Raised.LEVEL_PX + wob(wx)
+                val lip = if (grassy) 1 + (Noise.value(wx * 0.35f, 7.1f, seed + 22) * 3f).toInt() else 0
+                val y0 = kotlin.math.ceil(topG - hgt - 0.5f).toInt()
+                val y1 = kotlin.math.floor(botG - 0.5f).toInt()
+                for (wy in y0..y1) {
+                    val by = wy + originY
+                    if (by !in 0 until h) continue
+                    val yy = wy + 0.5f
+                    val col: Int
+                    val gy: Float
+                    if (yy < botG - hgt) {
+                        // Cap: the tile's own ground, lit rim on open front edges, ink on open back edges.
+                        gy = yy + hgt
+                        val front = if (left) frontL else frontR
+                        val back = if (left) lowL else lowR
+                        col = when {
+                            back && yy < topG - hgt + 1f -> INK
+                            front && yy > botG - hgt - 1.2f -> cap.last()
+                            else -> {
+                                val n = Noise.fbm(wx * 0.045f, gy * 0.09f, seed + terrain.ordinal * 17) * 0.85f + Noise.rand(bx, by, seed) * 0.15f
+                                val f = n * (cap.size - 1) * 1.25f - 0.12f
+                                val i = floor(f).toInt().coerceIn(0, cap.size - 1)
+                                val up = bayer[(by and 3) * 4 + (bx and 3)] < ((f - floor(f)) * 16).toInt()
+                                cap[(if (up) i + 1 else i).coerceAtMost(cap.size - 1)]
+                            }
+                        }
+                    } else {
+                        // Face: z up from the foot; strata bands broken by joints.
+                        gy = botG - 0.5f
+                        val z = botG - yy
+                        val fromTop = hgt - z
+                        if (fromTop < lip) {
+                            col = if (fromTop < 1f) cap[1.coerceAtMost(cap.size - 1)] else cap[0]
+                        } else {
+                            // Rock chunks: jittered cells in (world x, z), each lit from its top-left,
+                            // with dark crevices where two cells meet.
+                            val fx = wx / CHUNK_W
+                            val fz = z / CHUNK_H
+                            val gx = floor(fx).toInt()
+                            val gz = floor(fz).toInt()
+                            var d1 = 9f; var d2 = 9f; var cx = 0; var cz = 0; var sx = 0f; var sz = 0f
+                            for (oz in -1..1) for (ox in -1..1) {
+                                val kx = gx + ox; val kz = gz + oz
+                                val px0 = kx + 0.15f + Noise.rand(kx, kz, seed + 24) * 0.7f
+                                val pz0 = kz + 0.15f + Noise.rand(kx, kz, seed + 25) * 0.7f
+                                val ddx = fx - px0; val ddz = (fz - pz0) * 1.2f
+                                val d = ddx * ddx + ddz * ddz
+                                if (d < d1) { d2 = d1; d1 = d; cx = kx; cz = kz; sx = ddx; sz = ddz } else if (d < d2) d2 = d
+                            }
+                            val edge = kotlin.math.sqrt(d2) - kotlin.math.sqrt(d1)
+                            var v = (if (left) 2.9f else 1.6f) + 0.5f * (z / hgt) - (if (z < 3f) 0.6f else 0f)
+                            v += (Noise.rand(cx, cz, seed + 26) - 0.5f) * 1.0f
+                            v += (sz * 1.6f - sx * 0.8f).coerceIn(-0.9f, 0.9f)
+                            if (dx == -1 || dx == 0) v += if (left) 0.6f else 0.3f
+                            if (edge < 0.11f) v = if (left) 0.7f else 0.2f else if (edge < 0.2f) v -= 0.6f
+                            if (grassy && fromTop < lip + 4 && Noise.rand(bx, by, seed + 27) > 0.7f) {
+                                col = cap[0]
+                                img[by * w + bx] = col
+                                groundY?.set(by * w + bx, gy)
+                                continue
+                            }
+                            v += (Noise.rand(bx, by, seed + 26) - 0.5f) * 0.5f
+                            if (raised.accents.isNotEmpty() && Noise.rand(bx, by, seed + 28) > 0.992f) {
+                                // Ore glints, crystals or embers in the rock.
+                                col = raised.accents[(Noise.rand(bx, by, seed + 29) * raised.accents.size).toInt().coerceAtMost(raised.accents.size - 1)]
+                                img[by * w + bx] = col
+                                groundY?.set(by * w + bx, gy)
+                                continue
+                            }
+                            val vi = v.coerceIn(0f, rock.size - 1f)
+                            val lo = floor(vi).toInt()
+                            val up = bayer[(by and 3) * 4 + (bx and 3)] < ((vi - lo) * 16).toInt()
+                            col = rock[(if (up) lo + 1 else lo).coerceAtMost(rock.size - 1)]
+                        }
+                    }
+                    img[by * w + bx] = col
+                    groundY?.set(by * w + bx, gy)
+                }
+                // Contact shadow on the ground just in front of the foot.
+                val fy = kotlin.math.floor(botG - 0.5f).toInt() + 1 + originY
+                if ((if (left) frontL else frontR) && fy in 0 until h && img[fy * w + bx] != 0) img[fy * w + bx] = darken(img[fy * w + bx])
+            }
+        }
+    }
+
+    private fun darken(c: Int): Int {
+        val r = (c shr 16 and 0xFF) * 3 / 5; val g = (c shr 8 and 0xFF) * 3 / 5; val b = (c and 0xFF) * 3 / 5
+        return (0xFF shl 24) or (r shl 16) or (g shl 8) or b
     }
 
     /** Endesga-32 colour ramps and detail motifs per terrain and season (0 spring .. 3 winter). */
-    private class Ramps(val season: Int) {
-        fun of(t: Terrain): IntArray = when (t) {
+    private class Ramps(val season: Int, val palette: Map<Terrain, IntArray>) {
+        fun of(t: Terrain): IntArray = palette[t] ?: when (t) {
             Terrain.GRASS -> when (season) {
                 1 -> intArrayOf(0xFF3E8948.toInt(), 0xFF63C74D.toInt(), 0xFF63C74D.toInt(), 0xFFFEE761.toInt())
                 2 -> intArrayOf(0xFF733E39.toInt(), 0xFF3E8948.toInt(), 0xFFB86F50.toInt(), 0xFFD77643.toInt())
@@ -257,6 +425,10 @@ class GroundPainter(private val seed: Int = 7) {
     }
 
     companion object {
+        /** Cliff-top wobble (px) and the size of the rock chunks on cliff faces (px). */
+        const val WOB = 3
+        const val CHUNK_W = 9f
+        const val CHUNK_H = 7f
         const val INK = 0xFF181425.toInt()
         const val WHITE = 0xFFFFFFFF.toInt()
         const val CYAN = 0xFF2CE8F5.toInt()

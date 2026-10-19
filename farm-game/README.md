@@ -8,8 +8,8 @@ A cozy isometric pixel-art farming game for Android: tap to plant, water and har
 
 ## What's in it
 - **Farm:** a 44x44 world inside a forest wall: farmstead, river and bridge, village, pasture and eight fenced 4x4 field blocks bought one at a time. 12 crops with star quality, watering, fertilizer, seasons that wither crops, storms, a glass greenhouse that ignores seasons, sprinklers, scarecrows and lightning rods on the corners between plots.
-- **Forest:** five zones of trees to chop with axe tiers, stumps, saplings, foraging, fallen branches, bird nests and wild beehives.
-- **Mine:** a quarry that grows back, and 40 floors below it with ladders, hollow knocks, dark floors and torches, cave-ins to brace, gates, an elevator every 5 floors and geodes to crack.
+- **Forest:** a 44x44 forest of five clearings along a winding trail, walled by deep woods and rock cliffs: trees to chop with axe tiers, stumps, saplings, foraging, fallen branches, bird nests and wild beehives.
+- **Mine:** a quarry under stepped sandstone cliffs that grows back, and 40 floors below it walled in rock that changes colour every ten floors and fades to darkness: ladders, hollow knocks, dark floors and torches, cave-ins to brace, gates, an elevator every 5 floors and geodes to crack.
 - **Machines:** about 20 buildings (Windmill, Bakery, Furnace, Sawmill, Drill Rig and more) that keep working while the app is closed, plus a Logging Hut, a Tree Nursery and a Market Cart that sells by your rules.
 - **Farmhands:** five named farmhands (from level 5) each work one field: harvest into its crate, replant its crop, water and clear. They train up to level 25 and eat crops each morning. A harvester takes the crates to the truck or the Silo, and you tap the truck to sell its load in town.
 - **Skills:** a point per level for a 20-skill tree in five branches (crops, wood, mine, trade, machines), reset at the Workbench; four craftable tonics (Energy Brew, Growth Tonic, Rain Totem, Lucky Charm).

@@ -8,6 +8,7 @@ import com.ditherfarm.engine.Gfx
 import com.ditherfarm.engine.GroundPainter
 import com.ditherfarm.engine.Iso
 import com.ditherfarm.engine.Lighting
+import com.ditherfarm.engine.Raised
 import com.ditherfarm.engine.Screen
 import com.ditherfarm.engine.Terrain
 import com.ditherfarm.engine.Weather
@@ -63,8 +64,35 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     open val hudTop = 30
     open val hudBottom = 44
 
-    /** Terrain for map cell (c, r); drives the painted ground. */
+    /** Terrain for map cell (c, r); drives the painted ground. Called for -[margin] .. cols + [margin] - 1. */
     abstract fun terrain(c: Int, r: Int): Terrain
+
+    /** Painted-only tiles round the map (cave walls round a mine floor); taps there are ignored. */
+    open val margin = 0
+
+    /** Cliff faces for raised ground; null for a flat map. */
+    open val rock: IntArray? = null
+
+    /** Sparse bright pixels in the cliff faces (ore, crystals). */
+    open val rockAccents = IntArray(0)
+
+    /** Height level of tile (c, r) when [rock] is set (0 = ground). */
+    open fun level(c: Int, r: Int) = 0
+
+    /** True to darken the ground with [fade]. */
+    open val fades = false
+
+    /** 0..1 darkness for the ground at world point (wx, wy). */
+    open fun fade(wx: Float, wy: Float) = 0f
+
+    /** Terrain ramps that replace the defaults (e.g. rock colours per mine band). */
+    open fun palette(): Map<Terrain, IntArray> = emptyMap()
+
+    /** Earth cliff under the map's front edges, in px. */
+    open val edgeCliff = 14
+
+    /** Fills the screen behind the map (black round a cave); null leaves the default. */
+    open val voidColor: Int? = null
 
     /** 0 spring .. 3 winter, used for ground colours. */
     abstract fun seasonIndex(): Int
@@ -97,8 +125,16 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     fun invalidateGround() { groundKey = "" }
 
     override fun enter() {
-        cam.setBounds(Iso.bounds(cols, rows))
+        cam.setBounds(mapBounds())
         syncView()
+    }
+
+    /** World bounds of the painted map, margin included. */
+    protected fun mapBounds(): IntArray {
+        val m = margin
+        val b = Iso.bounds(cols + 2 * m, rows + 2 * m)
+        b[1] -= m * Iso.TH; b[3] -= m * Iso.TH
+        return b
     }
 
     private fun syncView() = cam.setView(game.engine.w, game.engine.h, hudTop + game.engine.safeTop, hudBottom + game.engine.safeBottom)
@@ -116,16 +152,23 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     override fun draw(g: Gfx) {
         val c = g.canvas
         val key = "${seasonIndex()}"
+        val m = margin
         if (ground == null || key != groundKey) {
             ground?.recycle()
-            ground = painter.paint(cols, rows, seasonIndex()) { cc, rr -> terrain(cc, rr) }
+            ground = painter.paint(
+                cols + 2 * m, rows + 2 * m, seasonIndex(), edgeCliff,
+                raised = rock?.let { ramp -> Raised({ cc, rr -> level(cc - m, rr - m) }, ramp, rockAccents) },
+                fade = if (fades) { wx, wy -> fade(wx, wy - m * Iso.TH) } else null,
+                palette = palette(),
+            ) { cc, rr -> terrain(cc - m, rr - m) }
             groundKey = key
         }
+        voidColor?.let { c.drawColor(it) }
         val shake = fx.shakeOffset(time)
         c.save()
         c.translate((-cam.snapX() + shake).toFloat(), -cam.snapY().toFloat())
         c.scale(cam.zoom.toFloat(), cam.zoom.toFloat())
-        c.drawBitmap(ground!!, -painter.originX.toFloat(), 0f, g.paint)
+        c.drawBitmap(ground!!, -painter.originX.toFloat(), -(painter.originY + m * Iso.TH).toFloat(), g.paint)
         drawGroundLayer(g)
         collect(drawList)
         drawList.flush()

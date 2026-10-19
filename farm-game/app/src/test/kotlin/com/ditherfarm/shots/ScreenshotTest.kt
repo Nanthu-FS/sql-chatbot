@@ -223,6 +223,32 @@ class ScreenshotTest {
         })
     }
 
+    @Test fun mineBands() {
+        for (floor in listOf(15, 35)) render("mine_band_$floor", seconds = 0.5f, setup = { g ->
+            toLevel(g, 20)
+            g.world.state.tools["pickaxe"] = 3
+            g.world.mine.gatesOpened += listOf(10, 20, 30)
+            g.world.state.coins += 200; g.world.add("wood", 30); g.world.add("torch", 9)
+            g.world.repairMine(); g.world.enterFloor(floor)
+            g.goTo(Nav.MINE)
+            g.engine.screen?.enter()
+            val m = g.world.mine
+            val n = m.grid
+            listOf(2 * n + 2, (n - 3) * n + 3, 3 * n + n - 3).forEach { c -> if (m.cells[c].node == null) g.world.placeTorch(c) }
+        })
+    }
+
+    @Test fun mineCliffs() {
+        for ((name, at) in listOf("back" to (9 to 11), "left" to (8 to 19))) render("mine_cliffs_$name", seconds = 0.5f, setup = { g ->
+            toLevel(g, 8)
+            g.world.state.coins += 2000; g.world.add("wood", 30); g.world.add("stone", 40)
+            g.world.repairMine()
+            g.goTo(Nav.MINE)
+            g.engine.screen?.enter()
+            (g.engine.screen as com.ditherfarm.ui.MineScreen).centerOnTile(at.first, at.second)
+        })
+    }
+
     @Test fun mineDark() {
         render("mine_dark", seconds = 1f, setup = { g ->
             toLevel(g, 14)
@@ -362,6 +388,18 @@ class ScreenshotTest {
             val m = w.mine
             m.rumble = m.markers.first(); m.rumbleEnd = w.state.minutes + 1000; m.braceTaps = 1
             w.events.clear()
+        })
+    }
+
+    @Test fun forestMap() {
+        val views = listOf("grove" to (33 to 30), "birch" to (31 to 17), "maple" to (27 to 13), "heart" to (10 to 8), "edge" to (8 to 22))
+        for ((name, at) in views) render("forest_map_$name", seconds = 0.4f, setup = { g ->
+            toLevel(g, 12)
+            listOf("B", "C").forEach { g.world.state.forest.zones += it }
+            g.world.events.clear()
+            g.goTo(Nav.FOREST)
+            g.engine.screen?.enter()
+            (g.engine.screen as com.ditherfarm.ui.ForestScreen).centerOnTile(at.first, at.second)
         })
     }
 

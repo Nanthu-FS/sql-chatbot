@@ -37,6 +37,7 @@ import com.ditherfarm.game.repairMine
 import com.ditherfarm.game.trayCount
 import com.ditherfarm.game.upgradeQuarry
 import kotlin.math.abs
+import kotlin.math.min
 import kotlin.math.max
 import kotlin.math.sin
 
@@ -65,13 +66,69 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
     private var layoutFloor = -1
 
     override fun terrain(c: Int, r: Int): Terrain = if (under) {
-        if (c == 0 || r == 0 || c == cols - 1 || r == rows - 1) Terrain.CAVE else Terrain.STONE
+        if (c in 1..cols - 2 && r in 1..rows - 2) Terrain.STONE else Terrain.CAVE
     } else when {
         isPit(c, r) -> Terrain.STONE
         max(abs(c - MineLayout.mouth.first), abs(r - MineLayout.mouth.second)) <= 1 -> Terrain.STONE
-        c == r && (c in 4..5 || c >= 10) -> Terrain.PATH
+        c == r && (c in 10..11 || c >= 16) -> Terrain.PATH
+        surfaceLevel(c, r) == 0 && cliffDepth(c, r) <= 6f -> Terrain.GRAVEL
         else -> Terrain.GRASS
     }
+
+    // --- cliffs and cave walls ----------------------------------------------------
+    /** Painted cave round a floor: its back walls rise there, its front fades to black. */
+    override val margin get() = if (under) 6 else 0
+    override val edgeCliff get() = if (under) 0 else 14
+    override val voidColor get() = if (under) Gfx.INK else null
+    override val fades get() = under
+
+    private val band get() = world.data.mine.band(max(1, m.floor)).band - 1
+
+    override val rock get() = if (under) BAND_ROCK[band] else QUARRY_ROCK
+    override val rockAccents get() = if (under) BAND_ACCENTS[band] else IntArray(0)
+    override fun palette(): Map<Terrain, IntArray> = if (under) mapOf(Terrain.STONE to BAND_FLOOR[band], Terrain.CAVE to BAND_CAVE[band]) else emptyMap()
+
+    /** Distance from the back edges, the cliff pushed forward behind the Mine Mouth (centre line). */
+    private fun cliffDepth(c: Int, r: Int) = min(c, r) - max(0f, 4f - abs(c - r) / 2f)
+
+    /** Stepped cliffs along the surface's back edges, four levels at the top. */
+    private fun surfaceLevel(c: Int, r: Int): Int {
+        val e = cliffDepth(c, r)
+        val bump = if (Noise.rand(c, r, 421) < 0.3f) 1 else 0
+        return when {
+            e <= 1f -> 4
+            e <= 2f -> min(4, 3 + bump)
+            e <= 3f -> 2 + bump
+            e <= 4f -> 1 + bump
+            else -> 0
+        }
+    }
+
+    override fun level(c: Int, r: Int): Int {
+        if (!under) return surfaceLevel(c, r)
+        val n = m.grid
+        return when {
+            (c <= 0 && r < n) || (r <= 0 && c < n) -> if (c < 0 || r < 0) 5 else 4
+            else -> 0
+        }
+    }
+
+    /** Darkness round the floor: none on the walls and the rim, black three tiles out. */
+    override fun fade(wx: Float, wy: Float): Float {
+        val c = (wy / Iso.HH + wx / Iso.HW) / 2f
+        val r = (wy / Iso.HH - wx / Iso.HW) / 2f
+        val n = m.grid.toFloat()
+        val out = maxOf(-c, -r, c - n, r - n, 0f)
+        return ((out - 1f) / 3.5f).coerceIn(0f, 1f)
+    }
+
+    /** A higher tile just in front would wrongly draw under this tile's props. */
+    private fun shadowed(c: Int, r: Int): Boolean {
+        val l = level(c, r)
+        return listOf(1 to 0, 0 to 1, 1 to 1, 2 to 1, 1 to 2, 2 to 2).any { (dc, dr) -> level(c + dc, r + dr) > l }
+    }
+
+    private val shade = android.graphics.LightingColorFilter(0x8C8C9E, 0)
 
     /** Quarry tiles plus the gaps between them, so the pit reads as one dug-out area. */
     private fun isPit(c: Int, r: Int): Boolean {
@@ -91,7 +148,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         layoutFloor = m.floor
         invalidateGround()
         super.enter()
-        cam.maxZoom = 3
+        setupCamera()
         recenter()
         if (under) hud.tip("mine-floor", "Break rocks to find the ladder down. A hollow knock means it is close.")
         else hud.tip("mine", "Tap a rock to mine it (2 energy). Rocks in the quarry grow back.")
@@ -105,12 +162,24 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         holdCell = -1
         shake.clear()
         invalidateGround()
-        cam.setBounds(Iso.bounds(cols, rows))
+        cam.setBounds(mapBounds())
+        setupCamera()
         recenter()
         if (under && m.dark) hud.tip("mine-dark", "It is dark down here. Tap empty ground to place a torch.")
     }
 
-    fun recenter() = if (under) centerOnTile(m.grid / 2, m.grid / 2) else centerOnTile(7, 7)
+    /** The surface keeps the view on painted ground like the farm; a floor sits in its dark cave. */
+    private fun setupCamera() {
+        cam.maxZoom = 3
+        if (under) { cam.minZoom = 1; cam.clearDiamond() }
+        else {
+            val n = MineLayout.SURFACE
+            cam.minZoom = 2
+            cam.setDiamond(0f, n * Iso.TH / 2f, (n - 2) * Iso.TW / 2f, (n - 2) * Iso.TH / 2f)
+        }
+    }
+
+    fun recenter() = if (under) centerOnTile(m.grid / 2, m.grid / 2) else centerOnTile(13, 13)
 
     override fun update(dt: Float) {
         super.update(dt)
@@ -209,20 +278,30 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
                 else g.sprite("icons_big/lock", mx, my - 28, 200)
             } else g.sprite("icons/arrow_down", mx, my - 30 + sin(time * 3f) * 2f)
         }
-        // Props.
-        if (game.assets.has("rocks/mine_cart")) list.add(Iso.centerY(2, 5).toFloat()) { g.sprite("rocks/mine_cart", Iso.x(2, 5).toFloat(), Iso.centerY(2, 5).toFloat()) }
+        // Props: scrub on the ledges, pines and boulders in the dark wall in front, grass between.
+        val (kc, kr) = MineLayout.cart
+        if (game.assets.has("rocks/mine_cart")) list.add(Iso.centerY(kc, kr).toFloat()) { g.sprite("rocks/mine_cart", Iso.x(kc, kr).toFloat(), Iso.centerY(kc, kr).toFloat()) }
         for (r in 0 until rows) for (c in 0 until cols) {
-            if (terrain(c, r) != Terrain.GRASS || MineLayout.slots.contains(c to r)) continue
+            if (MineLayout.slots.contains(c to r) || (c to r) == MineLayout.cart || shadowed(c, r)) continue
+            val t = terrain(c, r)
+            if (t != Terrain.GRASS && t != Terrain.GRAVEL) continue
+            val lv = level(c, r)
+            val front = c >= SURFACE_WALL || r >= SURFACE_WALL
             val roll = Noise.rand(c, r, 411)
             val sprite = when {
+                lv > 0 -> if (roll < 0.18f) "deco/tallgrass_a" else if (roll < 0.26f) "deco/bush" else if (roll < 0.3f) "trees/pine" else null
+                front -> if (roll < 0.62f) "trees/pine" else if (roll < 0.74f) "deco/bush" else if (roll < 0.8f) "deco/rock_big" else null
+                t == Terrain.GRAVEL -> if (roll < 0.22f) "deco/rock" else null
                 roll < 0.14f -> "deco/tallgrass_a"
                 roll < 0.2f -> "deco/rock"
                 roll < 0.23f -> "deco/flowers_white"
                 else -> null
             } ?: continue
             val x = Iso.x(c, r) + (Noise.rand(c, r, 412) - 0.5f) * 12f
-            val y = Iso.centerY(c, r) + (Noise.rand(c, r, 413) - 0.5f) * 5f
-            list.add(y) { g.sprite(sprite, x, y) }
+            val y = Iso.centerY(c, r) + (Noise.rand(c, r, 413) - 0.5f) * 5f - lv * com.ditherfarm.engine.Raised.LEVEL_PX
+            if (!inView(x, y, 70f)) continue
+            val s = if (sprite == "trees/pine" && world.time.season == Season.WINTER && game.assets.has("trees/pine_snow")) "trees/pine_snow" else sprite
+            if (front) list.add(y) { g.spriteFiltered(s, x, y, shade) } else list.add(y) { g.sprite(s, x, y) }
         }
         // Machine slots.
         MineLayout.slots.forEachIndexed { k, (c, r) ->
@@ -244,14 +323,13 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
     private fun collectFloor(list: DrawList) {
         val g = game.gfx
         val n = m.grid
-        val wall = pick("rocks/rock_big", "deco/rock_big")
         for (i in 0 until n * n) {
             val c = i % n; val r = i / n
             val x = Iso.x(c, r).toFloat()
             val y = Iso.centerY(c, r).toFloat()
             if (c == 0 || r == 0 || c == n - 1 || r == n - 1) {
-                // Cave walls along the back edges only, so they never hide the floor.
-                if (c == 0 || r == 0) list.add(y) { g.sprite(wall, x, y, 255) }
+                // The back walls are painted; loose rubble lies along the front rim.
+                if (c > 0 && r > 0 && Noise.rand(c, r, m.floor) < 0.35f && game.assets.has("rocks/rubble")) list.add(y) { g.sprite("rocks/rubble", x, y) }
                 continue
             }
             val cell = m.cells[i]
@@ -477,7 +555,42 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         }
     }
 
-    private companion object {
-        val GEMS = setOf("quartz", "amethyst", "emerald", "ruby", "diamond")
+
+    companion object {
+        private val GEMS = setOf("quartz", "amethyst", "emerald", "ruby", "diamond")
+
+        /** Front rows of the surface that are pine wall. */
+        const val SURFACE_WALL = 21
+
+        private fun ramp(vararg c: Long) = IntArray(c.size) { c[it].toInt() }
+
+        /** Sandstone quarry cliffs. */
+        val QUARRY_ROCK = ramp(0xFF181425, 0xFF3E2731, 0xFF733E39, 0xFFB86F50, 0xFFC28569, 0xFFE4A672)
+
+        /** Per mine band (floors 1-10, 11-20, 21-30, 31-40): wall faces, floor, the cave beyond and glints. */
+        val BAND_ROCK = listOf(
+            ramp(0xFF181425, 0xFF3E2731, 0xFF733E39, 0xFFB86F50, 0xFFC28569, 0xFFE4A672),
+            ramp(0xFF181425, 0xFF262B44, 0xFF3A4466, 0xFF5A6988, 0xFF8B9BB4, 0xFFC0CBDC),
+            ramp(0xFF181425, 0xFF262B44, 0xFF124E89, 0xFF3A4466, 0xFF5A6988, 0xFF8B9BB4),
+            ramp(0xFF181425, 0xFF3E2731, 0xFF68386C, 0xFFA22633, 0xFFBE4A2F, 0xFFD77643),
+        )
+        val BAND_FLOOR = listOf(
+            ramp(0xFF3E2731, 0xFF733E39, 0xFF733E39, 0xFFB86F50),
+            ramp(0xFF3A4466, 0xFF5A6988, 0xFF8B9BB4, 0xFFC0CBDC),
+            ramp(0xFF262B44, 0xFF3A4466, 0xFF124E89, 0xFF5A6988),
+            ramp(0xFF181425, 0xFF3E2731, 0xFF68386C, 0xFF733E39),
+        )
+        val BAND_CAVE = listOf(
+            ramp(0xFF181425, 0xFF3E2731, 0xFF3E2731, 0xFF733E39),
+            ramp(0xFF181425, 0xFF262B44, 0xFF3A4466, 0xFF5A6988),
+            ramp(0xFF181425, 0xFF262B44, 0xFF262B44, 0xFF124E89),
+            ramp(0xFF181425, 0xFF181425, 0xFF3E2731, 0xFF68386C),
+        )
+        val BAND_ACCENTS = listOf(
+            ramp(0xFFF77622, 0xFFE4A672, 0xFFB86F50),
+            ramp(0xFFFEAE34, 0xFFC0CBDC, 0xFFFFFFFF),
+            ramp(0xFF2CE8F5, 0xFF0099DB, 0xFFFFFFFF),
+            ramp(0xFFF77622, 0xFFFEAE34, 0xFFE43B44),
+        )
     }
 }

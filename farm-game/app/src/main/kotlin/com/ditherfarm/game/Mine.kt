@@ -127,13 +127,18 @@ class MineState {
 
 /** Fixed quarry spot tiles on the 14x14 surface map (first 12 at Lv1, 16 at Lv2, 20 at Lv3). */
 object MineLayout {
-    const val SURFACE = 14
+    /** The surface map: the quarry in the middle, stepped cliffs behind, scrub and pines in front. */
+    const val SURFACE = 26
+    /** Where the old 14x14 layout sits inside the bigger map. */
+    private const val OFF = 6
+    private fun at(c: Int, r: Int) = c + OFF to r + OFF
     val quarryTiles: List<Pair<Int, Int>> = listOf(
         5 to 7, 6 to 8, 7 to 7, 8 to 8, 6 to 6, 8 to 6, 5 to 9, 7 to 9, 9 to 7, 4 to 8, 9 to 9, 6 to 10,
         4 to 6, 10 to 8, 8 to 10, 5 to 11, 10 to 6, 3 to 7, 7 to 11, 11 to 9,
-    )
-    val mouth = 3 to 3
-    val slots = listOf(10 to 3, 12 to 6, 2 to 11, 4 to 12)
+    ).map { (c, r) -> at(c, r) }
+    val mouth = at(3, 3)
+    val slots = listOf(at(10, 3), at(12, 6), at(2, 11), at(4, 12))
+    val cart = at(2, 5)
 }
 
 // ------------------------------------------------------------------ World API

@@ -65,28 +65,80 @@ class ForestState {
             hive = o.optInt("hive", -1); hiveUntil = o.optInt("hiveUntil")
             o.optJSONArray("spots")?.objects()?.forEach { spots.add(SpotState.fromJson(it)) }
             o.optJSONArray("zones")?.strings()?.let { zones.addAll(it) }
-            o.optJSONArray("branches")?.let { a -> (0 until a.length()).forEach { branches.add(a.getInt(it)) } }
+            // Branches from the old small map that now fall in the forest wall are dropped.
+            o.optJSONArray("branches")?.let { a -> (0 until a.length()).map { a.getInt(it) }.filter { ForestLayout.zoneOf(it / 1000, it % 1000) != null }.forEach { branches.add(it) } }
         }
     }
 }
 
 /**
- * Forest layout: a 22x22 iso island; zones are bands from the entrance (bottom corner,
- * high c+r) up to the Ancient Heart (top corner). Positions are deterministic.
+ * Forest layout: a 44x44 map like the farm. The five zones are clearings joined by a trail that
+ * winds up from the entrance (bottom corner, by the farm) to the Ancient Heart near the top; the
+ * rest is forest wall (the screen adds rock cliffs). u = c - r runs left to
+ * right and v = c + r top to bottom. Spot indices keep the zone order, so saves stay valid.
  */
 object ForestLayout {
-    const val SIZE = 22
-    /** Zone of a tile by distance band from the top corner (the entrance is the bottom corner). */
-    fun zoneOf(c: Int, r: Int): String = when (c + r) {
-        in 30..42 -> "A"
-        in 24..29 -> "B"
-        in 18..23 -> "C"
-        in 12..17 -> "D"
-        else -> "E"
+    const val SIZE = 44
+    /** Tiles from the map edge that are wall. */
+    const val WALL = 4
+
+    /** A zone's clearing: an ellipse centred at (u, v) with half-axes [a] (u) and [b] (v). */
+    class Clearing(val zone: String, val u: Float, val v: Float, val a: Float, val b: Float)
+
+    val CLEARINGS = listOf(
+        Clearing("A", 0f, 64f, 10f, 7f),
+        Clearing("B", -14f, 48f, 9.5f, 6.5f),
+        Clearing("C", 14f, 40f, 9.5f, 6.5f),
+        Clearing("D", -11f, 29f, 8.5f, 6f),
+        Clearing("E", 2f, 18.5f, 8f, 5.5f),
+    )
+
+    /** The trail's bends (u, v): the entrance, then each clearing's centre. */
+    private val BENDS = listOf(0f to 2f * SIZE - 2f) + CLEARINGS.map { it.u to it.v }
+
+    private fun inside(c: Int, r: Int) = c >= WALL && r >= WALL && c < SIZE - WALL && r < SIZE - WALL
+
+    /** Ellipse test with a little noise so clearings are not perfect ovals. */
+    private fun inClearing(k: Clearing, c: Int, r: Int): Boolean {
+        val du = (c - r - k.u) / k.a
+        val dv = (c + r - k.v) / k.b
+        val wobble = ((c * 92821 + r * 68917) and 0xFF) / 255f * 0.18f
+        return du * du + dv * dv <= 1f + wobble - 0.09f
     }
 
-    /** The trail from the entrance winds up the middle; nothing is placed on it. */
-    fun isTrail(c: Int, r: Int): Boolean = kotlin.math.abs(c - r) <= 1 && c + r >= 4
+    /** Distance in tiles from (c, r) to trail leg [i] (from bend i to bend i + 1). */
+    private fun legDistance(i: Int, c: Int, r: Int): Float {
+        val (u0, v0) = BENDS[i]; val (u1, v1) = BENDS[i + 1]
+        // Work in (c, r): c = (v + u) / 2, r = (v - u) / 2.
+        val ax = (v0 + u0) / 2f; val ay = (v0 - u0) / 2f
+        val bx = (v1 + u1) / 2f; val by = (v1 - u1) / 2f
+        val dx = bx - ax; val dy = by - ay
+        val t = (((c - ax) * dx + (r - ay) * dy) / (dx * dx + dy * dy)).coerceIn(0f, 1f)
+        val px = ax + dx * t - c; val py = ay + dy * t - r
+        return kotlin.math.sqrt(px * px + py * py)
+    }
+
+    private val zoneGrid: Array<String?> = Array(SIZE * SIZE) { i ->
+        val c = i % SIZE; val r = i / SIZE
+        CLEARINGS.firstOrNull { inside(c, r) && inClearing(it, c, r) }?.zone
+    }
+    private val trailGrid: Array<String?> = Array(SIZE * SIZE) { i ->
+        val c = i % SIZE; val r = i / SIZE
+        val leg = (0 until BENDS.size - 1).firstOrNull { legDistance(it, c, r) <= 0.75f }
+        if (leg == null || (!inside(c, r) && c + r < SIZE)) null else CLEARINGS[leg].zone
+    }
+
+    /** Zone of a clearing or trail tile; null for forest wall. */
+    fun zoneOf(c: Int, r: Int): String? =
+        if (c !in 0 until SIZE || r !in 0 until SIZE) null else zoneGrid[r * SIZE + c] ?: trailGrid[r * SIZE + c]
+
+    /** The trail from the entrance through every clearing; nothing is placed on it. */
+    fun isTrail(c: Int, r: Int): Boolean = c in 0 until SIZE && r in 0 until SIZE && trailGrid[r * SIZE + c] != null
+
+    fun isWall(c: Int, r: Int) = zoneOf(c, r) == null
+
+    /** Open ground of a zone where branches may fall (clearings, not spots). */
+    val clearingTiles: List<Pair<Int, Int>> = (0 until SIZE * SIZE).map { it % SIZE to it / SIZE }.filter { (c, r) -> zoneGrid[r * SIZE + c] != null }
 
     fun build(zones: List<ZoneDef>): List<ForestSpot> {
         val spots = ArrayList<ForestSpot>()
@@ -94,7 +146,7 @@ object ForestLayout {
         for (z in zones) {
             val tiles = ArrayList<Pair<Int, Int>>()
             for (r in 1 until SIZE - 1) for (c in 1 until SIZE - 1) {
-                if (zoneOf(c, r) == z.id && !isTrail(c, r) && (c + r) % 2 == 0) tiles += c to r
+                if (zoneGrid[r * SIZE + c] == z.id && !isTrail(c, r) && (c + r) % 2 == 0) tiles += c to r
             }
             val rng = Rng(z.id.hashCode().toLong() * 7919)
             for (i in tiles.indices.reversed()) { val j = rng.nextInt(i + 1); val t = tiles[i]; tiles[i] = tiles[j]; tiles[j] = t }
@@ -111,7 +163,7 @@ object ForestLayout {
             repeat(z.mushrooms) { take(SpotKind.MUSHROOM) }
             // Rocks sit on the odd tiles between the spots.
             rockTiles[z.id] = (1 until SIZE - 1).flatMap { r -> (1 until SIZE - 1).map { c -> c to r } }
-                .filter { (c, r) -> zoneOf(c, r) == z.id && !isTrail(c, r) && (c + r) % 2 == 1 }
+                .filter { (c, r) -> zoneGrid[r * SIZE + c] == z.id && !isTrail(c, r) && (c + r) % 2 == 1 }
                 .let { odd -> odd.indices.map { odd[(it * 7 + z.id.hashCode().mod(odd.size)) % odd.size] }.distinct() }
         }
         // Loose rocks come last so spots in saves made before they existed keep their indices.
@@ -370,10 +422,11 @@ internal fun World.forestDawn(day: Int) {
     hiveDawn(day, rng)
     // Fallen branches on free tiles of open zones.
     val spawn = if (state.weather.stormy) 4 else 2
+    f.branches.removeAll { ForestLayout.zoneOf(it / 1000, it % 1000) == null }
+    val tiles = ForestLayout.clearingTiles
     repeat(spawn) {
         if (f.branches.size >= 6) return@repeat
-        val c = 1 + rng.nextInt(ForestLayout.SIZE - 2)
-        val r = 1 + rng.nextInt(ForestLayout.SIZE - 2)
+        val (c, r) = tiles[rng.nextInt(tiles.size)]
         if (ForestLayout.zoneOf(c, r) in f.zones && forestSpots.none { it.c == c && it.r == r }) f.branches += c * 1000 + r
     }
 }
