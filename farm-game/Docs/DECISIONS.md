@@ -5,7 +5,7 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 ## Platform and presentation
 - Native Android (Kotlin, custom Canvas renderer). No Unity.
 - Portrait, isometric view. Tap the farm directly (Hay Day style); there is no avatar.
-- Pixel art: 32px, Endesga-32 palette, checker dithering, black outline, hard drop shadow.
+- Pixel art: 32px, Endesga-32 palette, checker dithering, black outline, hard drop shadow. Art round 3 (sharp and clean, inspired by a lush reference but without its blur): a wider palette with hue shifting (shadows cooler, highlights warmer), no dithering (clean steps), coloured outlines, crisp see-through cast shadows to the lower right with sun spots under trees, leaf-cluster foliage, and posterised ground patches with grass clumps. World sprites and items get this from Tools/ArtGen/polish.py; UI icons keep the old style.
 - Font: Silkscreen (OFL).
 - SFX only, no music. Haptics with a settings toggle.
 - App name: **Dither Farm**. The APK is built by GitHub Actions.

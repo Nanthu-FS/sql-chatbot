@@ -8,7 +8,8 @@ import java.io.File
 /**
  * World scale check (Docs/DECISIONS.md, "World scale"): every world sprite must stay inside the
  * height band of its kind, measured against a cottage (about 44px). Catches art that comes out
- * too big or too small before anyone has to spot it in the game. Heights include the 2px pad.
+ * too big or too small before anyone has to spot it in the game. Heights include the 2px pad
+ * (body height from the manifest, without the cast shadow).
  */
 class ScaleTest {
     private class Band(pattern: String, val min: Int, val max: Int, val why: String) {
@@ -39,13 +40,15 @@ class ScaleTest {
 
     @Test fun worldSpritesStayInScale() {
         val art = File(ScreenshotTest.assetRoot(), "art")
+        // Polished sprites record their body height ("bh"): the cast shadow makes the canvas taller.
+        val manifest = org.json.JSONObject(File(art, "manifest.json").readText())
         val bad = ArrayList<String>()
         var checked = 0
         for (dir in listOf("people", "buildings", "vehicles", "deco", "crops")) {
             for (f in File(art, dir).listFiles { f -> f.name.endsWith(".png") }.orEmpty()) {
                 val name = "$dir/" + f.name.removeSuffix(".png").removeSuffix("_snow")
                 val band = bands.firstOrNull { it.regex.containsMatchIn(name) } ?: continue
-                val h = pngHeight(f)
+                val h = manifest.optJSONObject("$dir/" + f.name.removeSuffix(".png"))?.optInt("bh", 0)?.takeIf { it > 0 } ?: pngHeight(f)
                 checked++
                 if (h !in band.min..band.max) bad += "$name is ${h}px tall, wants ${band.min}-${band.max} (${band.why})"
             }

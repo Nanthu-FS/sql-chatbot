@@ -58,20 +58,6 @@ FLOWERS = [
     ".dGGGd..",
 ]
 
-BUSH = [
-    ".....gggg.......",
-    "...ggggggGg.....",
-    "..gggwggGGGgg...",
-    ".ggggggGGGGGGg..",
-    ".gggggGGGGrGGGg.",
-    "gggggGGGGGGGGGG.",
-    "ggggGGGrGGGGGdGg",
-    "gGGGGGGGGGGdGGGG",
-    ".GGGGGdGGGddGGd.",
-    "..dGGGGddGGddd..",
-    "....dddddddd....",
-]
-
 ROCK = [
     "...aaaa...",
     "..aAAAAa..",
@@ -191,19 +177,49 @@ def snowy(body):
     return im
 
 
+_TREES = {}
+
+
+def _trees():
+    """trees.py's foliage helpers (its main() left out), for bushes drawn the same way."""
+    if not _TREES:
+        path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "trees.py")
+        src = open(path).read()
+        src = src[: src.rstrip().rfind("main()")]
+        _TREES.update({"__file__": path, "__name__": "deco_trees"})
+        exec(compile(src, path, "exec"), _TREES)
+    return _TREES
+
+
+def leafy_bush(berries):
+    """A small round bush of leaf clusters, like the tree canopies."""
+    T = _trees()
+    c = T["Canvas"]()
+    T["canopy"](c, T["Geo"](1.0), [(32, 62, 7.5, 4.8), (26.5, 63.5, 4.2, 3.3), (37.5, 63.5, 4.2, 3.3), (32, 58.2, 5, 3.2)], T["LEAF"])
+    if berries:
+        for x, y in ((29, 59), (35, 60), (27, 63), (33, 64), (38, 63)):
+            if c.on(x, y) and c.on(x + 1, y + 1):
+                c.put(x, y, "pink")
+                c.put(x + 1, y, "red")
+                c.put(x, y + 1, "red")
+                c.put(x + 1, y + 1, "red_d")
+    return c.im.crop(c.im.getbbox())
+
+
 def main():
     s = Sprites(sys.argv[1], "deco")
     save(s, "tallgrass_a", from_map(TALL_A, G))
     save(s, "tallgrass_b", from_map(TALL_B, G))
-    for name, rows, key in (("tallgrass_a", TALL_A, G), ("tallgrass_b", TALL_B, G), ("bush", BUSH, {**G, "r": "green"}),
+    save(s, "bush_snow", snowy(leafy_bush(False)))
+    for name, rows, key in (("tallgrass_a", TALL_A, G), ("tallgrass_b", TALL_B, G),
                             ("rock", ROCK, ROCK_KEY), ("rock_big", ROCK_BIG, ROCK_KEY), ("stump", STUMP, STUMP_KEY),
                             ("log", LOG, {**STUMP_KEY, "r": "brown_l"}), ("reeds", REEDS, G)):
         save(s, f"{name}_snow", snowy(from_map(rows, key)))
     save(s, "reeds", from_map(REEDS, G))
     for name, petal in (("red", "red"), ("white", "white"), ("pink", "pink"), ("blue", "cyan"), ("purple", "magenta")):
         save(s, f"flowers_{name}", from_map(FLOWERS, {**G, "p": petal}))
-    save(s, "bush", from_map(BUSH, {**G, "r": "green"}))
-    save(s, "bush_berry", from_map(BUSH, {**G, "r": "red"}))
+    save(s, "bush", leafy_bush(False))
+    save(s, "bush_berry", leafy_bush(True))
     save(s, "rock", from_map(ROCK, ROCK_KEY))
     save(s, "rock_big", from_map(ROCK_BIG, ROCK_KEY))
     save(s, "stump", from_map(STUMP, STUMP_KEY))

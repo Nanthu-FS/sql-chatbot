@@ -2,7 +2,11 @@
 import json
 import os
 import random
+import sys
 from PIL import Image
+
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+import polish  # noqa: E402
 
 E = {name: tuple(int(h[i:i + 2], 16) for i in (0, 2, 4)) + (255,) for name, h in {
     "rust": "be4a2f", "clay": "d77643", "cream": "ead4aa", "tan": "e4a672", "brown_l": "b86f50", "brown": "733e39",
@@ -51,8 +55,16 @@ class Sprites:
         os.makedirs(self.dir, exist_ok=True)
 
     def save(self, name, im, ax, ay):
+        key = f"{self.group}/{name}"
+        entry = {"ax": ax, "ay": ay}
+        kind = polish.kind_of(key)
+        if kind is not None:
+            # Polish (art round 3); the body height is kept for the scale check, as the cast
+            # shadow makes the canvas bigger.
+            entry["bh"] = im.size[1]
+            im = polish.polish(im, kind, key)
         im.save(os.path.join(self.dir, name + ".png"))
-        self.pivots[f"{self.group}/{name}"] = {"ax": ax, "ay": ay}
+        self.pivots[key] = entry
 
     def done(self):
         print(json.dumps(self.pivots))

@@ -11,6 +11,7 @@ shadow). Pivot = base of the trunk (+pad). Endesga-32 only, light from the top-l
 dithering between foliage steps, hard steps on bark.
 """
 import math
+import random
 import os
 import sys
 
@@ -118,29 +119,61 @@ def ell(cx, cy, rx, ry):
 
 
 def tone(ramp, v, x, y):
-    """Ramp colour for a fractional level v, checker-dithered between the two nearest steps."""
+    """Ramp colour for a fractional level v: the nearest step (clean bands, no dither)."""
     n = len(ramp) - 1
-    v = max(0.0, min(float(n), v))
-    b = int(v)
-    f = v - b
-    if b >= n or f < 0.3:
-        return ramp[b]
-    if f > 0.7:
-        return ramp[b + 1]
-    return ramp[b + 1] if (x + y) % 2 == 0 else ramp[b]
+    return ramp[int(round(max(0.0, min(float(n), v))))]
+
+
+def clusters(cx, cy, rx, ry):
+    """Leaf-clump centres (x, y, radius) on a jittered grid about 4px apart inside a lobe."""
+    rnd = random.Random(int(cx * 131 + cy * 71 + rx * 13 + ry * 7))
+    step = 4.9
+    out = []
+    row = 0
+    y = cy - ry + 1.2
+    while y <= cy + ry - 0.6:
+        x = cx - rx + 1.2 + (step / 2 if row % 2 else 0.0)
+        while x <= cx + rx - 0.6:
+            jx, jy = x + rnd.uniform(-0.9, 0.9), y + rnd.uniform(-0.7, 0.7)
+            if ((jx - cx) / rx) ** 2 + ((jy - cy) / ry) ** 2 <= 1.0:
+                out.append((jx, jy, rnd.uniform(2.8, 3.6)))
+            x += step
+        y += step * 0.78
+        row += 1
+    return out or [(cx, cy, max(rx, ry))]
 
 
 def lobe(c, cx, cy, rx, ry, ramp, lift=0.0, sparkle=True):
-    """Sphere-shaded foliage clump painted over what is already on the canvas. Its lower and
-    right rim steps darker; where it meets earlier foliage it gets a crevice line."""
+    """Foliage clump painted over what is already on the canvas: sphere-lit overall, built from
+    small leaf clusters, each lit on its top-left with a dark gap where clusters meet, and a
+    scalloped rim where edge clusters bulge out. Where it meets earlier foliage it gets a
+    crevice line."""
     n = len(ramp) - 1
+    cl = clusters(cx, cy, rx, ry)
     s = ell(cx, cy, rx, ry)
+    for kx, ky, kr in cl:
+        if ((kx - cx) / rx) ** 2 + ((ky - cy) / ry) ** 2 > 0.45:
+            s |= ell(kx, ky, kr, kr * 0.85)
     for x, y in sorted(s, key=lambda p: (p[1], p[0])):
-        nx = (x + 0.5 - cx) / rx
-        ny = (y + 0.5 - cy) / ry
+        px, py = x + 0.5, y + 0.5
+        nx = (px - cx) / (rx + 1.5)
+        ny = (py - cy) / (ry + 1.5)
         nz = math.sqrt(max(0.0, 1.0 - min(1.0, nx * nx + ny * ny)))
         lv = nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]
         v = (lv + 0.45) / 1.45 * n + lift
+        # The leaf cluster this pixel belongs to, and how close the next one is.
+        d1 = d2 = 1e9
+        k1 = cl[0]
+        for k in cl:
+            d = math.hypot((px - k[0]) / k[2], (py - k[1]) / (k[2] * 0.85))
+            if d < d1:
+                d2, d1, k1 = d1, d, k
+            elif d < d2:
+                d2 = d
+        kx, ky, kr = k1
+        v += -0.75 * ((px - kx) / kr * 0.6 + (py - ky) / kr * 0.9)
+        if d2 - d1 < 0.16 and d1 > 0.6:
+            v -= 1.1
         if (x + 1, y) not in s or (x, y + 1) not in s:
             v -= 0.6
         cc = tone(ramp, v, x, y)
@@ -150,7 +183,7 @@ def lobe(c, cx, cy, rx, ry, ramp, lift=0.0, sparkle=True):
                 cc = ramp[0]
             else:
                 cc = ramp[max(0, ramp.index(cc) - 1)]
-        elif sparkle and v >= n - 0.4 and (x * 7 + y * 3) % 9 == 0:
+        elif sparkle and v >= n - 0.1 and d1 < 0.35 and (x * 7 + y * 3) % 5 == 0:
             cc = ramp[n]
         c.put(x, y, cc)
 
@@ -197,6 +230,12 @@ def pine_tier(c, g, apex, base, hw, ramp):
                 continue
             lx = (x + 0.5 - BX) / half
             v = n * (0.8 - 0.35 * lx - 0.4 * t)
+            # Branch layers: chevrons drooping outward, lit along their top, shaded under.
+            band = (y - ay - abs(x + 0.5 - BX) * 0.55) % 4.0
+            if band < 1.0:
+                v += 0.7 if lx < 0.35 else 0.3
+            elif band >= 3.0:
+                v -= 0.6
             if y >= y1:
                 v -= 1.0
             c.put(x, y, tone(ramp, v, x, y))

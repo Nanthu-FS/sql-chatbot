@@ -52,10 +52,11 @@ def lamp_glass(art):
     im = Image.open(os.path.join(art, "deco", "lantern.png")).convert("RGBA")
     out = new(*im.size)
     src, dst = im.load(), out.load()
-    keep = {E[c][:3] for c in ("yellow", "amber", "cream", "white")}
+    # The glass: bright, warm pixels (the art is hue-shifted, so match by look, not exact colour).
     for y in range(im.height):
         for x in range(im.width):
-            if src[x, y][3] and src[x, y][:3] in keep:
+            r, g, b, a = src[x, y]
+            if a == 255 and 0.299 * r + 0.587 * g + 0.114 * b > 165 and r > b + 50:
                 dst[x, y] = src[x, y]
     return out
 

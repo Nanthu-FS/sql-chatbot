@@ -91,18 +91,13 @@ class GroundPainter(private val seed: Int = 7) {
             ter[y * w + x] = terrainAt(c, r)
         }
 
-        // Pass 2: dithered colour ramps from low-frequency noise.
+        // Pass 2: clean colour patches: low-frequency noise posterised into the ramp's steps.
         for (y in 0 until mapH) for (x in 0 until w) {
             val t = ter[y * w + x] ?: continue
             val ramp = ramps.of(t)
             val wx = (x - originX).toFloat()
             if (t == Terrain.COBBLE || t == Terrain.PAVED) { px[y * w + x] = laid(t, wx, y.toFloat(), ramp); continue }
-            val n = Noise.fbm(wx * 0.045f, y * 0.09f, seed + t.ordinal * 17) * 0.85f + Noise.rand(x, y, seed) * 0.15f
-            val f = n * (ramp.size - 1) * 1.25f - 0.12f
-            val i = floor(f).toInt().coerceIn(0, ramp.size - 1)
-            val frac = f - floor(f)
-            val up = bayer[(y and 3) * 4 + (x and 3)] < (frac * 16).toInt()
-            px[y * w + x] = ramp[(if (up) i + 1 else i).coerceAtMost(ramp.size - 1)]
+            px[y * w + x] = patch(ramp, wx, y.toFloat(), t)
         }
 
         // Pass 3: borders. Darken land at terrain changes; foam on water edges.
@@ -124,14 +119,14 @@ class GroundPainter(private val seed: Int = 7) {
         }
 
         // Pass 4: detail motifs on a jittered grid.
-        for (gy in 0 until mapH step 5) for (gx in 0 until w step 7) {
+        for (gy in 0 until mapH step 4) for (gx in 0 until w step 6) {
             val ox = gx + (Noise.rand(gx, gy, seed + 9) * 6).toInt()
             val oy = gy + (Noise.rand(gx, gy, seed + 10) * 4).toInt()
             if (ox !in 2 until w - 3 || oy !in 2 until mapH - 2) continue
             val t = ter[oy * w + ox] ?: continue
             val roll = Noise.rand(ox, oy, seed + 11)
             val meadow = Noise.fbm((ox - originX) * 0.03f, oy * 0.06f, seed + 12)
-            val motif = ramps.motif(t, roll, meadow) ?: continue
+            val motif = ramps.motif(t, roll, meadow, Noise.rand(ox, oy, seed + 14)) ?: continue
             if (motif.all { (dx, dy, _) -> ter.getOrNull((oy + dy) * w + ox + dx) == t }) {
                 for ((dx, dy, color) in motif) out[(oy + dy) * w + ox + dx] = color
             }
@@ -178,8 +173,9 @@ class GroundPainter(private val seed: Int = 7) {
                 val i = y * w + x
                 if (img[i] == 0) continue
                 val gy = groundY!![i].let { if (it.isNaN()) (y - originY).toFloat() else it }
-                val d = fade(x - originX + 0.5f, gy + 0.5f)
-                if (d > 0f && bayer[(y and 3) * 4 + (x and 3)] < (d * 17f).toInt()) img[i] = INK
+                // Darkness in clean steps: the colour moves toward ink a quarter at a time.
+                val d = (fade(x - originX + 0.5f, gy + 0.5f) * 4f).toInt().coerceIn(0, 4)
+                if (d > 0) img[i] = blend(img[i], INK, d / 4f)
             }
         }
         // Ink outline around the whole island.
@@ -248,13 +244,7 @@ class GroundPainter(private val seed: Int = 7) {
                         col = when {
                             back && yy < topG - hgt + 1f -> INK
                             front && yy > botG - hgt - 1.2f -> cap.last()
-                            else -> {
-                                val n = Noise.fbm(wx * 0.045f, gy * 0.09f, seed + terrain.ordinal * 17) * 0.85f + Noise.rand(bx, by, seed) * 0.15f
-                                val f = n * (cap.size - 1) * 1.25f - 0.12f
-                                val i = floor(f).toInt().coerceIn(0, cap.size - 1)
-                                val up = bayer[(by and 3) * 4 + (bx and 3)] < ((f - floor(f)) * 16).toInt()
-                                cap[(if (up) i + 1 else i).coerceAtMost(cap.size - 1)]
-                            }
+                            else -> patch(cap, wx.toFloat(), gy, terrain)
                         }
                     } else {
                         // Face: z up from the foot; strata bands broken by joints.
@@ -291,7 +281,6 @@ class GroundPainter(private val seed: Int = 7) {
                                 groundY?.set(by * w + bx, gy)
                                 continue
                             }
-                            v += (Noise.rand(bx, by, seed + 26) - 0.5f) * 0.5f
                             if (raised.accents.isNotEmpty() && Noise.rand(bx, by, seed + 28) > 0.992f) {
                                 // Ore glints, crystals or embers in the rock.
                                 col = raised.accents[(Noise.rand(bx, by, seed + 29) * raised.accents.size).toInt().coerceAtMost(raised.accents.size - 1)]
@@ -299,10 +288,7 @@ class GroundPainter(private val seed: Int = 7) {
                                 groundY?.set(by * w + bx, gy)
                                 continue
                             }
-                            val vi = v.coerceIn(0f, rock.size - 1f)
-                            val lo = floor(vi).toInt()
-                            val up = bayer[(by and 3) * 4 + (bx and 3)] < ((vi - lo) * 16).toInt()
-                            col = rock[(if (up) lo + 1 else lo).coerceAtMost(rock.size - 1)]
+                            col = rock[Math.round(v.coerceIn(0f, rock.size - 1f))]
                         }
                     }
                     img[by * w + bx] = col
@@ -315,6 +301,31 @@ class GroundPainter(private val seed: Int = 7) {
         }
     }
 
+    /** Posterised ground colour at a world point: patches with organic edges, no dither. */
+    private fun patch(ramp: IntArray, wx: Float, wy: Float, t: Terrain): Int {
+        // Undo the iso squash, turn off the tile grid's axes and warp, so patches are organic blobs.
+        val gx = wx * 0.8f + wy * 1.2f
+        val gy = -wx * 0.6f + wy * 1.6f
+        val warp = Noise.value(gx * 0.05f, gy * 0.05f, seed + 31) * 14f
+        val n = Noise.fbm((gx + warp) * 0.055f, (gy - warp) * 0.055f, seed + t.ordinal * 17)
+        // Middle tones cover most ground; the darkest and lightest are rare accents.
+        val k = ramp.size - 1
+        val edges = when (k) {
+            4 -> PATCH5
+            3 -> PATCH4
+            2 -> PATCH3
+            else -> floatArrayOf(0.5f)
+        }
+        var i = 0
+        while (i < k && n > edges[i]) i++
+        return ramp[i]
+    }
+
+    private fun blend(a: Int, b: Int, t: Float): Int {
+        fun ch(sh: Int) = (((a shr sh) and 0xFF) + (((b shr sh) and 0xFF) - ((a shr sh) and 0xFF)) * t).toInt().coerceIn(0, 255)
+        return (0xFF shl 24) or (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
+    }
+
     private fun darken(c: Int): Int {
         val r = (c shr 16 and 0xFF) * 3 / 5; val g = (c shr 8 and 0xFF) * 3 / 5; val b = (c and 0xFF) * 3 / 5
         return (0xFF shl 24) or (r shl 16) or (g shl 8) or b
@@ -324,67 +335,82 @@ class GroundPainter(private val seed: Int = 7) {
     private class Ramps(val season: Int, val palette: Map<Terrain, IntArray>) {
         fun of(t: Terrain): IntArray = palette[t] ?: when (t) {
             Terrain.GRASS -> when (season) {
-                1 -> intArrayOf(0xFF3E8948.toInt(), 0xFF63C74D.toInt(), 0xFF63C74D.toInt(), 0xFFFEE761.toInt())
-                2 -> intArrayOf(0xFF733E39.toInt(), 0xFF3E8948.toInt(), 0xFFB86F50.toInt(), 0xFFD77643.toInt())
-                3 -> intArrayOf(0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt(), 0xFFFFFFFF.toInt(), 0xFFFFFFFF.toInt())
-                else -> intArrayOf(0xFF265C42.toInt(), 0xFF3E8948.toInt(), 0xFF63C74D.toInt(), 0xFF63C74D.toInt())
+                1 -> ramp(0xFF2A4A3A, 0xFF3D6E3A, 0xFF5D943C, 0xFF84B443, 0xFFC2D264)
+                2 -> ramp(0xFF3B3532, 0xFF5E4A35, 0xFF7F6A3A, 0xFFA58644, 0xFFD0A85A)
+                3 -> ramp(0xFF6D7EA0, 0xFF9EB0CC, 0xFFC9D5E6, 0xFFE8EEF6, 0xFFFFFFFF)
+                else -> ramp(0xFF23463F, 0xFF2F6B43, 0xFF4A8C3F, 0xFF6AA845, 0xFFA3C95A)
             }
             Terrain.FOREST -> when (season) {
-                2 -> intArrayOf(0xFF3E2731.toInt(), 0xFF733E39.toInt(), 0xFF265C42.toInt(), 0xFFBE4A2F.toInt())
-                3 -> intArrayOf(0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt(), 0xFFFFFFFF.toInt())
-                else -> intArrayOf(0xFF193C3E.toInt(), 0xFF265C42.toInt(), 0xFF3E8948.toInt(), 0xFF3E8948.toInt())
+                2 -> ramp(0xFF2A1E24, 0xFF4A2D2A, 0xFF6B3D2C, 0xFF8C5130, 0xFFB06A35)
+                3 -> ramp(0xFF4B5878, 0xFF6D7EA0, 0xFF9EB0CC, 0xFFC9D5E6, 0xFFE8EEF6)
+                else -> ramp(0xFF162B2E, 0xFF1F3D34, 0xFF2A5039, 0xFF3A6640, 0xFF4F7D45)
             }
-            Terrain.DIRT -> if (season == 3) intArrayOf(0xFF733E39.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt(), 0xFFFFFFFF.toInt())
-            else intArrayOf(0xFF3E2731.toInt(), 0xFF733E39.toInt(), 0xFFB86F50.toInt())
-            Terrain.PATH -> if (season == 3) intArrayOf(0xFF8B9BB4.toInt(), 0xFFC28569.toInt(), 0xFFE4A672.toInt())
-            else intArrayOf(0xFFB86F50.toInt(), 0xFFC28569.toInt(), 0xFFE4A672.toInt(), 0xFFEAD4AA.toInt())
-            Terrain.SAND -> intArrayOf(0xFFC28569.toInt(), 0xFFE4A672.toInt(), 0xFFEAD4AA.toInt())
-            Terrain.WATER -> intArrayOf(0xFF124E89.toInt(), 0xFF0099DB.toInt(), 0xFF0099DB.toInt(), 0xFF2CE8F5.toInt())
-            Terrain.STONE -> intArrayOf(0xFF3A4466.toInt(), 0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
-            Terrain.CAVE -> intArrayOf(0xFF181425.toInt(), 0xFF262B44.toInt(), 0xFF3A4466.toInt(), 0xFF5A6988.toInt())
-            Terrain.GRAVEL -> intArrayOf(0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
-            Terrain.COBBLE -> intArrayOf(0xFF3A4466.toInt(), 0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
-            Terrain.PAVED -> intArrayOf(0xFF5A6988.toInt(), 0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
+            Terrain.DIRT -> if (season == 3) ramp(0xFF4A3C48, 0xFF6B6680, 0xFF9EB0CC, 0xFFC9D5E6)
+            else ramp(0xFF2F1F26, 0xFF4A2E2D, 0xFF66403A, 0xFF84553F, 0xFFA06A48)
+            Terrain.PATH -> if (season == 3) ramp(0xFF7D8AA6, 0xFFA3A3B8, 0xFFC4BFC9, 0xFFE0DDE3)
+            else ramp(0xFF7A4F3D, 0xFF96654A, 0xFFB07E57, 0xFFC69A68, 0xFFDCB985)
+            Terrain.SAND -> ramp(0xFFA8784F, 0xFFC4945F, 0xFFD9B27A, 0xFFEAD0A0)
+            Terrain.WATER -> ramp(0xFF183C6E, 0xFF1E5F9C, 0xFF2B84C0, 0xFF4FB6DD, 0xFF9CE4F2)
+            Terrain.STONE -> ramp(0xFF3A3F5C, 0xFF50597A, 0xFF6C7896, 0xFF8E9AB3, 0xFFB7C1D4)
+            Terrain.CAVE -> ramp(0xFF141225, 0xFF1F2238, 0xFF2C3150, 0xFF3D4566)
+            Terrain.GRAVEL -> ramp(0xFF4F5670, 0xFF6C7590, 0xFF8A93AB, 0xFFAAB3C6)
+            Terrain.COBBLE -> ramp(0xFF3A3F5C, 0xFF586280, 0xFF76809C, 0xFFA3ADC2)
+            Terrain.PAVED -> ramp(0xFF5C6582, 0xFF8790A8, 0xFFB3BCCC)
             Terrain.NONE -> intArrayOf(0)
         }
 
-        /** (dx, dy, colour) pixels of a motif, or null for none. */
-        fun motif(t: Terrain, roll: Float, meadow: Float): List<Triple<Int, Int, Int>>? {
-            val dark = of(t)[0]
+        private fun ramp(vararg c: Long) = IntArray(c.size) { c[it].toInt() }
+
+        /** (dx, dy, colour) pixels of a motif, or null for none; colours come from the terrain's ramp. */
+        fun motif(t: Terrain, roll: Float, meadow: Float, pick: Float): List<Triple<Int, Int, Int>>? {
+            val r = of(t)
+            val dark = r[0]
+            val lo = r[1.coerceAtMost(r.size - 1)]
+            val hi = r[(r.size - 2).coerceAtLeast(0)]
+            val top = r.last()
             return when (t) {
                 Terrain.GRASS -> when {
-                    season == 3 -> if (roll < 0.25f) tuft(0xFF3E8948.toInt(), 0xFF265C42.toInt()) else if (roll < 0.35f) pebble(0xFF5A6988.toInt(), 0xFF8B9BB4.toInt()) else null
-                    meadow > 0.58f && roll < 0.45f -> flower(petal(roll), 0xFFFEE761.toInt())
-                    roll < 0.55f -> tuft(dark, if (season == 2) 0xFFBE4A2F.toInt() else 0xFF265C42.toInt())
-                    roll < 0.70f -> blades(0xFF63C74D.toInt(), 0xFFFEE761.toInt())
-                    roll < 0.78f -> clover(0xFF63C74D.toInt())
-                    roll < 0.82f -> pebble(0xFF8B9BB4.toInt(), 0xFFC0CBDC.toInt())
-                    season == 2 && roll < 0.95f -> leaf(0xFFD77643.toInt(), 0xFFFEAE34.toInt())
+                    season == 3 -> if (roll < 0.25f) tuft(0xFF3D6E3A.toInt(), 0xFF2A4A3A.toInt()) else if (roll < 0.35f) pebble(0xFF6C7590.toInt(), 0xFF8A93AB.toInt()) else null
+                    meadow > 0.58f && roll < 0.4f -> flower(petal(roll), 0xFFFEE761.toInt(), lo)
+                    roll < 0.45f -> clump(dark, lo, hi, top, pick > 0.5f)
+                    roll < 0.6f -> tuft(lo, dark)
+                    roll < 0.72f -> blades(hi, top)
+                    roll < 0.76f -> pebble(0xFF6C7590.toInt(), 0xFF8A93AB.toInt())
+                    season == 2 && roll < 0.9f -> leaf(0xFFBE4A2F.toInt(), 0xFFD77643.toInt())
                     else -> null
                 }
                 Terrain.FOREST -> when {
-                    roll < 0.30f -> leaf(0xFFBE4A2F.toInt(), 0xFFD77643.toInt())
-                    roll < 0.55f -> tuft(dark, 0xFF193C3E.toInt())
-                    roll < 0.62f -> mushroom()
-                    roll < 0.70f -> pebble(0xFF5A6988.toInt(), 0xFF8B9BB4.toInt())
+                    roll < 0.25f -> leaf(if (season == 2) 0xFFD77643.toInt() else 0xFF8C5130.toInt(), 0xFFB06A35.toInt())
+                    roll < 0.5f -> clump(dark, lo, hi, top, pick > 0.5f)
+                    roll < 0.57f -> mushroom()
+                    roll < 0.64f -> pebble(0xFF50597A.toInt(), 0xFF8E9AB3.toInt())
                     else -> null
                 }
-                Terrain.GRAVEL -> if (roll < 0.6f) pebble(dark, of(t).last()) else null
+                Terrain.GRAVEL -> if (roll < 0.6f) pebble(dark, top) else null
                 Terrain.COBBLE, Terrain.PAVED -> null
                 Terrain.PATH, Terrain.DIRT, Terrain.SAND -> when {
-                    roll < 0.35f -> pebble(dark, of(t).last())
-                    roll < 0.5f -> listOf(Triple(0, 0, dark), Triple(1, 0, dark))
+                    roll < 0.35f -> pebble(dark, top)
+                    roll < 0.5f -> listOf(Triple(0, 0, lo), Triple(1, 0, lo))
                     else -> null
                 }
                 Terrain.STONE, Terrain.CAVE -> when {
-                    roll < 0.25f -> crack(0xFF181425.toInt())
-                    roll < 0.45f -> pebble(of(t)[0], of(t).last())
-                    roll < 0.5f -> listOf(Triple(0, 0, 0xFF68386C.toInt()))
+                    roll < 0.25f -> crack(r[0])
+                    roll < 0.45f -> pebble(r[0], top)
                     else -> null
                 }
-                Terrain.WATER -> if (roll < 0.15f) listOf(Triple(0, 0, 0xFF2CE8F5.toInt()), Triple(1, 0, 0xFF2CE8F5.toInt())) else null
+                Terrain.WATER -> if (roll < 0.15f) listOf(Triple(0, 0, top), Triple(1, 0, top)) else null
                 Terrain.NONE -> null
             }
+        }
+
+        /** A grass clump: dark roots, mid blades and lit tips (mirrored by [flip]). */
+        private fun clump(d: Int, m: Int, h: Int, t: Int, flip: Boolean): List<Triple<Int, Int, Int>> {
+            val s = if (flip) -1 else 1
+            return listOf(
+                Triple(-2 * s, 0, d), Triple(-1 * s, 0, m), Triple(0, 0, m), Triple(1 * s, 0, d), Triple(2 * s, 0, d),
+                Triple(-2 * s, -1, m), Triple(-1 * s, -1, h), Triple(0, -1, m), Triple(1 * s, -1, h),
+                Triple(-1 * s, -2, t), Triple(1 * s, -2, h), Triple(0, -2, h), Triple(1 * s, -3, t),
+            )
         }
 
         private fun petal(roll: Float) = when ((roll * 100).toInt() % 4) {
@@ -392,8 +418,7 @@ class GroundPainter(private val seed: Int = 7) {
         }
         private fun tuft(a: Int, b: Int) = listOf(Triple(0, 0, a), Triple(2, 0, a), Triple(1, -1, a), Triple(1, 0, b))
         private fun blades(a: Int, b: Int) = listOf(Triple(0, 0, a), Triple(0, -1, a), Triple(1, -2, b))
-        private fun clover(a: Int) = listOf(Triple(0, 0, a), Triple(1, 0, a), Triple(0, -1, a), Triple(1, 1, 0xFF265C42.toInt()))
-        private fun flower(p: Int, c: Int) = listOf(Triple(0, -1, p), Triple(-1, 0, p), Triple(1, 0, p), Triple(0, 1, p), Triple(0, 0, c), Triple(0, 2, 0xFF265C42.toInt()))
+        private fun flower(p: Int, c: Int, stem: Int) = listOf(Triple(0, -1, p), Triple(-1, 0, p), Triple(1, 0, p), Triple(0, 1, p), Triple(0, 0, c), Triple(0, 2, stem))
         private fun pebble(a: Int, b: Int) = listOf(Triple(0, 0, a), Triple(1, 0, a), Triple(0, -1, b))
         private fun leaf(a: Int, b: Int) = listOf(Triple(0, 0, a), Triple(1, 0, b))
         private fun crack(a: Int) = listOf(Triple(0, 0, a), Triple(1, 1, a), Triple(2, 1, a), Triple(3, 2, a))
@@ -427,6 +452,9 @@ class GroundPainter(private val seed: Int = 7) {
     companion object {
         /** Cliff-top wobble (px) and the size of the rock chunks on cliff faces (px). */
         const val WOB = 3
+        private val PATCH5 = floatArrayOf(0.27f, 0.42f, 0.58f, 0.73f)
+        private val PATCH4 = floatArrayOf(0.36f, 0.5f, 0.66f)
+        private val PATCH3 = floatArrayOf(0.42f, 0.6f)
         const val CHUNK_W = 9f
         const val CHUNK_H = 7f
         const val INK = 0xFF181425.toInt()
