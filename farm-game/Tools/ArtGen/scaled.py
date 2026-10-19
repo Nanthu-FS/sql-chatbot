@@ -23,8 +23,6 @@ from _pix import Sprites, finish, new  # noqa: E402
 
 # name: (module, folder, scale)
 SCALE = {
-    "oil_press": ("machines_farm", "buildings", 0.62),
-    "market_cart": ("machines_farm", "buildings", 0.65),
     "sawmill": ("machines_wild", "buildings", 0.78),
     "wood_chipper": ("machines_wild", "buildings", 0.6),
     "charcoal_kiln": ("machines_wild", "buildings", 0.75),

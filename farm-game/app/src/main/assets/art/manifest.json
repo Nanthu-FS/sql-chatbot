@@ -78,8 +78,8 @@
  },
  "buildings/harvest_shed": {
   "ax": 17,
-  "ay": 26,
-  "bh": 36
+  "ay": 24,
+  "bh": 33
  },
  "buildings/house_0_a": {
   "ax": 21,
@@ -200,9 +200,9 @@
   "bh": 40
  },
  "buildings/market_cart": {
-  "ax": 10,
-  "ay": 21,
-  "bh": 26
+  "ax": 13,
+  "ay": 23,
+  "bh": 29
  },
  "buildings/market_snow": {
   "ax": 15,
@@ -215,8 +215,8 @@
   "bh": 31
  },
  "buildings/oil_press": {
-  "ax": 11,
-  "ay": 21,
+  "ax": 12,
+  "ay": 20,
   "bh": 27
  },
  "buildings/orders": {
@@ -230,9 +230,9 @@
   "bh": 32
  },
  "buildings/planter_shed": {
-  "ax": 15,
-  "ay": 26,
-  "bh": 34
+  "ax": 16,
+  "ay": 24,
+  "bh": 32
  },
  "buildings/preserves_jar": {
   "ax": 10,
@@ -316,9 +316,9 @@
   "bh": 34
  },
  "buildings/windmill": {
-  "ax": 16,
-  "ay": 54,
-  "bh": 61
+  "ax": 24,
+  "ay": 61,
+  "bh": 64
  },
  "buildings/wood_chipper": {
   "ax": 9,

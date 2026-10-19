@@ -20,6 +20,7 @@ nothing is copied from them.
   deco/lantern                          the lamp post (night.py picks out its glass for lantern_lit)
   deco/fence_r, fence_l                 one tile of fence along +col / +row, pivot at the start corner
   buildings/compost_bin, bakery_oven, preserves_jar, beehive, fruit_press, seed_maker
+  buildings/oil_press, market_cart, harvest_shed, planter_shed, windmill
                                         farm machines, each with a cream icon plate
 
 Pivot = the ground centre of the footprint.
@@ -1003,6 +1004,243 @@ def preview4(out):
     sheet.resize((sheet.width * 5, sheet.height * 5), Image.NEAREST).save(out)
 
 
+ICONS.update({
+    "drop": ([".a.", "aya", "aaa"], {"a": "amber", "y": "yellow"}),
+    "coin": ([".y.", "yay", ".y."], {"y": "yellow", "a": "amber"}),
+})
+
+
+def rings(c, cx, cy, z0, z1, r0, r1, ramp, band=None):
+    """A round body built up in rings from z0 to z1, the radius going r0 -> r1; flat colour bands
+    lit from the left. band(z) may return a ramp to paint that ring instead."""
+    for z in range(z0, z1 + 1):
+        t = (z - z0) / max(1, z1 - z0)
+        r = max(1, round(r0 + (r1 - r0) * t))
+        rr = r / 2
+        rp = band(z) if band else None
+        rp = rp or ramp
+        for x in range(cx - r, cx + r + 1):
+            dx = (x - cx) / r
+            s_ = max(0.0, 1 - dx * dx) ** 0.5
+            col = rp[0] if dx < -0.5 else rp[1] if dx < 0.2 else rp[2] if dx < 0.7 else rp[3]
+            for y in range(round(cy - z - rr * s_), round(cy - z + rr * s_) + 1):
+                c.dot(x, y, rp[1] if z == z1 else col)
+
+
+def oil_press():
+    """A wooden bed with a grey millstone standing on edge (red hub), a crank arm, and a big amber
+    oil jar; an oil drop on the plate."""
+    c = Iso(34, 36, 17, 26)
+    U, V = 3.0, 2.0
+    c.box(-U, U, -V, V, 0, 4, "tan", "brown_l", "brown")
+    c.uline(-U, U, V, 2, "brown")
+    c.zline(U, V, 0, 4, "red", dx=-1); c.zline(-U, V, 0, 4, "red")
+    x, y = c.p(-0.8, 0, 4)                                                  # millstone on edge
+    for j in range(-13, 1):
+        for i in range(-7, 8):
+            e = i * i / 42 + (j + 6.5) ** 2 / 44
+            if e <= 1:
+                c.dot(x + i, y + j, "grey_d" if e > 0.8 and i > 0 else "grey_l" if i < -2 else "grey" if i < 3 else "grey_d")
+    for i in range(-5, 6, 2):
+        c.dot(x + i, y - 6 - (1 if i < 0 else 0), "grey_d")
+    c.dot(x, y - 7, "red"); c.dot(x + 1, y - 7, "red_d"); c.dot(x, y - 8, "red"); c.dot(x + 1, y - 8, "red")
+    for k in range(6):                                                      # crank arm
+        c.dot(x + 1 + k, y - 8 - k // 2, "brown")
+    c.dot(x + 7, y - 11, "red"); c.dot(x + 7, y - 12, "red")
+    jx, jy = c.p(2.2, 1.4, 4)                                               # oil jar
+    for j in range(5):
+        w = 1 if j in (0, 4) else 2
+        for i in range(-w, w + 1):
+            c.dot(jx + i, jy - j, "cream" if j == 4 else ("yellow" if i < 0 else "amber" if i < 2 else "orange"))
+    c.dot(jx - 1, jy - 2, "white")
+    plate(c, -2.4, -0.2, V, 0.6, 3.8, "drop")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def market_cart():
+    """A red cart with cream trim and one big cream wheel, crates of produce, and a red-and-cream
+    striped canopy on cream poles; a coin on the plate."""
+    c = Iso(34, 40, 17, 28)
+    U, V = 3.2, 1.8
+    c.box(-U, U, -V, V, 3, 7.5, "brown_l", "red", "red_d")
+    c.uline(-U, U, V, 7.5, "cream"); c.vline(U, 2 * V, -V, 7.5, "tan")
+    for u, v, light, dark in ((-1.8, -0.6, "pink", "red"), (-0.2, -0.4, "orange", "rust"), (1.4, -0.6, "green", "green_d"),
+                              (-1.0, 0.8, "yellow", "amber"), (0.8, 0.8, "pink", "red")):
+        x, y = c.p(u, v, 7.5)
+        for dx, dy, col in ((0, -1, light), (1, -1, light), (0, 0, dark), (1, 0, dark)):
+            c.dot(x + dx, y + dy, col)
+    plate(c, -1.4, 1.4, V, 3.6, 6.8, "coin")
+    x, y = c.p(0.4, V, 3)                                                   # big wheel
+    c.ellipse(x, y, 3.5, 3.5, "ink")
+    c.ellipse(x, y, 2.3, 2.3, "cream")
+    c.dot(x, y, "red"); c.dot(x - 1, y - 1, "tan"); c.dot(x + 1, y + 1, "tan")
+    c.line((U, 0, 4), (U + 2.4, 0, 3), "brown")                             # handle
+    for u, v in ((-U + 0.2, V - 0.2), (U - 0.2, V - 0.2), (U - 0.2, -V + 0.2)):
+        c.zline(u, v, 7.5, 15, "cream")
+    stripes = ("red", "cream")
+    for k in range(int(U * 2 * 2)):
+        u = -U - 0.4 + k * 0.5
+        c.poly([(u, -V - 0.4, 16.5), (u + 0.5, -V - 0.4, 16.5), (u + 0.5, V + 0.6, 14.2), (u, V + 0.6, 14.2)], stripes[(k // 2) % 2])
+    for k in range(int(U * 2 * 2)):
+        u = -U - 0.4 + k * 0.5
+        x, y = c.p(u, V + 0.6, 14.2)
+        col = "red_d" if (k // 2) % 2 == 0 else "tan"
+        c.dot(x, y + 1, col); c.dot(x + 1, y + 1, col)
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def shed(c, U, V, WH, PK, roof=("red", "red_d"), walls=("cream", "cream", "tan")):
+    """A small gable shed: cream board walls on a stone footing, red roof with cream rake boards
+    (ridge along u, gable end facing +u)."""
+    R = WH + PK
+    ze = WH - PK / V
+    c.poly([(-U - 0.6, 0, R), (U + 0.6, 0, R), (U + 0.6, -V - 0.6, ze), (-U - 0.6, -V - 0.6, ze)], "red_d")
+    c.box(-U, U, -V, V, 0, 1.2, "grey_l", "grey", "grey_d", lit=False)
+    c.box(-U, U, -V, V, 1.2, WH, *walls, lit=False)
+    for u in range(round(-U) + 1, round(U)):
+        c.zline(u, V, 1.2, WH, "tan")
+    c.poly([(U, -V, WH), (U, V, WH), (U, 0, R)], walls[2])
+    c.zline(U, V, 0, WH, "red", dx=-1); c.zline(-U, V, 0, WH, "red"); c.zline(U, -V, 0, WH, "red_d", dx=-1)
+    c.poly([(-U - 0.6, 0, R), (U + 0.6, 0, R), (U + 0.6, V + 0.6, ze), (-U - 0.6, V + 0.6, ze)], roof[0])
+    for k in (1.2, 2.4):
+        c.uline(-U - 0.6, U + 0.6, k, R - PK * k / V, roof[1])
+    c.uline(-U - 0.6, U + 0.6, V + 0.6, ze, "cream")
+    c.line((U + 0.6, 0, R + 1), (U + 0.6, V + 0.6, ze), "cream")
+    c.line((U + 0.6, 0, R + 1), (U + 0.6, -V - 0.6, ze), "cream")
+    c.uline(-U - 0.6, U + 0.6, 0, R + 1, "cream")
+    return R
+
+
+def harvest_shed():
+    """An open-fronted cream shed with a red roof: wheat sheaves stacked inside, a scythe leaning
+    by the opening and the wheat emblem on the gable."""
+    c = Iso(40, 44, 20, 30)
+    U, V, WH, PK = 3.4, 2.8, 11, 6
+    shed(c, U, V, WH, PK)
+    c.poly([(-U + 0.8, V, 1.2), (U - 0.8, V, 1.2), (U - 0.8, V, WH - 1), (-U + 0.8, V, WH - 1)], "brown_d")   # opening
+    for k, u in enumerate((-2.0, -0.8, 0.4, 1.6)):                         # sheaves
+        x, y = c.p(u, V, 1.2)
+        for j in range(7):
+            w = 1 if 2 <= j <= 4 else 2
+            for i in range(-w, w + 1):
+                c.dot(x + i, y - j, "brown_l" if j == 3 else ("yellow" if i < 0 else "amber"))
+    c.wheat(*c.p(U, -0.4, WH + 4.4))
+    x, y = c.p(U + 0.4, V - 0.2, 0)                                         # scythe
+    for k in range(13):
+        c.dot(x + k // 4, y - k, "brown"); c.dot(x + k // 4 + 1, y - k, "brown_l")
+    for i in range(5):
+        c.dot(x + 3 - i, y - 12 + i // 2, "grey_l")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def planter_shed():
+    """A cream potting shed with a red roof, a red door with a sprout plate, a window box of
+    flowers and a tray of seedlings by the wall."""
+    c = Iso(40, 44, 20, 30)
+    U, V, WH, PK = 3.0, 2.6, 11, 6
+    shed(c, U, V, WH, PK, roof=("green", "green_d"))
+    c.poly([(0.4, V, 1.2), (2.2, V, 1.2), (2.2, V, 8.4), (0.4, V, 8.4)], "red")             # door
+    c.poly([(0.6, V, 1.2), (2.0, V, 1.2), (2.0, V, 8.0), (0.6, V, 8.0)], "red_d")
+    c.dot(*c.p(1.8, V, 4.6), "cream")
+    x, y = c.p(1.3, V, 7.2)
+    rows, key = ICONS["sprout"]
+    for j, row in enumerate(rows):
+        for i, ch in enumerate(row):
+            if ch in key:
+                c.dot(x - 1 + i, y + j, key[ch])
+    c.poly([(-2.4, V, 5), (-0.6, V, 5), (-0.6, V, 8.4), (-2.4, V, 8.4)], "cream")          # window
+    c.poly([(-2.1, V, 5.4), (-0.9, V, 5.4), (-0.9, V, 8.0), (-2.1, V, 8.0)], "blue_d")
+    c.box(-2.6, -0.4, V, V + 0.6, 4, 5, "red", "red", "red_d")                              # window box
+    for i, col in enumerate(("pink", "yellow", "white", "pink")):
+        x, y = c.p(-2.4 + i * 0.6, V + 0.3, 5.6)
+        c.dot(x, y, col); c.dot(x, y + 1, "green")
+    c.box(U + 0.4, U + 2.0, -1.6, 0.4, 0, 1.2, "brown_l", "brown", "brown_d")              # seedling tray
+    for u, v in ((U + 0.8, -1.2), (U + 1.6, -1.0), (U + 0.9, -0.2), (U + 1.6, 0.1)):
+        x, y = c.p(u, v, 1.2)
+        c.dot(x, y - 1, "green"); c.dot(x, y, "green_d")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def windmill():
+    """A tapered cream tower with red bands, a red door and window, a red cap, and four cream
+    sails in red frames turned toward the viewer."""
+    c = Iso(56, 76, 28, 66)
+    cx, cy = c.p(0, 0, 0)
+    body = ("white", "cream", "tan", "tan_d")
+    red = ("pink", "red", "red_d", "purple")
+    rings(c, cx, cy, 0, 34, 9, 6, body, band=lambda z: red if z in (1, 2, 33, 34) else None)
+    for j in range(8):                                                      # door
+        for i in range(-2, 2):
+            c.dot(cx - 3 + i, cy + 3 - j, "red_d" if j == 7 or i in (-2, 1) else "red")
+    c.dot(cx - 3, cy - 1, "cream")
+    for j in range(4):                                                      # window
+        for i in range(2):
+            c.dot(cx - 2 + i, cy - 20 - j, "slate_d" if 0 < j < 3 else "cream")
+    for z in range(35, 44):                                                 # the cap
+        t = (z - 35) / 9
+        r = max(1, round(7 * (1 - t)))
+        for x in range(cx - r, cx + r + 1):
+            dx = (x - cx) / r if r else 0
+            s_ = max(0.0, 1 - dx * dx) ** 0.5
+            for y in range(round(cy - z - r / 2 * s_), round(cy - z + r / 2 * s_) + 1):
+                c.dot(x, y, "pink" if dx < -0.4 else "red" if dx < 0.3 else "red_d")
+    for i in range(-7, 8):
+        c.dot(cx + i, cy - 35 + round(3.5 * (1 - (i / 7.0) ** 2) ** 0.5), "cream")
+    c.dot(cx, cy - 45, "cream"); c.dot(cx, cy - 46, "cream")
+    # Sails: four arms in an X from a hub on the front of the cap.
+    hx, hy = cx - 3, cy - 36
+    for sx, sy in ((1, 1), (-1, 1), (1, -1), (-1, -1)):
+        a, b = (hx + sx * 4, hy + sy * 4), (hx + sx * 15, hy + sy * 15)     # cloth beside the spar
+        ox, oy = -sy * 4, sx * 4
+        c.d.polygon([a, b, (b[0] + ox, b[1] + oy), (a[0] + ox, a[1] + oy)], fill=c.c("cream"), outline=c.c("red"))
+        c.d.line([(hx + sx * 2, hy + sy * 2), b], fill=c.c("red_d"), width=1)
+        c.d.line([(hx + sx * 2 + (1 if sx < 0 else 0), hy + sy * 2), (b[0] + (1 if sx < 0 else 0), b[1])], fill=c.c("red_d"), width=1)
+    c.dot(hx, hy, "grey_d"); c.dot(hx + 1, hy, "grey"); c.dot(hx, hy - 1, "grey")
+    soften(c.im)
+    return c, (cx, cy + 4)
+
+
+MACHINES_2 = [("oil_press", oil_press), ("market_cart", market_cart), ("harvest_shed", harvest_shed),
+              ("planter_shed", planter_shed), ("windmill", windmill)]
+
+
+def preview5(out):
+    """Batch 5 (the last farm machines): today's sprite over the hand-pixeled one, 4x."""
+    from PIL import Image, ImageDraw
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    import polish
+    art = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "app", "src", "main", "assets", "art")
+    man = json.load(open(os.path.join(art, "manifest.json")))
+    hand = Image.open(os.path.join(art, "people/hana_se_idle.png")).convert("RGBA")
+    hp = man["people/hana_se_idle"]
+    cw, ch = 76, 90
+    sheet = Image.new("RGBA", (cw * len(MACHINES_2), ch * 2), (62, 137, 72, 255))
+    d = ImageDraw.Draw(sheet)
+    for i, (name, fn) in enumerate(MACHINES_2):
+        for row in range(2):
+            ax, ay = i * cw + 44, row * ch + ch - 10
+            d.line([(ax - 16, ay), (ax, ay - 8), (ax + 16, ay), (ax, ay + 8), (ax - 16, ay)], fill=(48, 110, 60, 255))
+            sheet.alpha_composite(hand, (ax - 28 - hp["ax"], ay - hp["ay"]))
+            key = "buildings/" + name
+            if row == 0:
+                im = Image.open(os.path.join(art, key + ".png")).convert("RGBA")
+                p = man[key]
+                sheet.alpha_composite(im, (ax - p["ax"], ay - p["ay"]))
+                d.text((i * cw + 2, 1), name.replace("_", " "), fill=(255, 255, 255, 255))
+            else:
+                cnv, (px_, py_) = fn()
+                x0, y0, x1, y1 = cnv.im.getbbox()
+                body, pad = finish(cnv.im.crop((x0, y0, x1, y1)))
+                sys.stderr.write("%s bh %d (now %d)\n" % (name, body.height, man[key]["bh"]))
+                body = polish.polish(body, "world", key)
+                sheet.alpha_composite(body, (ax - (px_ - x0 + pad), ay - (py_ - y0 + pad)))
+    sheet.resize((sheet.width * 4, sheet.height * 4), Image.NEAREST).save(out)
+
+
 def emit(sp, name, made):
     cnv, (px, py) = made
     x0, y0, x1, y1 = cnv.im.getbbox()
@@ -1028,7 +1266,7 @@ def main():
     emit(deco, "lantern", lantern())
     emit(deco, "fence_r", fence(True))
     emit(deco, "fence_l", fence(False))
-    for name, fn in MACHINES:
+    for name, fn in MACHINES + MACHINES_2:
         emit(bld, name, fn())
     for name, fn in (("barn", barn), ("silo", silo), ("orders", orders), ("workbench", workbench), ("well", well), ("market", market)):
         emit(bld, name, fn(False))
@@ -1084,5 +1322,7 @@ if __name__ == "__main__":
         preview3(sys.argv[2])
     elif len(sys.argv) > 2 and sys.argv[1] == "--preview4":
         preview4(sys.argv[2])
+    elif len(sys.argv) > 2 and sys.argv[1] == "--preview5":
+        preview5(sys.argv[2])
     else:
         main()
