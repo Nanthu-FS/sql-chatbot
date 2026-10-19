@@ -122,7 +122,9 @@ class Hud(private val game: Game) {
         // The notebook points at the screen its quest needs.
         if (navArrow >= 0) g.sprite("icons/arrow_down", navArrow.toFloat(), y - 6 + kotlin.math.sin(game.engine.time * 6f) * 2f)
         return picked?.let { nav ->
-            navLock(nav)?.let { why -> toast(why); game.sfx.play("error"); null } ?: nav
+            val why = navLock(nav) ?: return@let nav
+            toast(why); game.sfx.play("error")
+            null
         }
     }
 

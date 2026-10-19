@@ -214,7 +214,7 @@
  "quarry": [
   {
    "level": 1,
-   "unlock": 3,
+   "unlock": 1,
    "cost": {},
    "spots": 12,
    "respawnMinutes": 8,

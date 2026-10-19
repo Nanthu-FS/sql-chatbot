@@ -422,7 +422,7 @@ internal fun World.forestDawn(day: Int) {
             SpotKind.BUSH -> if (season == Season.SUMMER && day % 2 == 0) s.stock = minOf(3, s.stock + 1)
             SpotKind.APPLE -> if ((season == Season.SUMMER || season == Season.FALL) && day % 2 == 0) s.stock = minOf(3, s.stock + 1)
             SpotKind.MUSHROOM -> if (season != Season.WINTER) s.stock = minOf(if (state.weather.waters) 2 else 1, s.stock + 1)
-            SpotKind.ROCK -> s.stock = minOf(2, s.stock + 1)
+            SpotKind.ROCK -> s.stock = minOf(3, s.stock + 2)
             SpotKind.SLOT -> {}
         }
     }

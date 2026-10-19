@@ -16,6 +16,7 @@ import com.ditherfarm.game.forestSpots
 import com.ditherfarm.game.spot
 import com.ditherfarm.game.treeStage
 import com.ditherfarm.game.zoneOpen
+import com.ditherfarm.game.quarryOpen
 import com.ditherfarm.shots.ScreenshotTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -86,6 +87,18 @@ class TouchPlayTest {
         val f = g.farm
         t.swipe(bufX(f, Iso.x(c0, r0).toFloat()), bufY(f, Iso.centerY(c0, r0).toFloat()), bufX(f, Iso.x(c3, r3).toFloat()), bufY(f, Iso.centerY(c3, r3).toFloat()))
         assertEquals("all four ripe crops on the slide are harvested", 0, row.count { g.world.isReady(g.world.plot(it)) })
+    }
+
+    @Test fun lockedMineButtonStaysOnTheFarm() {
+        val (g, t) = start()
+        assertFalse("quarry still closed on a new farm", g.world.quarryOpen)
+        val n = Nav.entries.size
+        val gap = (270 - 8 - n * 34) / (n - 1)
+        val x = 4 + Nav.MINE.ordinal * (34 + gap) + 17f
+        val y = 480f - g.engine.safeBottom - 46 + 6 + 17                  // Hud.bottomHeight 46
+        t.tap(x, y)
+        t.frames(3)
+        assertTrue("the Mine stays shut until the quarry opens, on ${g.engine.screen?.javaClass?.simpleName}", g.engine.screen === g.farm)
     }
 
     @Test fun tapOnTheTopOfACropHarvestsIt() {
