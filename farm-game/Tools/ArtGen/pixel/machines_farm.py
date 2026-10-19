@@ -811,9 +811,9 @@ def planter_shed():
     return solids, None
 
 
-SPRITES = [("windmill", windmill), ("compost_bin", compost_bin), ("bakery_oven", bakery_oven),
-           ("preserves_jar", preserves_jar), ("beehive", beehive), ("fruit_press", fruit_press),
-           ("seed_maker", seed_maker), ("oil_press", oil_press), ("market_cart", market_cart),
+# The compost bin, bakery oven, preserves jar, beehive, fruit press and seed maker are
+# hand-pixeled in farm_hand.py (art round 5); their ray-cast models stay for comparison.
+SPRITES = [("windmill", windmill), ("oil_press", oil_press), ("market_cart", market_cart),
            ("harvest_shed", harvest_shed), ("planter_shed", planter_shed)]
 
 

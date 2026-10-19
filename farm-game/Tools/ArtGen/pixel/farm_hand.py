@@ -19,6 +19,8 @@ nothing is copied from them.
   deco/field_sign                       a field's sign (the engine letters it)
   deco/lantern                          the lamp post (night.py picks out its glass for lantern_lit)
   deco/fence_r, fence_l                 one tile of fence along +col / +row, pivot at the start corner
+  buildings/compost_bin, bakery_oven, preserves_jar, beehive, fruit_press, seed_maker
+                                        farm machines, each with a cream icon plate
 
 Pivot = the ground centre of the footprint.
 """
@@ -765,6 +767,242 @@ def preview3(out):
     sheet.resize((sheet.width * 5, sheet.height * 5), Image.NEAREST).save(out)
 
 
+# ---------------------------------------------------------------- farm machines (1x1)
+
+# Small painted icons for the machines' cream plates (upright, centred on the plate).
+ICONS = {
+    "sprout": (["g.g", "ggg", ".b."], {"g": "green", "b": "brown"}),
+    "loaf": ([".ooo.", "oyoyo", "ooooo"], {"o": "orange", "y": "amber"}),
+    "jar": ([".c.", "rrr", "rpr", "rrr"], {"c": "cream", "r": "red", "p": "pink"}),
+    "bee": (["w.w", "yky", ".y."], {"w": "white", "y": "yellow", "k": "ink"}),
+    "apple": ([".b.", "rrr", "rpr", ".r."], {"b": "green_d", "r": "red", "p": "pink"}),
+    "seed": (["..g", ".g.", "bb.", "bb."], {"g": "green", "b": "brown_l"}),
+}
+
+
+def plate(c, u0, u1, v, z0, z1, icon):
+    """A cream plate with a dark red edge painted on a +v face, an icon in the middle."""
+    c.poly([(u0, v, z0), (u1, v, z0), (u1, v, z1), (u0, v, z1)], "red_d")
+    c.poly([(u0 + 0.5, v, z0 + 0.6), (u1 - 0.5, v, z0 + 0.6), (u1 - 0.5, v, z1 - 0.6), (u0 + 0.5, v, z1 - 0.6)], "cream")
+    rows, key = ICONS[icon]
+    x, y = c.p((u0 + u1) / 2, v, (z0 + z1) / 2)
+    x -= len(rows[0]) // 2
+    y -= len(rows) // 2
+    for j, row in enumerate(rows):
+        for i, ch in enumerate(row):
+            if ch in key:
+                c.dot(x + i, y + j, key[ch])
+
+
+def compost_bin():
+    """A slatted wooden bin on red corner posts, dark compost heaped inside with green sprouts."""
+    c = Iso(30, 28, 15, 16)
+    S, H = 2.4, 6
+    c.box(-S, S, -S, S, 0, H, "tan", "tan", "brown_l")
+    c.poly([(-S + 0.6, -S + 0.6, H), (S - 0.6, -S + 0.6, H), (S - 0.6, S - 0.6, H), (-S + 0.6, S - 0.6, H)], "brown_d")
+    for z in (2, 4):                                                         # slat gaps
+        c.uline(-S, S, S, z, "brown"); c.vline(S, 2 * S, -S, z, "brown_d")
+    for u, v, dx in ((S, S, -1), (-S, S, 0), (S, -S, -1)):                  # red corner posts
+        c.zline(u, v, 0, H + 0.6, "red", dx=dx); c.zline(u, v, 0, H + 0.6, "red_d" if dx else "red", dx=dx + 1)
+    for u, v in ((-0.7, -0.5), (0.5, 0.2), (-0.2, 0.8)):                    # the heap and sprouts
+        x, y = c.p(u, v, H + 0.6)
+        for dx in (-1, 0, 1):
+            c.dot(x + dx, y, "brown"); c.dot(x + dx, y + 1, "brown_d")
+        c.dot(x, y - 1, "green"); c.dot(x - 1, y - 2, "green"); c.dot(x + 1, y - 2, "green_d")
+    plate(c, -1.5, 1.5, S, 0.8, 5.2, "sprout")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def bakery_oven():
+    """A brick base with cream trim, a cream plaster dome with a red band, a glowing arched mouth
+    and a chimney; a loaf on the plate."""
+    c = Iso(32, 40, 16, 30)
+    S, B = 2.8, 5.5
+    c.box(-S, S, -S, S, 0, B, "cream", "rust", "red_d")                      # brick base
+    for z in (1.8, 3.8):
+        c.uline(-S, S, S, z, "red_d"); c.vline(S, 2 * S, -S, z, "purple")
+    c.box(0.8, 1.7, -2.0, -1.1, B, 17, "grey_l", "grey", "grey_d")          # chimney at the back
+    c.box(0.6, 1.9, -2.2, -0.9, 16, 17.4, "cream", "cream", "tan")
+    cx, cy = c.p(0, 0, B)
+    R, D = 7, 8
+    for k in range(D + 1):                                                  # the dome, built up in rings
+        r = max(1, round(R * (1 - (k / (D + 0.5)) ** 2) ** 0.5))
+        rr = r / 2
+        for x in range(cx - r, cx + r + 1):
+            dx = (x - cx) / r
+            s_ = max(0.0, 1 - dx * dx) ** 0.5
+            col = ("red" if dx < 0.3 else "red_d") if k == 2 else ("white" if dx < -0.45 else "cream" if dx < 0.35 else "tan")
+            for y in range(round(cy - k - rr * s_), round(cy - k + rr * s_) + 1):
+                c.dot(x, y, col)
+    mx, my = cx - 3, cy + 1                                                 # the glowing mouth
+    for j, (half, inner) in enumerate(((2, "orange"), (2, "amber"), (2, "yellow"), (1, "amber"))):
+        for i in range(-half, half + 1):
+            c.dot(mx + i, my - j, "ink" if abs(i) == half else inner)
+    c.dot(mx, my - 4, "ink")
+    plate(c, -2.4, 0.2, S, 0.6, 5.0, "loaf")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def preserves_jar():
+    """A red shelf with cream edges: two rows of bright jars with cream lids, a jar on the crest."""
+    c = Iso(32, 40, 16, 30)
+    U, V = 2.8, 1.2
+    c.box(-U, U, -V, V, 0, 13, "cream", "red", "red_d")
+    c.poly([(-U + 0.6, V, 1.0), (U - 0.6, V, 1.0), (U - 0.6, V, 12.2), (-U + 0.6, V, 12.2)], "purple")   # inside
+    for z in (1.0, 6.6):
+        c.uline(-U + 0.6, U - 0.6, V, z, "cream")                            # shelves
+    cols = (("pink", "red"), ("orange", "amber"), ("magenta", "purple"), ("green", "green_d"))
+    for row, z in enumerate((1.6, 7.2)):
+        for k in range(2):
+            light, dark = cols[(k + row * 2) % 4]
+            x, y = c.p(-U + 1.3 + k * 2.2, V, z + 4.6)
+            for j in range(5):
+                for i in range(3):
+                    if j == 0:
+                        c.dot(x + i, y + j, "cream")
+                    else:
+                        c.dot(x + i, y + j, "white" if (i == 0 and j == 2) else (light if i < 2 else dark))
+    plate(c, -1.4, 1.4, V, 13, 17.4, "jar")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def beehive():
+    """Two white hive boxes with a yellow seam on red legs, a red lid, an entrance and bees."""
+    c = Iso(26, 26, 13, 17)
+    S = 2.0
+    for u, v in ((-S + 0.3, S - 0.5), (S - 0.5, S - 0.5), (S - 0.5, -S + 0.3)):
+        c.box(u, u + 0.4, v, v + 0.4, 0, 2.2, "red", "red", "red_d")
+    c.box(-S, S, -S, S, 2.2, 5.4, "white", "white", "grey_l")
+    c.box(-S, S, -S, S, 5.4, 8.6, "white", "white", "grey_l")
+    c.uline(-S, S, S, 5.4, "yellow"); c.vline(S, 2 * S, -S, 5.4, "amber")
+    c.box(-S - 0.3, S + 0.3, -S - 0.3, S + 0.3, 8.6, 9.6, "cream", "red", "red_d")  # lid
+    c.box(-0.6, 0.6, -0.6, 0.6, 9.6, 10.2, "red", "red", "red_d")          # handle
+    x, y = c.p(-0.8, S, 3.0)                                                 # entrance
+    for i in range(3):
+        c.dot(x + i, y + i // 2, "ink")
+    plate(c, -1.3, 1.3, S, 5.6, 8.4, "bee")
+    for u, v, z in ((S + 1.6, 0, 7), (-0.5, S + 1.6, 9), (S + 0.6, -S - 0.6, 11)):   # bees
+        x, y = c.p(u, v, z)
+        c.dot(x, y, "yellow"); c.dot(x + 1, y, "ink"); c.dot(x, y - 1, "white")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def fruit_press():
+    """A red-hooped barrel under a cream screw frame with a red turning wheel; juice runs from a
+    spout into a cream cup. An apple on the plate."""
+    c = Iso(32, 38, 16, 28)
+    cx, cy = c.p(0, 0, 0)
+    rx, ry, H = 5, 2.5, 8
+    for z in range(H + 1):                                                  # the barrel
+        rr = rx - (1 if z in (0, H) else 0)
+        for x in range(cx - rr, cx + rr + 1):
+            dx = (x - cx) / rr
+            s_ = max(0.0, 1 - dx * dx) ** 0.5
+            hoop = z in (2, 6)
+            col = ("red" if dx < 0.3 else "red_d") if hoop else ("tan" if dx < -0.4 else "brown_l" if dx < 0.4 else "brown")
+            c.dot(x, round(cy - z + ry * s_), col)
+    c.ellipse(cx, cy - H, rx - 1, ry - 1, "purple")
+    c.ellipse(cx, cy - H - 1, rx - 2, ry - 1, "magenta")                    # fruit mash
+    for px_ in (cx - 6, cx + 5):                                            # frame
+        for y in range(cy - H - 7, cy - 1):
+            c.dot(px_, y, "cream"); c.dot(px_ + 1, y, "tan")
+    for x in range(cx - 6, cx + 7):
+        c.dot(x, cy - H - 7, "cream"); c.dot(x, cy - H - 6, "tan_d")
+    for y in range(cy - H - 6, cy - H):                                     # screw
+        c.dot(cx, y, "grey" if y % 2 else "grey_d")
+    for x in range(cx - 3, cx + 4):                                         # red wheel on top
+        c.dot(x, cy - H - 9, "red")
+    c.dot(cx - 3, cy - H - 8, "red_d"); c.dot(cx + 3, cy - H - 8, "red_d"); c.dot(cx, cy - H - 8, "grey_l")
+    c.dot(cx, cy - H - 10, "red")
+    # Spout and cup at the front.
+    sx, sy = cx + 2, cy + ry - 4
+    c.dot(sx, sy, "grey"); c.dot(sx + 1, sy, "grey")
+    c.dot(sx + 1, sy + 1, "magenta"); c.dot(sx + 1, sy + 2, "magenta")
+    for i in range(4):
+        c.dot(sx - 1 + i, sy + 3, "cream"); c.dot(sx - 1 + i, sy + 4, "cream" if i < 3 else "tan")
+    c.dot(sx, sy + 3, "magenta"); c.dot(sx + 1, sy + 3, "magenta")
+    # Plate on the left of the barrel.
+    for j in range(6):
+        for i in range(5):
+            c.dot(cx - 5 + i, cy - 6 + j, "red_d" if i in (0, 4) or j in (0, 5) else "cream")
+    rows, key = ICONS["apple"]
+    for j, row in enumerate(rows):
+        for i, ch in enumerate(row):
+            if ch in key:
+                c.dot(cx - 4 + i, cy - 5 + j, key[ch])
+    soften(c.im)
+    return c, (cx, round(cy + ry))
+
+
+def seed_maker():
+    """A red cabinet with cream trim, a grey hopper of seeds on top, a crank and a drawer of seed
+    packets; a seed on the plate."""
+    c = Iso(32, 38, 16, 26)
+    S = 2.3
+    c.box(-S, S, -S, S, 0, 8, "cream", "red", "red_d")
+    c.uline(-S, S, S, 7.2, "cream"); c.vline(S, 2 * S, -S, 7.2, "tan")
+    c.box(-1.4, 1.4, S - 0.01, S, 1.0, 3.4, "red_d", "red_d", "red_d", lit=False)  # drawer
+    x, y = c.p(0, S, 2.4)
+    c.dot(x - 1, y, "cream"); c.dot(x, y, "cream")
+    for i, col in enumerate(("yellow", "green", "pink")):                  # packets peeking out
+        x, y = c.p(-1.0 + i * 0.9, S, 3.8)
+        c.dot(x, y, col); c.dot(x + 1, y, col)
+    plate(c, -1.6, 1.2, S, 3.8, 7.0, "seed")
+    # Hopper: a grey funnel with seeds.
+    c.box(-1.1, 1.1, -1.1, 1.1, 8, 9, "grey", "grey", "grey_d")
+    c.box(-1.9, 1.9, -1.9, 1.9, 9, 12, "grey_l", "grey", "grey_d")
+    c.poly([(-1.5, -1.5, 12), (1.5, -1.5, 12), (1.5, 1.5, 12), (-1.5, 1.5, 12)], "brown")
+    for u, v in ((-0.8, -0.4), (0.4, -1.0), (0.6, 0.5), (-0.4, 0.8)):
+        x, y = c.p(u, v, 12)
+        c.dot(x, y, "amber")
+    # Crank on the right side.
+    x, y = c.p(S, 0.4, 5.6)
+    c.dot(x + 1, y, "grey_d"); c.dot(x + 2, y, "grey_d"); c.dot(x + 3, y - 1, "grey_d"); c.dot(x + 3, y - 2, "red")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+MACHINES = [("compost_bin", compost_bin), ("bakery_oven", bakery_oven), ("preserves_jar", preserves_jar),
+            ("beehive", beehive), ("fruit_press", fruit_press), ("seed_maker", seed_maker)]
+
+
+def preview4(out):
+    """Batch 4 (six farm machines): today's sprite over the hand-pixeled one, 5x."""
+    from PIL import Image, ImageDraw
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    import polish
+    art = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "app", "src", "main", "assets", "art")
+    man = json.load(open(os.path.join(art, "manifest.json")))
+    hand = Image.open(os.path.join(art, "people/hana_se_idle.png")).convert("RGBA")
+    hp = man["people/hana_se_idle"]
+    cw, ch = 64, 62
+    sheet = Image.new("RGBA", (cw * len(MACHINES), ch * 2), (62, 137, 72, 255))
+    d = ImageDraw.Draw(sheet)
+    for i, (name, fn) in enumerate(MACHINES):
+        for row in range(2):
+            ax, ay = i * cw + 38, row * ch + ch - 10
+            d.line([(ax - 16, ay), (ax, ay - 8), (ax + 16, ay), (ax, ay + 8), (ax - 16, ay)], fill=(48, 110, 60, 255))
+            sheet.alpha_composite(hand, (ax - 26 - hp["ax"], ay - hp["ay"]))
+            key = "buildings/" + name
+            if row == 0:
+                im = Image.open(os.path.join(art, key + ".png")).convert("RGBA")
+                p = man[key]
+                sheet.alpha_composite(im, (ax - p["ax"], ay - p["ay"]))
+                d.text((i * cw + 2, 1), name.split("_")[0], fill=(255, 255, 255, 255))
+            else:
+                cnv, (px_, py_) = fn()
+                x0, y0, x1, y1 = cnv.im.getbbox()
+                body, pad = finish(cnv.im.crop((x0, y0, x1, y1)))
+                sys.stderr.write("%s bh %d (now %d)\n" % (name, body.height, man[key]["bh"]))
+                body = polish.polish(body, "world", key)
+                sheet.alpha_composite(body, (ax - (px_ - x0 + pad), ay - (py_ - y0 + pad)))
+    sheet.resize((sheet.width * 5, sheet.height * 5), Image.NEAREST).save(out)
+
+
 def emit(sp, name, made):
     cnv, (px, py) = made
     x0, y0, x1, y1 = cnv.im.getbbox()
@@ -790,6 +1028,8 @@ def main():
     emit(deco, "lantern", lantern())
     emit(deco, "fence_r", fence(True))
     emit(deco, "fence_l", fence(False))
+    for name, fn in MACHINES:
+        emit(bld, name, fn())
     for name, fn in (("barn", barn), ("silo", silo), ("orders", orders), ("workbench", workbench), ("well", well), ("market", market)):
         emit(bld, name, fn(False))
         emit(bld, name + "_snow", fn(True))
@@ -842,5 +1082,7 @@ if __name__ == "__main__":
         preview2(sys.argv[2])
     elif len(sys.argv) > 2 and sys.argv[1] == "--preview3":
         preview3(sys.argv[2])
+    elif len(sys.argv) > 2 and sys.argv[1] == "--preview4":
+        preview4(sys.argv[2])
     else:
         main()

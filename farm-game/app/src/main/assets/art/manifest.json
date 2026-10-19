@@ -1,8 +1,8 @@
 {
  "buildings/bakery_oven": {
-  "ax": 10,
-  "ay": 28,
-  "bh": 34
+  "ax": 13,
+  "ay": 21,
+  "bh": 30
  },
  "buildings/barn": {
   "ax": 33,
@@ -15,9 +15,9 @@
   "bh": 62
  },
  "buildings/beehive": {
-  "ax": 11,
-  "ay": 14,
-  "bh": 20
+  "ax": 10,
+  "ay": 16,
+  "bh": 23
  },
  "buildings/charcoal_kiln": {
   "ax": 12,
@@ -25,7 +25,7 @@
   "bh": 28
  },
  "buildings/compost_bin": {
-  "ax": 10,
+  "ax": 12,
   "ay": 13,
   "bh": 20
  },
@@ -62,9 +62,9 @@
   "bh": 47
  },
  "buildings/fruit_press": {
-  "ax": 11,
-  "ay": 21,
-  "bh": 26
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
  },
  "buildings/furnace": {
   "ax": 10,
@@ -236,8 +236,8 @@
  },
  "buildings/preserves_jar": {
   "ax": 10,
-  "ay": 23,
-  "bh": 30
+  "ay": 20,
+  "bh": 27
  },
  "buildings/sawmill": {
   "ax": 12,
@@ -245,8 +245,8 @@
   "bh": 35
  },
  "buildings/seed_maker": {
-  "ax": 9,
-  "ay": 20,
+  "ax": 11,
+  "ay": 18,
   "bh": 26
  },
  "buildings/shop_cafe": {
