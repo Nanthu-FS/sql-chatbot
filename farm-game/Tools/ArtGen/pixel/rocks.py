@@ -1,19 +1,21 @@
 """Rocks (pixel-direct): quarry and mine objects, written to art/rocks/.
 
-Names follow the node ids in data/mine.json. MineScreen.rockSprite() maps amethyst_node to
-gem_node_amethyst (and the other gems), boulder to boulder, glow_mushroom to
-cave_mushroom_cluster. It also draws rubble, crack_1/crack_2, ladder_hole, mine_mouth,
-mine_cart, torch_wall and support_beam_prop.
+Names follow the node ids in data/mine.json, each in three shape variants (<id>, <id>_2, <id>_3)
+that MineScreen picks per cell. MineScreen.rockSprite() maps amethyst_node to gem_node_amethyst
+(and the other gems), boulder to boulder, glow_mushroom to cave_mushroom_cluster. It also draws
+rubble, crack_1/crack_2, ladder_hole, mine_mouth (+ _summer, _fall, _snow), mine_cart,
+torch_wall and support_beam_prop.
 
 Pivot = base centre (centre column of the bottom row, plus the finish() pad), so a node sits
-on its tile. Two exceptions: ladder_hole pivots on the centre of its iso diamond (it is drawn at
-the tile centre), and crack_1/crack_2 are overlays that share the rock's base-centre pivot.
+on its tile. Exceptions: ladder_hole pivots on the centre of its iso diamond (it is drawn at the
+tile centre), crack_1/crack_2 are overlays that share the rock's base-centre pivot, and the
+mine mouth pivots on the centre of its 2x2 footprint.
 
-Endesga-32 only, Bayer dither between ramp steps, light from the top-left, finished with
-finish() (1px ink outline + hard drop shadow).
+Light from the top-left, clean ramp steps (no dither), finished with finish(); the polish pass
+in Sprites.save gives the colour work, outlines and cast shadows (art round 3).
 """
 import os, sys; sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # noqa: E401,E702
-from _pix import BAYER, E, Sprites, diamond_rows, finish, new  # noqa: E402
+from _pix import E, Sprites, diamond_rows, finish, new  # noqa: E402
 import math  # noqa: E402
 import random  # noqa: E402
 
@@ -25,7 +27,6 @@ N4 = ((1, 0), (-1, 0), (0, 1), (0, -1))
 # Ramps run dark -> light.
 STONE = ["slate_d", "slate", "grey_d", "grey", "grey_l", "white"]
 STONE_DK = ["ink", "slate_d", "slate", "grey_d", "grey"]
-STONE_BACK = ["slate_d", "slate", "grey_d", "grey"]
 CLAY = ["brown_d", "brown", "brown_l", "clay", "tan"]
 COAL = ["ink", "ink", "slate_d", "slate", "grey"]
 IRON = ["slate_d", "slate", "grey_d", "grey", "grey_l"]
@@ -35,15 +36,6 @@ HOLE = ["ink", "ink", "ink", "slate_d", "slate"]
 WHEEL = ["ink", "slate_d", "slate", "grey"]
 TOPWOOD = ["brown_l", "tan_d", "tan", "cream"]
 
-GEM_ROWS = [
-    ".LLLMMDD.",
-    "LGLLMMDDD",
-    "LLLLMMDDD",
-    ".LLLMMDD.",
-    "..LLMDD..",
-    "...LMD...",
-    "....M....",
-]
 
 
 # ---------------------------------------------------------------- canvas and tone
@@ -53,14 +45,9 @@ def col(c):
 
 
 def tone(ramp, v, x, y):
-    """Ramp colour at level v (0..len-1), Bayer-dithered between the two nearest steps."""
+    """Ramp colour at level v (0..len-1): the nearest step, no dither (art round 3: clean)."""
     n = len(ramp) - 1
-    v = min(max(v, 0.0), float(n))
-    b = int(v)
-    if b >= n:
-        return col(ramp[n])
-    f = v - b
-    return col(ramp[b + 1]) if f > (BAYER[y % 4][x % 4] + 0.5) / 16 else col(ramp[b])
+    return col(ramp[int(round(min(max(v, 0.0), float(n))))])
 
 
 class Pic:
@@ -186,13 +173,6 @@ def layer(pic, sil, ramp, sep=None, **kw):
     return dist
 
 
-def rock_node(w, h, seed, ramp=STONE, **kw):
-    pic = Pic(w, h)
-    sil = stone_sil(w, h, seed, **kw)
-    dist = layer(pic, sil, ramp)
-    return pic, sil, dist
-
-
 def line_pts(a, b):
     """Bresenham line from a to b, both ends included."""
     x0, y0 = a
@@ -248,18 +228,6 @@ def vein(pic, sil, a, b, rng, n, colours, glint=None, jitter=1.5):
             pic.put(x, y - 1, glint)
 
 
-def gem(pic, cx, top, cols):
-    """Faceted gem (9x9) embedded in the top of a dark rock. cols: dark, mid, light, glint."""
-    dark, mid, light, glint = cols
-    key = {"L": light, "M": mid, "D": dark, "G": glint}
-    cells = {}
-    for j, row in enumerate(GEM_ROWS):
-        for i, ch in enumerate(row):
-            if ch in key:
-                cells[(cx - 4 + i, top + j)] = key[ch]
-    paint(pic, cells, sep="ink")
-
-
 def mushroom(pic, cx, cap_c, rx, ry, floor_y):
     """Glow mushroom: a domed cyan cap on a two-pixel cream stem down to floor_y."""
     for y in range(cap_c, floor_y + 1):
@@ -273,36 +241,6 @@ def mushroom(pic, cx, cap_c, rx, ry, floor_y):
 
 # ---------------------------------------------------------------- stone nodes
 
-def s_rock(sp):
-    pic, sil, dist = rock_node(25, 15, 11, lumps=2, amp=0.06)
-    rng = random.Random(3)
-    crack(pic, [(9, 5), (11, 7), (10, 9)], "slate_d")
-    specks(pic, dist, rng, 3, ["white", "grey_l"], lambda x, y: x < 12 and y < 8)
-    specks(pic, dist, rng, 2, ["grey_d"], lambda x, y: x > 12 and y > 6)
-    emit(sp, "rock", pic)
-
-
-def s_rock_big(sp):
-    pic = Pic(29, 19)
-    back = move(stone_sil(13, 11, 21, lumps=1, amp=0.05), 16, 8)
-    front = move(stone_sil(21, 17, 22, lumps=2, amp=0.07), 0, 2)
-    layer(pic, back, STONE_BACK)
-    dist = layer(pic, front, STONE, sep="slate_d")
-    rng = random.Random(4)
-    crack(pic, [(7, 8), (9, 10), (8, 12)], "slate_d")
-    specks(pic, dist, rng, 4, ["white", "grey_l"], lambda x, y: y < 9)
-    emit(sp, "rock_big", pic)
-
-
-def s_boulder(sp):
-    pic, sil, dist = rock_node(35, 26, 31, lumps=3, amp=0.08, p_top=2.0, p_bot=4.0)
-    rng = random.Random(5)
-    crack(pic, [(12, 9), (15, 12), (14, 16), (18, 19)], "slate_d")
-    vein(pic, sil, (8, 17), (22, 11), rng, 7, ["rust", "red_d", "clay"], glint="grey_l")
-    specks(pic, dist, rng, 5, ["white", "grey_l"], lambda x, y: y < 12 and x < 18)
-    emit(sp, "boulder", pic)
-
-
 def s_rubble(sp):
     pic = Pic(21, 8)
     for dx, dy, w, h, seed in ((1, 2, 8, 6, 111), (7, 0, 9, 8, 112), (14, 3, 7, 5, 113)):
@@ -311,133 +249,14 @@ def s_rubble(sp):
     emit(sp, "rubble", pic)
 
 
-def s_coal_rock(sp):
-    pic, sil, dist = rock_node(25, 16, 41, lumps=2, amp=0.06)
-    for cx, cy, rx, ry in ((7, 7, 2.2, 1.6), (13, 5, 2.4, 1.7), (18, 8, 2.0, 1.5), (10, 11, 2.0, 1.5), (16, 12, 1.8, 1.4)):
-        lump = ellipse(cx, cy, rx, ry) & sil
-        layer(pic, lump, COAL)
-    emit(sp, "coal_rock", pic)
-
-
-def _ore_rock(sp, name, seed, fn):
-    pic, sil, dist = rock_node(25, 15, seed, lumps=2, amp=0.06)
-    rng = random.Random(seed)
-    fn(pic, sil, dist, rng)
-    emit(sp, name, pic)
-
-
-def _copper(pic, sil, dist, rng):
-    vein(pic, sil, (5, 12), (20, 3), rng, 9, ["orange", "rust"], glint="amber")
-    vein(pic, sil, (9, 12), (16, 7), rng, 3, ["green", "green_d"])
-
-
-def _iron(pic, sil, dist, rng):
-    vein(pic, sil, (4, 11), (21, 5), rng, 9, ["red_d", "rust", "red"], glint="grey_l")
-
-
-def _gold(pic, sil, dist, rng):
-    vein(pic, sil, (4, 11), (21, 4), rng, 8, ["amber", "yellow"], glint="white")
-
-
-def s_copper_vein(sp):
-    _ore_rock(sp, "copper_vein", 51, _copper)
-
-
-def s_iron_vein(sp):
-    _ore_rock(sp, "iron_vein", 52, _iron)
-
-
-def s_gold_vein(sp):
-    _ore_rock(sp, "gold_vein", 53, _gold)
-
-
-def s_clay_bank(sp):
-    pic, sil, dist = rock_node(27, 15, 71, ramp=CLAY, lumps=1, amp=0.05, p_top=2.0, p_bot=3.0)
-    rng = random.Random(7)
-    for y in (5, 9):
-        for x in range(27):
-            if (x, y) in sil and dist[(x, y)] >= 2 and rng.random() < 0.75:
-                pic.put(x, y, "brown")
-    specks(pic, dist, rng, 4, ["tan", "grey_l"], lambda x, y: y > 5)
-    emit(sp, "clay_bank", pic)
-
-
-def s_quartz_cluster(sp):
-    pic = Pic(25, 22)
-    for cx, tip, base, halfw in ((6, 7, 18, 3.0), (19, 6, 18, 3.0), (12, 0, 18, 4.5), (9, 11, 19, 2.5), (16, 10, 19, 2.5)):
-        cols = {}
-        for y in range(tip, base + 1):
-            t = (y - tip) / max(1, base - tip)
-            hw = halfw * min(1.0, t / 0.35)
-            for x in range(cx - int(halfw) - 1, cx + int(halfw) + 2):
-                if abs(x - cx) <= hw + 0.01:
-                    if y == tip:
-                        c = "white"
-                    elif x < cx:
-                        c = "white"
-                    elif x == cx:
-                        c = "grey_l"
-                    else:
-                        c = "grey"
-                    cols[(x, y)] = c
-        paint(pic, cols, sep="slate")
-    base = move(stone_sil(25, 6, 61, lumps=1, amp=0.05, p_top=2.5, p_bot=4.0), 0, 16)
-    layer(pic, base, STONE_DK, sep="slate_d")
-    emit(sp, "quartz_cluster", pic)
-
-
-def s_geode_rock(sp):
-    pic, sil, dist = rock_node(23, 21, 81, lumps=2, amp=0.05, p_top=2.0, p_bot=2.4)
-    # A jagged split across the round stone, with crystals standing up inside it.
-    spine = [(4, 6), (6, 8), (8, 7), (10, 10), (12, 10), (14, 13), (17, 14)]
-    cells = set()
-    for a, b in zip(spine, spine[1:]):
-        cells.update(line_pts(a, b))
-    for x, y in cells:          # dark wall on the upper side, purple core below it
-        if (x, y - 1) in sil and (x, y - 1) not in cells:
-            pic.put(x, y - 1, "ink")
-    for x, y in cells:
-        if (x, y) in sil:
-            pic.put(x, y, "magenta" if (x + y) % 3 else "purple")
-    for x, y in cells:          # lit lower lip
-        if (x, y + 1) in sil and (x, y + 1) not in cells:
-            pic.put(x, y + 1, "pink")
-    for x, y in (spine[2], spine[4]):    # crystal tips poking out of the split
-        for dx, dy, c in ((0, -1, "cyan"), (0, -2, "white"), (1, -1, "cyan")):
-            if (x + dx, y + dy) in sil and (x + dx, y + dy) not in cells:
-                pic.put(x + dx, y + dy, c)
-    for x, y in (spine[1], spine[5]):
-        if (x, y + 1) in sil and (x, y + 1) not in cells:
-            pic.put(x, y + 1, "cyan")
-    emit(sp, "geode_rock", pic)
-
-
-def s_gem_nodes(sp):
-    gems = {
-        "amethyst": ("purple", "magenta", "pink", "white"),
-        "emerald": ("green_dd", "green_d", "green", "white"),
-        "ruby": ("purple", "red_d", "red", "pink"),
-        "diamond": ("blue_d", "blue", "cyan", "white"),
-    }
-    for name, cols in gems.items():
-        pic, sil, dist = rock_node(25, 18, 61, ramp=STONE_DK, lumps=2, amp=0.06)
-        rng = random.Random(9)
-        specks(pic, dist, rng, 4, ["grey", "slate"], lambda x, y: y > 6)
-        specks(pic, dist, rng, 2, ["grey"], lambda x, y: y <= 6)
-        gem(pic, 12, 3, cols)
-        pic.put(18, 6, "white")
-        pic.put(6, 2, "white")
-        emit(sp, f"gem_node_{name}", pic)
-
-
 def s_cracks(sp):
-    c1 = [[(13, 6), (12, 8), (10, 9), (9, 11)], [(12, 8), (14, 10)]]
-    c2 = c1 + [[(8, 4), (9, 7), (7, 9), (6, 12)], [(16, 5), (15, 8), (17, 11), (16, 13)], [(9, 11), (8, 14)]]
+    c1 = [[(10, 4), (9, 6), (8, 7), (7, 9)], [(9, 6), (11, 8)]]
+    c2 = c1 + [[(6, 3), (7, 5), (5, 7), (5, 9)], [(13, 3), (12, 6), (13, 8), (12, 10)], [(7, 9), (6, 11)]]
     for name, lines in (("crack_1", c1), ("crack_2", c2)):
-        pic = Pic(25, 17)
+        pic = Pic(19, 13)
         for pts in lines:
             crack(pic, pts, "ink", force=True)
-        emit(sp, name, pic, outline=False, shadow=False, ax=12, ay=16)
+        emit(sp, name, pic, outline=False, shadow=False, ax=9, ay=12)
 
 
 # ---------------------------------------------------------------- mine and quarry props
@@ -459,77 +278,6 @@ def s_ladder_hole(sp):
         for x in range(15, 20):
             pic.put(x, y, "tan_d")
     emit(sp, "ladder_hole", pic, ax=17, ay=11)
-
-
-def s_mine_mouth(sp):
-    W, H = 55, 48
-    CX, CY, R = 27, 27, 8
-    pic = Pic(W, H)
-    rock = move(stone_sil(W, 42, 81, lumps=3, amp=0.05, p_top=2.6, p_bot=6.0), 0, 6)
-    layer(pic, rock, STONE)
-    rng = random.Random(12)
-    vein(pic, rock, (4, 14), (11, 30), rng, 6, ["amber", "orange"], glint="yellow")
-    vein(pic, rock, (47, 12), (51, 27), rng, 5, ["rust", "orange"], glint="amber")
-    for dx, dy, w, h, seed in ((2, 43, 7, 4, 121), (46, 44, 6, 4, 122)):
-        sil = move(stone_sil(w, h, seed, lumps=1, amp=0.06, p_top=2.0, p_bot=3.5), dx, dy)
-        layer(pic, sil, STONE, sep="slate_d")
-
-    def half(y):
-        if y < CY - R:
-            return None
-        return R if y >= CY else math.sqrt(R * R - (CY - y) ** 2)
-
-    top = CY - R
-    for y in range(top, H):
-        hw = half(y)
-        f = (y - top) / (H - top)
-        for x in range(W):
-            if abs(x - CX) <= hw + 1e-6:
-                pic.put(x, y, "ink" if f < 0.5 else "slate_d" if f < 0.8 else "slate")
-    # warm lantern glow inside the mouth
-    LX, LY = 31, 23
-    for y in range(top, H):
-        for x in range(W):
-            if pic.px[x, y][3] and (x - LX) ** 2 + (y - LY) ** 2 <= 40 and pic.px[x, y] in (E["ink"] + (255,), E["slate_d"] + (255,)):
-                pic.put(x, y, "brown")
-    # rails and ties running out of the mouth
-    for x in range(10, 45):
-        pic.put(x, 45, "grey_l")
-        pic.put(x, 46, "grey_d")
-        if x % 4 == 0:
-            pic.put(x, 47, "brown")
-    # timber frame: two posts and a cap beam over the arch
-    for y in range(top, H):
-        hw = half(y)
-        if hw is None:
-            continue
-        for x in range(W):
-            d = abs(x - CX)
-            if hw < d <= hw + 2:
-                c = "tan_d" if y <= top + 3 else ("brown_l" if x < CX else "brown")
-                if (y % 6) == 3:
-                    c = "brown_d"
-                pic.put(x, y, c)
-    for y, c in ((15, "tan"), (16, "tan_d"), (17, "brown_l"), (18, "brown")):
-        for x in range(13, 42):
-            pic.put(x, y, c)
-    for x in (13, 14, 40, 41):
-        for y in range(15, 19):
-            pic.put(x, y, "brown_d")
-    for x, y in ((20, 16), (33, 17), (18, 21), (36, 21), (18, 40), (36, 40)):
-        pic.put(x, y, "grey_l" if y > 20 and x in (18, 36) else "brown_d")
-    # hanging lantern
-    for y in (19, 20):
-        pic.put(LX, y, "grey")
-    for (x, y), c in {
-        (30, 21): "ink", (31, 21): "ink", (32, 21): "ink",
-        (29, 22): "ink", (30, 22): "yellow", (31, 22): "yellow", (32, 22): "yellow", (33, 22): "ink",
-        (29, 23): "ink", (30, 23): "yellow", (31, 23): "white", (32, 23): "yellow", (33, 23): "ink",
-        (29, 24): "ink", (30, 24): "amber", (31, 24): "amber", (32, 24): "amber", (33, 24): "ink",
-        (30, 25): "ink", (31, 25): "ink", (32, 25): "ink",
-    }.items():
-        pic.put(x, y, c)
-    emit(sp, "mine_mouth", pic, ax=27, ay=47)
 
 
 def s_mine_cart(sp):
@@ -656,12 +404,316 @@ def s_cave_mushrooms(sp):
     emit(sp, "cave_mushroom_cluster", pic)
 
 
+# ---------------------------------------------------------------- mine nodes (art round 3, style A)
+# Ore-coloured rocks about a farmhand wide and knee high, three shape variants each (<id>, <id>_2,
+# <id>_3; the third is the first mirrored): peach copper with teal, rusty iron, dark stone with
+# gold nuggets, glossy coal, stacked grey slabs, clay, quartz and gem crystals, geodes, boulders.
+
+STONE_MID = ["slate_d", "slate", "grey_d", "grey", "grey_l"]
+PEACH = ["brown", "brown_l", "tan_d", "tan", "cream"]
+TEAL = ["teal_dd", "blue_d", "blue", "cyan", "white"]
+RUSTY = ["brown_d", "rust", "clay", "tan", "cream"]
+GOLD = ["rust", "orange", "amber", "yellow", "white"]
+GLOSSY = ["ink", "ink", "slate_d", "slate", "grey_l"]
+QUARTZ = ["slate", "grey", "grey_l", "white", "white"]
+SAND = ["brown_d", "brown", "brown_l", "tan_d", "tan", "cream"]
+GEMS = {
+    "amethyst": ["ink", "purple", "magenta", "pink", "white"],
+    "emerald": ["ink", "green_dd", "green_d", "green", "white"],
+    "ruby": ["ink", "red_d", "red", "pink", "white"],
+    "diamond": ["ink", "blue_d", "blue", "cyan", "white"],
+}
+
+
+def flip(pic):
+    from PIL import Image
+    pic.im = pic.im.transpose(Image.FLIP_LEFT_RIGHT)
+    pic.px = pic.im.load()
+    return pic
+
+
+def body(pic, x, y, w, h, seed, ramp, flat=False, sep=None):
+    sil = move(stone_sil(w, h, seed, lumps=2, amp=0.07, p_top=3.4 if flat else 2.1, p_bot=4.5), x, y)
+    layer(pic, sil, ramp, sep=sep)
+    return sil
+
+
+def nugget(pic, cx, cy, r, ramp, sep="ink"):
+    """A faceted chunk: a squat hexagon, top-left facet lit, a bright glint."""
+    n = len(ramp) - 1
+    cells = {}
+    for y in range(int(cy - r) - 1, int(cy + r) + 2):
+        for x in range(int(cx - r) - 1, int(cx + r) + 2):
+            dx, dy = x + 0.5 - cx, (y + 0.5 - cy) * 1.3
+            if abs(dx) + abs(dy) * 0.55 > r or abs(dy) > r * 0.95:
+                continue
+            if dy < -0.2 * r:
+                v = n - 1 if dx < 0.4 * r else n - 2
+            elif dx < -0.25 * r:
+                v = n - 2
+            else:
+                v = 1
+            cells[(x, y)] = col(ramp[max(0, v)])
+    paint(pic, cells, sep=sep)
+    pic.put(int(cx - r * 0.35), int(cy - r * 0.5), ramp[n])
+
+
+def shard(pic, cx, base, h, w, ramp, lean=0.0):
+    """A pointed crystal: lit left face, dark right face, bright tip."""
+    cells = {}
+    tip = base - h
+    for y in range(tip, base + 1):
+        t = (y - tip) / max(1, h)
+        half = max(0.5, w * min(1.0, t / 0.4))
+        x0 = cx + lean * (1 - t) * h * 0.35
+        for x in range(int(x0 - half) - 1, int(x0 + half) + 2):
+            d = x + 0.5 - x0
+            if abs(d) > half:
+                continue
+            c = ramp[-1] if y == tip else (ramp[3] if d < -0.3 else ramp[2] if d < 0.5 else ramp[1])
+            cells[(x, y)] = col(c)
+    paint(pic, cells, sep=ramp[0])
+
+
+def rand(v, seed):
+    return random.Random(seed * 31 + v * 977)
+
+
+def n_stone(v):
+    r = rand(v, 1)
+    pic = Pic(19, 12)
+    body(pic, 0, 4, 19, 8, 11 + v, STONE, flat=True)
+    body(pic, 3 + r.randint(0, 3), 0, 11 + r.randint(-1, 1), 6, 21 + v, STONE, flat=True, sep="slate_d")
+    crack(pic, [(8, 6), (9, 8)], "slate_d")
+    return pic
+
+
+def n_coal(v):
+    r = rand(v, 2)
+    pic = Pic(18, 11)
+    box = {(x, y) for x in range(18) for y in range(11)}
+    for cx, cy, rx in ((5, 7, 4.2), (12, 7, 4.4), (9, 4, 3.8)):
+        layer(pic, ellipse(cx + r.uniform(-0.6, 0.6), cy, rx, rx * 0.8) & box, GLOSSY, sep="ink")
+        pic.put(int(cx - 1), int(cy - 2), "white")
+    return pic
+
+
+def n_copper(v):
+    r = rand(v, 3)
+    pic = Pic(19, 12)
+    sil = body(pic, 0, 0, 19, 12, 31 + v, PEACH)
+    for _ in range(4):
+        x, y = r.randint(4, 15), r.randint(3, 8)
+        if (x, y) in sil:
+            nugget(pic, x, y, 2.2, TEAL, sep="teal_dd")
+    return pic
+
+
+def n_iron(v):
+    r = rand(v, 4)
+    pic = Pic(20, 13)
+    body(pic, 0, 3, 13, 10, 41 + v, RUSTY, flat=True)
+    body(pic, 8, 4 + r.randint(0, 1), 12, 9, 51 + v, RUSTY, flat=True, sep="brown_d")
+    body(pic, 4 + r.randint(0, 3), 0, 9, 7, 61 + v, RUSTY, flat=True, sep="brown_d")
+    for x, y in ((6, 7), (14, 8), (9, 3)):
+        pic.put(x + r.randint(-1, 1), y, "grey_l")
+    return pic
+
+
+def n_gold(v):
+    r = rand(v, 5)
+    pic = Pic(19, 12)
+    sil = body(pic, 0, 0, 19, 12, 71 + v, STONE_MID)
+    for i in range(3):
+        x, y = 4 + i * 5 + r.randint(-1, 1), r.randint(3, 7)
+        if (x, y) in sil:
+            nugget(pic, x, y, 2.6, GOLD, sep="brown_d")
+    return pic
+
+
+def n_clay(v):
+    r = rand(v, 6)
+    pic = Pic(19, 10)
+    sil = body(pic, 0, 0, 19, 10, 81 + v, CLAY)
+    for y in (4, 7):
+        for x in range(19):
+            if (x, y) in sil and (x - 1, y) in sil and (x + 1, y) in sil and r.random() < 0.8:
+                pic.put(x, y, "brown")
+    return pic
+
+
+def n_quartz(v):
+    r = rand(v, 7)
+    pic = Pic(17, 16)
+    body(pic, 0, 11, 17, 5, 91 + v, STONE_DK)
+    for cx, h, w, lean in ((5, 8, 2.0, -0.4), (9, 11, 2.6, 0.0), (13, 7, 2.0, 0.5)):
+        shard(pic, cx + r.uniform(-0.5, 0.5), 12, h + r.randint(-1, 1), w, QUARTZ, lean)
+    return pic
+
+
+def n_geode(v):
+    r = rand(v, 8)
+    pic = Pic(15, 14)
+    sil = body(pic, 0, 0, 15, 14, 101 + v, STONE_MID)
+    cav = {p for p in ellipse(8.5 + r.uniform(-0.5, 0.5), 7, 4.2, 3.2) if p in sil}
+    for x, y in cav:
+        pic.put(x, y, "ink" if y < 6 else "purple")
+    for x, y in sorted(cav)[::3]:
+        if y >= 6:
+            pic.put(x, y, "magenta")
+    for dx in (-2, 0, 2):
+        pic.put(8 + dx, 8, "cyan")
+        pic.put(8 + dx, 7, "white")
+    return pic
+
+
+def n_gem(name):
+    def build(v):
+        r = rand(v, 9)
+        pic = Pic(19, 16)
+        body(pic, 0, 9, 19, 7, 111 + v, STONE_DK)
+        for cx, h, w, lean in ((6, 7, 2.2, -0.6), (10, 10, 2.8, 0.0), (14, 6, 2.0, 0.6)):
+            shard(pic, cx + r.uniform(-0.5, 0.5), 11, h + r.randint(-1, 1), w, GEMS[name], lean)
+        return pic
+    return build
+
+
+def n_boulder(v):
+    r = rand(v, 10)
+    pic = Pic(26, 18)
+    sil = body(pic, 0, 0, 26, 18, 121 + v, STONE)
+    for y in (7, 11):
+        for x in range(26):
+            if (x, y + (x // 7) % 2) in sil and r.random() < 0.7:
+                pic.put(x, y + (x // 7) % 2, "rust" if x % 3 else "clay")
+    crack(pic, [(9, 4), (11, 7), (10, 10)], "slate_d")
+    return pic
+
+
+NODES = {
+    "rock": n_stone, "coal_rock": n_coal, "copper_vein": n_copper, "iron_vein": n_iron, "gold_vein": n_gold,
+    "clay_bank": n_clay, "quartz_cluster": n_quartz, "geode_rock": n_geode, "boulder": n_boulder,
+    **{f"gem_node_{g}": n_gem(g) for g in GEMS},
+}
+
+
+def s_nodes(sp):
+    for name, fn in NODES.items():
+        for v in range(3):
+            pic = fn(v)
+            if v == 2:
+                flip(pic)
+            emit(sp, name if v == 0 else f"{name}_{v + 1}", pic)
+
+
+# ---------------------------------------------------------------- the Mine Mouth
+# A timber-framed tunnel cut into a grass-topped sandstone block that joins the quarry cliffs. Its
+# cap uses the painted ground's grass for each season (GroundPainter), so it matches the cliff tops.
+
+GRASS_CAPS = {
+    "": [(0x23, 0x46, 0x3F), (0x2F, 0x6B, 0x43), (0x4A, 0x8C, 0x3F), (0x6A, 0xA8, 0x45), (0xA3, 0xC9, 0x5A)],
+    "_summer": [(0x2A, 0x4A, 0x3A), (0x3D, 0x6E, 0x3A), (0x5D, 0x94, 0x3C), (0x84, 0xB4, 0x43), (0xC2, 0xD2, 0x64)],
+    "_fall": [(0x3B, 0x35, 0x32), (0x5E, 0x4A, 0x35), (0x7F, 0x6A, 0x3A), (0xA5, 0x86, 0x44), (0xD0, 0xA8, 0x5A)],
+    "_snow": [(0x6D, 0x7E, 0xA0), (0x9E, 0xB0, 0xCC), (0xC9, 0xD5, 0xE6), (0xE8, 0xEE, 0xF6), (0xFF, 0xFF, 0xFF)],
+}
+
+
+def _block(cap, W=66, H=38, top=4):
+    """An iso rock block on a 2x2 tile footprint: grass cap, sandstone chunk faces (left lit)."""
+    D = 32
+    pic = Pic(W, top + D + H + 2)
+    cx = W // 2
+    rnd = random.Random(5)
+    seeds = {}
+    cap = [c + (255,) for c in cap]
+
+    def chunk(fx, fz, left):
+        gx, gz = int(fx // 9), int(fz // 7)
+        d1 = d2 = 1e9
+        best = None
+        for oz in (-1, 0, 1):
+            for ox in (-1, 0, 1):
+                k = (gx + ox, gz + oz)
+                if k not in seeds:
+                    seeds[k] = (k[0] * 9 + 1.5 + rnd.random() * 6, k[1] * 7 + 1 + rnd.random() * 5, rnd.random())
+                sx, sz, tk = seeds[k]
+                d = (fx - sx) ** 2 + ((fz - sz) * 1.2) ** 2
+                if d < d1:
+                    d2, d1, best = d1, d, (sx, sz, tk)
+                elif d < d2:
+                    d2 = d
+        sx, sz, tk = best
+        v = (3.0 if left else 1.7) + (tk - 0.5) + max(-0.9, min(0.9, (fz - sz) * 0.2 - (fx - sx) * 0.08))
+        if math.sqrt(d2) - math.sqrt(d1) < 0.9:
+            v = 0.8 if left else 0.3
+        return SAND[int(round(max(0, min(len(SAND) - 1, v))))]
+
+    for y in range(pic.h):
+        for x in range(W):
+            dx = x + 0.5 - cx
+            adx = abs(dx)
+            if adx > D:
+                continue
+            top_edge = top + adx / 2
+            bot_edge = top + D - adx / 2
+            if top_edge <= y + 0.5 <= bot_edge:
+                lv = 2 if (y + 0.5) < top + D / 2 - dx * 0.2 else 1
+                if (y + 0.5) > bot_edge - 1.2:
+                    lv = 4
+                pic.put(x, y, cap[lv])
+            elif bot_edge < y + 0.5 <= bot_edge + H:
+                z = bot_edge + H - (y + 0.5)
+                left = dx < 0
+                if (y + 0.5) < bot_edge + 2 + (x * 7 % 3 == 0):
+                    pic.put(x, y, cap[0])
+                else:
+                    pic.put(x, y, chunk(x if left else 2 * cx - x, z, left))
+    return pic, {"cx": cx, "top": top, "D": D, "H": H}
+
+
+def _face_point(geo, s, z):
+    """Pixel on the left face at fraction s along it (0 left corner .. 1 front corner), z px up."""
+    return (geo["cx"] - geo["D"] + s * geo["D"],
+            geo["top"] + geo["D"] / 2 + s * geo["D"] / 2 + geo["H"] - z)
+
+
+def mine_mouth(cap):
+    pic, geo = _block(cap)
+    # The tunnel: a dark opening in the left face, a little taller than a farmhand.
+    s0, s1, h = 0.28, 0.76, 25
+    for y in range(pic.h):
+        for x in range(pic.w):
+            s = (x + 0.5 - (geo["cx"] - geo["D"])) / geo["D"]
+            if s0 <= s <= s1:
+                z = geo["top"] + geo["D"] / 2 + s * geo["D"] / 2 + geo["H"] - (y + 0.5)
+                if 0 <= z <= h:
+                    f = z / h
+                    pic.put(x, y, "ink" if f > 0.45 else "slate_d" if f > 0.15 else "slate")
+    # Timber frame: two posts and a lintel along the face, and a lantern hanging inside.
+    for s in (0.25, 0.28, 0.76, 0.79):
+        for z in range(0, 27):
+            x, y = _face_point(geo, s, z)
+            pic.put(int(x), int(y), "brown_l" if s < 0.5 else "brown")
+    for s100 in range(22, 83):
+        for z, c in ((26, "tan"), (27, "brown_l"), (28, "brown")):
+            x, y = _face_point(geo, s100 / 100, z)
+            pic.put(int(x), int(y), c)
+    lx, ly = _face_point(geo, 0.52, 22)
+    for (dx, dy), c in {(0, 0): "grey", (0, 1): "amber", (-1, 2): "yellow", (0, 2): "white", (1, 2): "yellow", (0, 3): "amber"}.items():
+        pic.put(int(lx) + dx, int(ly) + dy, c)
+    return pic, geo["cx"], geo["top"] + geo["D"] // 2 + geo["H"]
+
+
+def s_mine_mouths(sp):
+    for suffix, cap in GRASS_CAPS.items():
+        pic, ax, ay = mine_mouth(cap)
+        emit(sp, "mine_mouth" + suffix, pic, ax=ax, ay=ay)
+
+
 def main():
     sp = Sprites(sys.argv[1], "rocks")
-    for fn in (s_rock, s_rock_big, s_boulder, s_rubble, s_coal_rock, s_copper_vein, s_iron_vein,
-               s_gold_vein, s_clay_bank, s_quartz_cluster, s_geode_rock, s_gem_nodes, s_cracks,
-               s_ladder_hole, s_mine_mouth, s_mine_cart, s_crate, s_torch_wall, s_support_beam,
-               s_cave_mushrooms):
+    for fn in (s_nodes, s_rubble, s_cracks, s_ladder_hole, s_mine_mouths, s_mine_cart, s_crate, s_torch_wall,
+               s_support_beam, s_cave_mushrooms):
         fn(sp)
     sp.done()
 

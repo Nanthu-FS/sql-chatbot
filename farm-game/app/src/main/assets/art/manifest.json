@@ -3420,9 +3420,19 @@
   "ay": 17
  },
  "rocks/boulder": {
-  "ax": 19,
-  "ay": 27,
-  "bh": 30
+  "ax": 14,
+  "ay": 19,
+  "bh": 22
+ },
+ "rocks/boulder_2": {
+  "ax": 14,
+  "ay": 19,
+  "bh": 22
+ },
+ "rocks/boulder_3": {
+  "ax": 14,
+  "ay": 19,
+  "bh": 22
  },
  "rocks/cave_mushroom_cluster": {
   "ax": 13,
@@ -3430,27 +3440,57 @@
   "bh": 21
  },
  "rocks/clay_bank": {
-  "ax": 15,
-  "ay": 16,
-  "bh": 19
+  "ax": 11,
+  "ay": 11,
+  "bh": 14
+ },
+ "rocks/clay_bank_2": {
+  "ax": 11,
+  "ay": 11,
+  "bh": 14
+ },
+ "rocks/clay_bank_3": {
+  "ax": 11,
+  "ay": 11,
+  "bh": 14
  },
  "rocks/coal_rock": {
-  "ax": 14,
-  "ay": 17,
-  "bh": 20
+  "ax": 10,
+  "ay": 12,
+  "bh": 15
+ },
+ "rocks/coal_rock_2": {
+  "ax": 10,
+  "ay": 12,
+  "bh": 15
+ },
+ "rocks/coal_rock_3": {
+  "ax": 10,
+  "ay": 12,
+  "bh": 15
  },
  "rocks/copper_vein": {
-  "ax": 14,
-  "ay": 16,
-  "bh": 19
+  "ax": 11,
+  "ay": 13,
+  "bh": 16
+ },
+ "rocks/copper_vein_2": {
+  "ax": 11,
+  "ay": 13,
+  "bh": 16
+ },
+ "rocks/copper_vein_3": {
+  "ax": 11,
+  "ay": 13,
+  "bh": 16
  },
  "rocks/crack_1": {
-  "ax": 14,
-  "ay": 18
+  "ax": 11,
+  "ay": 14
  },
  "rocks/crack_2": {
-  "ax": 14,
-  "ay": 18
+  "ax": 11,
+  "ay": 14
  },
  "rocks/crate": {
   "ax": 13,
@@ -3458,39 +3498,109 @@
   "bh": 24
  },
  "rocks/gem_node_amethyst": {
-  "ax": 14,
-  "ay": 19,
-  "bh": 22
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/gem_node_amethyst_2": {
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/gem_node_amethyst_3": {
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
  },
  "rocks/gem_node_diamond": {
-  "ax": 14,
-  "ay": 19,
-  "bh": 22
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/gem_node_diamond_2": {
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/gem_node_diamond_3": {
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
  },
  "rocks/gem_node_emerald": {
-  "ax": 14,
-  "ay": 19,
-  "bh": 22
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/gem_node_emerald_2": {
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/gem_node_emerald_3": {
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
  },
  "rocks/gem_node_ruby": {
-  "ax": 14,
-  "ay": 19,
-  "bh": 22
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/gem_node_ruby_2": {
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/gem_node_ruby_3": {
+  "ax": 11,
+  "ay": 17,
+  "bh": 20
  },
  "rocks/geode_rock": {
-  "ax": 13,
-  "ay": 22,
-  "bh": 25
+  "ax": 9,
+  "ay": 15,
+  "bh": 18
+ },
+ "rocks/geode_rock_2": {
+  "ax": 9,
+  "ay": 15,
+  "bh": 18
+ },
+ "rocks/geode_rock_3": {
+  "ax": 9,
+  "ay": 15,
+  "bh": 18
  },
  "rocks/gold_vein": {
-  "ax": 14,
-  "ay": 16,
-  "bh": 19
+  "ax": 11,
+  "ay": 13,
+  "bh": 16
+ },
+ "rocks/gold_vein_2": {
+  "ax": 11,
+  "ay": 13,
+  "bh": 16
+ },
+ "rocks/gold_vein_3": {
+  "ax": 11,
+  "ay": 13,
+  "bh": 16
  },
  "rocks/iron_vein": {
-  "ax": 14,
-  "ay": 16,
-  "bh": 19
+  "ax": 11,
+  "ay": 14,
+  "bh": 17
+ },
+ "rocks/iron_vein_2": {
+  "ax": 11,
+  "ay": 14,
+  "bh": 17
+ },
+ "rocks/iron_vein_3": {
+  "ax": 11,
+  "ay": 14,
+  "bh": 17
  },
  "rocks/ladder_hole": {
   "ax": 19,
@@ -3502,24 +3612,54 @@
   "bh": 23
  },
  "rocks/mine_mouth": {
-  "ax": 29,
-  "ay": 49,
-  "bh": 52
+  "ax": 35,
+  "ay": 60,
+  "bh": 80
+ },
+ "rocks/mine_mouth_fall": {
+  "ax": 35,
+  "ay": 60,
+  "bh": 80
+ },
+ "rocks/mine_mouth_snow": {
+  "ax": 35,
+  "ay": 60,
+  "bh": 80
+ },
+ "rocks/mine_mouth_summer": {
+  "ax": 35,
+  "ay": 60,
+  "bh": 80
  },
  "rocks/quartz_cluster": {
-  "ax": 14,
-  "ay": 23,
-  "bh": 26
+  "ax": 10,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/quartz_cluster_2": {
+  "ax": 10,
+  "ay": 17,
+  "bh": 20
+ },
+ "rocks/quartz_cluster_3": {
+  "ax": 10,
+  "ay": 17,
+  "bh": 20
  },
  "rocks/rock": {
-  "ax": 14,
-  "ay": 16,
-  "bh": 19
+  "ax": 11,
+  "ay": 13,
+  "bh": 16
  },
- "rocks/rock_big": {
-  "ax": 16,
-  "ay": 20,
-  "bh": 23
+ "rocks/rock_2": {
+  "ax": 11,
+  "ay": 13,
+  "bh": 16
+ },
+ "rocks/rock_3": {
+  "ax": 11,
+  "ay": 13,
+  "bh": 16
  },
  "rocks/rubble": {
   "ax": 12,

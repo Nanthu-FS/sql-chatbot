@@ -89,7 +89,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
     override fun palette(): Map<Terrain, IntArray> = if (under) mapOf(Terrain.STONE to BAND_FLOOR[band], Terrain.CAVE to BAND_CAVE[band]) else emptyMap()
 
     /** Distance from the back edges, the cliff pushed forward behind the Mine Mouth (centre line). */
-    private fun cliffDepth(c: Int, r: Int) = min(c, r) - max(0f, 4f - abs(c - r) / 2f)
+    private fun cliffDepth(c: Int, r: Int) = min(c, r) - max(0f, 5f - abs(c - r) / 2f)
 
     /** Stepped cliffs along the surface's back edges, four levels at the top. */
     private fun surfaceLevel(c: Int, r: Int): Int {
@@ -214,6 +214,19 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         else -> pick("rocks/$node", "deco/rock")
     }
 
+    /** The Mine Mouth with its grass cap in the season's colours. */
+    private fun mouthSprite(): String {
+        val v = when (world.time.season) { Season.SUMMER -> "rocks/mine_mouth_summer"; Season.FALL -> "rocks/mine_mouth_fall"; Season.WINTER -> "rocks/mine_mouth_snow"; else -> "rocks/mine_mouth" }
+        return pick(v, pick("rocks/mine_mouth", "deco/rock_big"))
+    }
+
+    /** One of a node's shape variants (base, _2, _3), fixed per cell and floor. */
+    private fun variant(sprite: String, i: Int): String {
+        val k = Math.floorMod(i * 7 + m.floor * 3, 3)
+        if (k == 0) return sprite
+        return "${sprite}_${k + 1}".takeIf { game.assets.has(it) } ?: sprite
+    }
+
     private fun tileOf(i: Int): Pair<Int, Int> = if (under) (i % m.grid) to (i / m.grid) else MineLayout.quarryTiles[i]
 
     private fun center(i: Int): Pair<Float, Float> {
@@ -245,7 +258,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             g.text("?", x.toInt(), (y - 16).toInt(), Gfx.WHITE, align = 0)
             return
         }
-        g.sprite(rockSprite(node), x + sx, y)
+        g.sprite(variant(rockSprite(node), i), x + sx, y)
         val hp = world.data.mine.nodes[node]?.hp ?: return
         if (damage > 0) {
             val crack = if (damage * 2 >= hp) "rocks/crack_2" else "rocks/crack_1"
@@ -274,11 +287,11 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         val mx = Iso.x(mc, mr).toFloat()
         val my = Iso.centerY(mc, mr).toFloat()
         list.add(my + 8) {
-            g.sprite(pick("rocks/mine_mouth", "deco/rock_big"), mx, my + 8)
+            g.sprite(mouthSprite(), mx, my)
             if (!m.repaired) {
-                if (world.level >= world.data.mine.repairLevel) g.sprite("icons_big/build", mx, my - 30 + sin(time * 3f) * 1.5f, 220)
-                else g.sprite("icons_big/lock", mx, my - 28, 200)
-            } else g.sprite("icons/arrow_down", mx, my - 30 + sin(time * 3f) * 2f)
+                if (world.level >= world.data.mine.repairLevel) g.sprite("icons_big/build", mx, my - 58 + sin(time * 3f) * 1.5f, 220)
+                else g.sprite("icons_big/lock", mx, my - 56, 200)
+            } else g.sprite("icons/arrow_down", mx, my - 58 + sin(time * 3f) * 2f)
         }
         // Props: scrub on the ledges, pines and boulders in the dark wall in front, grass between.
         val (kc, kr) = MineLayout.cart

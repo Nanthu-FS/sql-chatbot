@@ -394,50 +394,57 @@ def it_gear(c):
 # ---------------------------------------------------------------- stone and ores
 
 ROCK = U(disc(7.0, 8.2, 5.4, 4.0), disc(5.6, 5.8, 3.4, 3.1), disc(10.0, 7.2, 3.0, 3.2))
-FLECKS = [(4.5, 5.5), (8.5, 4.5), (6.5, 8.5), (10.5, 7.5), (4.5, 9.5), (8.5, 10.5)]
 
 
-def rock_base(c):
-    fill(c, ROCK, STONE, ball(6.4, 6.4, 6.0, 5.4, N=4, bias=0.25), sep="slate_d")
+# Ore-coloured rocks, like the mine's nodes (art round 3, style A).
+PEACH = ["brown", "brown_l", "tan_d", "tan", "cream"]
+TEAL = ["teal_dd", "blue_d", "blue", "cyan", "white"]
+RUSTY = ["brown_d", "rust", "clay", "tan", "cream"]
+GOLD_NUG = ["rust", "orange", "amber", "yellow", "white"]
+DARK_STONE = ["slate_d", "slate", "grey_d", "grey", "grey_l"]
+SLAB_LO = poly([(1.2, 8.6), (2.6, 6.8), (11.4, 6.6), (13.0, 8.6), (12.2, 11.6), (2.2, 11.8)])
+SLAB_HI = poly([(3.4, 5.4), (4.8, 3.0), (9.6, 2.8), (10.8, 5.0), (9.8, 6.9), (4.0, 7.0)])
 
 
 def it_stone(c):
-    rock_base(c)
-    if c.n > 14:
-        fill(c, seg((7.2, 6.4), (9.0, 9.0), 0.5), ["slate"], const(0))
-    dot(c, 4.5, 4.5, "white")
+    fill(c, SLAB_LO, STONE, ball(7.0, 8.4, 6.2, 3.4, N=4, bias=0.25), sep="slate_d")
+    fill(c, SLAB_HI, STONE, ball(7.0, 4.6, 3.8, 2.4, N=4, bias=0.35), sep="slate_d")
+    dot(c, 5.5, 3.5, "white")
     return c
 
 
-def ore(c, cc, pick, glint=None):
-    rock_base(c)
-    for i in pick:
-        u, v = FLECKS[i]
-        dot(c, u, v, cc, r=0.5 if c.n == 14 else 0.75)
-    if glint:
-        for i in glint:
-            u, v = FLECKS[i]
-            dot(c, u - 0.5, v - 0.5, "white", r=0.5 if c.n == 14 else 0.5)
-    return c
+def nugget(c, u, v, r, ramp, sep):
+    fill(c, disc(u, v, r, r * 0.85), ramp, ball(u, v, r, r * 0.85, N=len(ramp) - 1, bias=0.35), sep=sep)
+    dot(c, u - r * 0.35, v - r * 0.4, ramp[-1])
 
 
 def it_copper_ore(c):
-    return ore(c, "orange", (0, 2, 3, 5))
+    fill(c, ROCK, PEACH, ball(6.4, 6.4, 6.0, 5.4, N=4, bias=0.25), sep="brown")
+    for u, v in ((5.0, 6.0), (9.5, 7.5), (6.8, 9.6)):
+        nugget(c, u, v, 1.5, TEAL, "teal_dd")
+    return c
 
 
 def it_iron_ore(c):
-    return ore(c, "rust", (0, 1, 3, 4, 5))
+    fill(c, poly([(1.4, 7.0), (3.0, 4.2), (7.2, 4.0), (8.0, 7.0), (7.0, 11.8), (2.0, 11.6)]), RUSTY, ball(4.6, 7.4, 3.6, 4.0, N=4, bias=0.3), sep="brown_d")
+    fill(c, poly([(6.6, 6.4), (8.4, 3.0), (12.2, 3.6), (13.0, 7.6), (11.6, 11.6), (7.4, 11.4)]), RUSTY, ball(9.8, 7.0, 3.4, 4.2, N=4, bias=0.3), sep="brown_d")
+    for u, v in ((4.5, 6.5), (10.5, 5.5), (9.5, 9.5)):
+        dot(c, u, v, "grey_l")
+    return c
 
 
 def it_gold_ore(c):
-    return ore(c, "yellow", (0, 2, 4), glint=(2,))
+    fill(c, ROCK, DARK_STONE, ball(6.4, 6.4, 6.0, 5.4, N=4, bias=0.25), sep="slate_d")
+    for u, v, r in ((5.4, 6.4, 1.8), (9.6, 8.0, 1.6)):
+        nugget(c, u, v, r, GOLD_NUG, "brown_d")
+    return c
 
 
 def it_coal(c):
     lumps = [(9.4, 6.4, 3.6, 3.2), (5.0, 8.0, 3.9, 3.5), (9.0, 10.6, 2.8, 2.2)]
     for cx, cy, rx, ry in lumps:
         fill(c, disc(cx, cy, rx, ry), COAL, ball(cx, cy, rx, ry, N=4, bias=0.3, shift=-0.8), sep="ink")
-        dot(c, cx - 0.5 * rx, cy - 0.5 * ry, "grey", r=0.5)
+        dot(c, cx - 0.5 * rx, cy - 0.5 * ry, "white", r=0.5)
     return c
 
 
