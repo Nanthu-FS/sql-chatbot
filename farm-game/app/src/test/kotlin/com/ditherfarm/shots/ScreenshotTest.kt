@@ -181,6 +181,16 @@ class ScreenshotTest {
 
     @Test fun workbenchPanel() { render("panel_workbench", setup = { g -> g.world.enqueue("wb_plank"); g.farm.showPanel("workbench") }) }
 
+    /** Bulk crafting: x10 picked, ten planks queued in one slot. */
+    @Test fun workbenchBulk() {
+        render("panel_workbench_bulk", setup = { g ->
+            g.world.add("wood", 60)
+            g.farm.chrome.panels.craftAmount = 10
+            g.world.enqueue("wb_plank", 10)
+            g.farm.showPanel("workbench")
+        })
+    }
+
     @Test fun buildPanel() { render("panel_build", setup = { g -> g.world.gainXp(40); g.farm.showPanel("build:windmill") }) }
 
     @Test fun machinePanel() {

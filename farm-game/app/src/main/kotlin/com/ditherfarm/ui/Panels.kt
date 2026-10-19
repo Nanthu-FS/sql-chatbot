@@ -14,7 +14,10 @@ import com.ditherfarm.game.buildBlocker
 import com.ditherfarm.game.building
 import com.ditherfarm.game.cancelLast
 import com.ditherfarm.game.collect
+import com.ditherfarm.game.BULK_MAX
+import com.ditherfarm.game.canBulk
 import com.ditherfarm.game.enqueue
+import com.ditherfarm.game.maxBatches
 import com.ditherfarm.game.jobProgress
 import com.ditherfarm.game.nextToolRecipe
 import com.ditherfarm.game.recipeBlocker
@@ -141,6 +144,9 @@ class Panels(private val game: Game, private val hud: Hud) {
     fun reset() { selected = null; confirmNewGame = 0 }
 
     companion object {
+        /** [craftAmount] value for MAX: as many batches as you can afford. */
+        const val AMOUNT_MAX = 0
+
         /** Tabs of the goals panel. */
         const val TAB_DAILY = 0
         const val TAB_GOALS = 1
@@ -457,31 +463,58 @@ class Panels(private val game: Game, private val hud: Hud) {
         return (if (n > 1) "${n}x " else "") + world.data.name(out).uppercase()
     }
 
-    /** One recipe row: output, name, inputs with have/need, time and a MAKE button. */
+    /** How many batches each MAKE queues: 1, 5, 10, or [AMOUNT_MAX] for as many as you can afford. */
+    var craftAmount = 1
+
+    /** The x1 / x5 / x10 / MAX chips over a recipe list; returns the y below them. */
+    private fun amountChips(x: Int, y: Int, w: Int): Int {
+        g.text("MAKE AT ONCE", x + 2, y + 4, Gfx.INK, outline = 0, shadow = false)
+        val opts = listOf(1, 5, 10, AMOUNT_MAX)
+        val bw = 34
+        var bx = x + w - opts.size * (bw + 3) + 3
+        for (o in opts) {
+            if (ui.button("amount-$o", bx, y, bw, 14, if (o == AMOUNT_MAX) "MAX" else "x$o", style = if (craftAmount == o) "gold" else "wood")) craftAmount = o
+            bx += bw + 3
+        }
+        return y + 18
+    }
+
+    /** Batches a MAKE on [r] queues now: the chosen amount, or all you can afford for MAX; tools are one at a time. */
+    private fun batchCount(r: RecipeDef): Int = when {
+        !world.canBulk(r) -> 1
+        craftAmount == AMOUNT_MAX -> world.maxBatches(r).coerceIn(1, BULK_MAX)
+        else -> craftAmount
+    }
+
+    /** One recipe row: output, name, inputs with have/need, time and a MAKE button, for [batchCount] batches. */
     private fun recipeRow(r: RecipeDef, x: Int, y: Int, w: Int, label: String = "MAKE"): Boolean {
+        val n = batchCount(r)
         val locked = r.unlockLevel > world.level
         g.slice9("ui/slot", x, y, x + w, y + 34, 4)
         g.sprite(if (locked) "icons/lock" else outputIcon(r), (x + 12).toFloat(), (y + 12).toFloat())
-        g.text(if (locked) "LEVEL ${r.unlockLevel}" else fit(recipeName(r), w - 24 - 66), x + 24, y + 4, Gfx.INK, outline = 0, shadow = false)
+        // Locked recipes still say what they make, greyed, so there is something to look forward to.
+        g.text(fit(recipeName(r), w - 24 - 66), x + 24, y + 4, if (locked) Gfx.GREY else Gfx.INK, outline = 0, shadow = false)
         var ix = x + 24
         for ((k, v) in r.inputs) {
             val have = world.available(k)
             g.sprite(if (k == "#crop") "icons/harvest" else icon(k), (ix + 6).toFloat(), (y + 22).toFloat())
-            val t = "$have/$v"
-            g.text(t, ix + 13, y + 18, if (have >= v) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
+            val t = "$have/${v * n}"
+            g.text(t, ix + 13, y + 18, if (have >= v * n) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
             ix += 16 + g.textWidth(t)
         }
         if (r.coins > 0) {
             g.sprite("icons/coin", (ix + 6).toFloat(), (y + 22).toFloat())
-            g.text("${r.coins}", ix + 13, y + 18, if (world.state.coins >= r.coins) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
+            g.text("${r.coins * n}", ix + 13, y + 18, if (world.state.coins >= r.coins * n) 0xFF3E8948.toInt() else 0xFFA22633.toInt(), outline = 0, shadow = false)
         }
-        val mins = r.minutes
-        g.text(if (mins < 1) "${(mins * 60).toInt()}S" else "${mins.toInt()}M", x + w - 62, y + 4, Gfx.GREY, outline = 0, shadow = false)
-        val blocker = world.recipeBlocker(r)
-        val clicked = ui.button("make-${r.id}", x + w - 48, y + 15, 42, 15, label, style = if (blocker == null) "green" else "grey")
+        val mins = r.minutes * n
+        val time = when { mins < 1 -> "${(mins * 60).toInt()}S"; mins < 60 -> "${mins.toInt()}M"; else -> "${(mins / 60).toInt()}H${(mins % 60).toInt()}M" }
+        g.text(time, x + w - 62, y + 4, Gfx.GREY, outline = 0, shadow = false)
+        val blocker = world.recipeBlocker(r, n)
+        val text = when { locked -> "LV ${r.unlockLevel}"; n > 1 -> "$label x$n"; else -> label }
+        val clicked = ui.button("make-${r.id}", x + w - 56, y + 15, 50, 15, text, style = if (blocker == null) "green" else "grey")
         if (clicked) {
             if (blocker != null) { hud.toast(blocker); game.sfx.play("error") }
-            else if (world.enqueue(r.id)) { game.sfx.play("craft"); game.haptics.click() }
+            else if (world.enqueue(r.id, n)) { game.sfx.play("craft"); game.haptics.click() }
         }
         return clicked
     }
@@ -495,6 +528,8 @@ class Panels(private val game: Game, private val hud: Hud) {
             val sx = x + i * 24
             g.slice9("ui/slot", sx, y, sx + 22, y + 22, 4)
             job?.let { j -> world.data.recipes[j.recipe]?.let { g.sprite(outputIcon(it), (sx + 11).toFloat(), (y + 11).toFloat()) } }
+            // A bulk job shows how many batches it holds.
+            job?.takeIf { it.count > 1 }?.let { g.text("x${it.count}", sx + 21, y + 13, Gfx.WHITE, align = 1) }
         }
         val qx = x + q * 24 + 4
         if (b.jobs.isNotEmpty()) {
@@ -516,7 +551,8 @@ class Panels(private val game: Game, private val hud: Hud) {
         val recipes = world.recipesFor(id)
         val maxH = game.engine.h - game.engine.safeTop - game.engine.safeBottom - hud.topHeight - hud.bottomHeight - 12
         val fuel = def.fuelTank > 0
-        val (x, y, pw, ph) = frame(def.name.uppercase(), minOf(maxH, 66 + (if (fuel) 20 else 0) + recipes.size * 36)).toList()
+        val chips = if (recipes.any { world.canBulk(it) }) 18 else 0
+        val (x, y, pw, ph) = frame(def.name.uppercase(), minOf(maxH, 66 + (if (fuel) 20 else 0) + chips + recipes.size * 36)).toList()
         if (closeButton(x, y, pw)) return false
         queueStrip(id, x + 8, y + 22, pw - 16)
         var top = y + 50
@@ -530,6 +566,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             }
             top += 20
         }
+        if (recipes.any { world.canBulk(it) }) top = amountChips(x + 8, top, pw - 16)
         val listH = y + ph - 8 - top
         val off = ui.scroll("recipes-$id", x + 6, top, pw - 12, listH, recipes.size * 36)
         val c = g.canvas
@@ -601,11 +638,13 @@ class Panels(private val game: Game, private val hud: Hud) {
         }
         val tab = { r: RecipeDef -> when { r.outputs.keys.any { it in TONICS } -> 2; r.id in farmItems -> 1; else -> 0 } }
         val list = all.filter { !it.id.startsWith("tool_") && tab(it) == benchTab }
-        val off = ui.scroll("bench-$benchTab", x + 6, top, pw - 12, listH, list.size * 36)
-        c.save(); c.clipRect(x + 6, top, x + pw - 6, top + listH)
+        val listTop = amountChips(x + 8, top, pw - 16)
+        val listH2 = y + ph - 8 - listTop
+        val off = ui.scroll("bench-$benchTab", x + 6, listTop, pw - 12, listH2, list.size * 36)
+        c.save(); c.clipRect(x + 6, listTop, x + pw - 6, listTop + listH2)
         list.forEachIndexed { i, r ->
-            val ry = top + i * 36 - off
-            if (ry + 34 < top || ry > top + listH) return@forEachIndexed
+            val ry = listTop + i * 36 - off
+            if (ry + 34 < listTop || ry > listTop + listH2) return@forEachIndexed
             recipeRow(r, x + 8, ry, pw - 20)
         }
         c.restore()

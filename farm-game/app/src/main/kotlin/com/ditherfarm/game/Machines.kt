@@ -38,11 +38,17 @@ class RecipeDef(
     val gameMinutes get() = Time.realSecondsToGameMinutes(minutes * 60)
 }
 
-/** One queued batch with absolute start/end times on the game clock (offline-safe). */
-class Job(val recipe: String, val start: Double, val end: Double) {
-    fun toJson() = JSONObject().put("r", recipe).put("s", start).put("e", end)
-    companion object { fun fromJson(o: JSONObject) = Job(o.getString("r"), o.getDouble("s"), o.getDouble("e")) }
+/**
+ * One queued job with absolute start/end times on the game clock (offline-safe): [count] batches
+ * of its recipe made back to back in one queue slot (bulk crafting), each taking the usual time.
+ */
+class Job(val recipe: String, val start: Double, val end: Double, val count: Int = 1) {
+    fun toJson() = JSONObject().put("r", recipe).put("s", start).put("e", end).also { if (count > 1) it.put("n", count) }
+    companion object { fun fromJson(o: JSONObject) = Job(o.getString("r"), o.getDouble("s"), o.getDouble("e"), o.optInt("n", 1).coerceAtLeast(1)) }
 }
+
+/** Most batches one bulk job can hold. */
+const val BULK_MAX = 99
 
 class BuildingState(val id: String) {
     var built = false
@@ -116,7 +122,21 @@ fun World.recipesFor(id: String): List<RecipeDef> = data.buildings[id]?.recipes?
 fun World.available(input: String): Int =
     if (input == "#crop") state.inventory.entries.sumOf { (k, v) -> if (data.crops.containsKey(baseId(k))) v else 0 } else count(input, anyQuality = true)
 
-fun World.recipeBlocker(r: RecipeDef): String? {
+/** True if [r] can be made in bulk: anything but tool upgrades and the Drill Rig. */
+fun World.canBulk(r: RecipeDef) = toolTarget(r) == null && r.id != "drill" && r.inputs.isNotEmpty()
+
+/** How many batches of [r] the coins, ingredients and fuel on hand pay for (at most [BULK_MAX]). */
+fun World.maxBatches(r: RecipeDef): Int {
+    var n = BULK_MAX
+    if (r.coins > 0) n = minOf(n, state.coins / r.coins)
+    for ((k, v) in r.inputs) if (v > 0) n = minOf(n, available(k) / v)
+    val fuel = fuelUse(r)
+    if (fuel > 0) n = minOf(n, (building(r.building).fuel / fuel).toInt())
+    return n.coerceAtLeast(0)
+}
+
+/** Why [count] batches of [r] cannot be queued now, or null. */
+fun World.recipeBlocker(r: RecipeDef, count: Int = 1): String? {
     val b = building(r.building)
     val def = data.buildings[r.building]
     toolTarget(r)?.let { (tool, tier) -> if (toolTier(tool) >= tier) return "Already have it" }
@@ -126,9 +146,9 @@ fun World.recipeBlocker(r: RecipeDef): String? {
         featBlocker(r.id) != null -> featBlocker(r.id)
         r.building == "blacksmith" && r.id.endsWith("_3") && state.villageTier < 2 -> "Gold work comes with the brick village"
         b.jobs.size >= queueSize(r.building) -> "Queue is full"
-        state.coins < r.coins -> "Not enough coins"
-        r.inputs.any { (k, v) -> available(k) < v } -> "Missing ingredients"
-        r.fuel > 0 && b.fuel < fuelUse(r) -> "Needs coal"
+        state.coins < r.coins * count -> "Not enough coins"
+        r.inputs.any { (k, v) -> available(k) < v * count } -> "Missing ingredients"
+        r.fuel > 0 && b.fuel < fuelUse(r) * count -> "Needs coal"
         else -> null
     }
 }
@@ -136,16 +156,20 @@ fun World.recipeBlocker(r: RecipeDef): String? {
 /** Game minutes a batch takes (the Goods page makes machines 5% faster). */
 fun World.jobMinutes(r: RecipeDef) = r.gameMinutes * (1 - skill("overclock")) * if (hasBonus("machine_speed")) 0.95 else 1.0
 
-/** Queues one batch: takes inputs (and fuel) now, schedules after the last queued job. */
-fun World.enqueue(recipeId: String): Boolean {
+/**
+ * Queues [count] batches as one job (one queue slot): takes all their inputs (and fuel) now and
+ * schedules them after the last queued job, each batch taking the usual time.
+ */
+fun World.enqueue(recipeId: String, count: Int = 1): Boolean {
     val r = data.recipes[recipeId] ?: return false
-    recipeBlocker(r)?.let { events += WorldEvent.Blocked(it); return false }
+    val n = if (canBulk(r)) count.coerceIn(1, BULK_MAX) else 1
+    recipeBlocker(r, n)?.let { events += WorldEvent.Blocked(it); return false }
     val b = building(r.building)
-    state.coins -= r.coins
-    r.inputs.forEach { (k, v) -> if (k == "#crop") takeAnyCrops(v) else removeAny(k, v) }
-    b.fuel -= fuelUse(r)
+    state.coins -= r.coins * n
+    r.inputs.forEach { (k, v) -> if (k == "#crop") takeAnyCrops(v * n) else removeAny(k, v * n) }
+    b.fuel -= fuelUse(r) * n
     val start = max(state.minutes, b.jobs.lastOrNull()?.end ?: 0.0)
-    b.jobs += Job(r.id, start, start + jobMinutes(r))
+    b.jobs += Job(r.id, start, start + jobMinutes(r) * n, n)
     events += WorldEvent.JobQueued(r.building, r.id)
     return true
 }
@@ -167,9 +191,10 @@ fun World.cancelLast(id: String): Boolean {
     if (job.end <= state.minutes) return false
     val r = data.recipes.getValue(job.recipe)
     b.jobs.removeAt(b.jobs.size - 1)
-    state.coins += r.coins
-    r.inputs.forEach { (k, v) -> add(if (k == "#crop") "wheat" else k, v) }
-    b.fuel += fuelUse(r)
+    val n = job.count
+    state.coins += r.coins * n
+    r.inputs.forEach { (k, v) -> add(if (k == "#crop") "wheat" else k, v * n) }
+    b.fuel += fuelUse(r) * n
     return true
 }
 
@@ -184,14 +209,14 @@ internal fun World.tickMachines() {
                 val job = b.jobs.removeAt(0)
                 lastEnd = job.end
                 val r = data.recipes[job.recipe] ?: continue
-                b.batches++
+                b.batches += job.count
                 for ((k, v) in r.outputs) {
                     val tool = k.removePrefix("@tool:")
                     if (tool != k) {
                         state.tools[tool] = maxOf(state.tools[tool] ?: 0, v)
                         events += WorldEvent.ToolUpgraded(tool, v)
                     } else {
-                        b.tray[k] = (b.tray[k] ?: 0) + v
+                        b.tray[k] = (b.tray[k] ?: 0) + v * job.count
                     }
                 }
                 if (r.id == "drill") drillBonus(b)
