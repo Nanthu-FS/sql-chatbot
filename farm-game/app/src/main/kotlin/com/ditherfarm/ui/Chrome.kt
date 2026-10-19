@@ -53,6 +53,17 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     val isOpen get() = panel != Panel.NONE
 
+    /**
+     * A popup that must be answered first (a confirm, a level-up, the gift, a scene, the welcome-back
+     * summary): nothing under it takes input. Under an ordinary panel the HUD and the nav bar stay
+     * live, so they switch panels or screens.
+     */
+    private val blocking get() = game.awaySummary != null ||
+        panel == Panel.CONFIRM || panel == Panel.LEVEL_UP || panel == Panel.GIFT || panel == Panel.STORY
+
+    /** Anything open: a screen's own action buttons (the Mine's ROPE, QUARRY) only draw under it. */
+    private val covered get() = panel != Panel.NONE || game.awaySummary != null
+
     init {
         panels.onPlace = { item -> panel = Panel.NONE; game.startPlacing(item) }
         panels.onSkills = { open(Panel.SKILLS, "bench") }
@@ -131,6 +142,9 @@ class Chrome(private val game: Game, private val here: Nav) {
     fun drawTop(questBelow: Int = 0) {
         // A story scene owns the whole screen: no HUD (and nothing under it to tap) until it ends.
         if (panel == Panel.STORY) return
+        // Under a popup the HUD, the screen's own buttons and the nav bar are only drawn; drawBottom
+        // turns input back on for the popup itself.
+        ui.inert = blocking
         hud.drawTop()
         val w = game.engine.w
         val y = game.engine.safeTop + 18
@@ -156,6 +170,8 @@ class Chrome(private val game: Game, private val here: Nav) {
         }
         if (ui.clickable("hud-level", 2, ly, 92, 14)) open(Panel.SKILLS)
         drawGoal(questBelow)
+        // The screen's own buttons, drawn next, are only drawn while anything is open.
+        ui.inert = covered
     }
 
     /**
@@ -208,19 +224,22 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     /** Nav bar, panels and overlays. [tipLift] raises tips above screen trays. */
     fun drawBottom(tipLift: Int = 0) {
-        if (panel == Panel.STORY) { drawPanel(); return }
+        if (panel == Panel.STORY) { ui.inert = false; drawPanel(); return }
+        ui.inert = blocking
         val badges = mapOf(Nav.ORDERS to world.state.orders.indices.count { world.canDeliver(it) })
         when (val nav = hud.drawBottom(here, badges)) {
             Nav.BARN -> open(Panel.BARN)
             Nav.ORDERS -> open(Panel.ORDERS)
             Nav.MARKET -> open(Panel.MARKET)
             Nav.MENU -> open(Panel.SETTINGS)
-            Nav.FARM, Nav.FOREST, Nav.MINE -> if (nav != here) game.goTo(nav) else game.recenter()
+            // Leaving the screen closes its panel, so none is left open behind.
+            Nav.FARM, Nav.FOREST, Nav.MINE -> if (nav != here) { panel = Panel.NONE; game.goTo(nav) } else game.recenter()
             null -> {}
         }
+        ui.inert = false
         drawPanel()
         // Toasts and tips wait while a story scene plays.
-        if (panel != Panel.STORY) hud.drawOverlays(tipVisible = panel == Panel.NONE, tipLift = tipLift)
+        if (panel != Panel.STORY) hud.drawOverlays(tipVisible = panel == Panel.NONE && game.awaySummary == null, tipLift = tipLift)
     }
 
     private fun drawPanel() {

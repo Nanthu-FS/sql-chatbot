@@ -6,6 +6,9 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
+import com.ditherfarm.game.SCENES
+import com.ditherfarm.game.enterFloor
+import com.ditherfarm.game.knowEverything
 import com.ditherfarm.game.setPlayer
 import com.ditherfarm.shots.ScreenshotTest
 import org.junit.Assert.assertEquals
@@ -21,9 +24,11 @@ import java.io.File
 import java.nio.file.Files
 
 /**
- * While a story scene plays nothing under it can be tapped: not the nav bar (which used to take
- * the player to the Forest or Mine mid-scene), not the HUD. A new farm drops a scene that was
- * playing and starts its own opening once, on the farm.
+ * Nothing under a popup can be tapped. While a story scene plays: not the nav bar (which used to
+ * take the player to the Forest or Mine mid-scene), not the HUD. Under a confirm or the
+ * welcome-back popup: not the nav bar or the HUD. Under any panel: not a screen's own buttons (the
+ * Mine's ROPE). Under an ordinary panel the nav bar still switches screens, closing the panel
+ * first. A new farm drops a scene that was playing and starts its own opening once, on the farm.
  */
 @RunWith(RobolectricTestRunner::class)
 @Config(sdk = [34])
@@ -64,6 +69,18 @@ class StoryInputTest {
 
     private val navXs = listOf(20f, 58f, 96f, 135f, 174f, 212f, 250f)
 
+    /** The nav bar's Forest button (second of seven). */
+    private val forestX = 58f
+    private val navY get() = h - 15f
+
+    /** A game past its opening, on the farm with nothing open. */
+    private fun playing(): Game = newGame().also { g ->
+        g.world.state.storySeen.addAll(SCENES.map { it.id })
+        g.farm.chrome.reset()
+        frames(g, 2)
+        assertEquals(Chrome.Panel.NONE, g.farm.chrome.panel)
+    }
+
     @Test fun navBarAndHudIgnoreTapsDuringTheOpening() {
         val g = newGame()
         assertEquals("the opening plays on a new farm", Chrome.Panel.STORY, g.farm.chrome.panel)
@@ -94,5 +111,61 @@ class StoryInputTest {
         assertTrue(g.farm.chrome.story.playing)
         assertEquals(Chrome.Panel.NONE, g.forest.chrome.panel)
         assertFalse(g.forest.chrome.story.playing)
+    }
+
+    @Test fun leavingAScreenClosesItsPanel() {
+        val g = playing()
+        g.farm.chrome.open(Chrome.Panel.BARN)
+        frames(g, 2)
+        tap(g, forestX, navY)
+        assertSame(g.forest, g.engine.screen)
+        assertEquals("no panel is left open on the farm", Chrome.Panel.NONE, g.farm.chrome.panel)
+    }
+
+    @Test fun navBarAndHudUnderAConfirmDoNothing() {
+        val g = playing()
+        var answered = false
+        g.farm.chrome.confirm("PICK UP?", "Put it back in the Barn?", "PICK UP") { answered = true }
+        frames(g, 2)
+        tap(g, forestX, navY)
+        assertSame("the nav bar under a confirm does not switch screens", g.farm, g.engine.screen)
+        g.farm.chrome.confirm("PICK UP?", "Put it back in the Barn?", "PICK UP") { answered = true }
+        frames(g, 2)
+        // The goals pill on the top bar would swap the confirm for Goals.
+        tap(g, 220f, g.engine.safeTop + 25f)
+        assertTrue(g.farm.chrome.panel != Chrome.Panel.GOALS)
+        assertFalse(answered)
+    }
+
+    @Test fun mineRopeButtonUnderAPanelDoesNothing() {
+        val g = playing()
+        val w = g.world
+        w.knowEverything()
+        w.state.mine.repaired = true
+        assertTrue(w.enterFloor(1))
+        w.add("rope_ladder", 2)
+        g.goTo(Nav.MINE)
+        g.engine.screen?.enter()
+        frames(g, 3)
+        val chrome = g.mine.chrome
+        val ropeY = g.engine.safeTop + chrome.hud.topHeight + 2 + 7f
+        // Control: with nothing open the ROPE button asks to climb down.
+        tap(g, 196f, ropeY)
+        assertEquals(Chrome.Panel.CONFIRM, chrome.panel)
+        chrome.reset()
+        // Under Settings it is only drawn.
+        chrome.open(Chrome.Panel.SETTINGS)
+        frames(g, 2)
+        tap(g, 196f, ropeY)
+        assertTrue(chrome.panel != Chrome.Panel.CONFIRM)
+    }
+
+    @Test fun navBarUnderTheWelcomeBackPopupOnlyDismissesIt() {
+        val g = playing()
+        g.awaySummary = "Your crops grew."
+        frames(g, 2)
+        tap(g, forestX, navY)
+        assertSame(g.farm, g.engine.screen)
+        assertEquals(null, g.awaySummary)
     }
 }

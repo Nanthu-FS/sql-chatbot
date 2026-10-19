@@ -781,6 +781,14 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
     }
 
+    /** Drops placing and the seed tray (a new or imported farm starts from a clean screen). */
+    fun clearModes() {
+        placing = null
+        placeVertex = -1
+        trayOpen = false
+        infoPlot = -1
+    }
+
     /** Closes the open panel or tray; false if nothing was open (back leaves the app). */
     fun closePanel(): Boolean {
         if (chrome.close()) return true

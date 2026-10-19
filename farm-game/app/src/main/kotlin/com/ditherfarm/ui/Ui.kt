@@ -32,9 +32,17 @@ class Ui(val g: Gfx, private val sfx: Sfx, private val haptics: Haptics) {
     private var scrollId: Any? = null
     private var scrollGrab = 0f
 
+    /**
+     * While true, widgets still draw but take no input: they sit under an open panel, a scene or a
+     * popup, which are drawn later in the frame. A tap there falls through to the panel's modal
+     * (so it counts as a tap outside it) instead of pressing the hidden-behind button.
+     */
+    var inert = false
+
     fun beginFrame() {
         prevHits.clear(); prevHits.addAll(hits); hits.clear()
         modalDepthPrev = modalDepth; modalDepth = 0
+        inert = false
     }
 
     fun endFrame() {
@@ -56,6 +64,7 @@ class Ui(val g: Gfx, private val sfx: Sfx, private val haptics: Haptics) {
 
     /** Generic clickable area. Returns true on release inside after pressing inside. */
     fun clickable(id: Any, x: Int, y: Int, w: Int, h: Int): Boolean {
+        if (inert) return false
         hits.add(Rect(x, y, x + w, y + h))
         if (down && activeId == null && startedInside(x, y, w, h) && scrollId == null) activeId = id
         if (released && activeId == id && !dragged && inside(x, y, w, h)) {

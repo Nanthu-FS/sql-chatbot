@@ -246,8 +246,7 @@ class Game(val host: Host) {
         val imported = text?.let { parseWorld(it) }
         if (imported == null) { toast("Not a Dither Farm save"); return }
         world = imported
-        applySettings()
-        save()
+        startOver()
         toast("Save imported")
     }
 
@@ -258,7 +257,14 @@ class Game(val host: Host) {
      */
     fun newGame() {
         world = fresh()
+        startOver()
+    }
+
+    /** After the farm is replaced: clean screens, settings applied, saved, and back on the farm. */
+    private fun startOver() {
+        awaySummary = null
         farm.chrome.reset()
+        farm.clearModes()
         if (forestScreen.isInitialized()) forest.chrome.reset()
         if (mineScreen.isInitialized()) mine.chrome.reset()
         applySettings()
