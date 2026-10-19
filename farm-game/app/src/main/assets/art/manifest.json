@@ -67,6 +67,102 @@
   "ax": 17,
   "ay": 26
  },
+ "buildings/house_0_a": {
+  "ax": 21,
+  "ay": 29
+ },
+ "buildings/house_0_a_lit": {
+  "ax": 21,
+  "ay": 29
+ },
+ "buildings/house_0_b": {
+  "ax": 21,
+  "ay": 28
+ },
+ "buildings/house_0_b_lit": {
+  "ax": 21,
+  "ay": 28
+ },
+ "buildings/house_0_c": {
+  "ax": 21,
+  "ay": 27
+ },
+ "buildings/house_0_c_lit": {
+  "ax": 21,
+  "ay": 27
+ },
+ "buildings/house_1_a": {
+  "ax": 21,
+  "ay": 29
+ },
+ "buildings/house_1_a_lit": {
+  "ax": 21,
+  "ay": 29
+ },
+ "buildings/house_1_b": {
+  "ax": 21,
+  "ay": 29
+ },
+ "buildings/house_1_b_lit": {
+  "ax": 21,
+  "ay": 29
+ },
+ "buildings/house_1_c": {
+  "ax": 21,
+  "ay": 37
+ },
+ "buildings/house_1_c_lit": {
+  "ax": 21,
+  "ay": 37
+ },
+ "buildings/house_2_a": {
+  "ax": 21,
+  "ay": 29
+ },
+ "buildings/house_2_a_lit": {
+  "ax": 21,
+  "ay": 29
+ },
+ "buildings/house_2_b": {
+  "ax": 21,
+  "ay": 37
+ },
+ "buildings/house_2_b_lit": {
+  "ax": 21,
+  "ay": 37
+ },
+ "buildings/house_2_c": {
+  "ax": 21,
+  "ay": 28
+ },
+ "buildings/house_2_c_lit": {
+  "ax": 21,
+  "ay": 28
+ },
+ "buildings/house_3_a": {
+  "ax": 18,
+  "ay": 34
+ },
+ "buildings/house_3_a_lit": {
+  "ax": 18,
+  "ay": 34
+ },
+ "buildings/house_3_b": {
+  "ax": 18,
+  "ay": 34
+ },
+ "buildings/house_3_b_lit": {
+  "ax": 18,
+  "ay": 34
+ },
+ "buildings/house_3_c": {
+  "ax": 21,
+  "ay": 37
+ },
+ "buildings/house_3_c_lit": {
+  "ax": 21,
+  "ay": 37
+ },
  "buildings/logging_hut": {
   "ax": 14,
   "ay": 22
@@ -114,6 +210,38 @@
  "buildings/seed_maker": {
   "ax": 9,
   "ay": 20
+ },
+ "buildings/shop_cafe": {
+  "ax": 21,
+  "ay": 37
+ },
+ "buildings/shop_cafe_lit": {
+  "ax": 21,
+  "ay": 37
+ },
+ "buildings/shop_carpenter": {
+  "ax": 22,
+  "ay": 29
+ },
+ "buildings/shop_carpenter_lit": {
+  "ax": 22,
+  "ay": 29
+ },
+ "buildings/shop_seed": {
+  "ax": 21,
+  "ay": 28
+ },
+ "buildings/shop_seed_lit": {
+  "ax": 21,
+  "ay": 28
+ },
+ "buildings/shop_smith": {
+  "ax": 21,
+  "ay": 34
+ },
+ "buildings/shop_smith_lit": {
+  "ax": 21,
+  "ay": 34
  },
  "buildings/silo": {
   "ax": 16,
