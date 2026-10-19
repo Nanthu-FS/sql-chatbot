@@ -344,11 +344,11 @@ class Chrome(private val game: Game, private val here: Nav) {
                 })
             }
             is WorldEvent.QuestDone -> { game.sfx.play("coin"); game.haptics.heavy(); hud.toast("Notebook: done!") }
-            is WorldEvent.ChoresNew -> { game.sfx.play("order"); hud.toast("New daily chores! See Goals"); hud.tip("chores", "Three chores a day. Finish all three on more days in a row for a bigger streak bonus. One missed day a week is forgiven.") }
+            is WorldEvent.ChoresNew -> { game.sfx.play("order"); hud.toast("New daily chores! Tap the trophy"); hud.tip("chores", "Three chores a day. Finish all three on more days in a row for a bigger streak bonus. One missed day a week is forgiven.") }
             is WorldEvent.ChoreDone -> { game.sfx.play("unlock"); world.state.chores.getOrNull(e.chore)?.let { hud.toast("Chore done: ${it.text}") } }
             is WorldEvent.ChoreClaimed, is WorldEvent.ContractClaimed -> { game.sfx.play("coin"); game.haptics.tick() }
             is WorldEvent.ChoresFinished -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("All chores done! ${e.streak}-day streak: +${e.coins} coins") }
-            is WorldEvent.ContractNew -> hud.toast("A new truck contract is in. See Goals")
+            is WorldEvent.ContractNew -> hud.toast("A new truck contract is in. Tap the trophy")
             is WorldEvent.LoanApproved -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Loan approved: +${e.coins} coins!") }
             is WorldEvent.ContractDone -> { game.sfx.play("unlock"); game.haptics.heavy(); hud.toast("Truck contract complete! Claim it in Goals") }
             is WorldEvent.SkillLearned -> {

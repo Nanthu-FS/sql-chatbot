@@ -4,7 +4,7 @@
   {
    "id": "pine",
    "minAxe": 0,
-   "hp": 5,
+   "hp": 3,
    "wood": [
     3,
     5
@@ -31,7 +31,7 @@
   {
    "id": "birch",
    "minAxe": 0,
-   "hp": 6,
+   "hp": 4,
    "wood": [
     3,
     5
@@ -54,7 +54,7 @@
   {
    "id": "oak",
    "minAxe": 1,
-   "hp": 12,
+   "hp": 8,
    "wood": [
     3,
     4
@@ -77,7 +77,7 @@
   {
    "id": "maple",
    "minAxe": 2,
-   "hp": 20,
+   "hp": 14,
    "wood": [
     2,
     3
@@ -104,7 +104,7 @@
   {
    "id": "ancient_oak",
    "minAxe": 3,
-   "hp": 60,
+   "hp": 40,
    "wood": [
     10,
     10

@@ -224,9 +224,16 @@ internal fun World.autoOpenZones() {
     data.zones.firstOrNull()?.let { if (it.unlockLevel <= state.level && it.cost.isEmpty()) state.forest.zones += it.id }
 }
 
-/** Grows saplings into young and mature trees as time passes. */
+/** Grows saplings into young and mature trees as time passes; a stump on a tree's own spot sprouts
+ *  a sapling of it [STUMP_SPROUT_MINUTES] real minutes after the fell (playtest round 4). */
 fun World.treeStage(i: Int): TreeStage {
     val s = spot(i)
+    val native = forestSpots[i].native
+    if (s.stage == TreeStage.STUMP && native != null && state.minutes - s.since >= Time.realSecondsToGameMinutes(STUMP_SPROUT_MINUTES * 60.0)) {
+        val def = data.trees.getValue(native)
+        s.tree = def.id; s.stage = TreeStage.SAPLING; s.damage = 0; s.plantedAt = state.minutes; s.since = state.minutes
+        s.growMinutes = Time.realSecondsToGameMinutes(def.growMinutes * 60)
+    }
     if (s.stage == TreeStage.SAPLING || s.stage == TreeStage.YOUNG) {
         val f = (state.minutes - s.plantedAt) / s.growMinutes
         s.stage = when { f >= 1 -> TreeStage.MATURE; f >= 0.4 -> TreeStage.YOUNG; else -> TreeStage.SAPLING }
@@ -432,3 +439,4 @@ internal fun World.forestDawn(day: Int) {
 }
 
 const val SWING_ENERGY = 2
+const val STUMP_SPROUT_MINUTES = 5.0

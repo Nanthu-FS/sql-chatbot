@@ -8,7 +8,7 @@ from _pix import E, Sprites, finish, from_map  # noqa: E402
 
 SPRITES = {
     "dust": ([".bb.", "bBBb", ".bb."], {"b": "tan", "B": "tan_d"}, False),
-    "drop": (["..c..", ".cbc.", "cbbbc", ".bbb.", "..b.."], {"c": "cyan", "b": "blue"}, True),
+    "drop": (["..b..", ".bcb.", ".bcb.", "bcwbb", "bccbb", "bbbbb", ".bbb."], {"c": "cyan", "b": "blue", "w": "white"}, True),
     "sparkle": (["...y...", "...y...", "..yWy..", "yyWWWyy", "..yWy..", "...y...", "...y..."], {"y": "yellow", "W": "white"}, False),
     "star": ([".y.", "yWy", ".y."], {"y": "amber", "W": "white"}, False),
     "leaf": (["gG", ".g"], {"g": "green", "G": "green_d"}, True),

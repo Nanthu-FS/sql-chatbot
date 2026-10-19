@@ -28,7 +28,7 @@ class MachinesForestTest {
         assertTrue(w.isBuilt("workbench"))
         val wood = w.count("wood")
         assertTrue(w.enqueue("wb_plank"))
-        assertEquals(wood - 3, w.count("wood"))
+        assertEquals(wood - data.recipes.getValue("wb_plank").inputs.getValue("wood"), w.count("wood"))
         assertFalse("queue of 1 is full", w.enqueue("wb_plank"))
         w.realMinutes(0.6)
         assertEquals(1, w.trayCount("workbench"))
@@ -97,10 +97,24 @@ class MachinesForestTest {
         var swings = 0
         while (w.treeStage(pine) == TreeStage.MATURE && swings < 10) { assertTrue(w.chop(pine)); swings++ }
         assertEquals(TreeStage.STUMP, w.treeStage(pine))
-        assertTrue(swings in 3..5)
+        assertTrue("swings: $swings", swings in 2..3)
         assertEquals(energy - SWING_ENERGY * swings, w.state.energy, 0.5)
         assertTrue(w.count("wood") >= 22)
         assertNotNull("stump needs a stone axe", w.chopBlocker(pine))
+    }
+
+    @Test fun stumpSproutsItsTreeAgainWithinMinutes() {
+        val w = fresh()
+        w.gainXp(40)
+        val pine = w.forestSpots.first { it.native == "pine" }.index
+        while (w.treeStage(pine) == TreeStage.MATURE) assertTrue(w.chop(pine))
+        assertEquals(TreeStage.STUMP, w.treeStage(pine))
+        w.realMinutes(STUMP_SPROUT_MINUTES - 1)
+        assertEquals("still a stump", TreeStage.STUMP, w.treeStage(pine))
+        w.realMinutes(1.5)
+        assertEquals(TreeStage.SAPLING, w.treeStage(pine))
+        w.realMinutes(data.trees.getValue("pine").growMinutes + 0.5)
+        assertEquals("a pine is back in about 17 real minutes", TreeStage.MATURE, w.treeStage(pine))
     }
 
     @Test fun oakNeedsStoneAxe() {
@@ -119,7 +133,7 @@ class MachinesForestTest {
         w.add("pinecone", 1)
         assertTrue(w.plantTree(pine, "pinecone"))
         assertEquals(TreeStage.SAPLING, w.treeStage(pine))
-        w.realMinutes(30.0) // spring x0.8 → 24 minutes to mature
+        w.realMinutes(data.trees.getValue("pine").growMinutes * 0.8 + 0.5) // spring x0.8
         assertEquals(TreeStage.MATURE, w.treeStage(pine))
     }
 
