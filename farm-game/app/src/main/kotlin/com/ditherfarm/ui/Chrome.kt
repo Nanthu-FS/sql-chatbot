@@ -41,7 +41,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR }
 
     var panel = Panel.NONE
         private set
@@ -69,6 +69,13 @@ class Chrome(private val game: Game, private val here: Nav) {
     init {
         panels.onPlace = { item -> panel = Panel.NONE; game.startPlacing(item) }
         panels.onSkills = { open(Panel.SKILLS, "bench") }
+        panels.onDecorShop = { open(Panel.DECOR) }
+        // Decorations go on the farm, so buying one elsewhere takes the player there.
+        panels.onDecor = { id ->
+            panel = Panel.NONE
+            if (here != Nav.FARM) game.goTo(Nav.FARM)
+            game.farm.startDecor(id)
+        }
         // Scenes play on the farm, so a replay asked for in the Forest or Mine goes there first.
         panels.onStory = {
             if (here == Nav.FARM) replayOpening()
@@ -277,6 +284,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.SEEDS -> panels.seeds()
             Panel.STORY -> story.draw()
             Panel.PET -> panels.pet()
+            Panel.DECOR -> panels.decor()
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {

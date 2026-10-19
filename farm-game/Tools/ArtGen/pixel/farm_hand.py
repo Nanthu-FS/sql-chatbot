@@ -23,6 +23,7 @@ nothing is copied from them.
   buildings/oil_press, market_cart, harvest_shed, planter_shed, windmill
   buildings/cottage_c(_lit)             the bunkhouse, and its lit windows for the night overlay
   deco/hay_bale, trough, bridge, sign_forest, sign_mine
+  decor/<id>                            the decorations the player buys and places (Decor.kt)
                                         farm machines, each with a cream icon plate
 
 Pivot = the ground centre of the footprint.
@@ -1414,6 +1415,219 @@ def emit_overlay(sp, name, made, under):
     sp.save(name, out, p["ax"], p["ay"])
 
 
+# ---------------------------------------------------------------- decorations (round 5)
+
+def _map(c, x0, y0, rows, key):
+    """Pixel map onto the canvas with its top-left at (x0, y0)."""
+    for j, row in enumerate(rows):
+        for i, ch in enumerate(row):
+            if ch in key:
+                c.dot(x0 + i, y0 + j, key[ch])
+
+
+def decor_flowers(light, mid, dark):
+    """A raised bed: cream-capped wooden sides, dark soil and a mound of flowers with leaves."""
+    c = Iso(30, 24, 15, 13)
+    S = 2.6
+    c.box(-S, S, -S, S, 0, 2.4, "cream", "brown_l", "brown")
+    c.poly([(-S + 0.4, -S + 0.4, 2.4), (S - 0.4, -S + 0.4, 2.4), (S - 0.4, S - 0.4, 2.4), (-S + 0.4, S - 0.4, 2.4)], "brown_d")
+    for k, (u, v) in enumerate(((-1.4, -1.0), (0.2, -1.4), (1.4, -0.4), (-1.0, 0.4), (0.4, 0.6), (1.4, 1.2), (-0.2, 1.6), (-1.6, 1.4))):
+        x, y = c.p(u, v, 3.4)
+        c.dot(x - 1, y + 1, "green_d"); c.dot(x + 1, y + 1, "green")
+        c.dot(x, y, mid); c.dot(x - 1, y, light if k % 2 else mid); c.dot(x + 1, y, dark); c.dot(x, y - 1, light)
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def decor_bench():
+    """A red garden bench with cream slats and arm rests."""
+    c = Iso(30, 26, 15, 16)
+    U, V = 3.0, 1.0
+    for u in (-U, U - 0.5):
+        c.box(u, u + 0.5, -V, V, 0, 3.4, "red", "red", "red_d")
+    c.box(-U, U, -V, V, 3.4, 4.2, "cream", "tan", "tan_d")
+    c.uline(-U, U, 0, 4.2, "tan")
+    c.box(-U, U, -V - 0.3, -V + 0.1, 4.2, 8, "cream", "tan", "tan_d")
+    c.uline(-U, U, -V + 0.1, 6.4, "tan_d")
+    for u in (-U, U - 0.5):
+        c.box(u, u + 0.5, -V, V, 4.2, 5.6, "red", "red", "red_d")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+GNOME = [
+    "....r....",
+    "...rr....",
+    "...rrr...",
+    "..rrRrr..",
+    "..rrrrr..",
+    ".rrrrrrr.",
+    "..sksks..",
+    "..sssss..",
+    ".wwwswww.",
+    ".bwwwwwb.",
+    "bbbwwwbbb",
+    ".bnnnnnb.",
+    ".bbbbbbb.",
+    "..bb.bb..",
+    "..kk.kk..",
+]
+
+
+def decor_gnome():
+    """A garden gnome: tall red hat, rosy face, white beard, blue coat with a brown belt."""
+    c = Iso(22, 24, 11, 20)
+    c.box(-1.6, 1.6, -1.6, 1.6, 0, 1.2, "grey_l", "grey", "grey_d")
+    key = {"r": "red", "R": "pink", "s": "skin", "k": "ink", "w": "white", "b": "blue", "n": "brown"}
+    x, y = c.p(0, 0, 1.2)
+    _map(c, x - 4, y - len(GNOME), GNOME, key)
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def decor_birdbath():
+    """A stone birdbath: pedestal, a wide bowl of water and a little bird on the rim."""
+    c = Iso(26, 26, 13, 20)
+    c.box(-1.6, 1.6, -1.6, 1.6, 0, 1.2, "grey_l", "grey", "grey_d")
+    c.box(-0.6, 0.6, -0.6, 0.6, 1.2, 7, "grey_l", "grey", "grey_d")
+    cx, cy = c.p(0, 0, 7)
+    c.ellipse(cx, cy + 1, 8, 4, "grey_d")
+    c.ellipse(cx, cy, 8, 4, "grey_l")
+    c.ellipse(cx, cy, 6, 3, "blue")
+    c.dot(cx - 2, cy - 1, "cyan"); c.dot(cx - 1, cy - 1, "white")
+    for dx, dy, col in ((5, -3, "red_d"), (6, -3, "red"), (6, -4, "red"), (7, -4, "amber"), (5, -2, "red_d")):
+        c.dot(cx + dx, cy + dy, col)
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def decor_lamp():
+    """A garden lamp: a red post on a slate foot, a cream lantern with warm glass and a slate cap."""
+    c = Iso(14, 30, 7, 27)
+    c.box(-1.0, 1.0, -1.0, 1.0, 0, 1.0, "slate", "slate_d", "ink")
+    c.box(-0.35, 0.35, -0.35, 0.35, 1.0, 13, "red", "red", "red_d")
+    c.box(-1.1, 1.1, -1.1, 1.1, 13, 18, "cream", "cream", "tan")
+    x, y = c.p(0, 1.1, 15.5)
+    for dy in (-2, -1, 0, 1):
+        c.dot(x - 2, y + dy, "amber"); c.dot(x - 1, y + dy, "yellow")
+    c.dot(x - 1, y - 2, "white")
+    c.poly([(-1.5, 1.5, 18), (1.5, 1.5, 18), (0, 0, 21)], "slate")
+    c.poly([(1.5, -1.5, 18), (1.5, 1.5, 18), (0, 0, 21)], "slate_d")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def decor_topiary():
+    """A round clipped bush in a red pot with a cream rim."""
+    c = Iso(26, 30, 13, 24)
+    c.box(-1.8, 1.8, -1.8, 1.8, 0, 3.6, "brown_d", "red", "red_d")
+    c.uline(-1.8, 1.8, 1.8, 3.2, "cream"); c.vline(1.8, 3.6, -1.8, 3.2, "tan")
+    cx, cy = c.p(0, 0, 3.6)
+    for k in range(12):                                                     # the ball, built in rings
+        r = round(6.5 * max(0.0, 1 - ((k - 6) / 6.5) ** 2) ** 0.5)
+        if r <= 0:
+            continue
+        for x in range(cx - r, cx + r + 1):
+            dx = (x - cx) / r
+            col = "green" if dx < -0.3 else "green_d" if dx < 0.5 else "green_dd"
+            c.dot(x, cy - 2 - k, col)
+    for dx, dy in ((-3, -9), (-1, -12), (2, -8), (-4, -5)):
+        c.dot(cx + dx, cy + dy, "yellow")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def decor_pond():
+    """A little lily pond: a stone rim, water with a glint, two lily pads and a pink flower."""
+    c = Iso(34, 22, 17, 11)
+    cx, cy = c.p(0, 0, 0)
+    c.ellipse(cx, cy + 1, 14, 7, "grey_d")
+    c.ellipse(cx, cy, 14, 7, "grey_l")
+    c.ellipse(cx, cy, 11, 5, "blue_d")
+    c.ellipse(cx + 1, cy + 1, 9, 4, "blue")
+    c.dot(cx - 5, cy - 2, "cyan"); c.dot(cx - 4, cy - 2, "white")
+    for px_, py_ in ((cx + 3, cy - 1), (cx - 4, cy + 2)):
+        for dx in (-1, 0, 1):
+            c.dot(px_ + dx, py_, "green"); c.dot(px_ + dx, py_ + 1, "green_d")
+    c.dot(cx + 3, cy - 2, "pink"); c.dot(cx + 4, cy - 2, "white")
+    for k in range(0, 360, 40):                                             # rim stones
+        import math
+        a = math.radians(k)
+        c.dot(round(cx + 13 * math.cos(a)), round(cy + 6 * math.sin(a)), "grey")
+    return c, (cx, cy + 7)
+
+
+def decor_arch():
+    """A cream rose arch over the path: two posts, a curved top, green vines and pink roses."""
+    c = Iso(30, 40, 15, 34)
+    for v in (-2.2, 2.2):
+        c.box(-0.4, 0.4, v - 0.4, v + 0.4, 0, 20, "cream", "cream", "tan")
+    x0, y0 = c.p(0, 2.2, 20)
+    x1, y1 = c.p(0, -2.2, 20)
+    for i in range(0, 11):
+        t = i / 10
+        x = round(x0 + (x1 - x0) * t)
+        y = round(y0 + (y1 - y0) * t - 5 * (1 - (2 * t - 1) ** 2))
+        c.dot(x, y, "cream"); c.dot(x, y + 1, "tan")
+        if i % 2 == 0:
+            c.dot(x, y - 1, "green"); c.dot(x + 1, y, "green_d")
+        if i % 3 == 1:
+            c.dot(x, y - 1, "pink"); c.dot(x + 1, y - 1, "red")
+    for v in (-2.2, 2.2):
+        for z in range(2, 20, 3):
+            x, y = c.p(0.4, v, z)
+            c.dot(x, y, "green"); c.dot(x - 1, y - 1, "green_d")
+            if z % 6 == 2:
+                c.dot(x + 1, y - 1, "pink")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def decor_sheaf():
+    """The Golden Sheaf statue: the farm's wheat emblem cast in gold, twice size, on a cream plinth
+    with red trim."""
+    from _iso import WHEAT
+    c = Iso(30, 40, 15, 33)
+    c.box(-2.6, 2.6, -2.6, 2.6, 0, 1.2, "grey_l", "grey", "grey_d")
+    c.box(-2.0, 2.0, -2.0, 2.0, 1.2, 8, "cream", "cream", "tan")
+    c.uline(-2.0, 2.0, 2.0, 7.0, "red"); c.vline(2.0, 4.0, -2.0, 7.0, "red_d")
+    x, y = c.p(0, 0, 8)
+    cols = {"a": "amber", "y": "yellow", "Y": "white", "b": "orange"}
+    for j, row in enumerate(WHEAT):
+        for i, ch in enumerate(row):
+            if ch in cols:
+                for dx in (0, 1):
+                    for dy in (0, 1):
+                        c.dot(x - 5 + 2 * i + dx, y - 13 + 2 * j + dy, cols[ch])
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+DECOR_ART = [("flowers_red", lambda: decor_flowers("pink", "red", "red_d")),
+             ("flowers_sun", lambda: decor_flowers("yellow", "amber", "orange")),
+             ("bench", decor_bench), ("gnome", decor_gnome), ("birdbath", decor_birdbath), ("lamp", decor_lamp),
+             ("topiary", decor_topiary), ("pond", decor_pond), ("arch", decor_arch), ("sheaf", decor_sheaf)]
+
+
+def preview_decor(out):
+    from PIL import Image
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    import polish
+    art = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "app", "src", "main", "assets", "art")
+    hand = Image.open(os.path.join(art, "people/hana_se_idle.png")).convert("RGBA")
+    cw = 40
+    sheet = Image.new("RGBA", (cw * (len(DECOR_ART) + 1), 56), (62, 137, 72, 255))
+    sheet.alpha_composite(hand, (8, 52 - hand.height))
+    for i, (name, fn) in enumerate(DECOR_ART):
+        cnv, (px_, py_) = fn()
+        x0, y0, x1, y1 = cnv.im.getbbox()
+        body, pad = finish(cnv.im.crop((x0, y0, x1, y1)))
+        body = polish.polish(body, "world", "decor/" + name)
+        ax, ay = (i + 1) * cw + 20, 48
+        sheet.alpha_composite(body, (ax - (px_ - x0 + pad), ay - (py_ - y0 + pad)))
+    sheet.resize((sheet.width * 4, sheet.height * 4), Image.NEAREST).save(out)
+
+
 def emit(sp, name, made):
     cnv, (px, py) = made
     x0, y0, x1, y1 = cnv.im.getbbox()
@@ -1445,11 +1659,14 @@ def main():
         group, name = key.split("/")
         emit(bld if group == "buildings" else deco, name, fn())
     emit_overlay(bld, "cottage_c_lit", bunkhouse(True), "cottage_c")
+    dec = Sprites(art, "decor")
+    for name, fn in DECOR_ART:
+        emit(dec, name, fn())
     for name, fn in (("barn", barn), ("silo", silo), ("orders", orders), ("workbench", workbench), ("well", well), ("market", market)):
         emit(bld, name, fn(False))
         emit(bld, name + "_snow", fn(True))
     pivots = {}
-    for sp in (veh, bld, deco):
+    for sp in (veh, bld, deco, dec):
         pivots.update(sp.pivots)
     print(json.dumps(pivots))
 
@@ -1503,5 +1720,7 @@ if __name__ == "__main__":
         preview5(sys.argv[2])
     elif len(sys.argv) > 2 and sys.argv[1] == "--preview6":
         preview6(sys.argv[2])
+    elif len(sys.argv) > 2 and sys.argv[1] == "--preview-decor":
+        preview_decor(sys.argv[2])
     else:
         main()

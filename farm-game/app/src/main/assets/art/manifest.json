@@ -847,6 +847,46 @@
   "ay": 11,
   "bh": 18
  },
+ "decor/arch": {
+  "ax": 8,
+  "ay": 28
+ },
+ "decor/bench": {
+  "ax": 10,
+  "ay": 13
+ },
+ "decor/birdbath": {
+  "ax": 10,
+  "ay": 13
+ },
+ "decor/flowers_red": {
+  "ax": 12,
+  "ay": 10
+ },
+ "decor/flowers_sun": {
+  "ax": 12,
+  "ay": 10
+ },
+ "decor/gnome": {
+  "ax": 7,
+  "ay": 18
+ },
+ "decor/lamp": {
+  "ax": 8,
+  "ay": 23
+ },
+ "decor/pond": {
+  "ax": 16,
+  "ay": 16
+ },
+ "decor/sheaf": {
+  "ax": 11,
+  "ay": 22
+ },
+ "decor/topiary": {
+  "ax": 9,
+  "ay": 19
+ },
  "fx/chip_stone": {
   "ax": 2,
   "ay": 2

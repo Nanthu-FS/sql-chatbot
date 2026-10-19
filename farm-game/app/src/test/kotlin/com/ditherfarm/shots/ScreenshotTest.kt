@@ -11,6 +11,7 @@ import com.ditherfarm.game.Season
 import com.ditherfarm.game.Weather
 import com.ditherfarm.game.addCartRule
 import com.ditherfarm.game.adoptPet
+import com.ditherfarm.game.placeDecor
 import com.ditherfarm.game.build
 import com.ditherfarm.game.buyBlock
 import com.ditherfarm.game.buildingsOn
@@ -503,6 +504,35 @@ class ScreenshotTest {
             toLevel(g, com.ditherfarm.game.PET_LEVEL)
             g.world.adoptPet(com.ditherfarm.game.PetKind.DOG, "Biscuit")
             g.world.events.clear()
+        }, zoom = 2)
+    }
+
+    @Test fun farmStrays() {
+        render("farm_strays", seconds = 0.5f, setup = { g ->
+            toLevel(g, com.ditherfarm.game.PET_LEVEL)
+            g.world.state.pet.offered = true
+            g.farm.centerOnTile(com.ditherfarm.ui.FarmMap.WELL.first, com.ditherfarm.ui.FarmMap.WELL.second)
+        }, zoom = 2)
+    }
+
+    @Test fun decorPanel() {
+        render("panel_decor", setup = { g ->
+            toLevel(g, 10); g.world.state.coins += 5000
+            g.farm.showPanel("decor")
+        })
+    }
+
+    @Test fun farmDecorated() {
+        render("farm_decor", seconds = 0.5f, setup = { g ->
+            toLevel(g, 16); g.world.state.coins += 50_000
+            val w = g.world
+            w.state.pet.offered = true
+            // The free grass nearest the yard, one decoration each.
+            val free = (6..22).flatMap { c -> (6..20).map { r -> c to r } }.filter { (c, r) -> g.farm.decorFree(c, r) }
+                .sortedBy { (c, r) -> (c - 14) * (c - 14) + (r - 12) * (r - 12) }
+            com.ditherfarm.game.DECOR.keys.zip(free).forEach { (id, t) -> w.placeDecor(t.first, t.second, id) }
+            w.events.clear()
+            g.farm.centerOnTile(14, 12)
         }, zoom = 2)
     }
 

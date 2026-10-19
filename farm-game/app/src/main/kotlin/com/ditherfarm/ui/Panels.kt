@@ -99,6 +99,10 @@ import com.ditherfarm.game.workerOn
 import com.ditherfarm.game.workerPlotsPerMinute
 import com.ditherfarm.game.PET_NAME_MAX
 import com.ditherfarm.game.PetKind
+import com.ditherfarm.game.DECOR
+import com.ditherfarm.game.beauty
+import com.ditherfarm.game.decorBlocker
+import com.ditherfarm.game.decorBonus
 import com.ditherfarm.game.adoptPet
 import com.ditherfarm.game.petOffered
 import com.ditherfarm.game.BRANCHES
@@ -139,6 +143,9 @@ class Panels(private val game: Game, private val hud: Hud) {
     var onPlace: ((String) -> Unit)? = null
     /** Called when Settings' STORY button is tapped (replays the opening). */
     var onStory: (() -> Unit)? = null
+    /** Called with a decoration id when BUY is tapped in the decor shop, and to open the shop. */
+    var onDecor: ((String) -> Unit)? = null
+    var onDecorShop: (() -> Unit)? = null
     /** Called when the Workbench's SKILLS button is tapped. */
     var onSkills: (() -> Unit)? = null
     private var skillTab = 0
@@ -378,7 +385,7 @@ class Panels(private val game: Game, private val hud: Hud) {
 
     // -------------------------------------------------------------- settings
     fun settings(): Boolean {
-        val (x, y, pw, ph) = frame("SETTINGS", 250).toList()
+        val (x, y, pw, ph) = frame("SETTINGS", 274).toList()
         if (closeButton(x, y, pw)) return false
         val s = world.state
         fun row(i: Int, icon: String, label: String, on: Boolean): Boolean {
@@ -401,6 +408,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (confirmNewGame >= 3) { game.newGame(); confirmNewGame = 0; hud.toast("A fresh start!"); return false }
         }
         if (ui.button("story", x + 10, by + 48, pw - 20, 18, "STORY: WATCH THE OPENING", "icons/book", "wood")) { onStory?.invoke(); return true }
+        if (ui.button("decorate", x + 10, by + 72, pw - 20, 18, "DECORATE YOUR FARM", "icons/heart", "gold")) { onDecorShop?.invoke(); return true }
         g.text("DITHER FARM 0.1", x + pw / 2, y + ph - 30, Gfx.GREY, align = 0, outline = 0, shadow = false)
         g.text("FONT SILKSCREEN (OFL) - ENDESGA 32", x + pw / 2, y + ph - 19, Gfx.GREY, align = 0, outline = 0, shadow = false)
         return true
@@ -966,6 +974,33 @@ class Panels(private val game: Game, private val hud: Hud) {
         val reward = "+$coins COINS  +$xp XP" + items.entries.joinToString("") { (k, v) -> "  +$v ${world.data.name(k).uppercase()}" }
         g.text(reward.take(36), w / 2, y + 76, Gfx.INK, align = 0, outline = 0, shadow = false)
         if (ui.button("gift-claim", w / 2 - 30, y + ph - 24, 60, 16, "CLAIM", style = "gold")) { world.claimGift(today); return false }
+        return true
+    }
+
+    // ------------------------------------------------------------------ decor shop
+    /** Decorations to buy and place; beauty and its order bonus at the top. */
+    fun decor(): Boolean {
+        val rowsN = (DECOR.size + 1) / 2
+        val (x, y, pw, ph) = frame("DECORATE", 44 + rowsN * 40).toList()
+        if (closeButton(x, y, pw)) return false
+        val b = world.beauty
+        g.text("BEAUTY $b: +${(world.decorBonus() * 100).toInt()}% ORDER COINS", x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
+        val cw = (pw - 20) / 2
+        DECOR.values.forEachIndexed { i, d ->
+            val cx = x + 10 + (i % 2) * cw
+            val cy = y + 34 + (i / 2) * 40
+            g.slice9("ui/slot", cx, cy, cx + 32, cy + 32, 4)
+            g.sprite("decor/${d.id}", (cx + 16).toFloat(), (cy + 28).toFloat())
+            g.text(fit(d.name.uppercase(), cw - 40), cx + 36, cy + 2, Gfx.INK, outline = 0, shadow = false)
+            g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
+            g.text("${d.price}  +${d.beauty}", cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
+            val why = world.decorBlocker(d.id)
+            val locked = world.level < d.unlockLevel
+            if (locked) g.text("LEVEL ${d.unlockLevel}", cx + 36, cy + 24, Gfx.GREY, outline = 0, shadow = false)
+            else if (ui.button("decor-$i", cx + cw - 48, cy + 21, 40, 13, "BUY", style = if (why == null) "green" else "grey")) {
+                if (why != null) hud.toast(why) else { onDecor?.invoke(d.id); return false }
+            }
+        }
         return true
     }
 

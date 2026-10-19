@@ -71,7 +71,7 @@ class PetWalker(private val game: Game) {
             list.add(sy) {
                 g.sprite("pets/dog_sit", sx - 8f, sy)
                 g.sprite("pets/cat_sit", sx + 8f, sy, flipX = true)
-                g.sprite("icons/heart", sx, sy - 18f + sin(time * 4f) * 1.5f)
+                g.sprite("fx/heart", sx, sy - 16f + sin(time * 4f) * 1.5f)
             }
             return
         }
@@ -85,10 +85,10 @@ class PetWalker(private val game: Game) {
         }
     }
 
-    /** Where the strays wait for the player: in the yard beside the well. */
+    /** Where the strays wait for the player: in the open yard in front of the well. */
     private fun straysAt(): Pair<Float, Float> {
         val (c, r) = FarmMap.WELL
-        return Iso.x(c, r) + 26f to Iso.centerY(c, r) + 16f
+        return Iso.x(c, r) - 14f to Iso.centerY(c, r) + 22f
     }
 
     /**

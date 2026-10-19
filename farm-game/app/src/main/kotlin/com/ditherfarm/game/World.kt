@@ -42,6 +42,8 @@ sealed class WorldEvent {
     data class BirdNest(val spot: Int, val item: String, val qty: Int) : WorldEvent()
     data class PetAdopted(val kind: PetKind, val name: String) : WorldEvent()
     data class PetGift(val items: Map<String, Int>) : WorldEvent()
+    data class DecorPlaced(val c: Int, val r: Int, val id: String) : WorldEvent()
+    data class DecorRemoved(val c: Int, val r: Int, val id: String) : WorldEvent()
     data class Mined(val cell: Int, val quarry: Boolean, val node: String, val crit: Boolean, val hpLeft: Int) : WorldEvent()
     data class RockBroken(val cell: Int, val quarry: Boolean, val node: String, val drops: Map<String, Int>, val xp: Int) : WorldEvent()
     data class HollowKnock(val cell: Int, val onLadder: Boolean) : WorldEvent()
@@ -691,7 +693,7 @@ class World(val data: GameData, val state: GameState) {
         val o = s.order ?: return false
         if (!canDeliver(slot)) { events += WorldEvent.Blocked("Missing items"); return false }
         o.lines.forEach { removeAny(it.item, it.qty) }
-        val coins = (o.coins * (1 + skill("charmer")) * orderPayMult()).roundToInt()
+        val coins = (o.coins * (1 + skill("charmer")) * orderPayMult() * (1 + decorBonus())).roundToInt()
         state.coins += coins
         val v = data.villagers.firstOrNull { it.id == o.villager }
         val fav = o.lines.count { v != null && it.item in v.favorites }

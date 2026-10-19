@@ -10,10 +10,14 @@ import com.ditherfarm.engine.Terrain
 import android.graphics.Paint
 import android.graphics.Path
 import com.ditherfarm.game.FieldLayout
+import com.ditherfarm.game.DECOR
 import com.ditherfarm.game.Fixture
 import com.ditherfarm.game.PlotState
 import com.ditherfarm.game.Quality
 import com.ditherfarm.game.Season
+import com.ditherfarm.game.decorKey
+import com.ditherfarm.game.pickUpDecor
+import com.ditherfarm.game.placeDecor
 import com.ditherfarm.game.Weather
 import com.ditherfarm.game.WorldEvent
 import com.ditherfarm.game.blockOwned
@@ -87,7 +91,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private fun machineAt(c: Int, r: Int) = machines.withIndex().firstOrNull { (i, _) -> slotTiles.getOrNull(i) == (c to r) }?.value
 
     /** A scattered decoration; [tree] props swap to their fall and snow art by season. */
-    private class Prop(val sprite: String, val x: Float, val y: Float, val sway: Boolean, val tree: Boolean = false)
+    private class Prop(val sprite: String, val x: Float, val y: Float, val sway: Boolean, val tree: Boolean = false, val tile: Long = Long.MIN_VALUE)
     private val props = ArrayList<Prop>()
     private val lanterns = FarmMap.LANTERNS
     private val waterTiles = ArrayList<Pair<Int, Int>>()
@@ -106,6 +110,11 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private var flashTime = 0f
     /** Fixture item being placed, and the corner picked by the first tap (the second tap confirms). */
     private var placing: String? = null
+    /** Decoration being placed (round 5) and the tile picked for it (-1 until the first tap). */
+    private var decorPlacing: String? = null
+    private var decorTile = -1L
+    /** Tiles kept clear of scattered props and decorations (the truck, signs, houses...). */
+    private val reservedTiles = HashSet<Long>()
     private var placeVertex = -1
 
     private enum class Action { PLANT, WATER, HARVEST, CLEAR }
@@ -164,7 +173,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private fun scatterProps() {
         props.clear()
         waterTiles.clear()
-        val reserved = HashSet<Long>()
+        val reserved = reservedTiles.also { it.clear() }
         listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
         for (b in 0 until FieldLayout.BLOCKS) FarmCrew.crateTile(b).let { reserved += key(it.first, it.second) }
         for (dc in 0..1) for (dr in 0..1) reserved += key(FarmMap.TRUCK.first + dc, FarmMap.TRUCK.second + dr)
@@ -205,7 +214,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 Terrain.SAND -> if (roll < 0.3f) "deco/reeds" else null
                 else -> null
             } ?: continue
-            props += Prop(sprite, x, y, sprite == "deco/tallgrass_a")
+            props += Prop(sprite, x, y, sprite == "deco/tallgrass_a", tile = decorKey(c, r))
         }
         for ((c, r) in lanterns) props += Prop("deco/lantern", Iso.x(c, r).toFloat(), Iso.centerY(c, r).toFloat(), false)
         // Fences along the back edges of every field block.
@@ -390,6 +399,21 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val (x, y) = vertexPos(v)
             list.add(y + 0.4f) { game.gfx.sprite(fixtureSprite(item), x, y) }
         }
+        for ((k, id) in world.state.decor) {
+            val c = (k / 1000).toInt(); val r = (k % 1000).toInt()
+            val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()
+            if (inView(x, y)) list.add(y) { game.gfx.sprite("decor/$id", x, y) }
+        }
+        decorPlacing?.let { id ->
+            if (decorTile >= 0) {
+                val c = (decorTile / 1000).toInt(); val r = (decorTile % 1000).toInt()
+                val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()
+                list.add(Float.MAX_VALUE) {
+                    game.gfx.sprite("tiles/cursor_ok", x, Iso.y(c, r).toFloat(), (sin(time * 5f) * 50 + 205).toInt())
+                    game.gfx.sprite("decor/$id", x, y, (sin(time * 6f) * 50 + 200).toInt())
+                }
+            }
+        }
         placing?.let { item ->
             if (placeVertex >= 0) {
                 val (x, y) = vertexPos(placeVertex)
@@ -402,6 +426,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             if (!inView(p.x, p.y, 64f)) continue
             if (winter && (p.sprite.startsWith("deco/flowers") || p.sprite == "deco/mushrooms")) continue
             if (!p.tree && isYardWorld(p.x, p.y)) continue
+            if (p.tile in world.state.decor) continue
             var sprite = if (p.sway && sin(time * 2.2f + p.x * 0.15f) > 0.3f) "deco/tallgrass_b" else p.sprite
             if (winter && game.assets.has("${sprite}_snow")) sprite = "${sprite}_snow"
             else if (p.tree && fall && game.assets.has("${sprite}_fall")) sprite = "${sprite}_fall"
@@ -549,7 +574,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         chrome.drawTop()
         if (trayOpen && !chrome.isOpen) drawSeedTray(g)
         if (placing != null && !chrome.isOpen) drawPlaceBanner(g)
-        chrome.drawBottom(tipLift = if (trayOpen) 2 * 34 + 22 else if (placing != null) 34 else 0)
+        if (decorPlacing != null && !chrome.isOpen) drawDecorBanner(g)
+        chrome.drawBottom(tipLift = if (trayOpen) 2 * 34 + 22 else if (placing != null || decorPlacing != null) 34 else 0)
     }
 
     private fun drawSeedTray(g: Gfx) {
@@ -597,6 +623,36 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         if (ui.button("place-cancel", w - 22, y + 4, 16, 12, null, "ui/x", "red")) { placing = null; placeVertex = -1 }
     }
 
+    private fun drawDecorBanner(g: Gfx) {
+        val id = decorPlacing ?: return
+        val d = DECOR[id] ?: return
+        val w = game.engine.w
+        val y = game.engine.h - game.engine.safeBottom - hud.bottomHeight - 34
+        ui.panel(2, y, w - 4, 30, dark = true)
+        g.sprite("decor/$id", 16f, y + 26f)
+        g.text("PLACE ${d.name.uppercase()}  ${d.price} COINS", 32, y + 5, Gfx.GOLD)
+        g.text(if (decorTile < 0) "TAP FREE GRASS ON THE FARM" else "TAP AGAIN TO PLACE IT THERE", 32, y + 17, Gfx.WHITE)
+        if (ui.button("decor-cancel", w - 22, y + 4, 16, 12, null, "ui/x", "red")) { decorPlacing = null; decorTile = -1 }
+    }
+
+    /** Enters placement mode for a decoration bought in the decor shop. */
+    fun startDecor(id: String) {
+        decorPlacing = id
+        decorTile = -1
+        placing = null
+        trayOpen = false
+        hud.tip("decor", "Decorations go on free grass. Each adds beauty, and beauty adds a little to order coins.")
+    }
+
+    /** Free grass for a decoration: not a field, road, river, pasture, building, sign or lamp. */
+    fun decorFree(c: Int, r: Int): Boolean {
+        if (c !in 0 until cols || r !in 0 until rows) return false
+        val k = key(c, r)
+        if (terrain(c, r) != Terrain.GRASS || FarmMap.isRoad(c, r) || FarmMap.isRiver(c, r) || FarmMap.inPasture(c, r) || FarmMap.isWall(c, r)) return false
+        if (k in buildingAt || k in reservedTiles || plotAt.containsKey(k) || (c to r) in lanterns || (c to r) in slotTiles) return false
+        return !world.state.decor.containsKey(decorKey(c, r))
+    }
+
     /** Enters placement mode for a fixture item (sprinkler, scarecrow, lightning rod). */
     fun startPlacing(item: String) {
         placing = item
@@ -620,6 +676,23 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     }
 
     override fun onWorldTap(wx: Float, wy: Float): Boolean {
+        decorPlacing?.let { id ->
+            val t = IntArray(2).also { Iso.pick(wx, wy, it) }
+            val k = decorKey(t[0], t[1])
+            when {
+                !decorFree(t[0], t[1]) -> { hud.toast("Pick a free patch of grass"); game.sfx.play("error") }
+                k == decorTile -> if (world.placeDecor(t[0], t[1], id)) { decorPlacing = null; decorTile = -1; game.sfx.play("craft") }
+                else -> { decorTile = k; game.sfx.play("click", 0.5f) }
+            }
+            return true
+        }
+        run {
+            val t = IntArray(2).also { Iso.pick(wx, wy, it) }
+            val id = world.state.decor[decorKey(t[0], t[1])] ?: return@run
+            val d = DECOR[id] ?: return@run
+            chrome.confirm("PICK UP?", "Pick up the ${d.name} for ${d.price / 2} coins back?", "PICK UP") { world.pickUpDecor(t[0], t[1]) }
+            return true
+        }
         val item = placing
         if (item != null) {
             val v = vertexAt(wx, wy, 8f)
@@ -791,7 +864,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "skills" -> chrome.open(Chrome.Panel.SKILLS, "bench")
             "village" -> chrome.open(Chrome.Panel.VILLAGE)
             "tonics" -> { chrome.open(Chrome.Panel.WORKBENCH); chrome.panels.benchTab = 2 }
-            "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART); "pet" -> chrome.open(Chrome.Panel.PET)
+            "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART); "pet" -> chrome.open(Chrome.Panel.PET); "decor" -> chrome.open(Chrome.Panel.DECOR)
             else -> if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
             else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))
         }
@@ -801,6 +874,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     fun clearModes() {
         placing = null
         placeVertex = -1
+        decorPlacing = null
+        decorTile = -1
         trayOpen = false
         infoPlot = -1
     }
@@ -809,6 +884,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     fun closePanel(): Boolean {
         if (chrome.close()) return true
         if (placing != null) { placing = null; placeVertex = -1; return true }
+        if (decorPlacing != null) { decorPlacing = null; decorTile = -1; return true }
         if (trayOpen) { trayOpen = false; return true }
         return false
     }
