@@ -52,8 +52,10 @@ class Game(val host: Host) {
     private var paused = false
 
     val farm = FarmScreen(this)
-    val forest by lazy { ForestScreen(this) }
-    val mine by lazy { MineScreen(this) }
+    private val forestScreen = lazy { ForestScreen(this) }
+    private val mineScreen = lazy { MineScreen(this) }
+    val forest by forestScreen
+    val mine by mineScreen
 
     init {
         applySettings()
@@ -250,10 +252,18 @@ class Game(val host: Host) {
     }
 
     /** Starts over with a fresh farm (settings menu, confirmed twice). */
+    /**
+     * Starts a new farm. Every screen's panels close and a scene playing is dropped, and the game
+     * goes to the farm, where the new farm's opening plays.
+     */
     fun newGame() {
         world = fresh()
+        farm.chrome.reset()
+        if (forestScreen.isInitialized()) forest.chrome.reset()
+        if (mineScreen.isInitialized()) mine.chrome.reset()
         applySettings()
         save()
+        if (engine.screen !== farm) goTo(Nav.FARM)
     }
 
     companion object {

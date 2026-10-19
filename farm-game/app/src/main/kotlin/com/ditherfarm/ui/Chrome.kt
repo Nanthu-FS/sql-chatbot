@@ -56,7 +56,25 @@ class Chrome(private val game: Game, private val here: Nav) {
     init {
         panels.onPlace = { item -> panel = Panel.NONE; game.startPlacing(item) }
         panels.onSkills = { open(Panel.SKILLS, "bench") }
-        panels.onStory = { sceneById("opening")?.let { story.start(it, replay = true); open(Panel.STORY) } }
+        // Scenes play on the farm, so a replay asked for in the Forest or Mine goes there first.
+        panels.onStory = {
+            if (here == Nav.FARM) replayOpening()
+            else { panel = Panel.NONE; game.goTo(Nav.FARM); game.farm.chrome.replayOpening() }
+        }
+    }
+
+    /** Plays the opening again, asking for a look and a name. */
+    fun replayOpening() {
+        sceneById("opening")?.let { story.start(it, replay = true); open(Panel.STORY) }
+    }
+
+    /** Closes whatever is open and stops a scene mid-way: a new farm starts from a clean screen. */
+    fun reset() {
+        story.stop()
+        panel = Panel.NONE
+        target = null
+        levelUps.clear()
+        giftShown = false
     }
 
     fun open(p: Panel, target: String? = null) {
@@ -111,6 +129,8 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     /** HUD top bar plus the goals button; call before drawing screen-specific overlays. [questBelow] moves the notebook chip down past a screen's own chip. */
     fun drawTop(questBelow: Int = 0) {
+        // A story scene owns the whole screen: no HUD (and nothing under it to tap) until it ends.
+        if (panel == Panel.STORY) return
         hud.drawTop()
         val w = game.engine.w
         val y = game.engine.safeTop + 18
@@ -188,6 +208,7 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     /** Nav bar, panels and overlays. [tipLift] raises tips above screen trays. */
     fun drawBottom(tipLift: Int = 0) {
+        if (panel == Panel.STORY) { drawPanel(); return }
         val badges = mapOf(Nav.ORDERS to world.state.orders.indices.count { world.canDeliver(it) })
         when (val nav = hud.drawBottom(here, badges)) {
             Nav.BARN -> open(Panel.BARN)

@@ -33,6 +33,9 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
 
     val playing get() = scene != null
 
+    /** Ends the scene without marking it played (a new farm starts over). */
+    fun stop() { scene = null; picking = false }
+
     /** Jumps to line [i] fully typed (screenshots). */
     internal fun showLine(i: Int) { line = i; shown = 999f; picking = false }
 
