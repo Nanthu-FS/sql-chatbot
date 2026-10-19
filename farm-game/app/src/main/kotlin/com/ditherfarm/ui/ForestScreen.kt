@@ -54,7 +54,8 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
     private val world get() = game.world
 
     private val spotAt by lazy { world.forestSpots.associateBy { it.c * 1000 + it.r } }
-    private val machines get() = world.buildingsOn("forest")
+    /** Machines on the forest slots, in unlock order (the building list is fixed game data). */
+    private val machines by lazy { world.buildingsOn("forest") }
     private val slotSpots by lazy { world.forestSpots.filter { it.kind == SpotKind.SLOT } }
 
     /** Per-spot shake timer after a hit. */
@@ -195,7 +196,9 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         // Dim locked clearings (and the trail up to them) with a dark dither.
         for (r in 0 until rows) for (c in 0 until cols) {
             val z = ForestLayout.zoneOf(c, r) ?: continue
-            if (!world.zoneOpen(z)) g.sprite("tiles/shadow", Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat(), 200)
+            val x = Iso.x(c, r).toFloat(); val y = Iso.y(c, r).toFloat()
+            if (!inView(x, y, TILE_PAD)) continue
+            if (!world.zoneOpen(z)) g.sprite("tiles/shadow", x, y, 200)
         }
         for (b in world.state.forest.branches) {
             val c = b / 1000; val r = b % 1000
@@ -217,6 +220,8 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         for (sp in world.forestSpots) {
             val x = Iso.x(sp.c, sp.r).toFloat()
             val y = Iso.centerY(sp.c, sp.r).toFloat()
+            // Off-screen spots add nothing: their closures and draws would all land outside the buffer.
+            if (!inView(x, y, SPOT_PAD)) continue
             val open = world.zoneOpen(sp.zone)
             list.add(y) {
                 if (!open) {
@@ -413,5 +418,12 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
             is WorldEvent.SeasonChanged -> invalidateGround()
             else -> {}
         }
+    }
+
+    companion object {
+        /** World px of margin around a view for tile shadows (one tile is 32 x 16). */
+        private const val TILE_PAD = 48f
+        /** World px of margin for spots: the beehive's bubble and honey rise about 84 px over its tree. */
+        private const val SPOT_PAD = 96f
     }
 }

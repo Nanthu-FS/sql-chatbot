@@ -26,9 +26,14 @@ class DrawList {
 
     fun flush() {
         val live = pool.subList(0, n)
-        live.sortBy { it.depth }
+        live.sortWith(BY_DEPTH)
         for (e in live) e.block()
         n = 0
+    }
+
+    private companion object {
+        /** Same order as sortBy (a stable sort), but the depths compare as primitives instead of boxed floats. */
+        val BY_DEPTH = Comparator<Entry> { a, b -> a.depth.compareTo(b.depth) }
     }
 }
 
@@ -51,7 +56,8 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     private val lighting = Lighting()
     private val painter = GroundPainter(groundSeed)
     private var ground: Bitmap? = null
-    private var groundKey = ""
+    /** Season the ground was last painted for; -1 forces a repaint. */
+    private var groundKey = -1
     private val drawList = DrawList()
     private val lights = ArrayList<Lighting.Light>()
     private val pick = IntArray(2)
@@ -125,7 +131,7 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     open fun onPaintEnd() {}
 
     /** Forces the ground bitmap to repaint (e.g. map edited). Season changes repaint automatically. */
-    fun invalidateGround() { groundKey = "" }
+    fun invalidateGround() { groundKey = -1 }
 
     override fun enter() {
         cam.setBounds(mapBounds())
@@ -154,12 +160,12 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
 
     override fun draw(g: Gfx) {
         val c = g.canvas
-        val key = "${seasonIndex()}"
+        val key = seasonIndex()
         val m = margin
         if (ground == null || key != groundKey) {
             ground?.recycle()
             ground = painter.paint(
-                cols + 2 * m, rows + 2 * m, seasonIndex(), edgeCliff,
+                cols + 2 * m, rows + 2 * m, key, edgeCliff,
                 raised = rock?.let { ramp -> Raised({ cc, rr -> level(cc - m, rr - m) }, ramp, rockAccents) },
                 fade = if (fades) { wx, wy -> fade(wx, wy - m * Iso.TH) } else null,
                 palette = palette(),
@@ -171,11 +177,13 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
         c.save()
         c.translate((-cam.snapX() + shake).toFloat(), -cam.snapY().toFloat())
         c.scale(cam.zoom.toFloat(), cam.zoom.toFloat())
+        g.inWorld = true
         c.drawBitmap(ground!!, -painter.originX.toFloat(), -(painter.originY + m * Iso.TH).toFloat(), g.paint)
         drawGroundLayer(g)
         collect(drawList)
         drawList.flush()
         fx.drawWorld(g)
+        g.inWorld = false
         c.restore()
 
         lights.clear()
@@ -194,7 +202,9 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
             c.save()
             c.translate((-cam.snapX() + shake).toFloat(), -cam.snapY().toFloat())
             c.scale(cam.zoom.toFloat(), cam.zoom.toFloat())
+            g.inWorld = true
             drawEmissive(g, night)
+            g.inWorld = false
             c.restore()
         }
         weather.draw(g, game.engine.w, game.engine.h)

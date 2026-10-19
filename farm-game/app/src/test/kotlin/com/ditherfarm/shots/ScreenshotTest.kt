@@ -63,6 +63,7 @@ class ScreenshotTest {
         override val saveDir: File = Files.createTempDirectory("df-save").toFile()
         override val context: android.content.Context? = null
         override val density = 3f
+        override fun nowMs(): Long = 1_781_000_000_000L // TEMP-PIN-CLOCK (verification only; revert before commit)
     }
 
     /** Builds a game, lets [setup] arrange it, runs frames for [seconds] and saves a PNG. */

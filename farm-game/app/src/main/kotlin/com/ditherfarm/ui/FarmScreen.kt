@@ -80,7 +80,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     /** Fixed slots for farm machines, assigned in unlock order. */
     private val slotTiles = FarmMap.SLOTS
-    private val machines get() = world.buildingsOn("farm").filter { !it.prebuilt && it.id != "greenhouse" }
+    /** Farm machines in slot order (the building list is fixed game data, so it is read once). */
+    private val machines by lazy { world.buildingsOn("farm").filter { !it.prebuilt && it.id != "greenhouse" } }
     private fun machineAt(c: Int, r: Int) = machines.withIndex().firstOrNull { (i, _) -> slotTiles.getOrNull(i) == (c to r) }?.value
 
     /** A scattered decoration; [tree] props swap to their fall and snow art by season. */

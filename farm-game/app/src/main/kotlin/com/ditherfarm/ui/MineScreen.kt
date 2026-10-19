@@ -59,7 +59,8 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
     override val hudBottom get() = hud.bottomHeight
 
     private val quarryAt = MineLayout.quarryTiles.withIndex().associate { (i, t) -> t.first * 1000 + t.second to i }
-    private val machines get() = world.buildingsOn("mine")
+    /** Machines on the surface slots, in unlock order (the building list is fixed game data). */
+    private val machines by lazy { world.buildingsOn("mine") }
     private val shake = HashMap<Int, Float>()
     private var holdCell = -1
     private var holdTimer = 0f
@@ -269,6 +270,39 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         }
     }
 
+    /** A surface prop: its sprite, where it stands, and whether it is in the dark front wall (shaded). */
+    private class SurfaceProp(val sprite: String, val x: Float, val y: Float, val front: Boolean)
+
+    /**
+     * The surface's scenery. Terrain, cliffs and the machine slots are fixed on the surface, so the
+     * props are worked out once (in the same order as before) and each frame only culls and draws them.
+     */
+    private val surfaceProps: List<SurfaceProp> by lazy {
+        val n = MineLayout.SURFACE
+        val out = ArrayList<SurfaceProp>()
+        for (r in 0 until n) for (c in 0 until n) {
+            if (MineLayout.slots.contains(c to r) || (c to r) == MineLayout.cart || shadowed(c, r)) continue
+            val t = terrain(c, r)
+            if (t != Terrain.GRASS && t != Terrain.GRAVEL) continue
+            val lv = level(c, r)
+            val front = c >= SURFACE_WALL || r >= SURFACE_WALL
+            val roll = Noise.rand(c, r, 411)
+            val sprite = when {
+                lv > 0 -> if (roll < 0.18f) "deco/tallgrass_a" else if (roll < 0.26f) "deco/bush" else if (roll < 0.3f) "trees/pine" else null
+                front -> if (roll < 0.62f) "trees/pine" else if (roll < 0.74f) "deco/bush" else if (roll < 0.8f) "deco/rock_big" else null
+                t == Terrain.GRAVEL -> if (roll < 0.22f) "deco/rock" else null
+                roll < 0.14f -> "deco/tallgrass_a"
+                roll < 0.2f -> "deco/rock"
+                roll < 0.23f -> "deco/flowers_white"
+                else -> null
+            } ?: continue
+            val x = Iso.x(c, r) + (Noise.rand(c, r, 412) - 0.5f) * 12f
+            val y = Iso.centerY(c, r) + (Noise.rand(c, r, 413) - 0.5f) * 5f - lv * com.ditherfarm.engine.Raised.LEVEL_PX
+            out += SurfaceProp(sprite, x, y, front)
+        }
+        out
+    }
+
     private fun collectSurface(list: DrawList) {
         val g = game.gfx
         val q = world.data.mine.quarry.getOrNull(m.quarryLevel - 1)
@@ -276,6 +310,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         for (i in 0 until spots) {
             val (x, y) = center(i)
             val cell = world.quarryNode(i) ?: continue
+            if (!inView(x, y, ROCK_PAD)) continue
             list.add(y) {
                 val node = cell.node
                 if (node == null) { if (game.assets.has("rocks/rubble")) g.sprite("rocks/rubble", x, y, 150) }
@@ -296,27 +331,11 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         // Props: scrub on the ledges, pines and boulders in the dark wall in front, grass between.
         val (kc, kr) = MineLayout.cart
         if (game.assets.has("rocks/mine_cart")) list.add(Iso.centerY(kc, kr).toFloat()) { g.sprite("rocks/mine_cart", Iso.x(kc, kr).toFloat(), Iso.centerY(kc, kr).toFloat()) }
-        for (r in 0 until rows) for (c in 0 until cols) {
-            if (MineLayout.slots.contains(c to r) || (c to r) == MineLayout.cart || shadowed(c, r)) continue
-            val t = terrain(c, r)
-            if (t != Terrain.GRASS && t != Terrain.GRAVEL) continue
-            val lv = level(c, r)
-            val front = c >= SURFACE_WALL || r >= SURFACE_WALL
-            val roll = Noise.rand(c, r, 411)
-            val sprite = when {
-                lv > 0 -> if (roll < 0.18f) "deco/tallgrass_a" else if (roll < 0.26f) "deco/bush" else if (roll < 0.3f) "trees/pine" else null
-                front -> if (roll < 0.62f) "trees/pine" else if (roll < 0.74f) "deco/bush" else if (roll < 0.8f) "deco/rock_big" else null
-                t == Terrain.GRAVEL -> if (roll < 0.22f) "deco/rock" else null
-                roll < 0.14f -> "deco/tallgrass_a"
-                roll < 0.2f -> "deco/rock"
-                roll < 0.23f -> "deco/flowers_white"
-                else -> null
-            } ?: continue
-            val x = Iso.x(c, r) + (Noise.rand(c, r, 412) - 0.5f) * 12f
-            val y = Iso.centerY(c, r) + (Noise.rand(c, r, 413) - 0.5f) * 5f - lv * com.ditherfarm.engine.Raised.LEVEL_PX
-            if (!inView(x, y, 70f)) continue
-            val s = if (sprite == "trees/pine" && world.time.season == Season.WINTER && game.assets.has("trees/pine_snow")) "trees/pine_snow" else sprite
-            if (front) list.add(y) { g.spriteFiltered(s, x, y, shade) } else list.add(y) { g.sprite(s, x, y) }
+        val winter = world.time.season == Season.WINTER
+        for (p in surfaceProps) {
+            if (!inView(p.x, p.y, 70f)) continue
+            val s = if (p.sprite == "trees/pine" && winter && game.assets.has("trees/pine_snow")) "trees/pine_snow" else p.sprite
+            if (p.front) list.add(p.y) { g.spriteFiltered(s, p.x, p.y, shade) } else list.add(p.y) { g.sprite(s, p.x, p.y) }
         }
         // Machine slots.
         MineLayout.slots.forEachIndexed { k, (c, r) ->
@@ -342,6 +361,8 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             val c = i % n; val r = i / n
             val x = Iso.x(c, r).toFloat()
             val y = Iso.centerY(c, r).toFloat()
+            // Cells off-screen add nothing, so skip their closures; the rock state is only read here.
+            if (!inView(x, y, ROCK_PAD)) continue
             if (c == 0 || r == 0 || c == n - 1 || r == n - 1) {
                 // The back walls are painted; loose rubble lies along the front rim.
                 if (c > 0 && r > 0 && Noise.rand(c, r, m.floor) < 0.35f && game.assets.has("rocks/rubble")) list.add(y) { g.sprite("rocks/rubble", x, y) }
@@ -576,6 +597,8 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
 
         /** Front rows of the surface that are pine wall. */
         const val SURFACE_WALL = 21
+        /** World px of margin for rocks and ceiling beams (the tallest rock art rises 60 px over its base). */
+        private const val ROCK_PAD = 64f
 
         private fun ramp(vararg c: Long) = IntArray(c.size) { c[it].toInt() }
 

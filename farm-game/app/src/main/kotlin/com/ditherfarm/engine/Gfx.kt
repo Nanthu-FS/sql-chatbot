@@ -66,9 +66,23 @@ class Gfx(val assets: Assets) {
 
     /**
      * 9-slice draw of a pixel-art frame: corners stay 1:1, edges and center stretch.
-     * [b] is the border width in pixels on every side.
+     * [b] is the border width in pixels on every side. Small opaque frames whose pieces do not
+     * overlap are drawn once into an image and blitted after: the same pixels in one draw, not nine.
      */
     fun slice9(name: String, l: Int, t: Int, r: Int, bottom: Int, b: Int, alpha: Int = 255) {
+        val w = r - l
+        val h = bottom - t
+        if (alpha == 255 && !inWorld && b > 0 && w >= 2 * b && h >= 2 * b && w * h <= FRAME_MAX_AREA) {
+            val img = frameImages.getOrPut(FrameKey(name, w, h, b)) {
+                val out = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+                nineSlice(Canvas(out), name, 0, 0, w, h, b, 255)
+                out
+            }
+            canvas.drawBitmap(img, l.toFloat(), t.toFloat(), blit)
+        } else nineSlice(canvas, name, l, t, r, bottom, b, alpha)
+    }
+
+    private fun nineSlice(c: Canvas, name: String, l: Int, t: Int, r: Int, bottom: Int, b: Int, alpha: Int) {
         val bmp = assets[name].bmp
         val w = bmp.width
         val h = bmp.height
@@ -81,9 +95,20 @@ class Gfx(val assets: Assets) {
             if (dx[i + 1] <= dx[i] || dy[j + 1] <= dy[j]) continue
             src.set(xs[i], ys[j], xs[i + 1], ys[j + 1])
             dst.set(dx[i], dy[j], dx[i + 1], dy[j + 1])
-            canvas.drawBitmap(bmp, src, dst, paint)
+            c.drawBitmap(bmp, src, dst, paint)
         }
         paint.alpha = 255
+    }
+
+    private data class FrameKey(val name: String, val w: Int, val h: Int, val b: Int)
+
+    /** Rendered small frames, least recently used out first; the oldest is recycled when the cache is full. */
+    private val frameImages = object : LinkedHashMap<FrameKey, Bitmap>(64, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<FrameKey, Bitmap>?): Boolean {
+            if (size <= FRAME_IMAGES) return false
+            eldest?.value?.recycle()
+            return true
+        }
     }
 
     fun textWidth(s: String): Int {
@@ -92,26 +117,65 @@ class Gfx(val assets: Assets) {
     }
 
     /**
+     * True while world objects are drawn under the map's zoom. Text there is drawn glyph by glyph,
+     * scaled with the world; text on the screen itself comes from [text]'s image cache.
+     */
+    var inWorld = false
+
+    private val blit = Paint().apply { isFilterBitmap = false; isAntiAlias = false }
+
+    /**
      * Pixel text with a 1px dark outline. [align] -1 left, 0 center, 1 right.
      * Silkscreen is drawn at 8px so glyphs land on the pixel grid.
      */
     fun text(s: String, x: Int, y: Int, color: Int = WHITE, align: Int = -1, outline: Int = INK, shadow: Boolean = true) {
         text.typeface = assets.font
         val w = textWidth(s)
-        val left = when (align) { 0 -> x - w / 2; 1 -> x - w; else -> x }.toFloat()
-        val base = (y + 7).toFloat()
+        val left = when (align) { 0 -> x - w / 2; 1 -> x - w; else -> x }
+        val base = y + 7
+        if (!inWorld && isOpaque(color) && (outline == 0 || isOpaque(outline))) {
+            // Opaque text on the screen is drawn once into an image and blitted after: the same pixels, one draw.
+            val img = textImage(s, color, outline, shadow)
+            canvas.drawBitmap(img, (left - TEXT_PAD_X).toFloat(), (base - TEXT_PAD_Y).toFloat(), blit)
+        } else drawTextLines(canvas, s, left.toFloat(), base.toFloat(), color, outline, shadow)
+    }
+
+    /** The glyph draws of one line anchored at ([left], [base]): shadow, outline ring, then the text. */
+    private fun drawTextLines(c: Canvas, s: String, left: Float, base: Float, color: Int, outline: Int, shadow: Boolean) {
+        text.typeface = assets.font
         if (shadow) {
             text.color = outline
-            canvas.drawText(s, left, base + 2, text)
-            canvas.drawText(s, left + 1, base + 2, text)
+            c.drawText(s, left, base + 2, text)
+            c.drawText(s, left + 1, base + 2, text)
         }
         if (outline != 0) {
             text.color = outline
-            for (oy in -1..1) for (ox in -1..1) if (ox != 0 || oy != 0) canvas.drawText(s, left + ox, base + oy, text)
+            for (oy in -1..1) for (ox in -1..1) if (ox != 0 || oy != 0) c.drawText(s, left + ox, base + oy, text)
         }
         text.color = color
-        canvas.drawText(s, left, base, text)
+        c.drawText(s, left, base, text)
     }
+
+    private data class TextKey(val s: String, val color: Int, val outline: Int, val shadow: Boolean)
+
+    /** Rendered text images, least recently used first out; the oldest is recycled when the cache is full. */
+    private val textImages = object : LinkedHashMap<TextKey, Bitmap>(64, 0.75f, true) {
+        override fun removeEldestEntry(eldest: MutableMap.MutableEntry<TextKey, Bitmap>?): Boolean {
+            if (size <= TEXT_IMAGES) return false
+            eldest?.value?.recycle()
+            return true
+        }
+    }
+
+    /** The line of text drawn at the origin with a [TEXT_PAD_X] x [TEXT_PAD_Y] margin, made once per text and style. */
+    private fun textImage(s: String, color: Int, outline: Int, shadow: Boolean): Bitmap =
+        textImages.getOrPut(TextKey(s, color, outline, shadow)) {
+            val bmp = Bitmap.createBitmap(textWidth(s) + 2 * TEXT_PAD_X, 2 * TEXT_PAD_Y, Bitmap.Config.ARGB_8888)
+            drawTextLines(Canvas(bmp), s, TEXT_PAD_X.toFloat(), TEXT_PAD_Y.toFloat(), color, outline, shadow)
+            bmp
+        }
+
+    private fun isOpaque(color: Int) = color ushr 24 == 0xFF
 
     companion object {
         const val WHITE = 0xFFFFFFFF.toInt()
@@ -121,6 +185,15 @@ class Gfx(val assets: Assets) {
         const val GREEN = 0xFF63C74D.toInt()
         const val BLUE = 0xFF2CE8F5.toInt()
         const val GREY = 0xFF8B9BB4.toInt()
+
+        /** Margin round a cached text image: the outline reaches 1 px out, the shadow 2 px down, ink sits within 12 px of the baseline. */
+        const val TEXT_PAD_X = 4
+        const val TEXT_PAD_Y = 12
+        /** Most text images kept at once (a few KB each). */
+        const val TEXT_IMAGES = 256
+        /** Frames up to 64 x 64 px are cached as images (at most 16 KB each); bigger ones are drawn piece by piece. */
+        const val FRAME_MAX_AREA = 64 * 64
+        const val FRAME_IMAGES = 256
 
         fun newBuffer(w: Int, h: Int): Bitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
     }
