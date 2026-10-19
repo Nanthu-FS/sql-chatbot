@@ -48,13 +48,13 @@
   "ay": 33
  },
  "buildings/cottage_c": {
-  "ax": 21,
-  "ay": 31,
-  "bh": 42
+  "ax": 20,
+  "ay": 29,
+  "bh": 39
  },
  "buildings/cottage_c_lit": {
-  "ax": 21,
-  "ay": 31
+  "ax": 20,
+  "ay": 29
  },
  "buildings/drill_rig": {
   "ax": 12,
@@ -637,8 +637,8 @@
  },
  "deco/bridge": {
   "ax": 24,
-  "ay": 22,
-  "bh": 33
+  "ay": 24,
+  "bh": 37
  },
  "deco/bush": {
   "ax": 13,
@@ -725,8 +725,8 @@
  },
  "deco/hay_bale": {
   "ax": 10,
-  "ay": 13,
-  "bh": 20
+  "ay": 11,
+  "bh": 18
  },
  "deco/iron_sprinkler": {
   "ax": 14,
@@ -803,14 +803,14 @@
   "bh": 28
  },
  "deco/sign_forest": {
-  "ax": 10,
-  "ay": 23,
-  "bh": 26
+  "ax": 9,
+  "ay": 19,
+  "bh": 23
  },
  "deco/sign_mine": {
-  "ax": 10,
-  "ay": 23,
-  "bh": 26
+  "ax": 9,
+  "ay": 19,
+  "bh": 23
  },
  "deco/stump": {
   "ax": 8,
@@ -844,8 +844,8 @@
  },
  "deco/trough": {
   "ax": 10,
-  "ay": 12,
-  "bh": 19
+  "ay": 11,
+  "bh": 18
  },
  "fx/chip_stone": {
   "ax": 2,

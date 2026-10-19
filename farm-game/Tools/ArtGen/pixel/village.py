@@ -735,18 +735,12 @@ def main():
     bld = Sprites(art, "buildings")
     deco = Sprites(art, "deco")
 
-    # The pickup truck and its load, the harvester, the field sign and the crates are
-    # hand-pixeled in farm_hand.py (art round 5).
+    # The pickup truck and its load, the harvester, the bunkhouse (cottage_c), the bridge, the
+    # signposts, the field sign, the crates, the hay bale and the trough are hand-pixeled in
+    # farm_hand.py (art round 5).
 
     emit(bld, "cottage_a", cottage_a())
     emit(bld, "cottage_b", cottage_b())
-    emit(bld, "cottage_c", cottage_c())
-
-    emit(deco, "bridge", bridge())
-    emit(deco, "sign_forest", signpost(TREE_ICON))
-    emit(deco, "sign_mine", signpost(PICK_ICON))
-    emit(deco, "hay_bale", hay_bale())
-    emit(deco, "trough", trough())
 
     pivots = {}
     for sp in (veh, bld, deco):

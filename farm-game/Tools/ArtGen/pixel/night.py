@@ -65,7 +65,7 @@ def main():
     art = sys.argv[1]
     bld, deco = Sprites(art, "buildings"), Sprites(art, "deco")
     ns = village()
-    for name in ("cottage_a", "cottage_b", "cottage_c"):
+    for name in ("cottage_a", "cottage_b"):                                  # cottage_c: farm_hand.py
         im, (ax, ay) = windows(ns, ns[name])
         bld.save(name + "_lit", im, ax, ay)
     manifest = json.load(open(os.path.join(art, "manifest.json")))

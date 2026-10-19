@@ -21,6 +21,8 @@ nothing is copied from them.
   deco/fence_r, fence_l                 one tile of fence along +col / +row, pivot at the start corner
   buildings/compost_bin, bakery_oven, preserves_jar, beehive, fruit_press, seed_maker
   buildings/oil_press, market_cart, harvest_shed, planter_shed, windmill
+  buildings/cottage_c(_lit)             the bunkhouse, and its lit windows for the night overlay
+  deco/hay_bale, trough, bridge, sign_forest, sign_mine
                                         farm machines, each with a cream icon plate
 
 Pivot = the ground centre of the footprint.
@@ -1241,6 +1243,177 @@ def preview5(out):
     sheet.resize((sheet.width * 4, sheet.height * 4), Image.NEAREST).save(out)
 
 
+# ---------------------------------------------------------------- yard props and the bunkhouse
+
+ICONS.update({
+    "bed": (["c....", "crrrr", "ccccc", "c...c"], {"c": "cream", "r": "red"}),
+    "tree": ([".g.", "ggg", "GgG", ".b."], {"g": "green", "G": "green_d", "b": "brown"}),
+    "pick": (["sss.", "...s", "..b.", ".b.."], {"s": "grey_d", "b": "brown"}),
+})
+
+
+def bunkhouse(lit=False):
+    """The farmhands' bunkhouse: a cream cottage with a red roof, red door and shutters, cream
+    window frames, a chimney and a bed on the plate. lit=True draws only the glowing windows (the
+    night overlay)."""
+    c = Iso(56, 60, 28, 42)
+    U, V, WH, PK = 4.4, 3.4, 13, 8
+    windows = [(V, -3.4, -1.8, 5.2, 9.4), (V, 2.0, 3.6, 5.2, 9.4)]          # on the +v face: (v, u0, u1, z0, z1)
+    gable = [(-1.0, 1.0, 5.2, 9.4), (-0.7, 0.7, WH + 1.6, WH + 4.4)]          # on the +u face: (v0, v1, z0, z1)
+    if lit:
+        for v, u0, u1, z0, z1 in windows:
+            c.poly([(u0 + 0.3, v, z0 + 0.5), (u1 - 0.3, v, z0 + 0.5), (u1 - 0.3, v, z1 - 0.5), (u0 + 0.3, v, z1 - 0.5)], "amber")
+            c.zline((u0 + u1) / 2, v, z0 + 0.5, z1 - 0.5, "yellow")
+        for v0, v1, z0, z1 in gable:
+            c.poly([(U, v0 + 0.3, z0 + 0.5), (U, v1 - 0.3, z0 + 0.5), (U, v1 - 0.3, z1 - 0.5), (U, v0 + 0.3, z1 - 0.5)], "amber")
+        return c, c.pivot(0, 0)
+    c.box(1.6, 2.8, -2.6, -1.4, WH, WH + PK + 4, "grey_l", "grey", "grey_d")  # chimney (behind the ridge)
+    c.box(1.4, 3.0, -2.8, -1.2, WH + PK + 3, WH + PK + 4.2, "cream", "cream", "tan")
+    shed(c, U, V, WH, PK)
+    for v, u0, u1, z0, z1 in windows:
+        c.poly([(u0, v, z0), (u1, v, z0), (u1, v, z1), (u0, v, z1)], "cream")
+        c.poly([(u0 + 0.3, v, z0 + 0.5), (u1 - 0.3, v, z0 + 0.5), (u1 - 0.3, v, z1 - 0.5), (u0 + 0.3, v, z1 - 0.5)], "blue_d")
+        c.zline((u0 + u1) / 2, v, z0 + 0.5, z1 - 0.5, "cream")
+        c.zline(u0 - 0.2, v, z0, z1, "red"); c.zline(u1 + 0.6, v, z0, z1, "red")      # shutters
+        x, y = c.p(u0 + 0.4, v, z1 - 0.8)
+        c.dot(x, y, "cyan")
+    for v0, v1, z0, z1 in gable:
+        c.poly([(U, v0, z0), (U, v1, z0), (U, v1, z1), (U, v0, z1)], "cream")
+        c.poly([(U, v0 + 0.3, z0 + 0.5), (U, v1 - 0.3, z0 + 0.5), (U, v1 - 0.3, z1 - 0.5), (U, v0 + 0.3, z1 - 0.5)], "slate_d")
+    c.poly([(-0.9, V, 1.2), (0.9, V, 1.2), (0.9, V, 9.6), (-0.9, V, 9.6)], "cream")   # door
+    c.poly([(-0.6, V, 1.2), (0.6, V, 1.2), (0.6, V, 9.2), (-0.6, V, 9.2)], "red")
+    c.dot(*c.p(0.4, V, 5), "cream")
+    c.box(-1.4, 1.4, V, V + 0.8, 0, 1.2, "grey_l", "grey", "grey_d")      # step
+    plate(c, -1.2, 1.2, V, 10, 12.6, "bed")
+    c.box(-U + 0.4, -U + 2.0, V + 0.2, V + 0.8, 1.6, 2.2, "brown_l", "brown", "brown_d")   # bench
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def hay_bale():
+    """A square straw bale tied with two red twine bands."""
+    c = Iso(26, 24, 13, 16)
+    U, V, H = 2.4, 1.7, 4.6
+    c.box(-U, U, -V, V, 0, H, "yellow", "amber", "orange")
+    for u, v, z in ((-1.6, V, 2), (0.6, V, 3.2), (-0.4, V, 1.2), (1.6, V, 2.4)):     # straw ends
+        x, y = c.p(u, v, z)
+        c.dot(x, y, "yellow")
+    for u in (-1.0, 1.0):                                                   # twine
+        c.zline(u, V, 0, H, "red")
+        c.vline(u, 2 * V, -V, H, "red")
+    c.vline(U, 2 * V, -V, 2.4, "rust")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def trough():
+    """A wooden water trough on red legs, water with a glint inside a cream rim."""
+    c = Iso(28, 22, 14, 14)
+    U, V = 2.8, 1.3
+    for u, v in ((-U + 0.2, V - 0.5), (U - 0.5, V - 0.5), (U - 0.5, -V + 0.2)):
+        c.box(u, u + 0.3, v, v + 0.3, 0, 1.4, "red", "red", "red_d")
+    c.box(-U, U, -V, V, 1.4, 4.6, "cream", "brown_l", "brown")
+    c.uline(-U, U, V, 3, "brown")
+    c.poly([(-U + 0.5, -V + 0.5, 4.6), (U - 0.5, -V + 0.5, 4.6), (U - 0.5, V - 0.5, 4.6), (-U + 0.5, V - 0.5, 4.6)], "blue")
+    c.uline(-U + 0.5, U - 0.5, -V + 0.5, 4.6, "blue_d")
+    x, y = c.p(-0.6, 0, 4.6)
+    c.dot(x, y, "white"); c.dot(x + 1, y, "cyan")
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def bridge():
+    """A plank bridge running along v (up-right on screen): natural planks, red posts with cream
+    caps and cream rails, like the fences. Pivot on the water at its centre."""
+    c = Iso(50, 38, 25, 24)
+    U, L = 2.9, 8
+    rail, post = ("white", "cream", "tan"), ("red", "red", "red_d")
+
+    def railing(u):
+        c.box(u - 0.2, u + 0.2, -L, L, 9.4, 10.4, *rail)
+        for v in (-L + 0.2, -L / 3, L / 3, L - 1.0):
+            c.box(u - 0.4, u + 0.4, v, v + 0.8, 6.4, 11.2, *post)
+            x, y = c.p(u, v + 0.4, 11.2)
+            c.dot(x, y, "cream"); c.dot(x - 1, y, "cream")
+    for u, v in ((-U + 0.4, -L + 1), (U - 0.8, -L + 1), (-U + 0.4, L - 1.4), (U - 0.8, L - 1.4)):
+        c.box(u, u + 0.4, v, v + 0.4, 0, 3.6, "brown_l", "brown", "brown_d")   # piles
+    railing(-U + 0.3)
+    c.box(-U - 0.2, U + 0.2, -L, L, 3.6, 5, "brown_l", "brown", "brown_d", lit=False)
+    c.box(-U, U, -L, L, 5, 6.4, "tan", "brown_l", "brown")
+    for k in range(1, L):
+        c.uline(-U, U, -L + 2 * k, 6.4, "brown")                               # plank seams
+    railing(U - 0.3)
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+def signpost(icon):
+    """A red post with a cream arrow board in a red edge, the destination's icon painted on it."""
+    c = Iso(26, 30, 13, 24)
+    c.box(-0.3, 0.3, -0.3, 0.3, 0, 15, "red", "red", "red_d")
+    c.dot(*c.p(0, 0, 15), "cream")
+    u0, u1, z0, z1 = -3.0, 2.6, 9, 14.4
+    pts = [(u0, 0.35, z0), (u1, 0.35, z0), (u1 + 1.2, 0.35, (z0 + z1) / 2), (u1, 0.35, z1), (u0, 0.35, z1)]
+    c.poly(pts, "red_d")
+    inner = [(u0 + 0.5, 0.35, z0 + 0.6), (u1, 0.35, z0 + 0.6), (u1 + 0.6, 0.35, (z0 + z1) / 2), (u1, 0.35, z1 - 0.6), (u0 + 0.5, 0.35, z1 - 0.6)]
+    c.poly(inner, "cream")
+    rows, key = ICONS[icon]
+    x, y = c.p(-0.4, 0.35, (z0 + z1) / 2)
+    x -= len(rows[0]) // 2
+    y -= len(rows) // 2
+    for j, row in enumerate(rows):
+        for i, ch in enumerate(row):
+            if ch in key:
+                c.dot(x + i, y + j, key[ch])
+    soften(c.im)
+    return c, c.pivot(0, 0)
+
+
+YARD = [("buildings/cottage_c", bunkhouse), ("deco/hay_bale", hay_bale), ("deco/trough", trough),
+        ("deco/bridge", bridge), ("deco/sign_forest", lambda: signpost("tree")), ("deco/sign_mine", lambda: signpost("pick"))]
+
+
+def preview6(out):
+    """Yard props: today's sprite over the hand-pixeled one, 4x."""
+    from PIL import Image, ImageDraw
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    import polish
+    art = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "app", "src", "main", "assets", "art")
+    man = json.load(open(os.path.join(art, "manifest.json")))
+    hand = Image.open(os.path.join(art, "people/hana_se_idle.png")).convert("RGBA")
+    hp = man["people/hana_se_idle"]
+    cw, ch = 80, 76
+    sheet = Image.new("RGBA", (cw * len(YARD), ch * 2), (62, 137, 72, 255))
+    for i, (key, fn) in enumerate(YARD):
+        for row in range(2):
+            ax, ay = i * cw + 46, row * ch + ch - 12
+            sheet.alpha_composite(hand, (ax - 30 - hp["ax"], ay - hp["ay"]))
+            if row == 0:
+                im = Image.open(os.path.join(art, key + ".png")).convert("RGBA")
+                p = man[key]
+                sheet.alpha_composite(im, (ax - p["ax"], ay - p["ay"]))
+            else:
+                cnv, (px_, py_) = fn()
+                x0, y0, x1, y1 = cnv.im.getbbox()
+                body, pad = finish(cnv.im.crop((x0, y0, x1, y1)))
+                sys.stderr.write("%s bh %d (now %d)\n" % (key, body.height, man[key].get("bh", 0)))
+                body = polish.polish(body, "world", key)
+                sheet.alpha_composite(body, (ax - (px_ - x0 + pad), ay - (py_ - y0 + pad)))
+    sheet.resize((sheet.width * 4, sheet.height * 4), Image.NEAREST).save(out)
+
+
+def emit_overlay(sp, name, made, under):
+    """Saves an overlay (no outline, shadow or polish) on the canvas and pivot of the sprite
+    `under` already saved by sp, so the engine can draw one exactly over the other."""
+    from PIL import Image
+    cnv, (px, py) = made
+    base = Image.open(os.path.join(sp.dir, under + ".png"))
+    p = sp.pivots[f"{sp.group}/{under}"]
+    out = Image.new("RGBA", base.size, (0, 0, 0, 0))
+    out.alpha_composite(cnv.im, (p["ax"] - px, p["ay"] - py))
+    sp.save(name, out, p["ax"], p["ay"])
+
+
 def emit(sp, name, made):
     cnv, (px, py) = made
     x0, y0, x1, y1 = cnv.im.getbbox()
@@ -1268,6 +1441,10 @@ def main():
     emit(deco, "fence_l", fence(False))
     for name, fn in MACHINES + MACHINES_2:
         emit(bld, name, fn())
+    for key, fn in YARD:
+        group, name = key.split("/")
+        emit(bld if group == "buildings" else deco, name, fn())
+    emit_overlay(bld, "cottage_c_lit", bunkhouse(True), "cottage_c")
     for name, fn in (("barn", barn), ("silo", silo), ("orders", orders), ("workbench", workbench), ("well", well), ("market", market)):
         emit(bld, name, fn(False))
         emit(bld, name + "_snow", fn(True))
@@ -1324,5 +1501,7 @@ if __name__ == "__main__":
         preview4(sys.argv[2])
     elif len(sys.argv) > 2 and sys.argv[1] == "--preview5":
         preview5(sys.argv[2])
+    elif len(sys.argv) > 2 and sys.argv[1] == "--preview6":
+        preview6(sys.argv[2])
     else:
         main()
