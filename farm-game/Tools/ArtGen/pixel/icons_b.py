@@ -1836,6 +1836,17 @@ BADGE_R = ["red_d", "red", "pink", "white"]
 WATER = ["blue_d", "blue", "cyan", "white"]
 
 
+def pin(n):
+    """A round-headed red pin stuck in at a slant, for pinning a goal to the HUD chip."""
+    c = Canvas(n)
+    k = n / 14.0
+    needle = thick((3.0 * k, 12.6 * k), (7.0 * k, 6.0 * k), 0.4 * k + 0.2)
+    c.cyl(needle, METAL, lit=3.0, peak=0.3)
+    c.sphere(8.2 * k, 5.0 * k, 4.2 * k, 4.2 * k, REDS, s=ell(8.2 * k, 5.0 * k, 4.2 * k, 4.2 * k), sep="red_d")
+    c.pts([(round(6.6 * k), round(3.0 * k)), (round(7.2 * k), round(2.6 * k))] + ([(round(6.4 * k), round(3.6 * k))] if n > 14 else []), "white")
+    return c
+
+
 ICONS = {
     "nav_farm": nav_farm, "nav_forest": nav_forest, "nav_mine": nav_mine, "bag": bag, "build": build,
     "craft": craft, "orders": orders, "market": market, "shop": shop, "sell": sell, "menu": menu,
@@ -1843,7 +1854,7 @@ ICONS = {
     "bell": bell, "sound_on": sound_on, "sound_off": sound_off, "vibrate": vibrate, "export": export,
     "import": import_, "info": info, "close": close, "tool_hoe": tool_hoe, "tool_water_can": tool_water_can,
     "tool_axe": tool_axe, "tool_pickaxe": tool_pickaxe, "tool_scythe": tool_scythe, "tool_sickle": tool_sickle,
-    "seeds": seeds, "fertilizer": fertilizer, "sprinkler": sprinkler, "harvest": harvest,
+    "seeds": seeds, "fertilizer": fertilizer, "sprinkler": sprinkler, "harvest": harvest, "pin": pin,
 }
 
 

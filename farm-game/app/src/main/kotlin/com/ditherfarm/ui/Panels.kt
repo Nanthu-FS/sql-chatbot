@@ -106,6 +106,19 @@ import com.ditherfarm.game.skillBlocker
 import com.ditherfarm.game.skillPoints
 import com.ditherfarm.game.useBlocker
 import com.ditherfarm.game.useTonic
+import com.ditherfarm.game.CHORES_LEVEL
+import com.ditherfarm.game.choreDone
+import com.ditherfarm.game.choreProgress
+import com.ditherfarm.game.choreReward
+import com.ditherfarm.game.choreStreakNow
+import com.ditherfarm.game.claimChore
+import com.ditherfarm.game.claimContract
+import com.ditherfarm.game.contractDaysLeft
+import com.ditherfarm.game.contractDone
+import com.ditherfarm.game.contractReward
+import com.ditherfarm.game.contractShipped
+import com.ditherfarm.game.streakBonus
+import com.ditherfarm.game.togglePin
 
 /** Modal panels opened from the HUD. Each draw call returns false when the panel should close. */
 class Panels(private val game: Game, private val hud: Hud) {
@@ -124,6 +137,25 @@ class Panels(private val game: Game, private val hud: Hud) {
     private var confirmNewGame = 0
 
     fun reset() { selected = null; confirmNewGame = 0 }
+
+    companion object {
+        /** Tabs of the goals panel. */
+        const val TAB_DAILY = 0
+        const val TAB_GOALS = 1
+    }
+
+    /** Sprite for a goal icon: a sprite path as is, an item id through [icon]. */
+    fun goalIcon(key: String) = if ('/' in key) key else icon(key)
+
+    /** A pin centred at ([cx], [cy]) that pins [key] to the goal chip; faded while unpinned. */
+    fun pinToggle(key: String, cx: Int, cy: Int) {
+        val on = world.state.pinned == key
+        g.sprite("icons/pin", cx.toFloat(), cy.toFloat(), if (on) 255 else 90)
+        if (ui.clickable("pin-$key", cx - 8, cy - 8, 16, 16)) {
+            game.sfx.play("click")
+            hud.toast(if (world.togglePin(key)) "Pinned to the goal chip" else "Unpinned")
+        }
+    }
 
     /** Sprite for an inventory key: crop/item icon, falling back to the generic ui dot. */
     fun icon(key: String, big: Boolean = false): String {
@@ -516,6 +548,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         }
         val blocker = world.buildBlocker(id)
         if (blocker != null) g.text(blocker.uppercase(), x + pw / 2, y + ph - 36, Gfx.RED, align = 0, outline = 0, shadow = false)
+        pinToggle("build:$id", x + pw - 18, y + ph - 14)
         if (ui.button("build-$id", x + pw / 2 - 40, y + ph - 22, 80, 16, "BUILD", style = if (blocker == null) "green" else "grey")) {
             if (world.build(id)) return false
         }
@@ -642,7 +675,7 @@ class Panels(private val game: Game, private val hud: Hud) {
     }
 
     // ------------------------------------------------------------------ goals
-    /** Open tab of the goals panel: 0 goals, 1 book, 2 events. */
+    /** Open tab of the goals panel: 0 daily, 1 goals, 2 book, 3 events. */
     var goalsTab = 0
     private var bookPage = 0
 
@@ -652,11 +685,12 @@ class Panels(private val game: Game, private val hud: Hud) {
     fun goals(): Boolean {
         val (x, y, pw, ph) = frame("GOALS", maxPanelH).toList()
         if (closeButton(x, y, pw)) return false
-        goalsTab = ui.tabs("goal-tabs", x + 8, y + 22, pw - 16, listOf("GOALS", "BOOK", "EVENTS"), goalsTab)
+        goalsTab = ui.tabs("goal-tabs", x + 8, y + 22, pw - 16, listOf("DAILY", "GOALS", "BOOK", "EVENTS"), goalsTab)
         val top = y + 42
         when (goalsTab) {
-            0 -> achievementList(x, top, pw, y + ph - 8 - top)
-            1 -> book(x, top, pw, y + ph - 8 - top)
+            TAB_DAILY -> daily(x, top, pw)
+            TAB_GOALS -> achievementList(x, top, pw, y + ph - 8 - top)
+            2 -> book(x, top, pw, y + ph - 8 - top)
             else -> eventsTab(x, top, pw)
         }
         return true
@@ -692,7 +726,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             when {
                 done -> g.sprite("icons/check", (x + pw - 22).toFloat(), (ry + 14).toFloat())
                 world.claimable(a) -> if (ui.button("claim-${a.id}", x + pw - 58, ry + 4, 48, 16, "CLAIM", style = "gold")) world.claimAchievement(a.id)
-                else -> {}
+                else -> pinToggle("ach:${a.id}:$tier", x + pw - 18, ry + 10)
             }
             if (!done) {
                 val reward = if (t.coins > 0) "${Ui.compact(t.coins)}c" else if (t.xp > 0) "${t.xp}XP" else "GIFT"
@@ -735,6 +769,79 @@ class Panels(private val game: Game, private val hud: Hud) {
             p.id in world.state.pagesClaimed -> g.text("CLAIMED", x + pw / 2, by + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
             world.pageClaimable(p) -> if (ui.button("claim-page", x + pw / 2 - 30, by + 20, 60, 16, "CLAIM", style = "gold")) world.claimPage(p.id)
             else -> {}
+        }
+    }
+
+    /** Today's three chores with the streak, then this week's truck contract. */
+    private fun daily(x: Int, top: Int, pw: Int) {
+        val today = game.today()
+        val green = 0xFF3E8948.toInt()
+        var y = top
+        val streak = world.choreStreakNow(today)
+        g.text("TODAY'S CHORES", x + 10, y, Gfx.INK, outline = 0, shadow = false)
+        g.text(if (streak > 0) "STREAK: $streak DAY${if (streak > 1) "S" else ""}" else "NO STREAK YET", x + pw - 10, y, 0xFF68386C.toInt(), align = 1, outline = 0, shadow = false)
+        y += 12
+        val chores = world.state.chores
+        if (world.level < CHORES_LEVEL || chores.isEmpty()) {
+            g.text("CHORES START AT LEVEL $CHORES_LEVEL", x + pw / 2, y + 8, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            y += 26
+        } else {
+            val (coins, _) = world.choreReward()
+            val bw = pw - 124
+            chores.forEachIndexed { i, c ->
+                val done = world.choreDone(c)
+                g.slice9(if (c.claimed) "ui/slot_sel" else "ui/slot", x + 8, y, x + pw - 8, y + 27, 4)
+                g.sprite(goalIcon(c.icon), (x + 20).toFloat(), (y + 13).toFloat())
+                g.text(c.text.uppercase(), x + 32, y + 4, Gfx.INK, outline = 0, shadow = false)
+                val have = world.choreProgress(c)
+                ui.bar(x + 32, y + 16, bw, have.toFloat() / c.n, if (done) "gold" else "green", 6)
+                g.text("$have/${c.n}", x + 36 + bw, y + 15, Gfx.INK, outline = 0, shadow = false)
+                when {
+                    c.claimed -> g.sprite("icons/check", (x + pw - 22).toFloat(), (y + 13).toFloat())
+                    done -> if (ui.button("chore-$i", x + pw - 58, y + 6, 46, 16, "CLAIM", style = "gold")) world.claimChore(i)
+                    else -> {
+                        g.text("+$coins", x + pw - 30, y + 15, green, align = 1, outline = 0, shadow = false)
+                        pinToggle("chore:${world.state.choreDay}:$i", x + pw - 18, y + 10)
+                    }
+                }
+                y += 30
+            }
+            val note = if (chores.all { it.claimed }) "ALL DONE! NEW CHORES TOMORROW"
+            else "ALL 3: +${world.streakBonus(streak + 1)} COINS (STREAK DAY ${minOf(streak + 1, 7)})"
+            g.text(note, x + pw / 2, y, green, align = 0, outline = 0, shadow = false)
+            y += 14
+        }
+        g.rect(x + 8, y, x + pw - 8, y + 1, 0xFFC28569.toInt())
+        y += 6
+        g.text("TRUCK CONTRACT", x + 10, y, Gfx.INK, outline = 0, shadow = false)
+        val c = world.state.contract
+        if (c == null) {
+            g.text("HIRE A FARMHAND TO TAKE CONTRACTS", x + pw / 2, y + 18, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            return
+        }
+        val done = world.contractDone(c)
+        val left = contractDaysLeft(today)
+        g.text(if (c.claimed) "NEXT ONE MONDAY" else "$left DAY${if (left > 1) "S" else ""} LEFT", x + pw - (if (c.claimed || done) 10 else 28), y, 0xFF68386C.toInt(), align = 1, outline = 0, shadow = false)
+        if (!c.claimed && !done) pinToggle("contract:${c.week}", x + pw - 16, y + 3)
+        g.text("SHIP BY TRUCK THIS WEEK:", x + 10, y + 11, Gfx.GREY, outline = 0, shadow = false)
+        y += 22
+        val bw = pw - 110
+        for ((crop, n) in c.crops) {
+            val have = world.contractShipped(c, crop)
+            g.sprite(icon(crop), (x + 20).toFloat(), (y + 6).toFloat())
+            g.text(world.data.name(crop).uppercase(), x + 30, y + 2, Gfx.INK, outline = 0, shadow = false)
+            ui.bar(x + 92, y + 3, bw - 60, have.toFloat() / n, if (have >= n) "gold" else "green", 6)
+            g.text("${Ui.compact(have.toInt())}/${Ui.compact(n)}", x + 96 + bw - 60, y + 2, Gfx.INK, outline = 0, shadow = false)
+            y += 14
+        }
+        val (coins, xp, items) = world.contractReward(c)
+        val extra = items.entries.joinToString { (k, v) -> "$v ${world.data.name(k).uppercase()}" }
+        g.text("PAYS ${Ui.compact(coins)} COINS, $xp XP, $extra", x + pw / 2, y + 2, green, align = 0, outline = 0, shadow = false)
+        y += 14
+        when {
+            c.claimed -> g.text("CLAIMED. WELL DONE!", x + pw / 2, y + 4, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            done -> if (ui.button("contract-claim", x + pw / 2 - 30, y, 60, 16, "CLAIM", style = "gold")) world.claimContract()
+            else -> g.text("SET FIELDS TO TRUCK, THEN SEND IT", x + pw / 2, y + 4, Gfx.GREY, align = 0, outline = 0, shadow = false)
         }
     }
 
@@ -936,6 +1043,7 @@ class Panels(private val game: Game, private val hud: Hud) {
                 g.text(label, ix + 14, ry + 20, if (got >= n) 0xFF3E8948.toInt() else Gfx.INK, outline = 0, shadow = false)
                 ix += 18 + g.textWidth(label)
             }
+            if (!done) pinToggle("bundle:${b.id}", x + pw - 20, ry + 8)
             val can = !done && b.items.any { (k, n) -> world.donated(b.id, k) < n && world.count(k, anyQuality = true) > 0 }
             if (!done && ui.button("give-${b.id}", x + pw - 58, ry + 16, 46, 16, "GIVE", style = if (can) "green" else "grey")) {
                 if (world.donate(b.id) > 0) game.sfx.play("coin") else game.sfx.play("error")

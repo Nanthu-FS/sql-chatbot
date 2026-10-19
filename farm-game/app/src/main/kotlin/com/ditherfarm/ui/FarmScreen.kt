@@ -18,7 +18,6 @@ import com.ditherfarm.game.Weather
 import com.ditherfarm.game.WorldEvent
 import com.ditherfarm.game.blockOwned
 import com.ditherfarm.game.build
-import com.ditherfarm.game.buyBlock
 import com.ditherfarm.game.buildingsOn
 import com.ditherfarm.game.collect
 import com.ditherfarm.game.fixtureAt
@@ -706,7 +705,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             return
         }
         signAt(c, r).takeIf { it >= 0 }?.let { b ->
-            if (world.blockOwned(b)) chrome.open(Chrome.Panel.FIELD, b.toString()) else offerBlock(b)
+            if (world.blockOwned(b)) chrome.open(Chrome.Panel.FIELD, b.toString()) else chrome.offerBlock(b)
             return
         }
         val i = plotAt[key(c, r)] ?: run { trayOpen = false; return }
@@ -716,7 +715,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 if (world.level >= GREENHOUSE_LEVEL) chrome.open(Chrome.Panel.BUILD, "greenhouse") else hud.toast("The Greenhouse unlocks at level $GREENHOUSE_LEVEL")
                 return
             }
-            offerBlock(FieldLayout.blockOf(i))
+            chrome.offerBlock(FieldLayout.blockOf(i))
             return
         }
         when (val a = actionFor(i)) {
@@ -737,14 +736,6 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             else -> chrome.confirm("SEND TRUCK?", "Sell $load crops in town for about ${world.truckValue()} coins?" + if (load >= world.truckCap) " It is full." else "", "SEND") {
                 world.sendTruck()
             }
-        }
-    }
-
-    private fun offerBlock(b: Int) {
-        val name = FieldLayout.name(b)
-        if (world.level < FieldLayout.UNLOCK[b]) { hud.toast("Field $name unlocks at level ${FieldLayout.UNLOCK[b]}"); return }
-        chrome.confirm("FIELD $name", "Buy this field of ${FieldLayout.PER_BLOCK} plots for ${world.blockPrice(b)} coins?", "BUY") {
-            if (world.buyBlock(b)) { game.sfx.play("buy"); game.haptics.heavy() }
         }
     }
 

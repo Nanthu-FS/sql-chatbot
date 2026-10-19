@@ -875,6 +875,10 @@
   "ax": 16,
   "ay": 16
  },
+ "icons_big/pin": {
+  "ax": 16,
+  "ay": 16
+ },
  "icons_big/plus": {
   "ax": 16,
   "ay": 16
@@ -1272,6 +1276,10 @@
   "ay": 9
  },
  "icons/orders": {
+  "ax": 9,
+  "ay": 9
+ },
+ "icons/pin": {
   "ax": 9,
   "ay": 9
  },

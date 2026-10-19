@@ -16,6 +16,10 @@ import com.ditherfarm.game.buildingsOn
 import com.ditherfarm.game.learn
 import com.ditherfarm.game.donate
 import com.ditherfarm.game.knowEverything
+import com.ditherfarm.game.claimChore
+import com.ditherfarm.game.rollDaily
+import com.ditherfarm.game.togglePin
+import com.ditherfarm.game.isBuilt
 import com.ditherfarm.game.assign
 import com.ditherfarm.game.crate
 import com.ditherfarm.game.hire
@@ -295,6 +299,7 @@ class ScreenshotTest {
             g.world.harvest(0); g.world.harvest(1)
             g.world.advance(1.0); g.world.events.clear()
             g.farm.showPanel("goals")
+            g.farm.chrome.panels.goalsTab = 1
         })
     }
 
@@ -303,7 +308,7 @@ class ScreenshotTest {
             listOf("wheat", "carrot", "potato", "tomato").forEach { g.world.add(it, 1) }
             g.world.events.clear()
             g.farm.showPanel("goals")
-            g.farm.chrome.panels.goalsTab = 1
+            g.farm.chrome.panels.goalsTab = 2
         })
     }
 
@@ -313,7 +318,7 @@ class ScreenshotTest {
             g.world.advance(com.ditherfarm.game.Time.gameMinutesToRealSeconds(7 * 1440.0 + 60))
             g.world.events.clear()
             g.farm.showPanel("goals")
-            g.farm.chrome.panels.goalsTab = 2
+            g.farm.chrome.panels.goalsTab = 3
         })
     }
 
@@ -455,6 +460,34 @@ class ScreenshotTest {
             g.world.add("stone", 60); g.world.donate("stone")
             g.world.events.clear()
             g.farm.showPanel("village")
+        })
+    }
+
+    @Test fun dailyPanel() {
+        render("panel_daily", setup = { g ->
+            toLevel(g, 8)
+            val w = g.world
+            w.state.bump("truck_trips")
+            w.rollDaily(g.today())
+            w.state.chores[0].let { w.state.bump(it.stat, it.n / 2) }
+            w.state.chores[1].let { w.state.bump(it.stat, it.n) }
+            w.state.chores[2].let { w.state.bump(it.stat, it.n) }
+            w.claimChore(2)
+            w.state.choreStreak = 3; w.state.choreDoneDay = g.today() - 1
+            w.state.contract!!.crops.keys.first().let { w.state.stats["trucked_$it"] = (w.state.stats["trucked_$it"] ?: 0) + 40 }
+            w.togglePin("chore:${w.state.choreDay}:0")
+            w.events.clear()
+            g.farm.showPanel("goals")
+            g.farm.chrome.panels.goalsTab = 0
+        })
+    }
+
+    @Test fun pinnedChip() {
+        render("hud_pinned", setup = { g ->
+            toLevel(g, 6)
+            g.world.state.coins = 700
+            g.world.togglePin("build:${g.world.data.buildings.values.first { !it.prebuilt && !g.world.isBuilt(it.id) && it.unlockLevel <= 6 }.id}")
+            g.world.events.clear()
         })
     }
 

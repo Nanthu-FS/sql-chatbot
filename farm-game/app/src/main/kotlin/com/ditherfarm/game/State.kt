@@ -173,6 +173,15 @@ class GameState(var seed: Long) {
     /** Village tier reached (0 wooden huts .. 3 concrete town) and donations towards the next ("bundle:item", "coins"). */
     var villageTier = 0
     val donated = LinkedHashMap<String, Int>()
+    /** Daily chores of device day [choreDay]; the streak, the last day all were done and the week whose free miss is used. */
+    var choreDay = -1L
+    val chores = ArrayList<Chore>()
+    var choreStreak = 0
+    var choreDoneDay = -1L
+    var choreFreeWeek = -1L
+    /** This week's truck contract, and the goal pinned to the HUD chip ("" for none; see Pins.kt). */
+    var contract: Contract? = null
+    var pinned = ""
 
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
@@ -214,6 +223,12 @@ class GameState(var seed: Long) {
         put("skills", JSONObject(skills as Map<*, *>)); put("luck", luckUntil)
         put("quest", questIndex); put("questBase", questBase); put("feats", JSONArray(featsSeen.toList()))
         put("village", villageTier); put("donated", JSONObject(donated as Map<*, *>))
+        put("daily", JSONObject().apply {
+            put("day", choreDay); put("chores", JSONArray().apply { chores.forEach { put(it.toJson()) } })
+            put("streak", choreStreak); put("doneDay", choreDoneDay); put("freeWeek", choreFreeWeek)
+            contract?.let { put("contract", it.toJson()) }
+        })
+        put("pinned", pinned)
         put("cartLog", JSONArray().apply { cartLog.forEach { put(it.toJson()) } })
         put("events", JSONObject().apply {
             put("giftDay", giftDay); put("giftStreak", giftStreak); put("merchantDay", merchantDay)
@@ -272,6 +287,12 @@ class GameState(var seed: Long) {
             questIndex = o.optInt("quest", 0); questBase = o.optLong("questBase", 0L)
             villageTier = o.optInt("village", 0)
             o.optJSONObject("donated")?.toIntMap()?.forEach { (k, v) -> donated[k] = v }
+            o.optJSONObject("daily")?.let { d ->
+                choreDay = d.optLong("day", -1); choreStreak = d.optInt("streak"); choreDoneDay = d.optLong("doneDay", -1); choreFreeWeek = d.optLong("freeWeek", -1)
+                d.optJSONArray("chores")?.objects()?.forEach { chores += Chore.fromJson(it) }
+                d.optJSONObject("contract")?.let { contract = Contract.fromJson(it) }
+            }
+            pinned = o.optString("pinned")
             o.optJSONArray("feats")?.let { a -> for (k in 0 until a.length()) featsSeen += a.getString(k) }
             o.optJSONArray("cartLog")?.objects()?.forEach { cartLog += CartDay(it.getInt("day"), it.getInt("units"), it.getInt("coins")) }
             o.optJSONObject("events")?.let { e ->

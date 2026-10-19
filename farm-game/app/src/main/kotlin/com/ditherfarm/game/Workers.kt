@@ -250,7 +250,7 @@ fun World.sendTruck(): Boolean {
         coins += got
         val id = baseId(k)
         state.glut[id] = (state.glut[id] ?: 0.0) + n * data.item(id).price
-        if (data.crops.containsKey(id)) state.bump("crops_sold", n.toLong())
+        if (data.crops.containsKey(id)) { state.bump("crops_sold", n.toLong()); state.bump("trucked_$id", n.toLong()) }
     }
     val units = t.load.values.sum()
     t.load.clear()

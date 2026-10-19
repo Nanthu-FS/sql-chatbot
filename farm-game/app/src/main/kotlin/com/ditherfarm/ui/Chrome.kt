@@ -9,10 +9,19 @@ import com.ditherfarm.game.festivalClaimable
 import com.ditherfarm.game.giftReady
 import com.ditherfarm.game.merchantHere
 import com.ditherfarm.game.skillPoints
+import com.ditherfarm.game.FieldLayout
+import com.ditherfarm.game.blockPrice
+import com.ditherfarm.game.buyBlock
+import com.ditherfarm.game.chipGoal
+import com.ditherfarm.game.claimAchievement
+import com.ditherfarm.game.claimChore
+import com.ditherfarm.game.claimContract
 import com.ditherfarm.game.claimQuest
+import com.ditherfarm.game.dailyClaimable
+import com.ditherfarm.game.donate
 import com.ditherfarm.game.quest
-import com.ditherfarm.game.questDone
-import com.ditherfarm.game.questProgress
+import com.ditherfarm.game.rollDaily
+import com.ditherfarm.game.togglePin
 
 /**
  * Everything around the map that every screen shares: the HUD, the nav bar, the modal
@@ -36,6 +45,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private var confirmBody = ""
     private var confirmYes = ""
     private var onConfirm: (() -> Unit)? = null
+    private var confirmPin: String? = null
 
     val isOpen get() = panel != Panel.NONE
 
@@ -56,9 +66,19 @@ class Chrome(private val game: Game, private val here: Nav) {
         if (p == Panel.WORKBENCH) hud.tip("workbench", "Crafts keep running while the app is closed. Tap the bench to collect.")
     }
 
-    fun confirm(title: String, body: String, yes: String, action: () -> Unit) {
-        confirmTitle = title; confirmBody = body; confirmYes = yes; onConfirm = action
+    /** A yes/later dialog; [pin] adds a pin toggle for that goal key (fields). */
+    fun confirm(title: String, body: String, yes: String, pin: String? = null, action: () -> Unit) {
+        confirmTitle = title; confirmBody = body; confirmYes = yes; onConfirm = action; confirmPin = pin
         open(Panel.CONFIRM)
+    }
+
+    /** Offers field [b] for sale, with a pin so its price can sit on the goal chip. */
+    fun offerBlock(b: Int) {
+        val name = FieldLayout.name(b)
+        if (world.level < FieldLayout.UNLOCK[b]) { hud.toast("Field $name unlocks at level ${FieldLayout.UNLOCK[b]}"); return }
+        confirm("FIELD $name", "Buy this field of ${FieldLayout.PER_BLOCK} plots for ${world.blockPrice(b)} coins?", "BUY", pin = "field:$b") {
+            if (world.buyBlock(b)) { game.sfx.play("buy"); game.haptics.heavy() }
+        }
     }
 
     /** Back button: closes the open panel; false if nothing was open. */
@@ -70,6 +90,7 @@ class Chrome(private val game: Game, private val here: Nav) {
 
     fun update(dt: Float) {
         hud.update(dt)
+        world.rollDaily(game.today())
         // Situational tips (each shows once).
         val s = world.state
         when {
@@ -92,7 +113,7 @@ class Chrome(private val game: Game, private val here: Nav) {
         ui.pill(x, y, w - x - 2, 14)
         val goalsClick = ui.clickable("hud-goals", x, y, w - x - 2, 14)
         g.sprite("icons/trophy", x + 9f, y + 7f)
-        val n = world.claimableCount() + if (world.festivalClaimable()) 1 else 0
+        val n = world.claimableCount() + world.dailyClaimable() + if (world.festivalClaimable()) 1 else 0
         if (n > 0) {
             g.sprite("ui/badge", x + 17f, y + 3f)
             g.text(n.coerceAtMost(9).toString(), x + 17, y - 1, Gfx.WHITE, align = 0, shadow = false)
@@ -108,25 +129,54 @@ class Chrome(private val game: Game, private val here: Nav) {
             g.text(pts.coerceAtMost(9).toString(), 90, ly - 2, Gfx.WHITE, align = 0, shadow = false)
         }
         if (ui.clickable("hud-level", 2, ly, 92, 14)) open(Panel.SKILLS)
-        drawQuest(questBelow)
+        drawGoal(questBelow)
     }
 
-    /** Grandpa's notebook: the current quest under the status bar; tap to claim when done. */
-    private fun drawQuest(below: Int) {
-        val q = world.quest ?: return
+    /**
+     * The goal chip under the status bar: the pinned goal, else Grandpa's notebook, else the
+     * village. Tapping finishes a ready goal or opens where it is worked on.
+     */
+    private fun drawGoal(below: Int) {
+        val (key, line) = world.chipGoal() ?: return
         val w = game.engine.w
         val y = game.engine.safeTop + 34 + below
-        val done = world.questDone
-        val (have, need) = world.questProgress()
-        val text = if (done) "DONE! TAP TO CLAIM" else q.text.uppercase()
-        val count = if (!done && need > 1) " $have/$need" else ""
-        val tw = minOf(w - 8, g.textWidth(text + count) + 26)
+        val pinned = key == world.state.pinned
+        val done = line.ready
+        val text = if (done) readyText(key) else line.text.uppercase()
+        val count = when {
+            done || line.need <= 1 -> ""
+            line.percent -> " ${(100 * line.have / line.need).toInt()}%"
+            else -> " ${Ui.compact(line.have.toInt())}/${Ui.compact(line.need.toInt())}"
+        }
+        val extra = if (pinned) 12 else 0
+        val tw = minOf(w - 8, g.textWidth(text + count) + 26 + extra)
         ui.pill(2, y, tw, 14)
-        g.sprite("icons/book", 10f, y + 7f)
-        g.text((text + count).let { if (g.textWidth(it) > tw - 24) it.take(((tw - 24) / 5.5).toInt()) else it }, 18, y + 3, if (done) Gfx.GOLD else Gfx.WHITE)
-        if (done) g.sprite("ui/badge", (tw - 1).toFloat(), y + 2f)
-        if (ui.clickable("hud-quest", 2, y, tw, 14)) {
-            if (done) world.claimQuest() else hud.toast(q.text)
+        g.sprite(panels.goalIcon(line.icon), 10f, y + 7f)
+        g.text((text + count).let { if (g.textWidth(it) > tw - 24 - extra) it.take(((tw - 24 - extra) / 5.5).toInt()) else it }, 18, y + 3, if (done) Gfx.GOLD else Gfx.WHITE)
+        if (pinned) g.sprite("icons/pin", (tw - 6).toFloat(), y + 7f)
+        if (done) g.sprite("ui/badge", (tw - 1 - extra).toFloat(), y + 2f)
+        if (ui.clickable("hud-goal", 2, y, tw, 14)) tapGoal(key, line)
+    }
+
+    private fun readyText(key: String) = when (key.substringBefore(':')) {
+        "bundle" -> "READY! TAP TO GIVE"
+        "build" -> "READY TO BUILD!"
+        "field" -> "READY TO BUY!"
+        "village" -> "TAP TO REBUILD THE VILLAGE"
+        else -> "DONE! TAP TO CLAIM"
+    }
+
+    private fun tapGoal(key: String, line: com.ditherfarm.game.GoalLine) {
+        val rest = key.substringAfter(':', "")
+        when (key.substringBefore(':')) {
+            "quest" -> if (line.ready) world.claimQuest() else world.quest?.let { hud.toast(it.text) }
+            "village" -> open(Panel.VILLAGE)
+            "bundle" -> if (line.ready) world.donate(rest) else open(Panel.VILLAGE)
+            "ach" -> if (line.ready) world.claimAchievement(rest.substringBefore(':')) else { panels.goalsTab = Panels.TAB_GOALS; open(Panel.GOALS) }
+            "build" -> open(Panel.BUILD, rest)
+            "field" -> if (line.ready) offerBlock(rest.toInt()) else hud.toast(line.text)
+            "chore" -> if (line.ready) world.claimChore(rest.substringAfter(':').toInt()) else { panels.goalsTab = Panels.TAB_DAILY; open(Panel.GOALS) }
+            "contract" -> if (line.ready) world.claimContract() else { panels.goalsTab = Panels.TAB_DAILY; open(Panel.GOALS) }
         }
     }
 
@@ -192,6 +242,7 @@ class Chrome(private val game: Game, private val here: Nav) {
         val outside = ui.modal(x, y, pw, ph)
         ui.panel(x, y, pw, ph)
         g.text(confirmTitle, w / 2, y + 9, Gfx.GOLD, align = 0)
+        confirmPin?.let { panels.pinToggle(it, x + pw - 14, y + 11) }
         lines.forEachIndexed { i, l -> g.text(l, w / 2, y + 21 + i * 10, Gfx.INK, align = 0, outline = 0, shadow = false) }
         if (ui.button("confirm-yes", x + 12, y + ph - 22, 76, 16, confirmYes, style = "green")) {
             onConfirm?.invoke(); return false
@@ -242,6 +293,12 @@ class Chrome(private val game: Game, private val here: Nav) {
                 })
             }
             is WorldEvent.QuestDone -> { game.sfx.play("coin"); game.haptics.heavy(); hud.toast("Notebook: done!") }
+            is WorldEvent.ChoresNew -> { game.sfx.play("order"); hud.toast("New daily chores! See Goals"); hud.tip("chores", "Three chores a day. Finish all three on more days in a row for a bigger streak bonus. One missed day a week is forgiven.") }
+            is WorldEvent.ChoreDone -> { game.sfx.play("unlock"); world.state.chores.getOrNull(e.chore)?.let { hud.toast("Chore done: ${it.text}") } }
+            is WorldEvent.ChoreClaimed, is WorldEvent.ContractClaimed -> { game.sfx.play("coin"); game.haptics.tick() }
+            is WorldEvent.ChoresFinished -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("All chores done! ${e.streak}-day streak: +${e.coins} coins") }
+            is WorldEvent.ContractNew -> hud.toast("A new truck contract is in. See Goals")
+            is WorldEvent.ContractDone -> { game.sfx.play("unlock"); game.haptics.heavy(); hud.toast("Truck contract complete! Claim it in Goals") }
             is WorldEvent.SkillLearned -> {
                 game.sfx.play("unlock"); game.haptics.tick()
                 com.ditherfarm.game.SKILLS[e.skill]?.let { hud.toast("${it.name} rank ${e.rank}") }

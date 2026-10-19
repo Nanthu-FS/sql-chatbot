@@ -56,6 +56,13 @@ sealed class WorldEvent {
     data class Donated(val bundle: String, val units: Int) : WorldEvent()
     data class VillageRebuilt(val tier: Int) : WorldEvent()
     data class QuestDone(val quest: String) : WorldEvent()
+    object ChoresNew : WorldEvent()
+    data class ChoreDone(val chore: Int) : WorldEvent()
+    data class ChoreClaimed(val chore: Int, val coins: Int) : WorldEvent()
+    data class ChoresFinished(val streak: Int, val coins: Int) : WorldEvent()
+    object ContractNew : WorldEvent()
+    object ContractDone : WorldEvent()
+    data class ContractClaimed(val coins: Int) : WorldEvent()
     data class Respecced(val coins: Int) : WorldEvent()
     data class TonicUsed(val item: String) : WorldEvent()
     data class WorkerLevelUp(val worker: String, val level: Int) : WorldEvent()
@@ -151,6 +158,7 @@ class World(val data: GameData, val state: GameState) {
         tickForestAuto()
         checkAchievements()
         checkFeats()
+        checkDaily()
     }
 
     private fun grow(dt: Double) {

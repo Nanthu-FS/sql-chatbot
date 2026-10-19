@@ -14,7 +14,7 @@ A cozy isometric pixel-art farming game for Android: tap to plant, water and har
 - **Farmhands:** five named farmhands (from level 5) each work one field: harvest into its crate, replant its crop, water and clear. They train up to level 25 and eat crops each morning. A harvester takes the crates to the truck or the Silo, and you tap the truck to sell its load in town.
 - **Skills:** a point per level for a 20-skill tree in five branches (crops, wood, mine, trade, machines), reset at the Workbench; four craftable tonics (Energy Brew, Growth Tonic, Rain Totem, Lucky Charm).
 - **Sound:** varied sound effects, calm lo-fi music per season and place, ambience and weather loops.
-- **Goals:** villager orders with friendship, achievements, a collection book with page bonuses, a daily gift streak, a traveling merchant and seasonal festivals.
+- **Goals:** Grandpa's notebook of guided quests; restore the valley (four village tiers paid with bundles of goods); a goal chip that shows any goal you pin; three daily chores with a streak; a weekly truck contract; villager orders with friendship, achievements, a collection book with page bonuses, a daily gift streak, a traveling merchant and seasonal festivals.
 
 ## Get the APK
 Every push that touches `farm-game/` runs **Dither Farm APK** in GitHub Actions, which runs the unit and screenshot tests and builds a debug APK.
