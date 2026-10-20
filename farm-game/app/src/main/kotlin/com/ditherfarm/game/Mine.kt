@@ -97,6 +97,9 @@ class MineState {
     /** Deep-floor critters (Critters.kt), and the inventory when this trip down began. */
     val critters = ArrayList<Critter>()
     val tripStart = LinkedHashMap<String, Int>()
+    /** The Crystal Golem on the bottom floor (Golem.kt): beaten for good, and the fight under way. */
+    var golemDefeated = false
+    var golemFight: GolemFight? = null
 
     fun toJson() = JSONObject().apply {
         put("repaired", repaired); put("quarryLevel", quarryLevel); put("floor", floor); put("deepestStop", deepestStop)
@@ -110,6 +113,7 @@ class MineState {
         put("gates", JSONArray(gatesOpened.toList()))
         put("critters", JSONArray().apply { critters.forEach { put(it.toJson()) } })
         put("trip", JSONObject(tripStart as Map<*, *>))
+        put("golem", golemDefeated)
     }
 
     companion object {
@@ -128,6 +132,7 @@ class MineState {
             o.optJSONArray("gates")?.let { a -> (0 until a.length()).forEach { gatesOpened += a.getInt(it) } }
             o.optJSONArray("critters")?.objects()?.forEach { c -> Critter.fromJson(c)?.let { critters += it } }
             o.optJSONObject("trip")?.toIntMap()?.let { tripStart.putAll(it) }
+            golemDefeated = o.optBoolean("golem")
         }
     }
 }
@@ -363,6 +368,26 @@ private fun World.generateFloor(floor: Int) {
     }
     placeTreasure(floor, rng)
     spawnCritters(floor, rng)
+    if (floor == MINE_BOTTOM && !m.golemDefeated) clearArena()
+}
+
+/** The cell the Crystal Golem stands on: the middle of the floor. */
+fun golemCell(n: Int) = (n / 2 - 1) * n + n / 2
+
+/** The bottom floor while the Golem stands: a lit hall, open round the Golem and up from the entry. */
+private fun World.clearArena() {
+    val m = state.mine
+    val n = m.grid
+    val g = golemCell(n)
+    m.dark = false
+    m.markers.clear()
+    m.golemFight = null
+    for (i in m.cells.indices) {
+        val c = i % n; val r = i / n
+        val near = max(abs(c - g % n), abs(r - g / n)) <= 3
+        val aisle = c == n / 2 && r > g / n
+        if (near || aisle) { m.cells[i].node = null; m.cells[i].damage = 0 }
+    }
 }
 
 /** The cell the ladder or elevator drops the player onto. */

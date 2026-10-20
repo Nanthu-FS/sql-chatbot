@@ -1105,6 +1105,26 @@
   "ax": 3,
   "ay": 3
  },
+ "golem/body": {
+  "ax": 24,
+  "ay": 51,
+  "bh": 54
+ },
+ "golem/body_hot": {
+  "ax": 24,
+  "ay": 51,
+  "bh": 54
+ },
+ "golem/crystal": {
+  "ax": 4,
+  "ay": 5,
+  "bh": 11
+ },
+ "golem/crystal_broken": {
+  "ax": 4,
+  "ay": 5,
+  "bh": 11
+ },
  "icons_big/arrow_down": {
   "ax": 16,
   "ay": 16,

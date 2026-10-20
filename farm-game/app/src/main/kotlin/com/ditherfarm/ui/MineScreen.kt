@@ -7,6 +7,15 @@ import com.ditherfarm.engine.Iso
 import com.ditherfarm.engine.Lighting
 import com.ditherfarm.engine.Noise
 import com.ditherfarm.engine.Terrain
+import com.ditherfarm.game.hitGolemCore
+import com.ditherfarm.game.hitGolemCrystal
+import com.ditherfarm.game.tickGolem
+import com.ditherfarm.game.golem
+import com.ditherfarm.game.golemHere
+import com.ditherfarm.game.golemCell
+import com.ditherfarm.game.GOLEM_CORE_HITS
+import com.ditherfarm.game.GOLEM_PHASES
+import com.ditherfarm.game.GolemStage
 import com.ditherfarm.game.hitCritter
 import com.ditherfarm.game.tickCritters
 import com.ditherfarm.game.CRITTER_FLOOR
@@ -196,7 +205,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         chrome.update(dt)
         if (layoutFloor != m.floor) relayout()
         // Critters only act while the floor is in play (not behind a panel, never offline).
-        if (under && !chrome.isOpen) world.tickCritters(min(dt, 0.1f).toDouble())
+        if (under && !chrome.isOpen) { world.tickCritters(min(dt, 0.1f).toDouble()); world.tickGolem(min(dt, 0.1f).toDouble()) }
         stepCritters(dt)
         val it = shake.entries.iterator()
         while (it.hasNext()) { val e = it.next(); e.setValue(e.value - dt); if (e.value <= 0) it.remove() }
@@ -403,6 +412,67 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             list.add(ly + 0.2f) { g.sprite("icons/arrow_down", lx, ly - 16 + sin(time * 4f) * 2f) }
         }
         collectCritters(list)
+        if (world.golemHere) collectGolem(list)
+    }
+
+    // --- the Crystal Golem (round 6) ---------------------------------------------
+    /** Where the Golem stands, in world pixels (its feet). */
+    private fun golemAt(): Pair<Float, Float> = center(golemCell(m.grid))
+
+    /** Armour crystal positions on the body, from its feet (up to five). */
+    private val crystalSpots = listOf(-15f to -27f, 15f to -27f, -5f to -42f, 17f to -14f, -17f to -14f)
+    private val coreSpot = 0f to -21f
+
+    private fun collectGolem(list: DrawList) {
+        val g = game.gfx
+        val f = world.golem
+        val (x, y) = golemAt()
+        list.add(y + 0.5f) {
+            // The charge ring round its feet fills as the slam builds.
+            val dots = 20
+            val lit = (f.charge * dots).toInt()
+            for (k in 0 until dots) {
+                val a = k * 2.0 * Math.PI / dots - Math.PI / 2
+                val dx = (kotlin.math.cos(a) * 30).toFloat(); val dy = (kotlin.math.sin(a) * 11).toFloat()
+                val on = k < lit || f.stage == GolemStage.WINDUP
+                g.rect((x + dx).toInt(), (y + dy).toInt(), (x + dx).toInt() + 2, (y + dy).toInt() + 2, if (on) (if (f.stage == GolemStage.WINDUP) Gfx.RED else 0xFF2CE8F5.toInt()) else 0xFF3A4466.toInt())
+            }
+            val hot = f.stage == GolemStage.WINDUP && (time * 10).toInt() % 2 == 0
+            val shakeX = if (f.stage == GolemStage.WINDUP) sin(time * 50f) * 1.5f else 0f
+            g.sprite(if (hot) "golem/body_hot" else "golem/body", x + shakeX, y)
+            f.crystals.forEachIndexed { k, hp ->
+                val (cx, cy) = crystalSpots[k]
+                g.sprite(if (hp > 0) "golem/crystal" else "golem/crystal_broken", x + cx + shakeX, y + cy)
+            }
+            if (f.stage == GolemStage.STUNNED) {
+                val pulse = 1f + sin(time * 8f) * 0.15f
+                g.spriteScaled("relics/golem_heart", x + coreSpot.first, y + coreSpot.second, pulse, pulse)
+            }
+            // Phase pips and what to do now.
+            for (p in 1..GOLEM_PHASES) g.rect((x - 10 + (p - 1) * 8).toInt(), (y - 58).toInt(), (x - 5 + (p - 1) * 8).toInt(), (y - 55).toInt(), if (p < f.phase) 0xFF3A4466.toInt() else Gfx.RED)
+            val (msg, col) = when (f.stage) {
+                GolemStage.ARMORED -> "BREAK THE CRYSTALS" to 0xFF2CE8F5.toInt()
+                GolemStage.WINDUP -> "BACK OFF!" to Gfx.RED
+                GolemStage.STUNNED -> "STRIKE THE HEART!" to Gfx.GOLD
+                GolemStage.DEFEATED -> "" to Gfx.WHITE
+            }
+            g.text(msg, x.toInt(), (y - 70).toInt(), col, align = 0)
+        }
+    }
+
+    /** A tap in the Golem's hall: a crystal, the bare heart, or (winding up) a tap that hurts. */
+    private fun tapGolem(wx: Float, wy: Float): Boolean {
+        val f = world.golem
+        val (x, y) = golemAt()
+        if (abs(wx - x) > 30f || wy < y - 60f || wy > y + 6f) return false
+        f.crystals.indices.firstOrNull { k -> f.crystals[k] > 0 && kotlin.math.hypot(wx - (x + crystalSpots[k].first), wy - (y + crystalSpots[k].second)) <= 7f }
+            ?.let { world.hitGolemCrystal(it); return true }
+        when (f.stage) {
+            GolemStage.STUNNED -> world.hitGolemCore()
+            GolemStage.WINDUP -> world.hitGolemCore()
+            else -> hud.toast("Its body is too hard: break the glowing crystals")
+        }
+        return true
     }
 
     // --- critters (round 6) ------------------------------------------------------
@@ -442,6 +512,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
     /** A tap within reach of a critter fights it before anything else on the floor. */
     override fun onWorldTap(wx: Float, wy: Float): Boolean {
         if (!under) return false
+        if (world.golemHere && tapGolem(wx, wy)) return true
         val hit = m.critters.indices.minByOrNull { i ->
             val p = critterPos[m.critters[i]] ?: return@minByOrNull Float.MAX_VALUE
             kotlin.math.hypot(wx - p[0], (wy - (p[1] - 5f)) * 1.4f)
@@ -644,7 +715,30 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             }
             is WorldEvent.FloorEntered -> {
                 relayout()
-                if (e.floor >= CRITTER_FLOOR) hud.tip("critters", "Critters live down here. Tap one to fight it before it bites: bites cost energy, and at zero you are carried up and lose half of this trip's finds.")
+                if (world.golemHere) hud.tip("golem", "The Crystal Golem! Tap its glowing crystals to break them before the ring fills. When it winds up, back off (don't tap), then strike its bare heart.")
+                else if (e.floor >= CRITTER_FLOOR) hud.tip("critters", "Critters live down here. Tap one to fight it before it bites: bites cost energy, and at zero you are carried up and lose half of this trip's finds.")
+            }
+            is WorldEvent.GolemWindup -> { game.sfx.play("thunder"); game.haptics.heavy() }
+            is WorldEvent.GolemSlam -> {
+                game.sfx.play("rock_break"); game.haptics.heavy(); fx.shake(5f)
+                val (x, y) = golemAt()
+                fx.burst("fx/dust", x, y, 14, speed = 80f, gravity = 30f)
+                if (e.energy > 0) fx.floatText("-${e.energy}", x, y - 30, Gfx.RED, icon = "icons/energy")
+                if (e.stunned) hud.toast("It's stunned! Strike its heart!")
+            }
+            is WorldEvent.GolemRecovered -> hud.toast("The Golem regrows its armour")
+            is WorldEvent.GolemCrystalHit -> {
+                game.sfx.play(if (e.broken) "gem" else "mine"); game.haptics.tick()
+                val (x, y) = golemAt()
+                crystalSpots.getOrNull(e.crystal)?.let { (cx, cy) -> fx.burst("fx/sparkle", x + cx, y + cy, if (e.broken) 8 else 3, speed = 40f, gravity = 0f, life = 0.5f) }
+            }
+            is WorldEvent.GolemCoreHit -> { game.sfx.play("coin"); game.haptics.heavy(); val (x, y) = golemAt(); fx.floatText("${e.hits}/$GOLEM_CORE_HITS", x, y - 34, Gfx.GOLD) }
+            is WorldEvent.GolemPhase -> { game.sfx.play("levelup"); fx.shake(3f); hud.toast("Phase ${e.phase}! More crystals, a faster slam") }
+            is WorldEvent.GolemDefeated -> {
+                game.sfx.play("levelup"); game.haptics.heavy(); fx.shake(6f)
+                val (x, y) = golemAt()
+                fx.burst("golem/crystal", x, y - 20, 16, speed = 90f, gravity = 60f, life = 1.2f)
+                hud.toast("The Crystal Golem falls! +${e.reward["coins"]} coins, crystal bars, diamonds and its heart")
             }
             is WorldEvent.CritterBit -> {
                 game.sfx.play("error"); game.haptics.heavy(); fx.shake(2f)

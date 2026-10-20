@@ -6,6 +6,7 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
+import com.ditherfarm.game.golem
 import com.ditherfarm.game.ranch
 import com.ditherfarm.game.collectProduct
 import com.ditherfarm.game.fillTrough
@@ -303,6 +304,25 @@ class ScreenshotTest {
             val n = m.grid
             listOf(c + 2, c - 2, c + 2 * n, c - 2 * n).forEach { t -> if (t in m.cells.indices && m.cells[t].node == null) g.world.placeTorch(t) }
             (g.engine.screen as com.ditherfarm.ui.MineScreen).centerOnTile(c % n, c / n)
+        }, zoom = 2)
+    }
+
+    @Test fun golemFight() {
+        for (stage in listOf("armored", "windup", "stunned")) render("mine_golem_$stage", seconds = 0.6f, setup = { g ->
+            toLevel(g, 30)
+            g.world.state.tools["pickaxe"] = 4
+            g.world.mine.gatesOpened += (10..80 step 10)
+            g.world.mine.repaired = true
+            g.world.enterFloor(com.ditherfarm.game.MINE_BOTTOM)
+            g.goTo(Nav.MINE); g.engine.screen?.enter()
+            val f = g.world.golem
+            when (stage) {
+                "armored" -> { f.crystals[1] = 0; f.charge = 0.6 }
+                "windup" -> { f.crystals.fill(0); f.stage = com.ditherfarm.game.GolemStage.WINDUP; f.timer = 9.0 }
+                else -> { f.crystals.fill(0); f.stage = com.ditherfarm.game.GolemStage.STUNNED; f.timer = 9.0 }
+            }
+            val n = g.world.mine.grid
+            (g.engine.screen as com.ditherfarm.ui.MineScreen).centerOnTile(n / 2, n / 2)
         }, zoom = 2)
     }
 
