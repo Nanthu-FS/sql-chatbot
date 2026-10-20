@@ -42,6 +42,7 @@ sealed class WorldEvent {
     data class BirdNest(val spot: Int, val item: String, val qty: Int) : WorldEvent()
     data class PetAdopted(val kind: PetKind, val name: String) : WorldEvent()
     data class PetGift(val items: Map<String, Int>) : WorldEvent()
+    data class PetLevelUp(val name: String, val level: Int) : WorldEvent()
     data class DecorPlaced(val c: Int, val r: Int, val id: String) : WorldEvent()
     data class GiantGrew(val anchor: Int, val crop: String) : WorldEvent()
     data class GiantHarvested(val anchor: Int, val crop: String, val qty: Int, val xp: Int) : WorldEvent()

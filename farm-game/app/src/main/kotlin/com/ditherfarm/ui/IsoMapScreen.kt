@@ -133,6 +133,7 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     /** A toast from the pet (its gift, a wag); the adoption panel when the strays are tapped. */
     open fun petToast(msg: String) {}
     open fun openPetPanel() {}
+    open fun openPetInfo() {}
     open fun onTileTap(c: Int, r: Int) {}
     open fun onTileLongPress(c: Int, r: Int) {}
     open fun onTilePaint(c: Int, r: Int) {}
@@ -318,6 +319,7 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
     }
     override fun longPress(x: Float, y: Float) {
         lastPaintC = Int.MIN_VALUE
+        if (game.pet.longPress(this, cam.toWorldX(x), cam.toWorldY(y))) { openPetInfo(); return }
         if (tileAt(x, y)) onTileLongPress(pick[0], pick[1])
     }
     override fun paint(x: Float, y: Float) {

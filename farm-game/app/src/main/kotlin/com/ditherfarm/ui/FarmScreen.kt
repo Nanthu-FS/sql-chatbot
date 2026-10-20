@@ -59,6 +59,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     override val rows = MAP
     val chrome = Chrome(game, Nav.FARM)
     override fun petToast(msg: String) = chrome.hud.toast(msg)
+    override fun openPetInfo() = chrome.open(Chrome.Panel.PET_INFO)
     override fun openPetPanel() = chrome.open(Chrome.Panel.PET)
     private val hud get() = chrome.hud
     override val hudTop get() = hud.topHeight
@@ -888,7 +889,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "skills" -> chrome.open(Chrome.Panel.SKILLS, "bench")
             "village" -> chrome.open(Chrome.Panel.VILLAGE)
             "tonics" -> { chrome.open(Chrome.Panel.WORKBENCH); chrome.panels.benchTab = 2 }
-            "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART); "pet" -> chrome.open(Chrome.Panel.PET); "decor" -> chrome.open(Chrome.Panel.DECOR)
+            "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART); "pet" -> chrome.open(Chrome.Panel.PET); "decor" -> chrome.open(Chrome.Panel.DECOR); "pet_info" -> chrome.open(Chrome.Panel.PET_INFO)
             else -> if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
             else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))
         }

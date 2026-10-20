@@ -12,6 +12,7 @@ import com.ditherfarm.game.Weather
 import com.ditherfarm.game.addCartRule
 import com.ditherfarm.game.adoptPet
 import com.ditherfarm.game.placeDecor
+import com.ditherfarm.game.wearAccessory
 import com.ditherfarm.game.build
 import com.ditherfarm.game.buyBlock
 import com.ditherfarm.game.buildingsOn
@@ -503,8 +504,21 @@ class ScreenshotTest {
         render("farm_pet", seconds = 2f, setup = { g ->
             toLevel(g, com.ditherfarm.game.PET_LEVEL)
             g.world.adoptPet(com.ditherfarm.game.PetKind.DOG, "Biscuit")
+            g.world.state.pet.love = 40; g.world.state.coins += 5000
+            g.world.wearAccessory("straw_hat")
             g.world.events.clear()
         }, zoom = 2)
+    }
+
+    @Test fun petPage() {
+        render("panel_pet_info", setup = { g ->
+            toLevel(g, com.ditherfarm.game.PET_LEVEL)
+            g.world.adoptPet(com.ditherfarm.game.PetKind.CAT, "Miso")
+            g.world.state.pet.love = 18; g.world.state.coins += 5000
+            g.world.wearAccessory("bow")
+            g.world.events.clear()
+            g.farm.showPanel("pet_info")
+        })
     }
 
     @Test fun farmStrays() {

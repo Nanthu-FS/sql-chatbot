@@ -43,7 +43,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO }
 
     var panel = Panel.NONE
         private set
@@ -305,6 +305,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.STORY -> story.draw()
             Panel.PET -> panels.pet()
             Panel.DECOR -> panels.decor()
+            Panel.PET_INFO -> panels.petInfo()
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -381,8 +382,12 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.ChoreClaimed, is WorldEvent.ContractClaimed -> { game.sfx.play("coin"); game.haptics.tick() }
             is WorldEvent.ChoresFinished -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("All chores done! ${e.streak}-day streak: +${e.coins} coins") }
             is WorldEvent.ContractNew -> hud.toast("A new truck contract is in. Tap the trophy")
-            is WorldEvent.PetAdopted -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Say hello to ${e.name}! Tap them for today's gift") }
+            is WorldEvent.PetAdopted -> {
+                game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Say hello to ${e.name}! Tap them for today's gift")
+                hud.tip("pet", "Tap your pet for its gift or a game of fetch; hold it for its page and accessories.")
+            }
             is WorldEvent.PetGift -> { game.sfx.play("coin"); game.haptics.tick() }
+            is WorldEvent.PetLevelUp -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("${e.name} is now level ${e.level}! Bigger gifts") }
             is WorldEvent.BeautyMilestone -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast(if (e.beauty >= com.ditherfarm.game.BEST_FARM_BEAUTY) "Best Farm in the Valley! +${e.coins} coins" else "Beauty ${e.beauty}! +${e.coins} coins") }
             is WorldEvent.LoanApproved -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Loan approved: +${e.coins} coins!") }
             is WorldEvent.ContractDone -> { game.sfx.play("unlock"); game.haptics.heavy(); hud.toast("Truck contract complete! Claim it in Goals") }

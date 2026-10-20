@@ -108,6 +108,13 @@ import com.ditherfarm.game.claimBeautyMilestone
 import com.ditherfarm.game.nextBeautyMilestone
 import com.ditherfarm.game.adoptPet
 import com.ditherfarm.game.petOffered
+import com.ditherfarm.game.PET_ACCESSORIES
+import com.ditherfarm.game.PET_LEVELS
+import com.ditherfarm.game.accessoryBlocker
+import com.ditherfarm.game.petLevel
+import com.ditherfarm.game.petLoveToNext
+import com.ditherfarm.game.pet
+import com.ditherfarm.game.wearAccessory
 import com.ditherfarm.game.BRANCHES
 import com.ditherfarm.game.TONICS
 import com.ditherfarm.game.learn
@@ -1024,6 +1031,41 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (ui.button("decor-prev", x + 10, by, 40, 14, "<", style = if (decorPage > 0) "wood" else "grey") && decorPage > 0) decorPage--
             g.text("PAGE ${decorPage + 1}/$pages", x + pw / 2, by + 3, Gfx.INK, align = 0, outline = 0, shadow = false)
             if (ui.button("decor-next", x + pw - 50, by, 40, 14, ">", style = if (decorPage < pages - 1) "wood" else "grey") && decorPage < pages - 1) decorPage++
+        }
+        return true
+    }
+
+    // ------------------------------------------------------------------ pet page
+    /** The pet's page: level and love, what its gifts hold, and accessories to buy and wear. */
+    fun petInfo(): Boolean {
+        val kind = world.pet.kind ?: return false
+        val p = world.pet
+        val (x, y, pw, ph) = frame(p.name, 104 + PET_ACCESSORIES.size * 24 + 18).toList()
+        if (closeButton(x, y, pw)) return false
+        g.slice9("ui/slot", x + 10, y + 22, x + 76, y + 86, 4)
+        game.pet.drawPet(g, kind, (x + 43).toFloat(), (y + 80).toFloat(), false, scale = 3f, pose = "sit")
+        val lv = world.petLevel
+        g.text("LEVEL $lv ${kind.name}", x + 84, y + 24, Gfx.INK, outline = 0, shadow = false)
+        world.petLoveToNext()?.let { (have, need) ->
+            val from = PET_LEVELS[lv - 1]
+            ui.bar(x + 84, y + 36, pw - 98, (have - from).toFloat() / (need - from), "red")
+            g.text("LOVE $have/$need", x + 84, y + 46, Gfx.GREY, outline = 0, shadow = false)
+        } ?: g.text("LOVE: BEST FRIENDS!", x + 84, y + 40, Gfx.RED, outline = 0, shadow = false)
+        g.text("GIFTS: UP TO ${3 + (lv - 1) / 2} FINDS", x + 84, y + 60, Gfx.INK, outline = 0, shadow = false)
+        g.text("TAP: GIFT OR FETCH", x + 84, y + 72, Gfx.GREY, outline = 0, shadow = false)
+        PET_ACCESSORIES.values.forEachIndexed { i, a ->
+            val ry = y + 96 + i * 24
+            g.slice9("ui/slot", x + 10, ry, x + 30, ry + 20, 4)
+            g.spriteScaled("pets/acc_${a.id}", (x + 20).toFloat(), (ry + 14).toFloat(), 2f, 2f)
+            g.text(a.name.uppercase(), x + 36, ry + 3, Gfx.INK, outline = 0, shadow = false)
+            val owned = a.id in p.accessories
+            val wearing = p.accessory == a.id
+            g.text(when { wearing -> "WEARING"; owned -> "OWNED"; lv < a.petLevel -> "PET LEVEL ${a.petLevel}"; else -> "${a.price} COINS" }, x + 36, ry + 12, Gfx.GREY, outline = 0, shadow = false)
+            val label = when { wearing -> "OFF"; owned -> "WEAR"; else -> "BUY" }
+            val ok = wearing || world.accessoryBlocker(a.id) == null
+            if (ui.button("acc-${a.id}", x + pw - 58, ry + 3, 48, 14, label, style = if (ok) "green" else "grey")) {
+                if (wearing) world.wearAccessory(null) else world.accessoryBlocker(a.id)?.let { hud.toast(it) } ?: world.wearAccessory(a.id)
+            }
         }
         return true
     }

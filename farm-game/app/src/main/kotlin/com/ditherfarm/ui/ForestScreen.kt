@@ -50,6 +50,7 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
     override val rows = ForestLayout.SIZE
     val chrome = Chrome(game, Nav.FOREST)
     override fun petToast(msg: String) = chrome.hud.toast(msg)
+    override fun openPetInfo() = chrome.open(Chrome.Panel.PET_INFO)
     private val hud get() = chrome.hud
     override val hudTop get() = hud.topHeight
     override val hudBottom get() = hud.bottomHeight

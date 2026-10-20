@@ -60,4 +60,40 @@ class PetTest {
         assertEquals(w.pet.gift, back.pet.gift)
         assertTrue(back.pet.offered || !w.pet.offered)
     }
+
+    @Test fun loveGrowsByDayAndLevelsUp() {
+        val w = World.newGame(data, 9).apply { toLevel(PET_LEVEL) }
+        w.adoptPet(PetKind.DOG, "Rex")
+        assertEquals(1, w.petLevel)
+        assertTrue(w.petPetted())
+        assertFalse("once a day", w.petPetted())
+        w.collectPetGift()                     // a collected gift counts too
+        assertEquals(2, w.pet.love)
+        repeat(3) { w.petFetched(true) }
+        assertEquals(5, w.pet.love)
+        assertEquals(2, w.petLevel)
+        assertTrue(w.events.any { it is WorldEvent.PetLevelUp })
+    }
+
+    @Test fun fetchBonusOnceADayAndOnlyForGreatCatches() {
+        val w = World.newGame(data, 9).apply { toLevel(PET_LEVEL) }
+        w.adoptPet(PetKind.CAT, "Miso")
+        assertTrue(w.petFetched(false).isEmpty())
+        val coins = w.state.coins
+        val bonus = w.petFetched(true)
+        assertEquals(coins + bonus.getValue("coins"), w.state.coins)
+        assertTrue("once a day", w.petFetched(true).isEmpty())
+    }
+
+    @Test fun accessoriesBuyOnceAndWear() {
+        val w = World.newGame(data, 9).apply { toLevel(PET_LEVEL); state.coins = 10_000 }
+        w.adoptPet(PetKind.DOG, "Rex")
+        assertNotNull("pet level 3 for the hat", w.accessoryBlocker("straw_hat"))
+        assertTrue(w.wearAccessory("bandana"))
+        val coins = w.state.coins
+        assertTrue(w.wearAccessory(null))
+        assertTrue("owned: free to wear again", w.wearAccessory("bandana"))
+        assertEquals(coins, w.state.coins)
+        assertEquals("bandana", GameState.fromJson(JSONObject(w.state.toJson().toString())).pet.accessory)
+    }
 }

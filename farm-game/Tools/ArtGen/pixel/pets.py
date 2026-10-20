@@ -1,7 +1,8 @@
 """The farm pets (round 5, folder "pets"): a tan farm dog and an orange tabby cat, both with the
 farm's red collar. Each has a walk cycle seen from the side going down-right (se_0/1), from behind
 going up-right (ne_0/1), and a sitting pose (sit); the engine mirrors them for the left-hand
-directions. About knee-high to a farmhand. Pivot = between the feet on the ground.
+directions. About knee-high to a farmhand. Pivot = between the feet on the ground. Also the
+accessories they can wear (acc_*) and the fetch stick.
 """
 import json
 import os
@@ -132,6 +133,17 @@ CAT = {
 }
 
 
+# Accessories worn over the pet (round 6), drawn by the engine at the head (or neck) of each pose.
+# Pivot = bottom middle for things on the head, top middle for the bandana at the neck.
+ACC = {
+    "acc_bandana": ([".bbbb.", "..bb..", "..b..."], {"b": "blue"}, "top"),
+    "acc_bow": (["pp.pp", "pPpPp", "pp.pp"], {"p": "pink", "P": "red"}, "bottom"),
+    "acc_straw_hat": (["..yyy..", ".yYYYy.", "yyrrryy"], {"y": "amber", "Y": "yellow", "r": "red"}, "bottom"),
+    "acc_flower_crown": (["p.w.p", "ggggg"], {"p": "pink", "w": "white", "g": "green"}, "bottom"),
+    "stick": (["......b", "bbbbbb.", ".b....."], {"b": "brown_l"}, "bottom"),
+}
+
+
 def sprites():
     for kind, frames, key in (("dog", DOG, DOG_KEY), ("cat", CAT, CAT_KEY)):
         for name, rows in frames.items():
@@ -145,6 +157,9 @@ def main():
         im, pad = finish(from_map(rows, key))
         # Pivot between the front and back feet, on the ground row.
         s.save(name, im, len(rows[0]) // 2 + pad, len(rows) - 1 + pad)
+    for name, (rows, key, anchor) in ACC.items():
+        im, pad = finish(from_map(rows, key), shadow=False, pad=1)
+        s.save(name, im, len(rows[0]) // 2 + pad, (pad if anchor == "top" else len(rows) - 1 + pad))
     print(json.dumps(s.pivots))
 
 

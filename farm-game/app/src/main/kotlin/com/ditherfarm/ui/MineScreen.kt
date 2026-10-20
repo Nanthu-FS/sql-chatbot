@@ -55,6 +55,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
     override val rows get() = cols
     val chrome = Chrome(game, Nav.MINE)
     override fun petToast(msg: String) = chrome.hud.toast(msg)
+    override fun openPetInfo() = chrome.open(Chrome.Panel.PET_INFO)
     private val hud get() = chrome.hud
     override val hudTop get() = hud.topHeight
     override val hudBottom get() = hud.bottomHeight

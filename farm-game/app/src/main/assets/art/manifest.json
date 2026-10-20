@@ -3670,6 +3670,26 @@
   "ay": 22,
   "bh": 25
  },
+ "pets/acc_bandana": {
+  "ax": 4,
+  "ay": 1,
+  "bh": 5
+ },
+ "pets/acc_bow": {
+  "ax": 3,
+  "ay": 3,
+  "bh": 5
+ },
+ "pets/acc_flower_crown": {
+  "ax": 3,
+  "ay": 2,
+  "bh": 4
+ },
+ "pets/acc_straw_hat": {
+  "ax": 4,
+  "ay": 3,
+  "bh": 5
+ },
  "pets/cat_ne_0": {
   "ax": 8,
   "ay": 10,
@@ -3719,6 +3739,11 @@
   "ax": 7,
   "ay": 11,
   "bh": 14
+ },
+ "pets/stick": {
+  "ax": 4,
+  "ay": 3,
+  "bh": 5
  },
  "portraits/bram": {
   "ax": 17,
