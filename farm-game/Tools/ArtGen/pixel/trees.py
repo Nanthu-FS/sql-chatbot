@@ -4,6 +4,8 @@ Trees (pine, birch, oak, maple, ancient_oak): <type>_sapling, <type>_young, <typ
 <type>_fall, <type>_snow (mature size), <type>_stump.
 Objects: log_windfall, branch_pile, berry_bush, berry_bush_empty, apple_tree,
 apple_tree_empty, mushroom_spot, brambles, signpost, beehive.
+Orchard (farm): orchard_<kind> (resting), orchard_<kind>_fruit, orchard_<kind>_sapling for
+apple, cherry, peach and orange.
 
 Every sprite is drawn on one 64x72 canvas with the trunk base on row GROUND and column BX,
 cropped symmetrically around BX and finished with finish() (1px ink outline + hard drop
@@ -438,6 +440,41 @@ def apple_tree(c, apples):
                             c.put(x + i, y + j, APPLE_KEY[ch])
 
 
+# Orchard trees: smaller and rounder than forest trees, planted two tiles apart.
+ORCHARD = {
+    # lobes, leaf ramp, fruit map, fruit key, fruit spots
+    "apple": (APPLE_LOBES, LEAF, APPLE_MAP, APPLE_KEY,
+              [(26, 37), (36, 39), (22, 42), (31, 43), (41, 44), (34, 34), (27, 46)]),
+    "cherry": ([(32, 41, 13, 8), (21, 38, 6, 5), (43, 38, 6, 5), (30, 33, 7, 5), (38, 46, 6, 4)],
+               ["teal_dd", "green_dd", "green_d", "green", "green"],
+               ["..g..", ".g.g.", "wr.wr", "rd.rd"], {"g": "green_dd", "w": "white", "r": "red", "d": "red_d"},
+               [(22, 35), (33, 36), (27, 41), (38, 42), (18, 40), (30, 46), (41, 35), (23, 45), (43, 40)]),
+    "peach": ([(32, 42, 12, 9), (24, 37, 6, 5), (40, 37, 6, 5), (32, 33, 7, 5)],
+              ["teal_dd", "green_dd", "green_d", "green", "yellow"],
+              [".g.", "wap", "app", ".r."], {"g": "green_d", "w": "cream", "a": "amber", "p": "pink", "r": "rust"},
+              [(25, 37), (35, 39), (22, 43), (31, 44), (40, 44), (33, 33)]),
+    "orange": ([(32, 40, 10, 10), (25, 36, 6, 6), (39, 36, 6, 6), (32, 31, 7, 5)],
+               ["teal_dd", "teal_dd", "green_dd", "green_d", "green"],
+               [".g.", "yoo", "oor", ".r."], {"g": "green_dd", "y": "yellow", "o": "orange", "r": "rust"},
+               [(26, 35), (35, 37), (24, 42), (32, 44), (39, 43), (31, 31), (29, 39)]),
+}
+
+
+def orchard_tree(c, kind, fruit, s=1.0):
+    lobes, leaf, fmap, fkey, spots = ORCHARD[kind]
+    g = Geo(s)
+    trunk(c, g, 46, 3, 4, BARK, flare=1)
+    canopy(c, g, lobes, leaf)
+    if fruit:
+        for x, y in spots:
+            w, h = len(fmap[0]), len(fmap)
+            if all(c.on(x + dx, y + dy) for dx in range(w) for dy in range(h)):
+                for j, row in enumerate(fmap):
+                    for i, ch in enumerate(row):
+                        if ch != ".":
+                            c.put(x + i, y + j, fkey[ch])
+
+
 def mushroom(c, x, y, cap):
     for yy in range(y - 2, y + 1):
         c.put(x - 1, yy, STEM[1])
@@ -586,6 +623,10 @@ def main():
     c = Canvas(); berry_bush(c, False); save_canvas(sp, "berry_bush_empty", c)
     c = Canvas(); apple_tree(c, True); save_canvas(sp, "apple_tree", c)
     c = Canvas(); apple_tree(c, False); save_canvas(sp, "apple_tree_empty", c)
+    for kind in ORCHARD:
+        c = Canvas(); orchard_tree(c, kind, False); save_canvas(sp, f"orchard_{kind}", c)
+        c = Canvas(); orchard_tree(c, kind, True); save_canvas(sp, f"orchard_{kind}_fruit", c)
+        c = Canvas(); orchard_tree(c, kind, False, 0.45); save_canvas(sp, f"orchard_{kind}_sapling", c)
     c = Canvas(); mushroom_spot(c); save_canvas(sp, "mushroom_spot", c)
     c = Canvas(); brambles(c); save_canvas(sp, "brambles", c)
     c = Canvas(); signpost(c); save_canvas(sp, "signpost", c)

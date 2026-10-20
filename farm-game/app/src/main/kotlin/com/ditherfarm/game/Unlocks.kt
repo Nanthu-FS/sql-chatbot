@@ -170,6 +170,7 @@ fun World.obtainableNow(): Set<String> {
             SpotKind.SLOT -> {}
         }
     }
+    got += orchardFruitNow()
     // Quarry and the floors already reached, with nodes the pickaxe can break.
     val pick = toolTier(Tool.PICKAXE)
     val nodes = HashSet<String>()

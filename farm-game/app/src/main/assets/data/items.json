@@ -222,7 +222,28 @@
    "id": "apple",
    "name": "Apple",
    "category": "forest",
-   "price": 8,
+   "price": 12,
+   "storage": "barn"
+  },
+  {
+   "id": "cherry",
+   "name": "Cherries",
+   "category": "fruit",
+   "price": 18,
+   "storage": "barn"
+  },
+  {
+   "id": "peach",
+   "name": "Peach",
+   "category": "fruit",
+   "price": 30,
+   "storage": "barn"
+  },
+  {
+   "id": "orange",
+   "name": "Orange",
+   "category": "fruit",
+   "price": 36,
    "storage": "barn"
   },
   {
@@ -667,6 +688,20 @@
    "storage": "none"
   },
   {
+   "id": "cherry_jam",
+   "name": "Cherry Jam",
+   "category": "goods",
+   "price": 60,
+   "storage": "barn"
+  },
+  {
+   "id": "peach_jam",
+   "name": "Peach Jam",
+   "category": "goods",
+   "price": 90,
+   "storage": "barn"
+  },
+  {
    "id": "strawberry_jam",
    "name": "Strawberry Jam",
    "category": "goods",
@@ -748,6 +783,20 @@
    "name": "Tomato Juice",
    "category": "goods",
    "price": 34,
+   "storage": "barn"
+  },
+  {
+   "id": "apple_juice",
+   "name": "Apple Juice",
+   "category": "goods",
+   "price": 50,
+   "storage": "barn"
+  },
+  {
+   "id": "orange_juice",
+   "name": "Orange Juice",
+   "category": "goods",
+   "price": 140,
    "storage": "barn"
   },
   {

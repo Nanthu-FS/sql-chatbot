@@ -573,6 +573,32 @@
    "fuel": 0.0
   },
   {
+   "id": "cherry_jam",
+   "building": "preserves_jar",
+   "inputs": {
+    "cherry": 2
+   },
+   "outputs": {
+    "cherry_jam": 1
+   },
+   "minutes": 30,
+   "unlock": 10,
+   "fuel": 0.0
+  },
+  {
+   "id": "peach_jam",
+   "building": "preserves_jar",
+   "inputs": {
+    "peach": 2
+   },
+   "outputs": {
+    "peach_jam": 1
+   },
+   "minutes": 30,
+   "unlock": 14,
+   "fuel": 0.0
+  },
+  {
    "id": "strawberry_jam",
    "building": "preserves_jar",
    "inputs": {
@@ -711,6 +737,32 @@
    },
    "minutes": 40,
    "unlock": 8,
+   "fuel": 0.0
+  },
+  {
+   "id": "apple_juice",
+   "building": "fruit_press",
+   "inputs": {
+    "apple": 3
+   },
+   "outputs": {
+    "apple_juice": 1
+   },
+   "minutes": 40,
+   "unlock": 12,
+   "fuel": 0.0
+  },
+  {
+   "id": "orange_juice",
+   "building": "fruit_press",
+   "inputs": {
+    "orange": 3
+   },
+   "outputs": {
+    "orange_juice": 1
+   },
+   "minutes": 40,
+   "unlock": 16,
    "fuel": 0.0
   },
   {

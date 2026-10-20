@@ -44,6 +44,19 @@ import com.ditherfarm.game.entryFound
 import com.ditherfarm.game.festival
 import com.ditherfarm.game.festivalClaimable
 import com.ditherfarm.game.festivalHandIn
+import com.ditherfarm.game.ORCHARD_COST
+import com.ditherfarm.game.ORCHARD_LEVEL
+import com.ditherfarm.game.ORCHARD_SPOTS
+import com.ditherfarm.game.FRUIT_TREES
+import com.ditherfarm.game.orchard
+import com.ditherfarm.game.orchardBlocker
+import com.ditherfarm.game.buyOrchard
+import com.ditherfarm.game.treeBlocker
+import com.ditherfarm.game.plantOrchardTree
+import com.ditherfarm.game.treeMature
+import com.ditherfarm.game.treeStatus
+import com.ditherfarm.game.pickFruit
+import com.ditherfarm.game.digUpTree
 import com.ditherfarm.game.festivalItems
 import com.ditherfarm.game.festivalProgress
 import com.ditherfarm.game.giftFor
@@ -163,7 +176,8 @@ class Panels(private val game: Game, private val hud: Hud) {
     private var confirmNewGame = 0
 
     private var trashArmed = -1
-    fun reset() { selected = null; confirmNewGame = 0; trashArmed = -1 }
+    private var digArmed = false
+    fun reset() { selected = null; confirmNewGame = 0; trashArmed = -1; digArmed = false }
 
     companion object {
         /** [craftAmount] value for MAX: as many batches as you can afford. */
@@ -431,7 +445,9 @@ class Panels(private val game: Game, private val hud: Hud) {
     // -------------------------------------------------------------- level up
     fun levelUp(level: Int, coins: Int): Boolean {
         val unlocks = world.data.crops.values.filter { it.unlockLevel == level }.map { it.id }
-        val ph = 102 + if (unlocks.isEmpty()) 0 else 24
+        // Round 6: the orchard and each fruit tree announce themselves.
+        val news = if (level == ORCHARD_LEVEL) "NEW: THE ORCHARD!" else FRUIT_TREES.values.firstOrNull { it.unlockLevel == level }?.let { "NEW: ${it.name.uppercase()}" }
+        val ph = 102 + (if (unlocks.isEmpty()) 0 else 24) + (if (news == null) 0 else 12)
         val pw = 200
         val w = game.engine.w
         val x = (w - pw) / 2
@@ -446,6 +462,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         unlocks.forEachIndexed { i, id ->
             g.sprite("items/seed_$id", (w / 2 - unlocks.size * 10 + i * 20 + 10).toFloat(), (y + 86).toFloat())
         }
+        news?.let { g.text(it, w / 2, y + ph - 36, 0xFF3E8948.toInt(), align = 0, outline = 0, shadow = false) }
         return !ui.button("lvl-ok", w / 2 - 24, y + ph - 22, 48, 16, "YAY!", style = "gold")
     }
 
@@ -1066,6 +1083,72 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (ui.button("acc-${a.id}", x + pw - 58, ry + 3, 48, 14, label, style = if (ok) "green" else "grey")) {
                 if (wearing) world.wearAccessory(null) else world.accessoryBlocker(a.id)?.let { hud.toast(it) } ?: world.wearAccessory(a.id)
             }
+        }
+        return true
+    }
+
+    // ------------------------------------------------------------------ orchard
+    /** The orchard (round 6): buy it, choose a sapling for an empty [spot], or see the tree there. */
+    fun orchard(spot: Int): Boolean {
+        val o = world.orchard
+        if (!o.open) {
+            val (x, y, pw, ph) = frame("ORCHARD", 168).toList()
+            if (closeButton(x, y, pw)) return false
+            g.slice9("ui/slot", x + 10, y + 24, x + 84, y + 98, 4)
+            g.sprite("trees/orchard_cherry_fruit", (x + 34).toFloat(), (y + 92).toFloat())
+            g.sprite("trees/orchard_orange_fruit", (x + 60).toFloat(), (y + 96).toFloat())
+            listOf("A FENCED ORCHARD WITH", "ROOM FOR $ORCHARD_SPOTS FRUIT TREES.", "TREES FRUIT EVERY 2-3", "DAYS IN THEIR SEASONS.").forEachIndexed { i, line ->
+                g.text(line, x + 92, y + 28 + i * 12, Gfx.INK, outline = 0, shadow = false)
+            }
+            var cx = x + 12
+            for ((k, v) in ORCHARD_COST) {
+                g.sprite(if (k == "coins") "icons/coin" else "items/$k", (cx + 7).toFloat(), (y + 118).toFloat())
+                val have = if (k == "coins") world.state.coins >= v else world.count(k) >= v
+                g.text(if (k == "coins") "$v" else "$v ${world.data.name(k).uppercase()}", cx + 16, y + 114, if (have) Gfx.INK else Gfx.RED, outline = 0, shadow = false)
+                cx += 90
+            }
+            val why = world.orchardBlocker()
+            if (ui.button("orchard-buy", x + pw / 2 - 50, y + ph - 30, 100, 20, if (world.level < ORCHARD_LEVEL) "LEVEL $ORCHARD_LEVEL" else "BUY", style = if (why == null) "gold" else "grey")) {
+                if (why != null) hud.toast(why) else { world.buyOrchard(); return false }
+            }
+            return true
+        }
+        val t = o.trees.getOrNull(spot)
+        if (t == null) {
+            val trees = FRUIT_TREES.values.toList()
+            val (x, y, pw, ph) = frame("PLANT A TREE", 30 + trees.size * 40).toList()
+            if (closeButton(x, y, pw)) return false
+            trees.forEachIndexed { i, d ->
+                val ry = y + 26 + i * 40
+                g.slice9("ui/slot", x + 10, ry, x + 46, ry + 36, 4)
+                g.sprite("trees/orchard_${d.id}_sapling", (x + 28).toFloat(), (ry + 32).toFloat())
+                g.sprite("items/${d.fruit}", (x + 40).toFloat(), (ry + 28).toFloat())
+                g.text(d.name.uppercase(), x + 52, ry + 2, Gfx.INK, outline = 0, shadow = false)
+                g.text(d.seasons.sortedBy { it.ordinal }.joinToString(" ") { it.label.uppercase() }, x + 52, ry + 13, Gfx.GREY, outline = 0, shadow = false)
+                g.text("${d.yield} EVERY ${d.everyDays} DAYS", x + 52, ry + 24, Gfx.GREY, outline = 0, shadow = false)
+                val why = world.treeBlocker(spot, d.id)
+                val label = if (world.level < d.unlockLevel) "L${d.unlockLevel}" else "${d.price}"
+                if (ui.button("tree-${d.id}", x + pw - 66, ry + 9, 56, 18, label, if (world.level < d.unlockLevel) null else "icons/coin", style = if (why == null) "green" else "grey")) {
+                    if (why != null) hud.toast(why) else { world.plantOrchardTree(spot, d.id); return false }
+                }
+            }
+            return true
+        }
+        val d = t.def
+        val (x, y, pw, ph) = frame(d.name.uppercase(), 150).toList()
+        if (closeButton(x, y, pw)) return false
+        g.slice9("ui/slot", x + 10, y + 24, x + 70, y + 98, 4)
+        val art = when { !world.treeMature(t) -> "trees/orchard_${d.id}_sapling"; t.fruit > 0 -> "trees/orchard_${d.id}_fruit"; else -> "trees/orchard_${d.id}" }
+        g.sprite(art, (x + 40).toFloat(), (y + 94).toFloat())
+        g.text(world.treeStatus(t).uppercase(), x + 78, y + 28, if (t.fruit > 0) Gfx.GREEN else Gfx.INK, outline = 0, shadow = false)
+        g.text("FRUITS IN", x + 78, y + 44, Gfx.GREY, outline = 0, shadow = false)
+        g.text(d.seasons.sortedBy { it.ordinal }.joinToString(" ") { it.label.uppercase() }, x + 78, y + 54, Gfx.INK, outline = 0, shadow = false)
+        g.sprite("items/${d.fruit}", (x + 85).toFloat(), (y + 75).toFloat())
+        g.text("${d.yield} EVERY ${d.everyDays} DAYS", x + 96, y + 71, Gfx.INK, outline = 0, shadow = false)
+        if (t.fruit > 0 && ui.button("tree-pick", x + 12, y + ph - 30, 100, 20, "PICK", style = "green")) { world.pickFruit(spot); return false }
+        if (ui.button("tree-dig", x + pw - 112, y + ph - 30, 100, 20, if (digArmed) "SURE?" else "DIG UP", style = "red")) {
+            if (digArmed) { world.digUpTree(spot); digArmed = false; return false }
+            digArmed = true; hud.toast("Tap again to dig the tree up. It is not refunded.")
         }
         return true
     }

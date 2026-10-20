@@ -55,6 +55,14 @@ object FarmMap {
     val PASTURE_C = 32..37
     val PASTURE_R = 12..16
 
+    /** Orchard by the village, between Fields C and E (round 6): fenced, two rows of four trees. */
+    val ORCHARD_C = 17..21
+    val ORCHARD_R = 29..37
+    val ORCHARD_TREES = listOf(18 to 30, 20 to 30, 18 to 32, 20 to 32, 18 to 34, 20 to 34, 18 to 36, 20 to 36)
+    /** Its sign, just outside the back corner. */
+    val ORCHARD_SIGN = 16 to 28
+    fun inOrchard(c: Int, r: Int) = c in ORCHARD_C && r in ORCHARD_R
+
     /** Lanterns light the farmstead, the village and the main road's edge (never on the road: vehicles drive it). */
     val LANTERNS = listOf(12 to 14, 14 to 17, 13 to 19, 23 to 21, 28 to 26, 33 to 31, 19 to 12, 13 to 29)
 

@@ -6,6 +6,9 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
+import com.ditherfarm.game.digUpTree
+import com.ditherfarm.game.plantOrchardTree
+import com.ditherfarm.game.buyOrchard
 import com.ditherfarm.game.GameTime
 import com.ditherfarm.game.Season
 import com.ditherfarm.game.Weather
@@ -541,6 +544,34 @@ class ScreenshotTest {
             val (c, r) = g.farm.plotTile(com.ditherfarm.game.giantCenter(0))
             g.farm.centerOnTile(c, r)
         }, zoom = 2)
+    }
+
+    @Test fun orchardFarm() {
+        render("farm_orchard", seconds = 0.5f, setup = { g ->
+            toLevel(g, 16); g.world.state.coins += 20_000; g.world.add("plank", 20)
+            val w = g.world
+            w.state.pet.offered = true
+            w.buyOrchard()
+            listOf("cherry", "apple", "peach", "orange", "cherry", "cherry", "peach", "orange").forEachIndexed { i, k -> w.plantOrchardTree(i, k) }
+            w.digUpTree(5)
+            repeat(2) { w.advance(com.ditherfarm.game.Time.REAL_SECONDS_PER_DAY) }
+            w.plantOrchardTree(5, "cherry")
+            w.events.clear()
+            g.farm.centerOnTile(19, 33)
+        }, zoom = 2)
+    }
+
+    @Test fun orchardPanels() {
+        render("panel_orchard_buy", setup = { g -> toLevel(g, 10); g.world.state.coins += 2000; g.farm.showPanel("orchard") })
+        render("panel_orchard_plant", setup = { g ->
+            toLevel(g, 12); g.world.state.coins += 5000; g.world.add("plank", 20); g.world.buyOrchard(); g.world.events.clear()
+            g.farm.showPanel("orchard:0")
+        })
+        render("panel_orchard_tree", setup = { g ->
+            toLevel(g, 12); g.world.state.coins += 5000; g.world.add("plank", 20); g.world.buyOrchard()
+            g.world.plantOrchardTree(0, "apple"); g.world.advance(com.ditherfarm.game.Time.REAL_SECONDS_PER_DAY * 2); g.world.events.clear()
+            g.farm.showPanel("orchard:0")
+        })
     }
 
     @Test fun decorPanel() {

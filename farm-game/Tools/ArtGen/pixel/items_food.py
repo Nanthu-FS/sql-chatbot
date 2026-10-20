@@ -63,6 +63,8 @@ CLOTH = ["tan_d", "tan", "cream", "white"]
 JAM_RED = ["purple", "red_d", "red", "pink"]
 JAM_GREEN = ["green_dd", "green_d", "green", "yellow"]
 JAM_GRAPE = ["slate_d", "purple", "magenta", "pink"]
+JAM_CHERRY = ["ink", "purple", "red_d", "red"]
+JAM_PEACH = ["rust", "orange", "amber", "cream"]
 PLATE_EDGE = ["slate", "grey_d", "grey"]
 LEAF = ["green_dd", "green_d", "green", "yellow"]
 
@@ -81,6 +83,8 @@ JUICE = {
     "strawberry": ["red_d", "red", "pink", "white"],
     "melon": ["green_d", "green", "yellow", "white"],
     "grapes": ["slate_d", "purple", "magenta", "pink"],
+    "apple": ["clay", "amber", "yellow", "cream"],
+    "orange": ["orange", "amber", "yellow", "cream"],
 }
 
 
@@ -538,6 +542,8 @@ ITEMS = {
     "strawberry_jam": lambda c: jam_jar(c, JAM_RED, [(5.5, 8.5, "yellow"), (8.5, 9.5, "yellow"), (6.5, 11.5, "yellow"), (9.5, 11.5, "yellow")]),
     "melon_jam": lambda c: jam_jar(c, JAM_GREEN, [(6.5, 8.5, "yellow"), (9.5, 8.5, "yellow"), (7.5, 10.5, "yellow"), (5.5, 11.5, "yellow")]),
     "grapes_jam": lambda c: jam_jar(c, JAM_GRAPE, [(5.5, 8.5, "magenta"), (9.5, 9.5, "magenta"), (6.5, 11.5, "pink"), (9.5, 11.5, "magenta")]),
+    "cherry_jam": lambda c: jam_jar(c, JAM_CHERRY, [(5.5, 8.5, "pink"), (8.5, 9.5, "red"), (6.5, 11.5, "pink"), (9.5, 11.5, "red")]),
+    "peach_jam": lambda c: jam_jar(c, JAM_PEACH, [(5.5, 8.5, "pink"), (8.5, 9.5, "yellow"), (6.5, 11.5, "pink"), (9.5, 11.5, "yellow")]),
 }
 for _name in PICKLE:
     ITEMS[f"{_name}_pickles"] = make_pickle(_name)

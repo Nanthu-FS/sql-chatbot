@@ -10,6 +10,11 @@ import com.ditherfarm.engine.Terrain
 import android.graphics.Paint
 import android.graphics.Path
 import com.ditherfarm.game.quest
+import com.ditherfarm.game.ORCHARD_COST
+import com.ditherfarm.game.ORCHARD_LEVEL
+import com.ditherfarm.game.orchard
+import com.ditherfarm.game.treeMature
+import com.ditherfarm.game.pickFruit
 import com.ditherfarm.game.FieldLayout
 import com.ditherfarm.game.DECOR
 import com.ditherfarm.game.Fixture
@@ -144,6 +149,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     /** Dirt under owned plots and one tile around them; the rest of the field stays meadow. */
     private fun isYard(c: Int, r: Int): Boolean {
+        if (world.orchard.open && (c to r) in FarmMap.ORCHARD_TREES) return true
         for (dr in -1..1) for (dc in -1..1) {
             val i = plotAt[key(c + dc, r + dr)] ?: continue
             if (world.plot(i).owned) return true
@@ -177,14 +183,14 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         props.clear()
         waterTiles.clear()
         val reserved = reservedTiles.also { it.clear() }
-        listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
+        listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmMap.ORCHARD_SIGN, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
         for (b in 0 until FieldLayout.BLOCKS) FarmCrew.crateTile(b).let { reserved += key(it.first, it.second) }
         for (dc in 0..1) for (dr in 0..1) reserved += key(FarmMap.TRUCK.first + dc, FarmMap.TRUCK.second + dr)
         (FarmMap.HOUSES + listOf(FarmMap.SHOP_SEED, FarmMap.SHOP_SMITH, FarmMap.SHOP_CARPENTER, FarmMap.SHOP_CAFE)).forEach { reserved += key(it.first, it.second) }
         for (r in 0 until rows) for (c in 0 until cols) {
             if (FarmMap.isRiver(c, r)) waterTiles += c to r
             if (key(c, r) in buildingAt || (c to r) in lanterns || (c to r) in slotTiles || key(c, r) in reserved) continue
-            if (plotAt[key(c, r)]?.let { world.plot(it).owned } == true || FarmMap.isRoad(c, r) || FarmMap.inPasture(c, r)) continue
+            if (plotAt[key(c, r)]?.let { world.plot(it).owned } == true || FarmMap.isRoad(c, r) || FarmMap.inPasture(c, r) || FarmMap.inOrchard(c, r)) continue
             if (FarmMap.isWall(c, r)) {
                 // Dense forest wall: a tree on most tiles, bushes between.
                 val roll = Noise.rand(c, r, 71)
@@ -233,6 +239,15 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         for (r in FarmMap.PASTURE_R) {
             props += Prop("deco/fence_l", Iso.x(FarmMap.PASTURE_C.first, r).toFloat(), Iso.y(FarmMap.PASTURE_C.first, r).toFloat(), false)
             props += Prop("deco/fence_l", Iso.x(FarmMap.PASTURE_C.last + 1, r).toFloat(), Iso.y(FarmMap.PASTURE_C.last + 1, r).toFloat(), false)
+        }
+        // Orchard: fenced like the pasture (the trees are drawn with the crops).
+        for (c in FarmMap.ORCHARD_C) {
+            props += Prop("deco/fence_r", Iso.x(c, FarmMap.ORCHARD_R.first).toFloat(), Iso.y(c, FarmMap.ORCHARD_R.first).toFloat(), false)
+            props += Prop("deco/fence_r", Iso.x(c, FarmMap.ORCHARD_R.last + 1).toFloat(), Iso.y(c, FarmMap.ORCHARD_R.last + 1).toFloat(), false)
+        }
+        for (r in FarmMap.ORCHARD_R) {
+            props += Prop("deco/fence_l", Iso.x(FarmMap.ORCHARD_C.first, r).toFloat(), Iso.y(FarmMap.ORCHARD_C.first, r).toFloat(), false)
+            props += Prop("deco/fence_l", Iso.x(FarmMap.ORCHARD_C.last + 1, r).toFloat(), Iso.y(FarmMap.ORCHARD_C.last + 1, r).toFloat(), false)
         }
         fun at(t: Pair<Int, Int>, sprite: String, fallback: String) =
             Prop(if (game.assets.has(sprite)) sprite else fallback, Iso.x(t.first, t.second).toFloat(), Iso.centerY(t.first, t.second).toFloat(), false)
@@ -455,6 +470,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 }
             }
         }
+        drawOrchard(list)
         for (b in Building.entries) {
             val x = Iso.x(b.c, b.r).toFloat()
             val y = Iso.centerY(b.c, b.r).toFloat()
@@ -520,6 +536,45 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 !p.needsClearing && !p.watered -> hitSprite(c, r, "fx/drop", x + 8, cy - 12, cy + 0.5f)
             }
             list.add(cy) { drawPlot(i, p, x, cy) }
+        }
+    }
+
+    /** The orchard's sign (its level or price until it is bought) and its trees. */
+    private fun drawOrchard(list: DrawList) {
+        val o = world.orchard
+        val (sc, sr) = FarmMap.ORCHARD_SIGN
+        val sx = Iso.x(sc, sr).toFloat(); val sy = Iso.centerY(sc, sr).toFloat()
+        if (inView(sx, sy)) {
+            hitSprite(sc, sr, "deco/field_sign", sx, sy)
+            list.add(sy) {
+                val g = game.gfx
+                g.sprite("deco/field_sign", sx, sy)
+                when {
+                    o.open -> g.sprite("items/apple", sx, sy - 13)
+                    world.level < ORCHARD_LEVEL -> g.text("L$ORCHARD_LEVEL", sx.toInt(), (sy - 15).toInt(), 0xFFC0CBDC.toInt(), align = 0)
+                    else -> g.text(Ui.compact(ORCHARD_COST["coins"] ?: 0), sx.toInt(), (sy - 15).toInt(), Gfx.GOLD, align = 0)
+                }
+            }
+        }
+        if (!o.open) return
+        FarmMap.ORCHARD_TREES.forEachIndexed { i, (c, r) ->
+            val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()
+            if (!inView(x, y, 60f)) return@forEachIndexed
+            val t = o.trees[i]
+            if (t == null) {
+                list.add(y) { game.gfx.sprite("icons/plus", x, y - 4 + sin(time * 3f + i) * 1.5f, 170) }
+                return@forEachIndexed
+            }
+            val art = when {
+                !world.treeMature(t) -> "trees/orchard_${t.kind}_sapling"
+                t.fruit > 0 -> "trees/orchard_${t.kind}_fruit"
+                else -> "trees/orchard_${t.kind}"
+            }
+            hitSprite(c, r, art, x, y)
+            list.add(y) {
+                game.gfx.sprite(art, x, y)
+                if (t.fruit > 0 && (time * 2 + i * 0.37f) % 3f < 1.6f) game.gfx.sprite("fx/sparkle", x + 10, y - 40 + sin(time * 5f + i) * 1.5f)
+            }
         }
     }
 
@@ -691,7 +746,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     fun decorFree(c: Int, r: Int): Boolean {
         if (c !in 0 until cols || r !in 0 until rows) return false
         val k = key(c, r)
-        if (terrain(c, r) != Terrain.GRASS || FarmMap.isRoad(c, r) || FarmMap.isRiver(c, r) || FarmMap.inPasture(c, r) || FarmMap.isWall(c, r)) return false
+        if (terrain(c, r) != Terrain.GRASS || FarmMap.isRoad(c, r) || FarmMap.isRiver(c, r) || FarmMap.inPasture(c, r) || FarmMap.inOrchard(c, r) || FarmMap.isWall(c, r)) return false
         if (k in buildingAt || k in reservedTiles || plotAt.containsKey(k) || (c to r) in lanterns || (c to r) in slotTiles) return false
         return !world.state.decor.containsKey(decorKey(c, r))
     }
@@ -837,6 +892,13 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             }
             return
         }
+        if ((c to r) == FarmMap.ORCHARD_SIGN) { chrome.open(Chrome.Panel.ORCHARD); return }
+        FarmMap.ORCHARD_TREES.indexOf(c to r).takeIf { it >= 0 }?.let { i ->
+            val t = world.orchard.trees[i]
+            if (t != null && t.fruit > 0) world.pickFruit(i) else chrome.open(Chrome.Panel.ORCHARD, i.toString())
+            return
+        }
+        if (FarmMap.inOrchard(c, r)) { chrome.open(Chrome.Panel.ORCHARD); return }
         signAt(c, r).takeIf { it >= 0 }?.let { b ->
             if (world.blockOwned(b)) chrome.open(Chrome.Panel.FIELD, b.toString()) else chrome.offerBlock(b)
             return
@@ -908,7 +970,9 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "village" -> chrome.open(Chrome.Panel.VILLAGE)
             "tonics" -> { chrome.open(Chrome.Panel.WORKBENCH); chrome.panels.benchTab = 2 }
             "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART); "pet" -> chrome.open(Chrome.Panel.PET); "decor" -> chrome.open(Chrome.Panel.DECOR); "pet_info" -> chrome.open(Chrome.Panel.PET_INFO)
-            else -> if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
+            "orchard" -> chrome.open(Chrome.Panel.ORCHARD)
+            else -> if (name.startsWith("orchard:")) chrome.open(Chrome.Panel.ORCHARD, name.removePrefix("orchard:"))
+            else if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
             else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))
         }
     }
@@ -1012,6 +1076,28 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 invalidateGround()
                 scatterProps()
                 hud.tip("land", "Tap a field's sign to choose its crop and where the harvest goes.")
+            }
+            is WorldEvent.OrchardOpened -> {
+                // Decorations standing where the orchard goes come back to the player at full price.
+                for (c in FarmMap.ORCHARD_C) for (r in FarmMap.ORCHARD_R) world.state.decor.remove(decorKey(c, r))?.let { world.state.coins += DECOR[it]?.price ?: 0 }
+                invalidateGround()
+                val (c, r) = FarmMap.ORCHARD_TREES[5]
+                fx.burst("fx/coin", Iso.x(c, r).toFloat(), Iso.centerY(c, r) - 6f, 12, speed = 70f); fx.shake(1.5f)
+            }
+            is WorldEvent.OrchardPlanted -> {
+                val (c, r) = FarmMap.ORCHARD_TREES[e.spot]
+                game.sfx.play("plant"); fx.burst("fx/dust", Iso.x(c, r).toFloat(), Iso.centerY(c, r).toFloat(), 6, speed = 30f, gravity = 30f, life = 0.5f)
+            }
+            is WorldEvent.TreeDugUp -> {
+                val (c, r) = FarmMap.ORCHARD_TREES[e.spot]
+                game.sfx.play("pickup"); fx.burst("fx/leaf", Iso.x(c, r).toFloat(), Iso.centerY(c, r) - 10f, 8, speed = 50f)
+            }
+            is WorldEvent.FruitPicked -> {
+                val (c, r) = FarmMap.ORCHARD_TREES[e.spot]
+                val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()
+                game.sfx.play("harvest"); game.haptics.tick()
+                fx.burst("items/${e.item}", x, y - 24, 5, speed = 60f)
+                fx.floatText("+${e.qty}", x, y - 44, Gfx.WHITE, icon = "items/${e.item}")
             }
             is WorldEvent.XpGained -> {}
             is WorldEvent.Blocked -> { val (x, y) = plotCenter(e.plot); fx.floatText(e.reason.uppercase(), x, y - 24, Gfx.RED) }

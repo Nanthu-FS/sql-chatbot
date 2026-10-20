@@ -106,6 +106,8 @@
     "copper_bar": 1
    },
    "recipes": [
+    "cherry_jam",
+    "peach_jam",
     "strawberry_jam",
     "melon_jam",
     "grapes_jam",
@@ -151,6 +153,8 @@
     "iron_bar": 3
    },
    "recipes": [
+    "apple_juice",
+    "orange_juice",
     "carrot_juice",
     "tomato_juice",
     "strawberry_juice",

@@ -58,6 +58,7 @@ BRONZE = ["brown", "rust", "clay", "tan", "cream"]
 FEATHER_W = ["slate", "grey", "grey_l", "white", "white"]
 GOLD_FEATHER = ["rust", "orange", "amber", "yellow", "white"]
 MULCH = ["brown_d", "brown", "brown_l", "tan_d", "tan"]
+PEACH = ["rust", "red", "pink", "amber", "cream"]
 QUALITY = ["slate_d", "blue_d", "blue", "cyan", "white"]
 BLUE_BG = ["blue_d", "blue", "blue", "cyan"]
 
@@ -390,6 +391,29 @@ def it_apple(c):
     leaf(c, (7.8, 2.6), (12.4, 0.6), 1.5, LEAF, sep="green_dd")
 
 
+def it_cherry(c):
+    paint(c, {p: "green_d" for p in stroke(c, (4.6, 8.0), (7.6, 1.6), 0.9)})
+    paint(c, {p: "green_d" for p in stroke(c, (10.0, 8.6), (7.6, 1.6), 0.9)})
+    leaf(c, (7.6, 1.8), (12.4, 1.4), 1.3, LEAF, sep="green_dd")
+    ball(c, 4.4, 9.8, 3.2, 3.0, RED, sep="purple", spec=[(3.2, 8.6, "white")])
+    ball(c, 9.8, 10.4, 3.2, 3.0, RED, sep="purple", spec=[(8.6, 9.2, "white")])
+
+
+def it_peach(c):
+    ball(c, 7.0, 8.4, 5.6, 5.2, PEACH, sep="rust", spec=[(4.2, 6.0, "white")])
+    paint(c, {p: "rust" for p in stroke(c, (8.6, 4.4), (9.4, 12.0), 0.8)})
+    paint(c, {p: "brown" for p in stroke(c, (7.2, 3.6), (7.6, 1.6), 1.0)})
+    leaf(c, (7.4, 2.6), (2.6, 0.8), 1.5, LEAF, sep="green_dd")
+
+
+def it_orange(c):
+    ball(c, 7.0, 8.0, 5.6, 5.4, ORANGE_SH, sep="rust", spec=[(4.4, 5.8, "white")])
+    for x, y in ((5.6, 9.6), (8.8, 7.0), (9.4, 10.8), (6.4, 12.0)):
+        c.dot(x, y, "orange")
+    c.dot(7.0, 2.8, "green_d")
+    leaf(c, (7.2, 2.6), (11.8, 1.0), 1.5, LEAF, sep="green_dd")
+
+
 def it_blackberry(c):
     pts = [(4.4, 4.8), (9.6, 4.8), (3.2, 8.0), (7.0, 7.6), (10.8, 8.0), (5.4, 11.0), (8.6, 11.0)]
     for x, y in pts:
@@ -650,6 +674,9 @@ ITEMS = {
     "glowcap": it_glowcap,
     "apple": it_apple,
     "blackberry": it_blackberry,
+    "cherry": it_cherry,
+    "peach": it_peach,
+    "orange": it_orange,
     "apple_sapling": it_apple_sapling,
     "pinecone": it_pinecone,
     "birch_seed": it_birch_seed,

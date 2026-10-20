@@ -93,6 +93,8 @@ class ProgressionTest {
             // Traveling merchant (level 10).
             listOf("rope_ladder", "torch", "quality_fertilizer", "hardwood", "geode", "apple_sapling").forEach { offer(it, MERCHANT_LEVEL) }
             offer("golden_acorn", 20)
+            // Orchard trees (round 6).
+            FRUIT_TREES.values.forEach { offer(it.fruit, it.unlockLevel) }
         } while (changed)
         // Never a source: nothing to fix if unused.
         zoneLevel.size
