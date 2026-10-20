@@ -72,6 +72,12 @@ import com.ditherfarm.game.buyAnimal
 import com.ditherfarm.game.ranchHandBlocker
 import com.ditherfarm.game.hireRanchHand
 import com.ditherfarm.game.ANIMAL_LEVEL
+import com.ditherfarm.game.RELICS
+import com.ditherfarm.game.RELIC_REWARD
+import com.ditherfarm.game.GOLEM_RELIC
+import com.ditherfarm.game.relicsFound
+import com.ditherfarm.game.relicRewardBlocker
+import com.ditherfarm.game.claimRelicReward
 import com.ditherfarm.game.festivalItems
 import com.ditherfarm.game.festivalProgress
 import com.ditherfarm.game.giftFor
@@ -769,6 +775,35 @@ class Panels(private val game: Game, private val hud: Hud) {
             else -> "YOU REACHED THE BOTTOM!"
         }
         g.text(note.take(34), x + pw / 2, y + ph - 16, Gfx.INK, align = 0, outline = 0, shadow = false)
+        // The relic page, once the deep mine has given up its first relic.
+        if (world.relicsFound > 0 && ui.button("relics", x + pw - 74, y + 4, 50, 14, "RELICS", style = if (world.relicRewardBlocker() == null) "gold" else "wood")) onRelics?.invoke()
+        return true
+    }
+
+    /** Opens the relic page (set by Chrome). */
+    var onRelics: (() -> Unit)? = null
+
+    // ------------------------------------------------------------------ relics
+    /** The eight deep-mine relics: found ones shown, missing ones as "?"; the full set pays once. */
+    fun relics(): Boolean {
+        val (x, y, pw, ph) = frame("RELICS ${world.relicsFound}/${RELICS.size}", 236).toList()
+        if (closeButton(x, y, pw)) return false
+        g.text("FROM RELIC ROCKS AND TREASURE", x + 10, y + 22, Gfx.GREY, outline = 0, shadow = false)
+        g.text("ROOMS BELOW FLOOR 40", x + 10, y + 32, Gfx.GREY, outline = 0, shadow = false)
+        val cw = (pw - 20) / 4
+        RELICS.entries.forEachIndexed { i, (id, name) ->
+            val cx = x + 10 + (i % 4) * cw
+            val cy = y + 46 + (i / 4) * 66
+            val found = id in world.state.relics
+            g.slice9("ui/slot", cx + 2, cy, cx + cw - 2, cy + 44, 4)
+            if (found) g.spriteScaled("relics/$id", (cx + cw / 2).toFloat(), (cy + 22).toFloat(), 2f, 2f)
+            else g.text("?", cx + cw / 2, cy + 18, Gfx.GREY, align = 0)
+            val words = (if (found) name else if (id == GOLEM_RELIC) "THE GOLEM" else "???").uppercase().split(" ")
+            words.take(2).forEachIndexed { k, w -> g.text(w, cx + cw / 2, cy + 47 + k * 9, if (found) Gfx.INK else Gfx.GREY, align = 0, outline = 0, shadow = false) }
+        }
+        val why = world.relicRewardBlocker()
+        val label = if (world.state.relicsClaimed) "SET COMPLETE!" else "ALL 8: ${RELIC_REWARD["coins"]} COINS + PRISMATIC"
+        if (ui.button("relic-claim", x + 10, y + ph - 28, pw - 20, 18, label, style = if (why == null) "gold" else "grey") && why == null) world.claimRelicReward()
         return true
     }
 

@@ -4230,6 +4230,38 @@
   "ay": 17,
   "bh": 34
  },
+ "relics/crown": {
+  "ax": 8,
+  "ay": 5
+ },
+ "relics/fossil": {
+  "ax": 8,
+  "ay": 6
+ },
+ "relics/golem_heart": {
+  "ax": 8,
+  "ay": 6
+ },
+ "relics/idol": {
+  "ax": 8,
+  "ay": 7
+ },
+ "relics/scarab": {
+  "ax": 8,
+  "ay": 7
+ },
+ "relics/skull": {
+  "ax": 8,
+  "ay": 6
+ },
+ "relics/sword": {
+  "ax": 8,
+  "ay": 8
+ },
+ "relics/tablet": {
+  "ax": 8,
+  "ay": 7
+ },
  "rocks/boulder": {
   "ax": 14,
   "ay": 19,
@@ -4472,6 +4504,21 @@
   "ay": 17,
   "bh": 20
  },
+ "rocks/relic_rock": {
+  "ax": 10,
+  "ay": 14,
+  "bh": 17
+ },
+ "rocks/relic_rock_2": {
+  "ax": 10,
+  "ay": 14,
+  "bh": 17
+ },
+ "rocks/relic_rock_3": {
+  "ax": 10,
+  "ay": 14,
+  "bh": 17
+ },
  "rocks/rock": {
   "ax": 11,
   "ay": 13,
@@ -4492,6 +4539,21 @@
   "ay": 9,
   "bh": 12
  },
+ "rocks/sealed_wall": {
+  "ax": 11,
+  "ay": 16,
+  "bh": 19
+ },
+ "rocks/sealed_wall_2": {
+  "ax": 11,
+  "ay": 16,
+  "bh": 19
+ },
+ "rocks/sealed_wall_3": {
+  "ax": 11,
+  "ay": 16,
+  "bh": 19
+ },
  "rocks/support_beam_prop": {
   "ax": 14,
   "ay": 28,
@@ -4501,6 +4563,21 @@
   "ax": 5,
   "ay": 28,
   "bh": 31
+ },
+ "rocks/treasure_chest": {
+  "ax": 9,
+  "ay": 12,
+  "bh": 15
+ },
+ "rocks/treasure_chest_2": {
+  "ax": 9,
+  "ay": 12,
+  "bh": 15
+ },
+ "rocks/treasure_chest_3": {
+  "ax": 9,
+  "ay": 12,
+  "bh": 15
  },
  "scenes/bank": {
   "ax": 0,

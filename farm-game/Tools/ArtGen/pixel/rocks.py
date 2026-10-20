@@ -595,6 +595,67 @@ def n_crystalite(v):
     return pic
 
 
+def rows_pic(rows, key):
+    pic = Pic(len(rows[0]), len(rows))
+    for y, row in enumerate(rows):
+        for x, ch in enumerate(row):
+            if ch != ".":
+                pic.put(x, y, key[ch])
+    return pic
+
+
+CHEST = [
+    "..bbbbbbbbbbbb..",
+    ".bBBWBBBBBBWBBb.",
+    "bBWWWWWWWWWWWWBb",
+    "byyyyyyyyyyyyyyb",
+    "bBBBBBByYBBBBBBb",
+    "bWWWWWWyyWWWWWWb",
+    "bWwwwwwkkwwwwwWb",
+    "bWwwwwwykwwwwwWb",
+    "bWwwwwwwwwwwwwWb",
+    "byyyyyyyyyyyyyyb",
+    "bbbbbbbbbbbbbbbb",
+]
+CHEST_KEY = {"b": "brown_d", "B": "brown", "W": "brown_l", "w": "rust", "y": "amber", "Y": "yellow", "k": "ink"}
+
+
+def n_chest(v):
+    """A treasure room's chest (round 6): banded wood with a gold lock."""
+    return rows_pic(CHEST, CHEST_KEY)
+
+
+def n_sealed(v):
+    """A sealed treasure-room wall (round 6): dressed dark blocks with a glowing rune."""
+    r = rand(v, 13)
+    pic = Pic(19, 15)
+    sil = body(pic, 0, 0, 19, 15, 141 + v, STONE_DK, flat=True)
+    for x, y in list(sil):
+        if y in (5, 10) or (x + (y // 5) * 4) % 8 == 0:
+            pic.put(x, y, "ink")
+    cx, cy = 9 + r.randint(-1, 1), 7
+    for dx, dy in ((0, -2), (0, -1), (0, 0), (0, 1), (0, 2), (-1, -1), (1, -1), (-2, 1), (2, 1)):
+        if (cx + dx, cy + dy) in sil:
+            pic.put(cx + dx, cy + dy, "cyan")
+    return pic
+
+
+def n_relic(v):
+    """A relic rock (round 6): a pale block with an old golden thing poking out of it."""
+    r = rand(v, 14)
+    pic = Pic(17, 13)
+    sil = body(pic, 0, 0, 17, 13, 151 + v, STONE_MID)
+    cx, cy = 8 + r.randint(-1, 1), 6
+    for x, y in ellipse(cx, cy, 3.2, 2.6):
+        if (x, y) in sil:
+            pic.put(x, y, "amber" if (x + y) % 3 else "yellow")
+    for x, y in ellipse(cx, cy, 1.4, 1.1):
+        if (x, y) in sil:
+            pic.put(x, y, "rust")
+    pic.put(cx - 1, cy - 2, "white")
+    return pic
+
+
 def n_boulder(v):
     r = rand(v, 10)
     pic = Pic(26, 18)
@@ -610,7 +671,7 @@ def n_boulder(v):
 NODES = {
     "rock": n_stone, "coal_rock": n_coal, "copper_vein": n_copper, "iron_vein": n_iron, "gold_vein": n_gold,
     "clay_bank": n_clay, "quartz_cluster": n_quartz, "geode_rock": n_geode, "boulder": n_boulder,
-    "crystalite_vein": n_crystalite,
+    "crystalite_vein": n_crystalite, "treasure_chest": n_chest, "sealed_wall": n_sealed, "relic_rock": n_relic,
     **{f"gem_node_{g}": n_gem(g) for g in GEMS},
 }
 

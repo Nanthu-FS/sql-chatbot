@@ -179,6 +179,35 @@
    }
   },
   {
+   "id": "treasure_chest",
+   "hp": 1,
+   "minPick": 0,
+   "drops": {},
+   "xp": 20,
+   "bonus": {}
+  },
+  {
+   "id": "sealed_wall",
+   "hp": 12,
+   "minPick": 3,
+   "drops": {
+    "stone": [
+     1,
+     2
+    ]
+   },
+   "xp": 3,
+   "bonus": {}
+  },
+  {
+   "id": "relic_rock",
+   "hp": 8,
+   "minPick": 2,
+   "drops": {},
+   "xp": 15,
+   "bonus": {}
+  },
+  {
    "id": "boulder",
    "hp": 8,
    "minPick": 1,

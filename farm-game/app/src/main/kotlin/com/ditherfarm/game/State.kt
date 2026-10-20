@@ -155,6 +155,9 @@ class GameState(var seed: Long) {
     var orchard = OrchardState()
     /** The pasture's animals and trough (Animals.kt). */
     var ranch = RanchState()
+    /** Relics found in the deep mine (Relics.kt), and whether the full set's reward was claimed. */
+    val relics = LinkedHashSet<String>()
+    var relicsClaimed = false
     var harvesterNext = 0.0
     /** Timed building id → game minute of its next run, and whether it is blocked (tray full). */
     val shedNext = HashMap<String, Double>()
@@ -237,6 +240,7 @@ class GameState(var seed: Long) {
         put("beautyClaimed", JSONArray(beautyClaimed.toList()))
         put("orchard", orchard.toJson())
         put("ranch", ranch.toJson())
+        put("relics", JSONArray(relics.toList())); put("relicsClaimed", relicsClaimed)
         put("harvesterNext", harvesterNext)
         put("shedNext", JSONObject(shedNext as Map<*, *>))
         put("achievements", JSONObject(achievements as Map<*, *>))
@@ -305,6 +309,8 @@ class GameState(var seed: Long) {
             o.optJSONArray("beautyClaimed")?.let { a -> for (k in 0 until a.length()) beautyClaimed += a.getInt(k) }
             o.optJSONObject("orchard")?.let { orchard = OrchardState.fromJson(it) }
             o.optJSONObject("ranch")?.let { ranch = RanchState.fromJson(it) }
+            o.optJSONArray("relics")?.let { a -> for (k in 0 until a.length()) a.getString(k).takeIf { it in RELICS }?.let { relics += it } }
+            relicsClaimed = o.optBoolean("relicsClaimed")
             harvesterNext = o.optDouble("harvesterNext", 0.0)
             o.optJSONObject("shedNext")?.let { m -> m.keys().forEach { shedNext[it] = m.getDouble(it) } }
             o.optJSONObject("achievements")?.toIntMap()?.forEach { (k, v) -> achievements[k] = v }

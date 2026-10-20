@@ -283,6 +283,29 @@ class ScreenshotTest {
         }, zoom = 2)
     }
 
+    @Test fun relicsAndTreasure() {
+        render("panel_relics", setup = { g ->
+            toLevel(g, 30)
+            listOf("idol", "skull", "crown").forEach { g.world.state.relics += it }
+            g.world.mine.repaired = true; g.world.enterFloor(41)
+            g.goTo(Nav.MINE); g.engine.screen?.enter()
+            (g.engine.screen as com.ditherfarm.ui.MineScreen).chrome.open(com.ditherfarm.ui.Chrome.Panel.RELICS)
+        })
+        render("mine_treasure", seconds = 0.5f, setup = { g ->
+            toLevel(g, 30)
+            g.world.state.tools["pickaxe"] = 4
+            g.world.mine.gatesOpened += listOf(10, 20, 30, 40, 50, 60, 70)
+            g.world.add("torch", 20); g.world.mine.repaired = true
+            val m = g.world.mine
+            for (k in 0 until 200) { g.world.enterFloor(41 + k % 39); g.world.events.clear(); if (m.cells.any { it.node == "treasure_chest" }) break }
+            g.goTo(Nav.MINE); g.engine.screen?.enter()
+            val c = m.cells.indexOfFirst { it.node == "treasure_chest" }
+            val n = m.grid
+            listOf(c + 2, c - 2, c + 2 * n, c - 2 * n).forEach { t -> if (t in m.cells.indices && m.cells[t].node == null) g.world.placeTorch(t) }
+            (g.engine.screen as com.ditherfarm.ui.MineScreen).centerOnTile(c % n, c / n)
+        }, zoom = 2)
+    }
+
     @Test fun mineCliffs() {
         for ((name, at) in listOf("back" to (9 to 11), "left" to (8 to 19))) render("mine_cliffs_$name", seconds = 0.5f, setup = { g ->
             toLevel(g, 8)

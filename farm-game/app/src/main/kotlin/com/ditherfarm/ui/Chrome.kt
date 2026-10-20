@@ -43,7 +43,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS }
 
     var panel = Panel.NONE
         private set
@@ -72,6 +72,7 @@ class Chrome(private val game: Game, private val here: Nav) {
         panels.onPlace = { item -> panel = Panel.NONE; game.startPlacing(item) }
         panels.onSkills = { open(Panel.SKILLS, "bench") }
         panels.onDecorShop = { open(Panel.DECOR) }
+        panels.onRelics = { open(Panel.RELICS) }
         // Decorations go on the farm, so buying one elsewhere takes the player there.
         panels.onDecor = { id ->
             panel = Panel.NONE
@@ -311,6 +312,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.PET_INFO -> panels.petInfo()
             Panel.ORCHARD -> panels.orchard(target?.toIntOrNull() ?: -1)
             Panel.PASTURE -> panels.pasture()
+            Panel.RELICS -> panels.relics()
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -404,6 +406,12 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.TroughFilled -> { game.sfx.play("collect"); game.haptics.tick() }
             is WorldEvent.AnimalsFed -> if (e.hungry > 0) hud.toast(if (e.hungry == 1) "An animal went hungry. Fill the trough!" else "${e.hungry} animals went hungry. Fill the trough!")
             is WorldEvent.RanchHandHired -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("The ranch hand starts tomorrow morning") }
+            is WorldEvent.RelicFound -> {
+                game.sfx.play("levelup"); game.haptics.heavy()
+                hud.toast("Relic found: ${com.ditherfarm.game.RELICS[e.id]}! (${e.count}/${com.ditherfarm.game.RELICS.size}) See them at the elevator")
+            }
+            is WorldEvent.TreasureOpened -> { game.sfx.play("gem"); game.haptics.heavy(); hud.toast("Treasure! +${e.coins} coins and gems") }
+            is WorldEvent.RelicsComplete -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Every relic found! The collection pays out") }
             is WorldEvent.OrchardFruit -> hud.toast(if (e.trees == 1) "A tree in the orchard has fruit" else "${e.trees} trees in the orchard have fruit")
             is WorldEvent.PetLevelUp -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("${e.name} is now level ${e.level}! Bigger gifts") }
             is WorldEvent.BeautyMilestone -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast(if (e.beauty >= com.ditherfarm.game.BEST_FARM_BEAUTY) "Best Farm in the Valley! +${e.coins} coins" else "Beauty ${e.beauty}! +${e.coins} coins") }

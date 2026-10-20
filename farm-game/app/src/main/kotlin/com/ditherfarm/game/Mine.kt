@@ -213,6 +213,7 @@ private fun World.hit(cell: Cell, depth: Int, where: Int, quarry: Boolean): Map<
     if (depth > 0 && def.id != "stone" && def.id != "rubble" && rng.chance(depth / 100.0)) drops.keys.firstOrNull()?.let { drop(it, 1) }
     if (def.id != "stone" && def.id != "rubble" && def.id != "crate" && roll(skill("prospector"))) drops.keys.firstOrNull()?.let { drop(it, 1) }
     if (def.id != "rubble" && def.id != "crate" && roll(skill("geologist"))) drop(if (depth > 0) data.mine.band(depth).geode else "geode", 1)
+    treasureLoot(def.id, depth, rng, ::drop)
     if (def.id == "crate") {
         when (rng.nextInt(3)) {
             0 -> state.coins += 20 + rng.nextInt(41)
@@ -360,6 +361,7 @@ private fun World.generateFloor(floor: Int) {
     if (floor >= 8 && rng.chance(0.25)) {
         repeat(1 + rng.nextInt(2)) { if (empties.isNotEmpty()) m.markers += empties.removeAt(rng.nextInt(empties.size)) }
     }
+    placeTreasure(floor, rng)
     spawnCritters(floor, rng)
 }
 
