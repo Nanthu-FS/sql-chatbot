@@ -89,6 +89,24 @@ class TouchPlayTest {
         assertEquals("all four ripe crops on the slide are harvested", 0, row.count { g.world.isReady(g.world.plot(it)) })
     }
 
+    @Test fun orchardSignAndMeadowOpenTheOrchard() {
+        val (g, t) = start()
+        val f = g.farm
+        g.world.gainXp(g.world.data.level(13).totalXp - g.world.state.xp)
+        g.world.state.pet.offered = true
+        g.world.events.clear()
+        t.frames(3)
+        while (f.chrome.isOpen) { f.chrome.close(); t.frames(2) }
+        for (tile in listOf(FarmMap.ORCHARD_SIGN, 19 to 33, 18 to 30)) {
+            f.centerOnTile(tile.first, tile.second)
+            t.frames(3)
+            t.tap(bufX(f, Iso.x(tile.first, tile.second).toFloat()), bufY(f, Iso.centerY(tile.first, tile.second).toFloat()))
+            t.frames(3)
+            assertEquals("tap on $tile", Chrome.Panel.ORCHARD, f.chrome.panel)
+            f.chrome.close(); t.frames(2)
+        }
+    }
+
     @Test fun lockedMineButtonStaysOnTheFarm() {
         val (g, t) = start()
         assertFalse("quarry still closed on a new farm", g.world.quarryOpen)

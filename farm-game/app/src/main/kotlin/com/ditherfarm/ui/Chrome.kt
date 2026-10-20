@@ -2,6 +2,8 @@ package com.ditherfarm.ui
 
 import com.ditherfarm.Game
 import com.ditherfarm.engine.Gfx
+import com.ditherfarm.game.playerName
+import com.ditherfarm.game.villager
 import com.ditherfarm.game.WorldEvent
 import com.ditherfarm.game.claimableCount
 import com.ditherfarm.game.festival
@@ -43,7 +45,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS, VILLAGER }
 
     var panel = Panel.NONE
         private set
@@ -73,6 +75,7 @@ class Chrome(private val game: Game, private val here: Nav) {
         panels.onSkills = { open(Panel.SKILLS, "bench") }
         panels.onDecorShop = { open(Panel.DECOR) }
         panels.onRelics = { open(Panel.RELICS) }
+        panels.onHeartEvent = { id -> com.ditherfarm.game.sceneById(id)?.let { story.start(it); open(Panel.STORY) } }
         // Decorations go on the farm, so buying one elsewhere takes the player there.
         panels.onDecor = { id ->
             panel = Panel.NONE
@@ -313,6 +316,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.ORCHARD -> panels.orchard(target?.toIntOrNull() ?: -1)
             Panel.PASTURE -> panels.pasture()
             Panel.RELICS -> panels.relics()
+            Panel.VILLAGER -> panels.villager(target ?: return)
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -406,6 +410,27 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.TroughFilled -> { game.sfx.play("collect"); game.haptics.tick() }
             is WorldEvent.AnimalsFed -> if (e.hungry > 0) hud.toast(if (e.hungry == 1) "An animal went hungry. Fill the trough!" else "${e.hungry} animals went hungry. Fill the trough!")
             is WorldEvent.RanchHandHired -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("The ranch hand starts tomorrow morning") }
+            is WorldEvent.HeartUp -> {
+                game.sfx.play("unlock"); game.haptics.tick()
+                val name = world.villager(e.villager)?.name ?: e.villager
+                hud.toast(if (e.hearts in com.ditherfarm.game.HEART_EVENTS) "$name: ${e.hearts} hearts! They want to talk to you" else "$name: ${e.hearts} hearts!")
+            }
+            is WorldEvent.KeepsakeGiven -> {
+                game.sfx.play("levelup"); game.haptics.heavy()
+                hud.toast("Best friends with ${world.villager(e.villager)?.name}! They gave you ${com.ditherfarm.game.DECOR[e.decor]?.name}. Place it from Decorate")
+            }
+            is WorldEvent.Talked -> { game.sfx.play("click"); panels.villagerSays = e.line }
+            is WorldEvent.GiftGiven -> {
+                game.sfx.play(if (e.reaction == com.ditherfarm.game.GiftReaction.LOVED) "levelup" else "coin"); game.haptics.tick()
+                val name = world.villager(e.villager)?.name ?: e.villager
+                panels.villagerSays = when (e.reaction) {
+                    com.ditherfarm.game.GiftReaction.LOVED -> "Oh! I love this! Thank you, ${world.playerName}!"
+                    com.ditherfarm.game.GiftReaction.LIKED -> "How thoughtful. Thank you!"
+                    com.ditherfarm.game.GiftReaction.PLAIN -> "Thanks, that's kind of you."
+                    com.ditherfarm.game.GiftReaction.POOR -> "Um... thanks? I think?"
+                }
+                hud.toast("$name ${e.reaction.label}! +${e.points}")
+            }
             is WorldEvent.RelicFound -> {
                 game.sfx.play("levelup"); game.haptics.heavy()
                 hud.toast("Relic found: ${com.ditherfarm.game.RELICS[e.id]}! (${e.count}/${com.ditherfarm.game.RELICS.size}) See them at the elevator")

@@ -81,6 +81,43 @@ PEOPLE = {
                                     p="pink", m="red_d", O="pink", P="slate_d", v="pink", V="magenta")),
 }
 
+# Villagers (round 6, friendships): the same bodies, dressed for their trades; walking frames only.
+VILLAGERS = {
+    "mara": ("bun", "apron", look(hair=("clay", "brown", "tan"), skin=("skin", "tan", "tan_d"), shirt=("white", "grey_l"),
+                                  bib=("cream", "tan", "tan"), legs=("brown", "brown_d"), band=("white", "grey_l"),
+                                  p="pink", m="red_d", O="white", P="tan_d", V="amber")),
+    "tobias": ("cap", "bib", look(hair=("brown", "brown_d"), skin=("tan", "tan_d", "brown_l"), shirt=("green", "green_d"),
+                                  bib=("brown_l", "brown", "brown"), legs=("brown", "brown_d"), hat=("green_d", "green_dd", "green"),
+                                  brim=("green_dd", "ink"), beard=("brown", "brown_d"), Y="ink", m="brown_d", O="cream", P="tan", V="green")),
+    "ivy": ("braid", "plain", look(hair=("rust", "red_d", "orange"), skin=("skin", "tan", "tan_d"), shirt=("pink", "red"),
+                                   legs=("green_d", "green_dd"), braid=("rust", "red_d"), p="pink", m="red_d", O="white", P="green", V="pink")),
+    "bram": ("cap", "apron", look(hair=("brown_d", "ink"), skin=("brown_l", "brown", "brown"), shirt=("grey_d", "slate"),
+                                  bib=("brown", "brown_d", "brown_d"), legs=("slate_d", "ink"), hat=("grey_d", "slate", "grey"),
+                                  brim=("slate", "slate_d"), beard=("brown", "brown_d"), Y="ink", m="brown_d", O="grey", P="slate", V="orange")),
+    "juniper": ("bun", "apron", look(hair=("grey_l", "grey", "white"), skin=("skin", "tan", "tan_d"), shirt=("purple", "slate_d"),
+                                     bib=("cream", "tan", "tan"), legs=("slate", "slate_d"), band=("purple", "slate_d"),
+                                     p="pink", m="red_d", O="white", P="tan_d", V="purple")),
+    "pip": ("straw", "plain", look(hair=("amber", "clay", "yellow"), skin=("skin", "tan", "tan_d"), shirt=("cyan", "blue"),
+                                   legs=("blue_d", "slate"), hat=("amber", "clay", "yellow"), brim=("amber", "tan_d"), band=("blue", "blue_d"),
+                                   z="tan_d", m="red_d", O="white", P="blue", V="cyan")),
+    "sela": ("bob", "plain", look(hair=("purple", "slate_d", "magenta"), skin=("tan", "tan_d", "tan_d"), shirt=("magenta", "purple"),
+                                  legs=("slate", "slate_d"), p="pink", m="red_d", O="white", P="purple", V="magenta")),
+    "fennel": ("cap", "plain", look(hair=("grey_l", "grey"), skin=("tan", "tan_d", "brown_l"), shirt=("green_d", "green_dd"),
+                                    legs=("brown", "brown_d"), hat=("green_dd", "teal_dd", "green_d"), brim=("teal_dd", "ink"),
+                                    beard=("white", "grey_l"), Y="brown_d", m="brown_d", O="cream", P="green", V="green")),
+    "rook": ("bob", "bib", look(hair=("ink", "slate_d", "slate"), skin=("brown_l", "brown", "brown"), shirt=("grey", "grey_d"),
+                                bib=("slate_d", "ink", "ink"), legs=("slate_d", "ink"), m="brown_d", O="grey_l", P="slate", V="orange")),
+    "willa": ("braid", "bib", look(hair=("yellow", "amber", "cream"), skin=("skin", "tan", "tan_d"), shirt=("red", "red_d"),
+                                   bib=("brown_l", "brown", "brown"), legs=("blue_d", "slate"), braid=("yellow", "amber"),
+                                   p="pink", m="red_d", O="pink", P="brown", V="red")),
+    "coco": ("bun", "apron", look(hair=("brown_d", "ink", "brown"), skin=("brown_l", "brown", "brown"), shirt=("orange", "rust"),
+                                  bib=("white", "grey_l", "grey_l"), legs=("brown_d", "ink"), band=("white", "grey_l"),
+                                  p="red", m="ink", O="white", P="tan", V="orange")),
+}
+for _, _, _lk in VILLAGERS.values():
+    for _k, _c in (("p", "pink"), ("z", "tan_d"), ("m", "red_d"), ("O", "white"), ("P", "tan"), ("V", "red")):
+        _lk.setdefault(_k, _c)
+PEOPLE.update({f"v_{k}": v for k, v in VILLAGERS.items()})
 
 FRAMES = [
     ("se", "idle", 0, "idle"), ("se", "walk", 0, "walk0"), ("se", "walk", 1, "walk1"),
@@ -89,6 +126,8 @@ FRAMES = [
     ("ne", "idle", 0, "idle"), ("ne", "walk", 0, "walk0"), ("ne", "walk", 1, "walk1"),
     ("ne", "carry", 0, "carry0"), ("ne", "carry", 1, "carry1"),
 ]
+
+VILLAGER_FRAMES = [f for f in FRAMES if f[1] in ("idle", "walk")]
 
 # Crate of produce (V produce, Q leaves, W/X wood) over torso rows 2-4; from behind its ends show.
 CRATE_FR = [".SQVVVVVQs.", ".AWWWWWWXa.", "..XXXXXXX.."]

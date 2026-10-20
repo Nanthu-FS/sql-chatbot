@@ -7,13 +7,13 @@ package com.ditherfarm.game
  * Mr. Sterling, comes back to assess the village after each rebuild, and at the concrete town the
  * loan is approved and the valley is named the best farming village.
  */
-enum class Who { PLAYER, OFFICER, NARRATOR }
+enum class Who { PLAYER, OFFICER, NARRATOR, VILLAGER }
 
 /** One line of a scene; [mood] 1 is the player's determined face or the officer's shocked one. */
 class Line(val who: Who, val text: String, val mood: Int = 0)
 
 /** A scene: [bank] scenes play in the loan office, the rest over the village. [tier] gates it. */
-class Scene(val id: String, val tier: Int, val bank: Boolean, val lines: List<Line>, val coins: Int = 0)
+class Scene(val id: String, val tier: Int, val bank: Boolean, val lines: List<Line>, val coins: Int = 0, val villager: String? = null)
 
 const val OFFICER_NAME = "Mr. Sterling"
 const val FARMER_LOOKS = 4
@@ -63,7 +63,7 @@ val SCENES: List<Scene> = listOf(
     ), coins = 50_000),
 )
 
-fun sceneById(id: String) = SCENES.firstOrNull { it.id == id }
+fun sceneById(id: String) = SCENES.firstOrNull { it.id == id } ?: HEART_SCENES[id]
 
 /** The player's name as shown in the story ("Farmer" until one is picked). */
 val World.playerName get() = state.playerName.ifBlank { "Farmer" }
@@ -78,6 +78,8 @@ fun World.pendingScene(): Scene? = SCENES.firstOrNull { it.id !in state.storySee
 fun World.finishScene(id: String) {
     val s = sceneById(id) ?: return
     if (!state.storySeen.add(id)) return
+    // A heart event deepens the friendship a little more (round 6).
+    s.villager?.let { befriend(it, 30); events += WorldEvent.HeartEventDone(it) }
     if (s.coins > 0) {
         state.coins += s.coins
         state.bump("coins_earned", s.coins.toLong())

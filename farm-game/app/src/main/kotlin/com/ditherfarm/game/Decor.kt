@@ -14,6 +14,8 @@ class DecorDef(
     val season: Season? = null,
     /** Lies flat on the ground (paths): drawn under everything standing. */
     val flat: Boolean = false,
+    /** A best friend's keepsake (round 6): given by this villager at ten hearts, never sold. */
+    val keepsake: String? = null,
 )
 
 val DECOR = listOf(
@@ -38,7 +40,22 @@ val DECOR = listOf(
     DecorDef("snowman", "Snowman", 300, 4, 2, season = Season.WINTER),
     DecorDef("vane", "Weathervane", 700, 5, 6),
     DecorDef("fountain", "Fountain", 3000, 20, 12),
+    // Keepsakes, one from each best friend (round 6).
+    DecorDef("ks_mara", "Mara's oven", 0, 8, 1, keepsake = "mara"),
+    DecorDef("ks_tobias", "Tobias's sign", 0, 8, 1, keepsake = "tobias"),
+    DecorDef("ks_ivy", "Ivy's cart", 0, 8, 1, keepsake = "ivy"),
+    DecorDef("ks_bram", "Bram's horseshoe", 0, 8, 1, keepsake = "bram"),
+    DecorDef("ks_juniper", "Juniper's tea", 0, 8, 1, keepsake = "juniper"),
+    DecorDef("ks_pip", "Pip's diamond", 0, 8, 1, keepsake = "pip"),
+    DecorDef("ks_sela", "Sela's barrel", 0, 8, 1, keepsake = "sela"),
+    DecorDef("ks_fennel", "Fennel's herbs", 0, 8, 1, keepsake = "fennel"),
+    DecorDef("ks_rook", "Rook's anvil", 0, 8, 1, keepsake = "rook"),
+    DecorDef("ks_willa", "Willa's bench", 0, 8, 1, keepsake = "willa"),
+    DecorDef("ks_coco", "Coco's table", 0, 8, 1, keepsake = "coco"),
 ).associateBy { it.id }
+
+/** Keepsakes the player has been given and not yet set out on the farm. */
+fun World.keepsakesToPlace(): List<DecorDef> = DECOR.values.filter { it.keepsake != null && it.id in state.keepsakes && it.id !in state.decor.values }
 
 const val BEAUTY_PER_PERCENT = 5
 const val BEAUTY_MAX_PERCENT = 10
@@ -70,6 +87,11 @@ fun World.claimBeautyMilestone(): Boolean {
 
 fun World.decorBlocker(id: String): String? {
     val d = DECOR[id] ?: return "Unknown decoration"
+    if (d.keepsake != null) return when {
+        id !in state.keepsakes -> "A gift from a best friend"
+        id in state.decor.values -> "Already on the farm"
+        else -> null
+    }
     return when {
         level < d.unlockLevel -> "Unlocks at level ${d.unlockLevel}"
         d.season != null && time.season != d.season -> "Sold in ${d.season.name.lowercase()}"

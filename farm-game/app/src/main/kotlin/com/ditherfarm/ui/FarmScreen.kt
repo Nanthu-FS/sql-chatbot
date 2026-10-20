@@ -138,6 +138,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private val crew = FarmCrew(game, this)
     /** The pasture's animals. */
     private val herd = Herd(game)
+    /** Villagers walking the village. */
+    private val village = VillageWalk(game)
     /** Fishing on the river. */
     private val fishing = Fishing(game) { hud.toast(it) }
     /** Plot of the farmhand job just announced: its result events stay quiet (the crew shows them). */
@@ -278,6 +280,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         chrome.update(dt)
         crew.update(dt)
         herd.update(dt)
+        village.update(dt)
         fishing.update(dt)
         if (infoTime > 0) infoTime -= dt
         if (decorBadTime > 0) decorBadTime -= dt
@@ -490,6 +493,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
         drawOrchard(list)
         herd.collect(list, this)
+        village.collect(list, this)
         fishing.collect(list)
         for (b in Building.entries) {
             val x = Iso.x(b.c, b.r).toFloat()
@@ -598,6 +602,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             list.add(sy) {
                 val g = game.gfx
                 g.sprite("deco/field_sign", sx, sy)
+                // Named, so it isn't mistaken for a field's sign (playtest round 6).
+                if (!o.open) g.text("ORCHARD", sx.toInt(), (sy - 34).toInt(), Gfx.WHITE, align = 0)
                 when {
                     o.open -> g.sprite("items/apple", sx, sy - 13)
                     world.level < ORCHARD_LEVEL -> g.text("L$ORCHARD_LEVEL", sx.toInt(), (sy - 15).toInt(), 0xFFC0CBDC.toInt(), align = 0)
@@ -825,7 +831,10 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     override fun onWorldTap(wx: Float, wy: Float): Boolean {
         if (fishing.active) { fishing.tap(); return true }
-        if (decorPlacing == null && placing == null) herd.at(wx, wy).takeIf { it >= 0 }?.let { i -> tapAnimal(i); return true }
+        if (decorPlacing == null && placing == null) {
+            herd.at(wx, wy).takeIf { it >= 0 }?.let { i -> tapAnimal(i); return true }
+            village.at(wx, wy)?.let { id -> chrome.panels.villagerSays = ""; chrome.open(Chrome.Panel.VILLAGER, id); return true }
+        }
         decorPlacing?.let { id ->
             val t = IntArray(2).also { Iso.pick(wx, wy, it) }
             val k = decorKey(t[0], t[1])
@@ -1030,6 +1039,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART); "pet" -> chrome.open(Chrome.Panel.PET); "decor" -> chrome.open(Chrome.Panel.DECOR); "pet_info" -> chrome.open(Chrome.Panel.PET_INFO)
             "orchard" -> chrome.open(Chrome.Panel.ORCHARD)
             "pasture" -> chrome.open(Chrome.Panel.PASTURE)
+            "villager" -> chrome.open(Chrome.Panel.VILLAGER, "mara")
             else -> if (name.startsWith("orchard:")) chrome.open(Chrome.Panel.ORCHARD, name.removePrefix("orchard:"))
             else if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
             else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))

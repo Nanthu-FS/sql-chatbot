@@ -65,6 +65,11 @@ sealed class WorldEvent {
     data class GolemCoreHit(val phase: Int, val hits: Int) : WorldEvent()
     data class GolemPhase(val phase: Int) : WorldEvent()
     data class GolemDefeated(val reward: Map<String, Int>) : WorldEvent()
+    data class HeartUp(val villager: String, val hearts: Int) : WorldEvent()
+    data class Talked(val villager: String, val line: String, val name: String) : WorldEvent()
+    data class GiftGiven(val villager: String, val item: String, val reaction: GiftReaction, val points: Int) : WorldEvent()
+    data class HeartEventDone(val villager: String) : WorldEvent()
+    data class KeepsakeGiven(val villager: String, val decor: String) : WorldEvent()
     data class OrchardPlanted(val spot: Int, val kind: String) : WorldEvent()
     data class TreeDugUp(val spot: Int) : WorldEvent()
     data class OrchardFruit(val trees: Int) : WorldEvent()
@@ -740,7 +745,7 @@ class World(val data: GameData, val state: GameState) {
         state.coins += coins
         val v = data.villagers.firstOrNull { it.id == o.villager }
         val fav = o.lines.count { v != null && it.item in v.favorites }
-        state.friendship[o.villager] = (state.friendship[o.villager] ?: 0) + 10 + 5 * o.lines.size + 5 * fav + if (o.big) 20 else 0
+        befriend(o.villager, 10 + 5 * o.lines.size + 5 * fav + if (o.big) 20 else 0)
         s.order = null
         s.nextAt = state.minutes + orderDelayMinutes()
         state.bump("orders")
@@ -772,7 +777,8 @@ class World(val data: GameData, val state: GameState) {
         const val STEP_MINUTES = 15.0
         const val OFFLINE_CAP_SECONDS = 24 * 3600.0
         const val PLOT_COUNT = FieldLayout.FIELD
-        val HEARTS = intArrayOf(100, 250, 500, 850, 1300)
+        /** Friendship points for each of the ten hearts (round 6; five hearts used to be 1300). */
+        val HEARTS = intArrayOf(100, 250, 450, 700, 1000, 1350, 1750, 2200, 2700, 3250)
         /** Rare finds and junk that villagers never ask for. */
         val NOT_ORDERED = setOf("prismatic_shard", "golden_feather", "golden_acorn", "heartwood", "old_coin", "withered_crop", "plant_scraps", "diamond", "bird_nest")
 

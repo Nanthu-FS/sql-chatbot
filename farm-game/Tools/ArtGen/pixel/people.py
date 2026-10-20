@@ -730,6 +730,11 @@ def main():
             sp.save(f"{name}_{view}_{suffix}", im, F.CANVAS_W // 2 + pad, (h - 1) + pad)
         im, pad = paint_portrait(PORTRAITS[name])
         pt.save(f"fh_{name}", im, 15 + pad, 15 + pad)
+    # Villagers walking the village (round 6): bodies only, their portraits come from portraits.py.
+    for vid in F.VILLAGERS:
+        for view, pose, phase, suffix in F.VILLAGER_FRAMES:
+            im, pad, h = F.sprite(f"v_{vid}", view, pose, phase)
+            sp.save(f"v_{vid}_{view}_{suffix}", im, F.CANVAS_W // 2 + pad, (h - 1) + pad)
     print(json.dumps({**sp.pivots, **pt.pivots}))
 
 

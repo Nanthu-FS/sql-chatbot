@@ -73,17 +73,22 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
         val cur = s.lines[line]
         val boxTop = h - 92
         // The officer sits behind his desk in the bank; in the village both stand above the box.
-        val officerLit = cur.who == Who.OFFICER
+        val officerLit = cur.who == Who.OFFICER || cur.who == Who.VILLAGER
         val playerLit = cur.who == Who.PLAYER
-        val officer = if (officerLit && cur.mood == 1) "portraits/officer_shock_bust" else "portraits/officer_bust"
+        // A heart event puts the villager (round 6) where the officer stands.
+        val officer = s.villager?.let { "portraits/$it" } ?: if (officerLit && cur.mood == 1) "portraits/officer_shock_bust" else "portraits/officer_bust"
         val farmer = "portraits/farmer_${world.state.playerLook}" + (if (playerLit && cur.mood == 1) "_det" else "") + "_bust"
-        val officerBase = if (s.bank) top + DESK_TOP + 4 else boxTop + 4
+        // Villager portraits pivot on their middle, busts on their base: lift them clear of the box.
+        val officerBase = (if (s.bank) top + DESK_TOP + 4 else boxTop + 4) - if (s.villager != null) 46 else 0
         g.spriteScaled(officer, (w - 64).toFloat(), officerBase.toFloat(), 3f, 3f, filter = if (officerLit) null else SHADE)
         if (s.bank) g.sprite("scenes/bank_desk", 0f, top.toFloat())
         g.spriteScaled(farmer, 62f, (boxTop + 8).toFloat(), 3f, 3f, filter = if (playerLit) null else SHADE)
         // Dialogue box with the speaker's name tag and the line typed out.
         ui.panel(6, boxTop, w - 12, 84)
-        val who = when (cur.who) { Who.PLAYER -> world.playerName.uppercase(); Who.OFFICER -> OFFICER_NAME.uppercase(); Who.NARRATOR -> null }
+        val who = when (cur.who) {
+            Who.PLAYER -> world.playerName.uppercase(); Who.OFFICER -> OFFICER_NAME.uppercase(); Who.NARRATOR -> null
+            Who.VILLAGER -> s.villager?.let { id -> world.data.villagers.firstOrNull { it.id == id }?.name?.uppercase() }
+        }
         if (who != null) {
             val tw = g.textWidth(who) + 14
             val tx = if (cur.who == Who.PLAYER) 12 else w - 12 - tw

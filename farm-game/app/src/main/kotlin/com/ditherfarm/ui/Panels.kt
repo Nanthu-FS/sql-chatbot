@@ -78,6 +78,23 @@ import com.ditherfarm.game.GOLEM_RELIC
 import com.ditherfarm.game.relicsFound
 import com.ditherfarm.game.relicRewardBlocker
 import com.ditherfarm.game.claimRelicReward
+import com.ditherfarm.game.hasRod
+import com.ditherfarm.game.collectProduct
+import com.ditherfarm.game.petAnimal
+import com.ditherfarm.game.pettedToday
+import com.ditherfarm.game.villager
+import com.ditherfarm.game.FRIEND_HEARTS
+import com.ditherfarm.game.nextHeart
+import com.ditherfarm.game.talkedToday
+import com.ditherfarm.game.giftedToday
+import com.ditherfarm.game.talk
+import com.ditherfarm.game.giftable
+import com.ditherfarm.game.giftReaction
+import com.ditherfarm.game.GiftReaction
+import com.ditherfarm.game.giveGift
+import com.ditherfarm.game.pendingHeartEvent
+import com.ditherfarm.game.heartScene
+import com.ditherfarm.game.keepsakesToPlace
 import com.ditherfarm.game.festivalItems
 import com.ditherfarm.game.festivalProgress
 import com.ditherfarm.game.giftFor
@@ -409,7 +426,11 @@ class Panels(private val game: Game, private val hud: Hud) {
             val tx = x + 48
             g.text((v?.name ?: o.villager).uppercase(), tx, cy + 5, Gfx.INK, outline = 0, shadow = false)
             val hearts = world.hearts(o.villager)
-            for (h in 0 until hearts) g.sprite("icons/heart", (tx + 4 + g.textWidth((v?.name ?: "").uppercase()) + h * 8).toFloat(), (cy + 9).toFloat())
+            if (hearts > 0) {
+                val hx = tx + 6 + g.textWidth((v?.name ?: "").uppercase())
+                miniHeart(hx, cy + 6, true)
+                g.text("$hearts", hx + 7, cy + 5, Gfx.RED, outline = 0, shadow = false)
+            }
             o.lines.forEachIndexed { li, line ->
                 val lx = tx + li * 50
                 val have = world.count(line.item, anyQuality = true)
@@ -693,7 +714,7 @@ class Panels(private val game: Game, private val hud: Hud) {
                 if (next == null) {
                     g.slice9("ui/slot", x + 8, ry, x + pw - 12, ry + 34, 4)
                     g.sprite(toolIcon(tool.name.lowercase()), (x + 20).toFloat(), (ry + 12).toFloat())
-                    g.text("GOLD ${tool.label.uppercase()} - MAX", x + 32, ry + 12, Gfx.INK, outline = 0, shadow = false)
+                    g.text("${world.data.tools.names[world.toolTier(tool)].uppercase()} ${tool.label.uppercase()} - MAX", x + 32, ry + 12, Gfx.INK, outline = 0, shadow = false)
                 } else if (next.building != "workbench") {
                     // Iron and gold tools are forged at the village Blacksmith.
                     g.slice9("ui/slot", x + 8, ry, x + pw - 12, ry + 34, 4)
@@ -705,6 +726,14 @@ class Panels(private val game: Game, private val hud: Hud) {
                     g.text(world.data.tools.names[world.toolTier(tool)].uppercase(), x + 8 + pw - 20 - 104, ry + 4, Gfx.GREY, outline = 0, shadow = false)
                 }
             }
+            // The fishing rod (round 6): made once, here.
+            val ry = top + Tool.entries.size * 36
+            val rod = world.data.recipes["tool_rod_1"]
+            if (world.hasRod || rod == null) {
+                g.slice9("ui/slot", x + 8, ry, x + pw - 12, ry + 34, 4)
+                g.sprite("icons/tool_rod", (x + 20).toFloat(), (ry + 12).toFloat())
+                g.text("FISHING ROD - TAP THE RIVER TO FISH", x + 32, ry + 12, Gfx.INK, outline = 0, shadow = false)
+            } else recipeRow(rod, x + 8, ry, pw - 20, "MAKE")
             return true
         }
         val tab = { r: RecipeDef -> when { r.outputs.keys.any { it in TONICS } -> 2; r.id in farmItems -> 1; else -> 0 } }
@@ -1070,7 +1099,8 @@ class Panels(private val game: Game, private val hud: Hud) {
 
     /** Decorations to buy and place, ten to a page; beauty, its order bonus and milestones on top. */
     fun decor(): Boolean {
-        val all = DECOR.values.toList()
+        // Keepsakes (round 6) show up after the shop's own pieces once a best friend gives one.
+        val all = DECOR.values.filter { it.keepsake == null } + world.keepsakesToPlace()
         val pages = (all.size + 9) / 10
         decorPage = decorPage.coerceIn(0, pages - 1)
         val (x, y, pw, ph) = frame("DECORATE", 64 + 5 * 40 + 22).toList()
@@ -1093,13 +1123,16 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (fitScale < 1f) g.spriteScaled("decor/${d.id}", (cx + 16).toFloat(), (cy + 29).toFloat(), fitScale, fitScale)
             else g.sprite("decor/${d.id}", (cx + 16).toFloat(), (cy + if (d.flat) 18 else 28).toFloat())
             g.text(fit(d.name.uppercase(), cw - 40), cx + 36, cy + 2, Gfx.INK, outline = 0, shadow = false)
-            g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
-            g.text("${d.price}  +${d.beauty}", cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
+            if (d.keepsake != null) g.text("GIFT  +${d.beauty}", cx + 36, cy + 13, Gfx.RED, outline = 0, shadow = false)
+            else {
+                g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
+                g.text("${d.price}  +${d.beauty}", cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
+            }
             val why = world.decorBlocker(d.id)
             when {
                 world.level < d.unlockLevel -> g.text("LEVEL ${d.unlockLevel}", cx + 36, cy + 24, Gfx.GREY, outline = 0, shadow = false)
                 d.season != null && world.time.season != d.season -> g.text("IN ${d.season.name}", cx + 36, cy + 24, Gfx.GREY, outline = 0, shadow = false)
-                ui.button("decor-${d.id}", cx + cw - 48, cy + 21, 40, 13, "BUY", style = if (why == null) "green" else "grey") ->
+                ui.button("decor-${d.id}", cx + cw - 48, cy + 21, 40, 13, if (d.keepsake != null) "PLACE" else "BUY", style = if (why == null) "green" else "grey") ->
                     if (why != null) hud.toast(why) else { onDecor?.invoke(d.id); return false }
             }
         }
@@ -1191,7 +1224,11 @@ class Panels(private val game: Game, private val hud: Hud) {
             val art = if (a.kind == AnimalKind.SHEEP && !a.product) "animals/sheep_shorn_0" else "animals/${a.kind.id}_0"
             g.sprite(art, (cx + 14).toFloat(), (cy + 22).toFloat())
             if (a.product) g.sprite("items/${a.kind.product}", (cx + cw - 14).toFloat(), (cy + 12).toFloat())
-            for (h in 0 until MAX_HEARTS) g.rect(cx + 4 + h * 6, cy + 26, cx + 8 + h * 6, cy + 29, if (h < a.hearts) Gfx.RED else 0xFFC0CBDC.toInt())
+            for (h in 0 until MAX_HEARTS) miniHeart(cx + 4 + h * 6, cy + 25, h < a.hearts)
+            // A tap on the card collects its product, or pets it.
+            if (ui.clickable("animal-$i", cx, cy, cw - 4, 32)) {
+                if (a.product) world.collectProduct(i) else if (!world.pettedToday(a)) world.petAnimal(i) else hud.toast("Already petted today")
+            }
         }
         // Ranch hand.
         val hy = y + ph - 46
@@ -1205,6 +1242,68 @@ class Panels(private val game: Game, private val hud: Hud) {
             }
         }
         return true
+    }
+
+    // ------------------------------------------------------------------ villagers
+    /** What the villager just said (a chat or a thank-you), shown in their panel. */
+    var villagerSays = ""
+    private var giftMode = false
+
+    /** Plays a heart event (set by Chrome). */
+    var onHeartEvent: ((String) -> Unit)? = null
+
+    /** A villager (round 6): hearts, a chat, a gift a day, and their heart events. */
+    fun villager(id: String): Boolean {
+        val v = world.villager(id) ?: return false
+        val (x, y, pw, ph) = frame(v.name.uppercase(), if (giftMode) 280 else 196).toList()
+        if (closeButton(x, y, pw)) { giftMode = false; villagerSays = ""; return false }
+        g.slice9("ui/slot", x + 10, y + 22, x + 58, y + 70, 4)
+        g.spriteScaled("portraits/$id", (x + 34).toFloat(), (y + 46).toFloat(), 1.3f, 1.3f)
+        g.text(v.role.uppercase(), x + 66, y + 24, Gfx.GREY, outline = 0, shadow = false)
+        val h = world.hearts(id)
+        for (k in 0 until FRIEND_HEARTS) miniHeart(x + 66 + k * 7, y + 36, k < h)
+        world.nextHeart(id)?.let { (have, need) -> g.text("$have/$need", x + 66, y + 45, Gfx.GREY, outline = 0, shadow = false) }
+            ?: g.text("BEST FRIENDS!", x + 66, y + 45, Gfx.RED, outline = 0, shadow = false)
+        g.text("LOVES", x + 66, y + 57, Gfx.INK, outline = 0, shadow = false)
+        v.favorites.take(5).forEachIndexed { k, item -> g.sprite(icon(item), (x + 106 + k * 16).toFloat(), (y + 61).toFloat()) }
+        // What they said last.
+        val say = villagerSays.ifEmpty { if (world.talkedToday(id)) "" else "..." }
+        hud.wrap("\"$say\"".uppercase(), pw - 24).take(3).forEachIndexed { k, line -> g.text(line, x + 12, y + 78 + k * 10, Gfx.INK, outline = 0, shadow = false) }
+        val by = y + 112
+        world.pendingHeartEvent(id)?.let { n ->
+            if (ui.button("heart-event", x + 10, by, pw - 20, 18, "$n HEARTS: ${v.name.uppercase()} WANTS TO TALK", style = "gold")) {
+                giftMode = false; villagerSays = ""; onHeartEvent?.invoke(heartScene(id, n)); return false
+            }
+        }
+        val talkY = by + 24
+        if (ui.button("talk", x + 10, talkY, pw / 2 - 14, 18, if (world.talkedToday(id)) "TALKED" else "TALK", style = if (world.talkedToday(id)) "grey" else "green") && !world.talkedToday(id)) world.talk(id)
+        if (ui.button("gift", x + pw / 2 + 4, talkY, pw / 2 - 14, 18, if (world.giftedToday(id)) "GIFT GIVEN" else if (giftMode) "CANCEL" else "GIVE GIFT", style = if (world.giftedToday(id)) "grey" else "wood") && !world.giftedToday(id)) giftMode = !giftMode
+        g.text("ORDERS FROM ${v.name.uppercase()} ADD HEARTS TOO", x + pw / 2, talkY + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        if (giftMode && !world.giftedToday(id)) {
+            // Everything in storage that can be given; loved gifts are marked with a heart.
+            val keys = world.state.inventory.keys.filter { world.giftable(it) && world.count(it) > 0 }.sortedByDescending { world.giftReaction(id, it).ordinal == 0 }
+            val gy = talkY + 38
+            val cols = (pw - 20) / 26
+            val rows = (ph - (gy - y) - 8) / 26
+            keys.take(cols * rows).forEachIndexed { k, key ->
+                val cx = x + 10 + (k % cols) * 26; val cy = gy + (k / cols) * 26
+                g.slice9("ui/slot", cx, cy, cx + 24, cy + 24, 4)
+                g.sprite(icon(baseId(key)), (cx + 12).toFloat(), (cy + 11).toFloat())
+                com.ditherfarm.game.Quality.of(key).icon?.let { g.sprite(it, (cx + 5).toFloat(), (cy + 19).toFloat()) }
+                if (world.giftReaction(id, key) == GiftReaction.LOVED) miniHeart(cx + 17, cy + 2, true)
+                g.text("${world.count(key)}", cx + 22, cy + 15, Gfx.WHITE, align = 1)
+                if (ui.clickable("gift-$key", cx, cy, 24, 24)) { world.giveGift(id, key); giftMode = false }
+            }
+            if (keys.isEmpty()) g.text("NOTHING TO GIVE", x + pw / 2, gy + 8, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        }
+        return true
+    }
+
+    /** A 5x4 heart: red when [full], an outline when empty. */
+    fun miniHeart(x: Int, y: Int, full: Boolean) {
+        val c = if (full) Gfx.RED else 0xFFC0CBDC.toInt()
+        val rows = if (full) listOf("XX.XX", "XXXXX", ".XXX.", "..X..") else listOf("XX.XX", "X.X.X", ".X.X.", "..X..")
+        rows.forEachIndexed { r, row -> row.forEachIndexed { k, ch -> if (ch == 'X') g.rect(x + k, y + r, x + k + 1, y + r + 1, c) } }
     }
 
     // ------------------------------------------------------------------ orchard

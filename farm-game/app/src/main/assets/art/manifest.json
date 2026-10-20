@@ -997,6 +997,61 @@
   "ay": 15,
   "bh": 18
  },
+ "decor/ks_bram": {
+  "ax": 9,
+  "ay": 12,
+  "bh": 15
+ },
+ "decor/ks_coco": {
+  "ax": 10,
+  "ay": 14,
+  "bh": 17
+ },
+ "decor/ks_fennel": {
+  "ax": 10,
+  "ay": 10,
+  "bh": 13
+ },
+ "decor/ks_ivy": {
+  "ax": 11,
+  "ay": 11,
+  "bh": 14
+ },
+ "decor/ks_juniper": {
+  "ax": 9,
+  "ay": 11,
+  "bh": 14
+ },
+ "decor/ks_mara": {
+  "ax": 10,
+  "ay": 12,
+  "bh": 15
+ },
+ "decor/ks_pip": {
+  "ax": 7,
+  "ay": 12,
+  "bh": 15
+ },
+ "decor/ks_rook": {
+  "ax": 10,
+  "ay": 9,
+  "bh": 12
+ },
+ "decor/ks_sela": {
+  "ax": 9,
+  "ay": 11,
+  "bh": 14
+ },
+ "decor/ks_tobias": {
+  "ax": 10,
+  "ay": 13,
+  "bh": 16
+ },
+ "decor/ks_willa": {
+  "ax": 11,
+  "ay": 10,
+  "bh": 13
+ },
  "decor/lamp": {
   "ax": 8,
   "ay": 23,
@@ -3941,6 +3996,336 @@
   "bh": 25
  },
  "people/rosa_se_work1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_bram_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_bram_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_bram_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_bram_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_bram_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_bram_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_coco_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_coco_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_coco_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_coco_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_coco_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_coco_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_fennel_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_fennel_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_fennel_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_fennel_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_fennel_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_fennel_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_ivy_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_ivy_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_ivy_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_ivy_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_ivy_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_ivy_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_juniper_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_juniper_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_juniper_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_juniper_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_juniper_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_juniper_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_mara_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_mara_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_mara_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_mara_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_mara_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_mara_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_pip_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_pip_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_pip_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_pip_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_pip_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_pip_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_rook_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_rook_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_rook_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_rook_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_rook_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_rook_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_sela_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_sela_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_sela_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_sela_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_sela_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_sela_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_tobias_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_tobias_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_tobias_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_tobias_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_tobias_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_tobias_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_willa_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_willa_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_willa_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_willa_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_willa_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_willa_se_walk1": {
   "ax": 8,
   "ay": 22,
   "bh": 25

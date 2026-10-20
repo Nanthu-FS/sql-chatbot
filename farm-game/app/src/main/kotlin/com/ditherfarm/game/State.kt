@@ -113,6 +113,11 @@ class GameState(var seed: Long) {
     val orders = ArrayList<OrderSlot>()
     var orderCounter = 0
     val friendship = HashMap<String, Int>()
+    /** Day of the last chat and the last gift with each villager (Friends.kt). */
+    val talked = HashMap<String, Int>()
+    val gifted = HashMap<String, Int>()
+    /** Keepsake decorations given by best friends (Decor.kt). */
+    val keepsakes = LinkedHashSet<String>()
     val recentOrderItems = ArrayList<String>()
 
     var weather = Weather.SUNNY
@@ -219,6 +224,8 @@ class GameState(var seed: Long) {
         })
         put("orderCounter", orderCounter)
         put("friendship", JSONObject(friendship as Map<*, *>))
+        put("talked", JSONObject(talked as Map<*, *>)); put("gifted", JSONObject(gifted as Map<*, *>))
+        put("keepsakes", JSONArray(keepsakes.toList()))
         put("recentOrderItems", JSONArray(recentOrderItems))
         put("weather", weather.name); put("forecast", forecast.name)
         put("glut", JSONObject(glut as Map<*, *>))
@@ -285,6 +292,9 @@ class GameState(var seed: Long) {
             }
             orderCounter = o.optInt("orderCounter")
             o.optJSONObject("friendship")?.toIntMap()?.forEach { (k, v) -> friendship[k] = v }
+            o.optJSONObject("talked")?.toIntMap()?.let { talked.putAll(it) }
+            o.optJSONObject("gifted")?.toIntMap()?.let { gifted.putAll(it) }
+            o.optJSONArray("keepsakes")?.let { a -> for (k in 0 until a.length()) a.getString(k).takeIf { DECOR.containsKey(it) }?.let { keepsakes += it } }
             o.optJSONArray("recentOrderItems")?.strings()?.let { recentOrderItems.addAll(it) }
             weather = Weather.valueOf(o.optString("weather", "SUNNY")); forecast = Weather.valueOf(o.optString("forecast", "SUNNY"))
             o.optJSONObject("glut")?.let { g -> g.keys().forEach { glut[it] = g.getDouble(it) } }

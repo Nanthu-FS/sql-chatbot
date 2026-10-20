@@ -6,6 +6,9 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
+import com.ditherfarm.game.finishScene
+import com.ditherfarm.game.talk
+import com.ditherfarm.game.befriend
 import com.ditherfarm.game.golem
 import com.ditherfarm.game.ranch
 import com.ditherfarm.game.collectProduct
@@ -668,6 +671,33 @@ class ScreenshotTest {
             g.farm.centerOnTile(21, 9)
             g.farm.fishAt(22, 8)
         }, drive = { g, _ -> if (g.farm.fishingState == com.ditherfarm.ui.Fishing.State.BITE) g.farm.fishingTap() }, zoom = 2)
+    }
+
+    @Test fun villagers() {
+        render("farm_villagers", seconds = 2f, setup = { g ->
+            toLevel(g, 14)
+            g.world.state.pet.offered = true
+            g.world.state.minutes += 240.0
+            g.world.befriend("ivy", 260)
+            g.world.events.clear()
+            g.farm.centerOnTile(12, 27)
+        }, zoom = 2)
+        render("panel_villager", setup = { g ->
+            toLevel(g, 14)
+            g.world.state.minutes += 240.0
+            g.world.befriend("mara", 480); g.world.add("wheat", 12); g.world.add("bread", 3); g.world.add("stone", 9)
+            g.world.talk("mara")
+            g.world.finishScene(com.ditherfarm.game.heartScene("mara", 2))
+            g.farm.showPanel("villager")
+            g.farm.chrome.onEvent(g.world.events.first { it is com.ditherfarm.game.WorldEvent.Talked })
+            g.world.events.clear()
+        })
+        render("story_heart", setup = { g ->
+            toLevel(g, 14)
+            g.farm.chrome.story.start(com.ditherfarm.game.HEART_SCENES.getValue("heart_pip_8"))
+            g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
+            g.farm.chrome.story.showLine(0)
+        })
     }
 
     @Test fun orchardPanels() {
