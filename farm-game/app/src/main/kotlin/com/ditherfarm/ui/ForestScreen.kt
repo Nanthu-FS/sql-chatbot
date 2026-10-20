@@ -111,7 +111,7 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
         // Keep the whole view on painted ground, like the farm.
         val n = ForestLayout.SIZE
         cam.setDiamond(0f, n * Iso.TH / 2f, (n - 2) * Iso.TW / 2f, (n - 2) * Iso.TH / 2f)
-        recenter()
+        if (!focusPointer()) recenter()
         weather.onThunder = { game.sfx.play("thunder") }
         if (props.isEmpty()) scatter()
         hud.tip("forest", "Tap a tree to chop it. Each swing uses 2 energy. Hold to keep swinging.")
@@ -274,22 +274,26 @@ class ForestScreen(game: Game) : IsoMapScreen(game, groundSeed = 53), WorldListe
                 }
             }
         }
-        // Grandpa's notebook points at a tree, a loose rock or the Sawmill's spot.
-        val target = when (world.pointer) {
-            Pointer.TREE -> world.forestSpots.firstOrNull { sp ->
-                sp.kind == SpotKind.TREE && world.zoneOpen(sp.zone) && world.treeStage(sp.index) == TreeStage.MATURE &&
-                    world.spot(sp.index).tree?.let { (world.data.trees[it]?.minAxe ?: 0) <= world.toolTier(Tool.AXE) } == true
-            }
-            Pointer.ROCK -> world.forestSpots.firstOrNull { it.kind == SpotKind.ROCK && world.zoneOpen(it.zone) && world.spot(it.index).stock > 0 }
-            Pointer.SAWMILL -> slotSpots.getOrNull(machines.indexOfFirst { it.id == "sawmill" })
-            else -> null
-        }
-        target?.let { sp ->
+        pointerSpot()?.let { sp ->
             val x = Iso.x(sp.c, sp.r).toFloat(); val y = Iso.centerY(sp.c, sp.r).toFloat()
             val h = if (sp.kind == SpotKind.TREE) 56f else 24f
             list.add(Float.MAX_VALUE) { g.sprite("icons/arrow_down", x, y - h + sin(time * 6f) * 2f) }
         }
     }
+
+    /** Grandpa's notebook points at a tree the axe can fell, a loose rock or the Sawmill's spot. */
+    private fun pointerSpot() = when (world.pointer) {
+        Pointer.TREE -> world.forestSpots.firstOrNull { sp ->
+            sp.kind == SpotKind.TREE && world.zoneOpen(sp.zone) && world.treeStage(sp.index) == TreeStage.MATURE &&
+                world.spot(sp.index).tree?.let { (world.data.trees[it]?.minAxe ?: 0) <= world.toolTier(Tool.AXE) } == true
+        }
+        Pointer.ROCK -> world.forestSpots.firstOrNull { it.kind == SpotKind.ROCK && world.zoneOpen(it.zone) && world.spot(it.index).stock > 0 }
+        Pointer.SAWMILL -> slotSpots.getOrNull(machines.indexOfFirst { it.id == "sawmill" })
+        else -> null
+    }
+
+    /** Centres the view on what the notebook points at (entering the forest, tapping the quest chip). */
+    fun focusPointer(): Boolean = pointerSpot()?.let { centerOnTile(it.c, it.r); true } ?: false
 
     private fun pick(sprite: String, fallback: String) = if (game.assets.has(sprite)) sprite else fallback
 

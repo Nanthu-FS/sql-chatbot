@@ -9,6 +9,7 @@ import com.ditherfarm.engine.Noise
 import com.ditherfarm.engine.Terrain
 import android.graphics.Paint
 import android.graphics.Path
+import com.ditherfarm.game.quest
 import com.ditherfarm.game.FieldLayout
 import com.ditherfarm.game.DECOR
 import com.ditherfarm.game.Fixture
@@ -513,6 +514,11 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             if (!inView(x, top)) return@forEachIndexed
             val crop = cropSprite(p) ?: return@forEachIndexed
             hitSprite(c, r, crop, x, cy)
+            // Tapping a crop's drop or sparkle counts as tapping the crop.
+            when {
+                world.isReady(p) -> hitSprite(c, r, "fx/sparkle", x + 7, cy - 20, cy + 0.5f)
+                !p.needsClearing && !p.watered -> hitSprite(c, r, "fx/drop", x + 8, cy - 12, cy + 0.5f)
+            }
             list.add(cy) { drawPlot(i, p, x, cy) }
         }
     }
@@ -521,7 +527,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private fun drawPointer(list: DrawList) {
         val (tile, art) = pointerTarget() ?: return
         val x = Iso.x(tile.first, tile.second).toFloat(); val y = Iso.centerY(tile.first, tile.second).toFloat()
-        val h = (art?.let { spriteTop(it) } ?: 24f) + 10f
+        val h = (art?.let { spriteTop(it) } ?: 6f) + 10f
         if (inView(x, y, 60f)) list.add(Float.MAX_VALUE) { game.gfx.sprite("icons/arrow_down", x, y - h + sin(time * 6f) * 2f) }
     }
 
@@ -531,9 +537,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     /** The farm tile the notebook's pointer marks, and the art standing there (for the arrow's height). */
     private fun pointerTarget(): Pair<Pair<Int, Int>, String?>? {
         return when (world.pointer) {
-            com.ditherfarm.game.Pointer.FIELD -> (FarmMap.BLOCKS[0].first + 1 to FarmMap.BLOCKS[0].second + 1) to null
-            com.ditherfarm.game.Pointer.MARKET -> FarmMap.MARKET to "buildings/market"
-            com.ditherfarm.game.Pointer.ORDERS -> FarmMap.ORDERS to "buildings/orders"
+            com.ditherfarm.game.Pointer.FIELD -> fieldTarget()?.let { plotTiles[it] to cropSprite(world.plot(it)) }
+                ?: ((FarmMap.BLOCKS[0].first + 1 to FarmMap.BLOCKS[0].second + 1) to null)
             com.ditherfarm.game.Pointer.WORKBENCH -> FarmMap.WORKBENCH to "buildings/workbench"
             com.ditherfarm.game.Pointer.WINDMILL -> (slotTiles.getOrNull(machines.indexOfFirst { it.id == "windmill" }) ?: return null) to "buildings/windmill"
             com.ditherfarm.game.Pointer.FIELD_B -> (FarmMap.BLOCKS[1].first - 1 to FarmMap.BLOCKS[1].second - 1) to "deco/field_sign"
@@ -542,6 +547,19 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             com.ditherfarm.game.Pointer.VILLAGE -> FarmMap.HOUSES[0] to "buildings/house_${world.villageTier}_a"
             else -> null
         }
+    }
+
+    /** The plot a field step needs: an empty one to plant, a dry crop to water, a ripe one to harvest. */
+    private fun fieldTarget(): Int? {
+        val plots = world.state.plots.filter { it.owned && it.giant < 0 }
+        val p = when (world.quest?.id) {
+            "plant" -> plots.firstOrNull { it.crop == null && !it.needsClearing }
+            "water" -> plots.firstOrNull { it.crop != null && !it.needsClearing && !it.watered && !world.isReady(it) }
+            "harvest" -> plots.firstOrNull { it.crop != null && !it.needsClearing && world.isReady(it) }
+                ?: plots.firstOrNull { it.crop != null && !it.needsClearing }
+            else -> null
+        }
+        return p?.index
     }
 
     private val pickTmp = IntArray(2)

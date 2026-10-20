@@ -116,6 +116,9 @@ class Hud(private val game: Game) {
             if (nav == Nav.FOREST && current != Nav.FOREST && world.pointer.inForest) navArrow = x + size / 2
             // A farm step while the player is in the forest or mine: point back at the farm.
             if (nav == Nav.FARM && current != Nav.FARM && world.pointer.onFarm) navArrow = x + size / 2
+            // The Market and Orders open from their buttons anywhere: point at the button.
+            if (nav == Nav.MARKET && world.pointer == com.ditherfarm.game.Pointer.MARKET) navArrow = x + size / 2
+            if (nav == Nav.ORDERS && world.pointer == com.ditherfarm.game.Pointer.ORDERS) navArrow = x + size / 2
             val b = badges[nav] ?: 0
             if (b > 0) {
                 g.sprite("ui/badge", (x + size - 3).toFloat(), (y + 9).toFloat())

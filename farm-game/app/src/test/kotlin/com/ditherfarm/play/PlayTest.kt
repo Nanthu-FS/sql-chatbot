@@ -8,7 +8,9 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
+import com.ditherfarm.game.QUESTS
 import com.ditherfarm.game.SCENES
+import com.ditherfarm.game.startQuest
 import com.ditherfarm.shots.ScreenshotTest
 import com.ditherfarm.ui.Chrome
 import com.ditherfarm.ui.FarmScreen
@@ -45,6 +47,7 @@ import java.io.File
  *       level N              the player is at level N
  *       coins N              N more coins
  *       item ID N            N of item ID in storage
+ *       quest ID             Grandpa's notebook is at step ID
  *  3. saves the farm and writes <dir>/shots/turn_NNN.png (2x), turn_NNN_grid.png (the same with a
  *     30-pixel coordinate grid) and <dir>/state.txt (what is on screen and in the farm).
  */
@@ -142,6 +145,7 @@ class PlayTest {
                 "level" -> w.gainXp(w.data.level(p[1].toInt()).totalXp - w.state.xp)
                 "coins" -> w.state.coins += p[1].toInt()
                 "item" -> w.add(p[1], p[2].toInt())
+                "quest" -> w.startQuest(QUESTS.indexOfFirst { it.id == p[1] }.coerceAtLeast(0))
                 "" -> {}
                 else -> log += "unknown setup: $raw"
             }

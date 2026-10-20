@@ -88,8 +88,11 @@ class Chrome(private val game: Game, private val here: Nav) {
     /** Takes the player to what the notebook points at: the right screen, centred on the target. */
     private fun showPointer(p: com.ditherfarm.game.Pointer) {
         when {
+            p == com.ditherfarm.game.Pointer.MARKET -> open(Panel.MARKET)
+            p == com.ditherfarm.game.Pointer.ORDERS -> open(Panel.ORDERS)
             p.onFarm -> { if (here != Nav.FARM) { panel = Panel.NONE; game.goTo(Nav.FARM) }; game.farm.focusPointer() }
-            p.inForest && here != Nav.FOREST && world.level >= Nav.FOREST.unlockLevel -> { panel = Panel.NONE; game.goTo(Nav.FOREST) }
+            p.inForest && here == Nav.FOREST -> game.forest.focusPointer()
+            p.inForest && world.level >= Nav.FOREST.unlockLevel -> { panel = Panel.NONE; game.goTo(Nav.FOREST) }
             p == com.ditherfarm.game.Pointer.MINE && here != Nav.MINE && world.quarryOpen -> { panel = Panel.NONE; game.goTo(Nav.MINE) }
             p == com.ditherfarm.game.Pointer.GOALS -> open(Panel.GOALS)
         }

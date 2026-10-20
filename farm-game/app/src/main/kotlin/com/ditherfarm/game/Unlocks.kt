@@ -68,7 +68,7 @@ internal fun World.checkFeats() {
 enum class Pointer {
     NONE, FIELD, MARKET, ORDERS, WORKBENCH, FOREST, TREE, ROCK, MINE, WINDMILL, FIELD_B, SAWMILL, BUNKHOUSE, TRUCK, VILLAGE, GOALS;
     /** Targets on the farm map (the nav bar points at the farm from the other screens). */
-    val onFarm get() = this in setOf(FIELD, MARKET, ORDERS, WORKBENCH, WINDMILL, FIELD_B, BUNKHOUSE, TRUCK, VILLAGE)
+    val onFarm get() = this in setOf(FIELD, WORKBENCH, WINDMILL, FIELD_B, BUNKHOUSE, TRUCK, VILLAGE)
     val inForest get() = this in setOf(FOREST, TREE, ROCK, SAWMILL)
 }
 
@@ -87,7 +87,7 @@ val QUESTS = listOf(
     Quest("plant", "Plant wheat on 6 plots", Pointer.FIELD, mapOf("coins" to 30, "xp" to 10), "planted", 6),
     // Counts every crop watered so far: watering while planting counts, so the six new crops are enough.
     Quest("water", "Tap crops with a blue drop to water them", Pointer.FIELD, mapOf("coins" to 20, "xp" to 10), check = { minOf(state.stat("watered"), 6L) to 6L }),
-    Quest("harvest", "Harvest 6 crops", Pointer.FIELD, mapOf("coins" to 40, "xp" to 15), "harvested", 6),
+    Quest("harvest", "Harvest 6 crops when they sparkle", Pointer.FIELD, mapOf("coins" to 40, "xp" to 15), "harvested", 6),
     Quest("sell", "Sell 5 crops at the Market", Pointer.MARKET, mapOf("coins" to 30, "xp" to 10), "crops_sold", 5),
     Quest("chop", "Go to the forest and chop down 2 trees", Pointer.TREE, mapOf("coins" to 30, "xp" to 15), "fells", 2),
     Quest("stones", "Pick up 4 stones from forest rocks", Pointer.ROCK, mapOf("coins" to 30, "xp" to 10), "forest_stone", 4),
