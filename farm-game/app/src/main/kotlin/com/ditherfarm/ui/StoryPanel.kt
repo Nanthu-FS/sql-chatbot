@@ -73,10 +73,13 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
         val cur = s.lines[line]
         val boxTop = h - 92
         // The officer sits behind his desk in the bank; in the village both stand above the box.
-        val officerLit = cur.who == Who.OFFICER || cur.who == Who.VILLAGER
+        val officerLit = cur.who == Who.OFFICER || cur.who == Who.VILLAGER || cur.who == Who.RIVAL
+        val rival = s.lines.any { it.who == Who.RIVAL }
         val playerLit = cur.who == Who.PLAYER
         // A heart event puts the villager (round 6) where the officer stands.
-        val officer = s.villager?.let { "portraits/$it" } ?: if (officerLit && cur.mood == 1) "portraits/officer_shock_bust" else "portraits/officer_bust"
+        val officer = s.villager?.let { "portraits/$it" }
+            ?: if (rival) (if (cur.who == Who.RIVAL && cur.mood == 1) "portraits/kessler_shock_bust" else "portraits/kessler_bust")
+            else if (officerLit && cur.mood == 1) "portraits/officer_shock_bust" else "portraits/officer_bust"
         val farmer = "portraits/farmer_${world.state.playerLook}" + (if (playerLit && cur.mood == 1) "_det" else "") + "_bust"
         // Villager portraits pivot on their middle, busts on their base: lift them clear of the box.
         val officerBase = (if (s.bank) top + DESK_TOP + 4 else boxTop + 4) - if (s.villager != null) 46 else 0
@@ -88,6 +91,7 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
         val who = when (cur.who) {
             Who.PLAYER -> world.playerName.uppercase(); Who.OFFICER -> OFFICER_NAME.uppercase(); Who.NARRATOR -> null
             Who.VILLAGER -> s.villager?.let { id -> world.data.villagers.firstOrNull { it.id == id }?.name?.uppercase() }
+            Who.RIVAL -> "MS. KESSLER"
         }
         if (who != null) {
             val tw = g.textWidth(who) + 14

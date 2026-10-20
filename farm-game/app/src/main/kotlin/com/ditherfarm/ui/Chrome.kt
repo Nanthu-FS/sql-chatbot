@@ -2,6 +2,7 @@ package com.ditherfarm.ui
 
 import com.ditherfarm.Game
 import com.ditherfarm.engine.Gfx
+import com.ditherfarm.game.pendingAct2Scene
 import com.ditherfarm.game.playerName
 import com.ditherfarm.game.villager
 import com.ditherfarm.game.WorldEvent
@@ -45,7 +46,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS, VILLAGER }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS, VILLAGER, CONTEST }
 
     var panel = Panel.NONE
         private set
@@ -75,6 +76,7 @@ class Chrome(private val game: Game, private val here: Nav) {
         panels.onSkills = { open(Panel.SKILLS, "bench") }
         panels.onDecorShop = { open(Panel.DECOR) }
         panels.onRelics = { open(Panel.RELICS) }
+        panels.onContest = { open(Panel.CONTEST) }
         panels.onHeartEvent = { id -> com.ditherfarm.game.sceneById(id)?.let { story.start(it); open(Panel.STORY) } }
         // Decorations go on the farm, so buying one elsewhere takes the player there.
         panels.onDecor = { id ->
@@ -282,7 +284,7 @@ class Chrome(private val game: Game, private val here: Nav) {
         val keep = when (panel) {
             Panel.NONE -> {
                 // Story scenes play on the farm (the officer visits the village).
-                val scene = if (here == Nav.FARM) world.pendingScene() else null
+                val scene = if (here == Nav.FARM) world.pendingScene() ?: world.pendingAct2Scene() else null
                 if (scene != null) { story.start(scene); open(Panel.STORY) }
                 else if (levelUps.isNotEmpty()) panel = Panel.LEVEL_UP
                 else if (!giftShown && world.giftReady(game.today())) { giftShown = true; open(Panel.GIFT) }
@@ -317,6 +319,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.PASTURE -> panels.pasture()
             Panel.RELICS -> panels.relics()
             Panel.VILLAGER -> panels.villager(target ?: return)
+            Panel.CONTEST -> panels.contest()
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -415,6 +418,13 @@ class Chrome(private val game: Game, private val here: Nav) {
                 val name = world.villager(e.villager)?.name ?: e.villager
                 hud.toast(if (e.hearts in com.ditherfarm.game.HEART_EVENTS) "$name: ${e.hearts} hearts! They want to talk to you" else "$name: ${e.hearts} hearts!")
             }
+            is WorldEvent.ContestStarted -> {
+                game.sfx.play("order")
+                hud.toast("Vexmoor Cup: ${com.ditherfarm.game.CONTESTS[e.contest]?.name}! Beat ${e.target} this week. Tap the trophy")
+            }
+            is WorldEvent.ContestWon -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("You won the ${com.ditherfarm.game.CONTESTS[e.contest]?.name}! +${e.coins} coins") }
+            is WorldEvent.ContestLost -> { game.sfx.play("error"); hud.toast("Vexmoor took the ${com.ditherfarm.game.CONTESTS[e.contest]?.name}. Next week!") }
+            is WorldEvent.Act2Complete -> { game.sfx.play("levelup"); game.haptics.heavy() }
             is WorldEvent.KeepsakeGiven -> {
                 game.sfx.play("levelup"); game.haptics.heavy()
                 hud.toast("Best friends with ${world.villager(e.villager)?.name}! They gave you ${com.ditherfarm.game.DECOR[e.decor]?.name}. Place it from Decorate")

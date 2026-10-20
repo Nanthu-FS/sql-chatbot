@@ -48,6 +48,8 @@ import java.io.File
  *       coins N              N more coins
  *       item ID N            N of item ID in storage
  *       quest ID             Grandpa's notebook is at step ID
+ *       tool NAME TIER       the tool (pickaxe, axe, hoe, rod...) is at that tier
+ *       mine STOP            the mine is repaired, its gates open and the elevator reaches STOP
  *  3. saves the farm and writes <dir>/shots/turn_NNN.png (2x), turn_NNN_grid.png (the same with a
  *     30-pixel coordinate grid) and <dir>/state.txt (what is on screen and in the farm).
  */
@@ -146,6 +148,12 @@ class PlayTest {
                 "coins" -> w.state.coins += p[1].toInt()
                 "item" -> w.add(p[1], p[2].toInt())
                 "quest" -> w.startQuest(QUESTS.indexOfFirst { it.id == p[1] }.coerceAtLeast(0))
+                "tool" -> w.state.tools[p[1]] = p[2].toInt()
+                "mine" -> w.state.mine.apply {
+                    val stop = p[1].toInt()
+                    repaired = true; gatesOpened += (10..stop step 10); deepestStop = stop; deepestFloor = stop
+                    w.state.bump("rocks_broken")   // the quarry counts as open
+                }
                 "" -> {}
                 else -> log += "unknown setup: $raw"
             }

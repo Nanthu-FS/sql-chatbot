@@ -150,6 +150,28 @@ KEEPSAKES = {
         ".......bW.......",
         "......bbbbb.....",
     ],
+    "festival_statue": [  # the valley's statue (Story Act 2 finale): a golden farmer with a sheaf
+        "......yYy.......",
+        ".....yYYYy......",
+        ".....yYYYy..y...",
+        "......yYy..yYy..",
+        "....yyYYYyyYy...",
+        "...yYYYYYYYy....",
+        "...yYyYYYyy.....",
+        "...yY.yYYy......",
+        "......yYYy......",
+        "......yYYy......",
+        ".....yYyYYy.....",
+        ".....yY..Yy.....",
+        ".....yY..Yy.....",
+        "....yyy..yyy....",
+        "..GGGGGGGGGGGG..",
+        "..LGGGGGGGGGGg..",
+        "...GGGGGGGGGg...",
+        "...GGkkkkkkGg...",
+        "...GGGGGGGGGg...",
+        "..gggggggggggg..",
+    ],
 }
 
 

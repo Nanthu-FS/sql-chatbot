@@ -570,6 +570,24 @@ OFFICER_SHOCK = mood(OFFICER, {
 OFFICER_SHOCK["key"] = dict(OFFICER["key"], o=("skin", "brown_d"))
 OFFICER_SHOCK["patch"] = {(24, 9): "l", (24, 10): "l"}
 
+# Ms. Kessler of Vexmoor Agri-Corp (round 6, Story Act 2): the officer's sharp face and pose, with
+# an auburn bob, red-framed glasses and a green corporate suit with a gold brooch.
+KESSLER = dict(OFFICER)
+KESSLER["rows"] = [
+    ("_____" + r[5:] if i < 5 else ("_____HH" + r[7:] if 5 <= i <= 14 and r.startswith("______") else r))
+    for i, r in enumerate(OFFICER["rows"])
+]
+KESSLER["ramps"] = dict(OFFICER["ramps"], hair=HAIR_AUBURN, cloth=["teal_dd", "green_dd", "green_d", "green"], cloth2=["rust", "orange", "amber", "yellow"])
+KESSLER["key"] = dict(OFFICER["key"], L=("acc", "red_d"))
+KESSLER["bg"] = ["green_dd", "green_d", "green"]
+KESSLER_SHOCK = mood(KESSLER, {
+    10: "_____HHSLSweSLS",
+    11: "_____HHSLSeeSLS",
+    15: "_______SSSSSSSSoooSSSSSS______",
+    16: "_______SSSSSSSSoooSSSSSS______",
+})
+KESSLER_SHOCK["key"] = dict(KESSLER["key"], o=("skin", "brown_d"))
+
 FARMER_HAT = dict(
     # Straw hat, brown hair, freckles, denim overalls over a red shirt.
     rows=[
@@ -746,7 +764,7 @@ FARMERS_DET = [
 
 PORTRAITS = [("mara", MARA), ("tobias", TOBIAS), ("ivy", IVY), ("bram", BRAM),
              ("juniper", JUNIPER), ("pip", PIP), ("sela", SELA), ("fennel", FENNEL),
-             ("officer", OFFICER), ("officer_shock", OFFICER_SHOCK)]
+             ("officer", OFFICER), ("officer_shock", OFFICER_SHOCK), ("kessler", KESSLER), ("kessler_shock", KESSLER_SHOCK)]
 PORTRAITS += [(f"farmer_{i}", f) for i, f in enumerate(FARMERS)]
 PORTRAITS += [(f"farmer_{i}_det", f) for i, f in enumerate(FARMERS_DET)]
 
@@ -756,7 +774,7 @@ def main():
     for name, spec in PORTRAITS:
         out, pad = paint(spec)
         sp.save(name, out, 15 + pad, 15 + pad)
-        if name.startswith(("officer", "farmer_")):
+        if name.startswith(("officer", "farmer_", "kessler")):
             out, pad = paint(spec, bust=True)
             sp.save(name + "_bust", out, 15 + pad, 29 + pad)
     sp.done()

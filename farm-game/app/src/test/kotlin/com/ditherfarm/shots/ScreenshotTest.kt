@@ -6,6 +6,7 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
+import com.ditherfarm.game.act2
 import com.ditherfarm.game.finishScene
 import com.ditherfarm.game.talk
 import com.ditherfarm.game.befriend
@@ -698,6 +699,32 @@ class ScreenshotTest {
             g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
             g.farm.chrome.story.showLine(0)
         })
+    }
+
+    @Test fun act2() {
+        render("story_act2", setup = { g ->
+            toLevel(g, 20)
+            g.farm.chrome.story.start(com.ditherfarm.game.ACT2_SCENES.getValue("act2_2"))
+            g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
+            g.farm.chrome.story.showLine(0)
+        })
+        render("panel_cup", setup = { g ->
+            toLevel(g, 20)
+            val w = g.world
+            w.state.storySeen.add("finale")
+            w.finishScene("act2_1"); w.finishScene("act2_2")
+            w.state.stats["harvested"] = (w.state.stats["harvested"] ?: 0L) + 7
+            w.state.stats["orders"] = (w.state.stats["orders"] ?: 0L) + 3
+            w.befriend("ivy", 800)
+            w.events.clear()
+            g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.CONTEST)
+        })
+        render("farm_statue", seconds = 0.5f, setup = { g ->
+            toLevel(g, 20)
+            g.world.state.pet.offered = true
+            g.world.state.act2.chapter = com.ditherfarm.game.ACT2_DONE
+            g.farm.centerOnTile(com.ditherfarm.ui.FarmMap.STATUE.first, com.ditherfarm.ui.FarmMap.STATUE.second)
+        }, zoom = 2)
     }
 
     @Test fun orchardPanels() {

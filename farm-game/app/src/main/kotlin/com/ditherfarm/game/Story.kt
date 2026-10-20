@@ -7,7 +7,7 @@ package com.ditherfarm.game
  * Mr. Sterling, comes back to assess the village after each rebuild, and at the concrete town the
  * loan is approved and the valley is named the best farming village.
  */
-enum class Who { PLAYER, OFFICER, NARRATOR, VILLAGER }
+enum class Who { PLAYER, OFFICER, NARRATOR, VILLAGER, RIVAL }
 
 /** One line of a scene; [mood] 1 is the player's determined face or the officer's shocked one. */
 class Line(val who: Who, val text: String, val mood: Int = 0)
@@ -63,7 +63,7 @@ val SCENES: List<Scene> = listOf(
     ), coins = 50_000),
 )
 
-fun sceneById(id: String) = SCENES.firstOrNull { it.id == id } ?: HEART_SCENES[id]
+fun sceneById(id: String) = SCENES.firstOrNull { it.id == id } ?: HEART_SCENES[id] ?: ACT2_SCENES[id]
 
 /** The player's name as shown in the story ("Farmer" until one is picked). */
 val World.playerName get() = state.playerName.ifBlank { "Farmer" }
@@ -80,6 +80,7 @@ fun World.finishScene(id: String) {
     if (!state.storySeen.add(id)) return
     // A heart event deepens the friendship a little more (round 6).
     s.villager?.let { befriend(it, 30); events += WorldEvent.HeartEventDone(it) }
+    if (id in ACT2_SCENES) act2SceneDone(id)
     if (s.coins > 0) {
         state.coins += s.coins
         state.bump("coins_earned", s.coins.toLong())

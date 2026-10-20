@@ -70,6 +70,10 @@ sealed class WorldEvent {
     data class GiftGiven(val villager: String, val item: String, val reaction: GiftReaction, val points: Int) : WorldEvent()
     data class HeartEventDone(val villager: String) : WorldEvent()
     data class KeepsakeGiven(val villager: String, val decor: String) : WorldEvent()
+    data class ContestStarted(val contest: String, val target: Int) : WorldEvent()
+    data class ContestWon(val contest: String, val coins: Int) : WorldEvent()
+    data class ContestLost(val contest: String) : WorldEvent()
+    data class Act2Complete(val coins: Int) : WorldEvent()
     data class OrchardPlanted(val spot: Int, val kind: String) : WorldEvent()
     data class TreeDugUp(val spot: Int) : WorldEvent()
     data class OrchardFruit(val trees: Int) : WorldEvent()
@@ -174,6 +178,7 @@ class World(val data: GameData, val state: GameState) {
             stepGame(step)
             remaining -= step
         }
+        checkContest()
         return true
     }
 
@@ -253,6 +258,7 @@ class World(val data: GameData, val state: GameState) {
         giantDawn(day)
         orchardDawn(day)
         ranchDawn(day)
+        act2Dawn(day)
         festivalDawn()
         runMarketCart()
         events += WorldEvent.DayStarted(day, state.weather)

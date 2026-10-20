@@ -10,6 +10,7 @@ import com.ditherfarm.engine.Terrain
 import android.graphics.Paint
 import android.graphics.Path
 import com.ditherfarm.game.quest
+import com.ditherfarm.game.act2
 import com.ditherfarm.game.ranch
 import com.ditherfarm.game.collectProduct
 import com.ditherfarm.game.petAnimal
@@ -188,6 +189,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         scatterProps()
         // The first tip fits the field: harvesting when something is ripe, else planting.
         if (world.state.plots.any { it.owned && world.isReady(it) }) tipHarvest() else tipPlant()
+        if (world.level >= 3) hud.tip("villagers", "Villagers stroll the village road west of your fields in the daytime. Tap one to chat or give a gift.")
     }
 
     private fun tipHarvest() = hud.tip("harvest", "Tap a ripe crop to harvest it. Or hold one and slide across the others to harvest them all.")
@@ -199,7 +201,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         props.clear()
         waterTiles.clear()
         val reserved = reservedTiles.also { it.clear() }
-        listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmMap.ORCHARD_SIGN, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
+        listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmMap.ORCHARD_SIGN, FarmMap.STATUE, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
         for (b in 0 until FieldLayout.BLOCKS) FarmCrew.crateTile(b).let { reserved += key(it.first, it.second) }
         for (dc in 0..1) for (dr in 0..1) reserved += key(FarmMap.TRUCK.first + dc, FarmMap.TRUCK.second + dr)
         (FarmMap.HOUSES + listOf(FarmMap.SHOP_SEED, FarmMap.SHOP_SMITH, FarmMap.SHOP_CARPENTER, FarmMap.SHOP_CAFE)).forEach { reserved += key(it.first, it.second) }
@@ -490,6 +492,12 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                     g.text(if (locked) "L${FieldLayout.UNLOCK[b]}" else Ui.compact(world.blockPrice(b)), x.toInt(), (y - 15).toInt(), if (locked) 0xFFC0CBDC.toInt() else Gfx.GOLD, align = 0)
                 }
             }
+        }
+        // The festival statue (Story Act 2 finale).
+        if (world.act2.chapter >= com.ditherfarm.game.ACT2_DONE) {
+            val (c, r) = FarmMap.STATUE
+            val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()
+            if (inView(x, y)) { hitSprite(c, r, "decor/festival_statue", x, y); list.add(y) { game.gfx.sprite("decor/festival_statue", x, y) } }
         }
         drawOrchard(list)
         herd.collect(list, this)
@@ -957,6 +965,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             }
             return
         }
+        if ((c to r) == FarmMap.STATUE && world.act2.chapter >= com.ditherfarm.game.ACT2_DONE) { hud.toast("The valley's statue: Vexmoor never got the valley"); return }
         if ((c to r) == FarmMap.ORCHARD_SIGN) { chrome.open(Chrome.Panel.ORCHARD); return }
         FarmMap.ORCHARD_TREES.indexOf(c to r).takeIf { it >= 0 }?.let { i ->
             val t = world.orchard.trees[i]
@@ -1146,6 +1155,14 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 invalidateGround()
                 scatterProps()
                 hud.tip("land", "Tap a field's sign to choose its crop and where the harvest goes.")
+            }
+            is WorldEvent.Act2Complete -> {
+                // Anything set out where the statue goes comes back at full price.
+                val (sc, sr) = FarmMap.STATUE
+                world.state.decor.remove(decorKey(sc, sr))?.let { world.state.coins += DECOR[it]?.price ?: 0 }
+                val x = Iso.x(sc, sr).toFloat(); val y = Iso.centerY(sc, sr).toFloat()
+                fx.burst("fx/sparkle", x, y - 20, 16, speed = 60f, gravity = 0f, life = 1.2f)
+                centerOnTile(sc, sr)
             }
             is WorldEvent.OrchardOpened -> {
                 // Decorations standing where the orchard goes come back to the player at full price.

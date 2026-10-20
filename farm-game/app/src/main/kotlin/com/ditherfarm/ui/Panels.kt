@@ -95,6 +95,13 @@ import com.ditherfarm.game.giveGift
 import com.ditherfarm.game.pendingHeartEvent
 import com.ditherfarm.game.heartScene
 import com.ditherfarm.game.keepsakesToPlace
+import com.ditherfarm.game.act2
+import com.ditherfarm.game.contest
+import com.ditherfarm.game.contestScore
+import com.ditherfarm.game.contestDaysLeft
+import com.ditherfarm.game.CHAPTER_GOALS
+import com.ditherfarm.game.ACT2_CHAPTERS
+import com.ditherfarm.game.ACT2_DONE
 import com.ditherfarm.game.festivalItems
 import com.ditherfarm.game.festivalProgress
 import com.ditherfarm.game.giftFor
@@ -800,7 +807,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         }
         val note = when {
             stops.size == 1 -> "REACH FLOOR 5 TO ADD A STOP"
-            next != null -> world.gateBlocker(next)?.uppercase() ?: "NEXT STOP: FLOOR $next"
+            next != null -> world.gateBlocker(next)?.uppercase() ?: "REACH B$next BY LADDER FOR A STOP"
             else -> "YOU REACHED THE BOTTOM!"
         }
         g.text(note.take(34), x + pw / 2, y + ph - 16, Gfx.INK, align = 0, outline = 0, shadow = false)
@@ -864,6 +871,8 @@ class Panels(private val game: Game, private val hud: Hud) {
     fun goals(): Boolean {
         val (x, y, pw, ph) = frame("GOALS", maxPanelH).toList()
         if (closeButton(x, y, pw)) return false
+        // Story Act 2: the Vexmoor Cup opens from here once it has begun.
+        if (world.act2.chapter >= 1 && ui.button("cup", x + pw - 76, y + 4, 50, 14, "CUP", "icons/trophy", style = "gold")) { onContest?.invoke(); return false }
         goalsTab = ui.tabs("goal-tabs", x + 8, y + 22, pw - 16, listOf("DAILY", "GOALS", "BOOK", "EVENTS"), goalsTab)
         val top = y + 42
         when (goalsTab) {
@@ -1241,6 +1250,53 @@ class Panels(private val game: Game, private val hud: Hud) {
                 if (why != null) hud.toast(why) else world.hireRanchHand()
             }
         }
+        return true
+    }
+
+    // ------------------------------------------------------------------ the Vexmoor Cup
+    /** Opens the Vexmoor Cup page (set by Chrome). */
+    var onContest: (() -> Unit)? = null
+
+    /** Story Act 2 (round 6): the chapter's two goals and this week's contest against Vexmoor. */
+    fun contest(): Boolean {
+        val a = world.act2
+        val (x, y, pw, ph) = frame("VEXMOOR CUP", 214).toList()
+        if (closeButton(x, y, pw)) return false
+        if (a.chapter >= ACT2_DONE) {
+            g.sprite("decor/festival_statue", (x + pw / 2).toFloat(), (y + 110).toFloat())
+            g.text("THE VALLEY IS SAVED!", x + pw / 2, y + 120, Gfx.GOLD, align = 0)
+            g.text("CUP WEEKS WON: ${a.wins}", x + pw / 2, y + 136, Gfx.INK, align = 0, outline = 0, shadow = false)
+            return true
+        }
+        g.text("CHAPTER ${a.chapter} OF $ACT2_CHAPTERS", x + 10, y + 22, Gfx.GREY, outline = 0, shadow = false)
+        // The two things this chapter needs.
+        fun check(row: Int, done: Boolean, text: String) {
+            val ry = y + 36 + row * 14
+            g.rect(x + 10, ry + 1, x + 17, ry + 8, if (done) 0xFF3E8948.toInt() else 0xFFC0CBDC.toInt())
+            g.text(text.uppercase(), x + 22, ry, if (done) 0xFF3E8948.toInt() else Gfx.INK, outline = 0, shadow = false)
+        }
+        check(0, a.wonThisChapter, "Win a Cup week")
+        CHAPTER_GOALS[a.chapter]?.takeIf { a.chapter > 1 }?.let { goal ->
+            val (have, need) = goal.progress(world)
+            check(1, have >= need, "${goal.text} ($have/$need)")
+        }
+        // This week's contest: your score against Vexmoor's.
+        val c = world.contest ?: return true
+        val cy = y + 74
+        g.slice9("ui/slot", x + 8, cy, x + pw - 8, cy + 94, 4)
+        g.sprite("icons/trophy", (x + 22).toFloat(), (cy + 14).toFloat())
+        g.text(c.name.uppercase(), x + 34, cy + 6, Gfx.GOLD)
+        g.text(c.desc.uppercase(), x + 34, cy + 18, Gfx.INK, outline = 0, shadow = false)
+        val score = world.contestScore().toInt()
+        g.text("YOU", x + 16, cy + 36, Gfx.INK, outline = 0, shadow = false)
+        ui.bar(x + 60, cy + 36, pw - 120, (score.toFloat() / a.target).coerceIn(0f, 1f), "green")
+        g.text("$score", x + pw - 52, cy + 36, Gfx.INK, outline = 0, shadow = false)
+        g.text("VEXMOOR", x + 16, cy + 52, Gfx.INK, outline = 0, shadow = false)
+        ui.bar(x + 60, cy + 52, pw - 120, 1f, "red")
+        g.text("${a.target}", x + pw - 52, cy + 52, Gfx.INK, outline = 0, shadow = false)
+        val left = world.contestDaysLeft()
+        g.text(if (a.weekWon) "WON THIS WEEK! NEXT CONTEST SOON" else "$left DAY${if (left == 1) "" else "S"} LEFT", x + pw / 2, cy + 72, if (a.weekWon) 0xFF3E8948.toInt() else Gfx.GREY, align = 0, outline = 0, shadow = false)
+        g.text("WEEKS WON: ${a.wins}", x + 10, y + ph - 18, Gfx.GREY, outline = 0, shadow = false)
         return true
     }
 

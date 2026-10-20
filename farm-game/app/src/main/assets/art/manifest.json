@@ -972,6 +972,11 @@
   "ay": 34,
   "bh": 37
  },
+ "decor/festival_statue": {
+  "ax": 10,
+  "ay": 21,
+  "bh": 24
+ },
  "decor/flowers_red": {
   "ax": 12,
   "ay": 10,
@@ -4586,6 +4591,24 @@
   "ax": 17,
   "ay": 17,
   "bh": 34
+ },
+ "portraits/kessler": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/kessler_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/kessler_shock": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/kessler_shock_bust": {
+  "ax": 17,
+  "ay": 31
  },
  "portraits/mara": {
   "ax": 17,

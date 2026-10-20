@@ -63,6 +63,9 @@ object FarmMap {
     val ORCHARD_SIGN = 16 to 28
     fun inOrchard(c: Int, r: Int) = c in ORCHARD_C && r in ORCHARD_R
 
+    /** The valley's statue after the festival (Story Act 2), beside the village road. */
+    val STATUE = 13 to 22
+
     /** Lanterns light the farmstead, the village and the main road's edge (never on the road: vehicles drive it). */
     val LANTERNS = listOf(12 to 14, 14 to 17, 13 to 19, 23 to 21, 28 to 26, 33 to 31, 19 to 12, 13 to 29)
 
