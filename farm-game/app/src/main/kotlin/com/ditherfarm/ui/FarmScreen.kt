@@ -121,6 +121,9 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     /** Decoration being placed (round 5) and the tile picked for it (-1 until the first tap). */
     private var decorPlacing: String? = null
     private var decorTile = -1L
+    /** A refused decoration tap flashes red on its tile for a moment. */
+    private var decorBad = -1L
+    private var decorBadTime = 0f
     /** Tiles kept clear of scattered props and decorations (the truck, signs, houses...). */
     private val reservedTiles = HashSet<Long>()
     private var placeVertex = -1
@@ -264,6 +267,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         chrome.update(dt)
         crew.update(dt)
         if (infoTime > 0) infoTime -= dt
+        if (decorBadTime > 0) decorBadTime -= dt
         if (flashTime > 0) flashTime -= dt
         weather.kind = when (world.state.weather) {
             Weather.SUNNY -> if (world.time.season == Season.FALL) Sky.Kind.LEAVES else Sky.Kind.CLEAR
@@ -275,6 +279,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     // --- drawing ---------------------------------------------------------------
     override fun drawGroundLayer(g: Gfx) {
+        if (decorPlacing != null) drawDecorSpots(g)
         for ((c, r) in waterTiles) {
             if (!inView(Iso.x(c, r).toFloat(), Iso.y(c, r).toFloat())) continue
             val phase = (time * 2f + c * 0.7f + r * 1.3f) % 3f
@@ -539,6 +544,18 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
     }
 
+    /** While a decoration is being placed: every free tile in view is marked green (a refused tap flashes red). */
+    private fun drawDecorSpots(g: Gfx) {
+        // Full strength: the dawn and dusk tint would wash out anything fainter.
+        val a = (sin(time * 3f) * 25 + 230).toInt()
+        for (r in 0 until rows) for (c in 0 until cols) {
+            val x = Iso.x(c, r).toFloat(); val y = Iso.y(c, r).toFloat()
+            if (!inView(x, y, 8f)) continue
+            if (decorKey(c, r) == decorBad && decorBadTime > 0) g.sprite("tiles/cursor_bad", x, y)
+            else if (decorFree(c, r)) g.sprite("tiles/cursor_ok", x, y, a)
+        }
+    }
+
     /** The orchard's sign (its level or price until it is bought) and its trees. */
     private fun drawOrchard(list: DrawList) {
         val o = world.orchard
@@ -729,7 +746,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         ui.panel(2, y, w - 4, 30, dark = true)
         g.sprite("decor/$id", 16f, y + 26f)
         g.text("PLACE ${d.name.uppercase()}  ${d.price} COINS", 32, y + 5, Gfx.GOLD)
-        g.text(if (decorTile < 0) "TAP FREE GRASS ON THE FARM" else "TAP AGAIN TO PLACE IT THERE", 32, y + 17, Gfx.WHITE)
+        g.text(if (decorTile < 0) "TAP A GREEN TILE ON THE FARM" else "TAP AGAIN TO PLACE IT THERE", 32, y + 17, Gfx.WHITE)
         if (ui.button("decor-cancel", w - 22, y + 4, 16, 12, null, "ui/x", "red")) { decorPlacing = null; decorTile = -1 }
     }
 
@@ -778,8 +795,12 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val t = IntArray(2).also { Iso.pick(wx, wy, it) }
             val k = decorKey(t[0], t[1])
             when {
-                !decorFree(t[0], t[1]) -> { hud.toast("Pick a free patch of grass"); game.sfx.play("error") }
-                k == decorTile -> if (world.placeDecor(t[0], t[1], id)) { decorPlacing = null; decorTile = -1; game.sfx.play("craft") }
+                !decorFree(t[0], t[1]) -> { hud.toast("Pick a green-marked patch of grass"); game.sfx.play("error"); decorBad = k; decorBadTime = 0.6f }
+                k == decorTile -> if (world.placeDecor(t[0], t[1], id)) {
+                    decorPlacing = null; decorTile = -1; game.sfx.play("craft")
+                    // Back to the shop for the next piece (playtest round 6).
+                    chrome.open(Chrome.Panel.DECOR)
+                }
                 else -> { decorTile = k; game.sfx.play("click", 0.5f) }
             }
             return true

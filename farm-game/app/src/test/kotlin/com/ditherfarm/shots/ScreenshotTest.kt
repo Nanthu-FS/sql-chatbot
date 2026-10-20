@@ -532,6 +532,15 @@ class ScreenshotTest {
         }, zoom = 2)
     }
 
+    @Test fun decorPlacing() {
+        render("farm_decor_place", seconds = 0.5f, setup = { g ->
+            toLevel(g, 10); g.world.state.coins += 5000
+            g.world.state.pet.offered = true
+            g.farm.startDecor("bench")
+            g.farm.centerOnTile(14, 12)
+        }, zoom = 2)
+    }
+
     @Test fun farmGiant() {
         render("farm_giant", seconds = 0.5f, setup = { g ->
             toLevel(g, 16)

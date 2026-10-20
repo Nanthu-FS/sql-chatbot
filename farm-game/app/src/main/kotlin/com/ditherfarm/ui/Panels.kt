@@ -1031,7 +1031,10 @@ class Panels(private val game: Game, private val hud: Hud) {
             val cx = x + 10 + (i % 2) * cw
             val cy = y + 54 + (i / 2) * 40
             g.slice9("ui/slot", cx, cy, cx + 32, cy + 32, 4)
-            g.sprite("decor/${d.id}", (cx + 16).toFloat(), (cy + if (d.flat) 18 else 28).toFloat())
+            // Big pieces (pond, arch, fountain) shrink to fit the card.
+            val fitScale = game.assets["decor/${d.id}"].let { 30f / maxOf(it.w, it.h) }
+            if (fitScale < 1f) g.spriteScaled("decor/${d.id}", (cx + 16).toFloat(), (cy + 29).toFloat(), fitScale, fitScale)
+            else g.sprite("decor/${d.id}", (cx + 16).toFloat(), (cy + if (d.flat) 18 else 28).toFloat())
             g.text(fit(d.name.uppercase(), cw - 40), cx + 36, cy + 2, Gfx.INK, outline = 0, shadow = false)
             g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
             g.text("${d.price}  +${d.beauty}", cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
@@ -1078,7 +1081,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             val owned = a.id in p.accessories
             val wearing = p.accessory == a.id
             g.text(when { wearing -> "WEARING"; owned -> "OWNED"; lv < a.petLevel -> "PET LEVEL ${a.petLevel}"; else -> "${a.price} COINS" }, x + 36, ry + 12, Gfx.GREY, outline = 0, shadow = false)
-            val label = when { wearing -> "OFF"; owned -> "WEAR"; else -> "BUY" }
+            val label = when { wearing -> "OFF"; owned -> "WEAR"; lv < a.petLevel -> "LV ${a.petLevel}"; else -> "BUY" }
             val ok = wearing || world.accessoryBlocker(a.id) == null
             if (ui.button("acc-${a.id}", x + pw - 58, ry + 3, 48, 14, label, style = if (ok) "green" else "grey")) {
                 if (wearing) world.wearAccessory(null) else world.accessoryBlocker(a.id)?.let { hud.toast(it) } ?: world.wearAccessory(a.id)
@@ -1156,6 +1159,8 @@ class Panels(private val game: Game, private val hud: Hud) {
     // ------------------------------------------------------------------ pet
     private var petPick: PetKind? = null
     private val petName = StringBuilder()
+    /** The name field holds the suggested name: the first key typed replaces it. */
+    private var petNameSuggested = false
 
     /** Two strays turned up: keep one, name it (a suggested name is filled in), then ADOPT. */
     fun pet(): Boolean {
@@ -1178,7 +1183,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.text(kind.name, cx, cy + 34, Gfx.INK, align = 0, outline = 0, shadow = false)
             if (ui.clickable("pet-$i", cx - 36, cy - 30, 72, 60)) {
                 val other = PetKind.entries.first { it != kind }.defaultName
-                if (petName.isEmpty() || petName.toString() == other) { petName.setLength(0); petName.append(kind.defaultName) }
+                if (petName.isEmpty() || petName.toString() == other) { petName.setLength(0); petName.append(kind.defaultName); petNameSuggested = true }
                 petPick = kind
             }
         }
@@ -1192,10 +1197,13 @@ class Panels(private val game: Game, private val hud: Hud) {
             var kx = (w - rowW) / 2
             val ky = ny + 24 + r * 22
             for (ch in row) {
-                if (ui.button("pkey-$ch", kx, ky, kw, 20, ch.toString(), style = "wood") && petName.length < PET_NAME_MAX) petName.append(ch)
+                if (ui.button("pkey-$ch", kx, ky, kw, 20, ch.toString(), style = "wood")) {
+                    if (petNameSuggested) { petName.setLength(0); petNameSuggested = false }
+                    if (petName.length < PET_NAME_MAX) petName.append(ch)
+                }
                 kx += kw + 2
             }
-            if (r == 2 && ui.button("pkey-del", kx, ky, kw * 2 + 2, 20, "DEL", style = "red") && petName.isNotEmpty()) petName.setLength(petName.length - 1)
+            if (r == 2 && ui.button("pkey-del", kx, ky, kw * 2 + 2, 20, "DEL", style = "red") && petName.isNotEmpty()) { petName.setLength(petName.length - 1); petNameSuggested = false }
         }
         val ok = petPick != null && petName.isNotBlank()
         if (ui.button("pet-later", x + 12, y + ph - 28, 70, 18, "LATER", style = "grey")) return false

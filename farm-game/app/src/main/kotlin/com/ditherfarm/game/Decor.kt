@@ -18,7 +18,7 @@ class DecorDef(
 
 val DECOR = listOf(
     DecorDef("flowers_red", "Red flower bed", 150, 2, 1),
-    DecorDef("flowers_sun", "Sunny flower bed", 150, 2, 1),
+    DecorDef("flowers_sun", "Sunny flowers", 150, 2, 1),
     DecorDef("bench", "Garden bench", 300, 3, 2),
     DecorDef("gnome", "Garden gnome", 400, 4, 4),
     DecorDef("birdbath", "Birdbath", 600, 5, 5),
@@ -26,18 +26,18 @@ val DECOR = listOf(
     DecorDef("topiary", "Round topiary", 900, 7, 8),
     DecorDef("pond", "Lily pond", 1500, 12, 10),
     DecorDef("arch", "Rose arch", 2000, 15, 12),
-    DecorDef("sheaf", "Golden Sheaf statue", 4000, 30, 15),
+    DecorDef("sheaf", "Golden sheaf", 4000, 30, 15),
     // Round 6: fences, paths, seasonal pieces and a fountain.
     DecorDef("picket", "Picket fence", 60, 1, 1),
     DecorDef("path_stone", "Stone path", 40, 1, 1, flat = true),
     DecorDef("path_brick", "Brick path", 70, 1, 3, flat = true),
     DecorDef("haystack", "Hay stack", 200, 2, 2),
-    DecorDef("sunflowers", "Sunflower patch", 250, 3, 3, season = Season.SUMMER),
+    DecorDef("sunflowers", "Sunflowers", 250, 3, 3, season = Season.SUMMER),
     DecorDef("blossom", "Blossom tree", 900, 6, 4, season = Season.SPRING),
     DecorDef("pumpkins", "Pumpkin pile", 350, 4, 4, season = Season.FALL),
     DecorDef("snowman", "Snowman", 300, 4, 2, season = Season.WINTER),
-    DecorDef("vane", "Rooster weathervane", 700, 5, 6),
-    DecorDef("fountain", "Stone fountain", 3000, 20, 12),
+    DecorDef("vane", "Weathervane", 700, 5, 6),
+    DecorDef("fountain", "Fountain", 3000, 20, 12),
 ).associateBy { it.id }
 
 const val BEAUTY_PER_PERCENT = 5

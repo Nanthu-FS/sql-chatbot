@@ -68,7 +68,7 @@ class PetWalker(private val game: Game) {
                 if (!moving && stickFly >= 1f) { mode = Mode.FETCH_BACK; tx = homeX; ty = homeY; meter = 0f }
             }
             Mode.FETCH_BACK -> {
-                meter += dt * 1.6f
+                meter += dt * 0.9f
                 tx = homeX; ty = homeY
                 if (!moving) { mode = Mode.FOLLOW; s.petToast("${world.pet.name} drops the stick at your feet") }
             }
@@ -78,7 +78,8 @@ class PetWalker(private val game: Game) {
         val d = hypot(dx, dy)
         moving = d > 1.5f
         if (moving) {
-            val speed = if (mode != Mode.FOLLOW) 70f else if (d > 60f) 120f else 40f
+            // Back from fetch at a trot, so the catch meter has time to swing (playtest round 6).
+            val speed = when { mode == Mode.FETCH_OUT -> 70f; mode == Mode.FETCH_BACK -> 36f; d > 60f -> 120f; else -> 40f }
             val step = min(d, speed * dt)
             x += dx / d * step; y += dy / d * step
             if (abs(dx) > 0.5f) faceLeft = dx < 0
@@ -126,6 +127,8 @@ class PetWalker(private val game: Game) {
                 g.sprite("pets/cat_sit", sx + 8f, sy, flipX = true)
                 g.sprite("fx/heart", sx, sy - 16f + sin(time * 4f) * 1.5f)
             }
+            // Until one is adopted an arrow marks them (they wait off the starting view).
+            list.add(Float.MAX_VALUE) { g.sprite("icons/arrow_down", sx, sy - 26f + sin(time * 6f) * 2f) }
             return
         }
         val kind = world.pet.kind ?: return
@@ -137,7 +140,8 @@ class PetWalker(private val game: Game) {
             val sy = homeY + (stickY - homeY) * t - sin(t * Math.PI.toFloat()) * 24f
             list.add(stickY) { g.sprite("pets/stick", sx, sy) }
         }
-        list.add(y) {
+        // Drawn over the world: the pet follows the view and must never be lost behind a building.
+        list.add(y + ON_TOP) {
             drawPet(g, kind, x, y, faceLeft)
             if (mode == Mode.FETCH_BACK) {
                 g.sprite("pets/stick", x + if (faceLeft) -5f else 5f, y - 5f, flipX = faceLeft)
@@ -147,9 +151,9 @@ class PetWalker(private val game: Game) {
         }
     }
 
-    /** Where the marker swings (0..1), and whether it is in the green. */
-    private val marker get() = (sin(meter * Math.PI.toFloat()) * 0.5f + 0.5f)
-    private val inGreen get() = marker in 0.4f..0.6f
+    /** Where the marker sweeps (0..1, back and forth at an even speed), and whether it is in the green. */
+    private val marker get() = (meter % 2f).let { if (it < 1f) it else 2f - it }
+    private val inGreen get() = marker in GREEN_FROM..GREEN_TO
 
     private fun drawMeter(g: Gfx, cx: Float, cy: Float) {
         val w = 22
@@ -157,7 +161,7 @@ class PetWalker(private val game: Game) {
         val t = cy.toInt()
         g.rect(l - 1, t - 1, l + w + 1, t + 4, Gfx.INK)
         g.rect(l, t, l + w, t + 3, 0xFF8B9BB4.toInt())
-        g.rect(l + (w * 0.4f).toInt(), t, l + (w * 0.6f).toInt(), t + 3, 0xFF63C74D.toInt())
+        g.rect(l + (w * GREEN_FROM).toInt(), t, l + (w * GREEN_TO).toInt(), t + 3, 0xFF63C74D.toInt())
         val mx = l + (w * marker).toInt()
         g.rect(mx, t - 2, mx + 1, t + 5, Gfx.WHITE)
     }
@@ -213,4 +217,10 @@ class PetWalker(private val game: Game) {
     /** A long press on the pet opens its page; true if it was on the pet. */
     fun longPress(s: IsoMapScreen, wx: Float, wy: Float): Boolean =
         world.hasPet && s === screen && onPet(wx, wy)
+
+    private companion object {
+        const val GREEN_FROM = 0.33f
+        const val GREEN_TO = 0.67f
+        const val ON_TOP = 100_000f
+    }
 }
