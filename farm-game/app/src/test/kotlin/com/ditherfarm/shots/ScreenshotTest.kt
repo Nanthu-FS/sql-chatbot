@@ -515,6 +515,20 @@ class ScreenshotTest {
         }, zoom = 2)
     }
 
+    @Test fun farmGiant() {
+        render("farm_giant", seconds = 0.5f, setup = { g ->
+            toLevel(g, 16)
+            val w = g.world
+            w.state.pet.offered = true
+            val crop = "pumpkin"
+            for (i in com.ditherfarm.game.FieldLayout.plotsOf(0)) w.plot(i).apply { clear(); this.crop = crop; growth = w.data.crop(crop).growMinutes; watered = true }
+            for (i in com.ditherfarm.game.giantPlots(0)) w.plot(i).giant = 0
+            w.events.clear()
+            val (c, r) = g.farm.plotTile(com.ditherfarm.game.giantCenter(0))
+            g.farm.centerOnTile(c, r)
+        }, zoom = 2)
+    }
+
     @Test fun decorPanel() {
         render("panel_decor", setup = { g ->
             toLevel(g, 10); g.world.state.coins += 5000

@@ -93,6 +93,7 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 ## Round 6 features (owner picks, one at a time)
 - Backlog in order: better tutorial, giant crops, more decorations, pet extras (fetch, pet levels, accessories), orchard (a fenced plot of 8 fruit trees), farm animals (chickens, cows, sheep in the pasture), fishing in the farm river (timing bar), deep mine adventure, villager friendships, Story Act 2 (a rival agri-corp).
 - **Tutorial:** the watering step says how ("tap crops with a blue drop"); a new notebook step after the first order teaches the trophy chip (it blinks gold) and Goals; when the next step is on the farm, the nav bar points at the farm from the forest and mine; tapping the notebook chip takes the player to the target (screen and camera); swapping an order takes two taps; the Orders board explains itself on first open. Save version 5 keeps old saves at the same notebook step.
+- **Giant crops:** at dawn a ripe 3x3 square of one pumpkin, melon or cabbage crop has a 15% chance to merge into a giant (hand-pixeled, drawn once over the patch with a sparkle). One tap harvests it: twice what the nine plots would give, all gold, and nine plots' worth of gold XP. Farmhands and the Harvest Shed leave giants for the player.
 
 ## Later (not v1)
 - New areas opened by the village: a lake with fishing, a ranch with animals, an orchard hill, a beach.

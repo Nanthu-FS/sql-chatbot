@@ -435,6 +435,21 @@
   "ay": 13,
   "bh": 18
  },
+ "crops/giant_cabbage": {
+  "ax": 41,
+  "ay": 35,
+  "bh": 50
+ },
+ "crops/giant_melon": {
+  "ax": 41,
+  "ay": 34,
+  "bh": 49
+ },
+ "crops/giant_pumpkin": {
+  "ax": 41,
+  "ay": 38,
+  "bh": 53
+ },
  "crops/grapes_0": {
   "ax": 11,
   "ay": 25,

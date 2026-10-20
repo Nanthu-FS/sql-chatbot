@@ -29,7 +29,8 @@ class ScaleTest {
         Band("vehicles/(truck|harvester)_[ns]e_", 14, 26, "vehicles: about a farmhand tall"),
         Band("deco/(crate_|hay_bale|trough)", 8, 22, "knee-high props"),
         Band("deco/scarecrow", 22, 32, "a scarecrow on its pole, a bit taller than a farmhand"),
-        Band("crops/", 4, 34, "crops fill their plot but stay under a farmhand and a half"),
+        Band("crops/(?!giant_)", 4, 34, "crops fill their plot but stay under a farmhand and a half"),
+        Band("crops/giant_", 30, 60, "a giant crop fills a 3x3 patch"),
     )
 
     /** Height from the PNG header (IHDR, bytes 20-23), so the check needs no image library. */

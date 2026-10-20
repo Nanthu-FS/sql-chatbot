@@ -133,9 +133,9 @@ private fun World.workStep(w: WorkerState): Boolean {
     val crop = state.fields[field].crop
     // One visit tends a whole plot (playtest round 4): harvest, clear, replant, then water it.
     // Ripe plots come first, then dead ones, then dry ones (a dry crop grows slower), then empty ones.
-    val i = plots.firstOrNull { !crateFull() && isReady(plot(it)) }
+    val i = plots.firstOrNull { !crateFull() && isReady(plot(it)) && plot(it).giant < 0 }
         ?: plots.firstOrNull { plot(it).needsClearing }
-        ?: plots.firstOrNull { dry(it) }
+        ?: plots.firstOrNull { dry(it) && plot(it).giant < 0 }
         ?: crop?.let { c -> plots.firstOrNull { plot(it).empty && canReplant(it, c) } }
         ?: return false
     val kind = plot(i).let { p ->

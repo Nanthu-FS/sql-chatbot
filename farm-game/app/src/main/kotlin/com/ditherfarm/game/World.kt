@@ -43,6 +43,8 @@ sealed class WorldEvent {
     data class PetAdopted(val kind: PetKind, val name: String) : WorldEvent()
     data class PetGift(val items: Map<String, Int>) : WorldEvent()
     data class DecorPlaced(val c: Int, val r: Int, val id: String) : WorldEvent()
+    data class GiantGrew(val anchor: Int, val crop: String) : WorldEvent()
+    data class GiantHarvested(val anchor: Int, val crop: String, val qty: Int, val xp: Int) : WorldEvent()
     data class DecorRemoved(val c: Int, val r: Int, val id: String) : WorldEvent()
     data class Mined(val cell: Int, val quarry: Boolean, val node: String, val crit: Boolean, val hpLeft: Int) : WorldEvent()
     data class RockBroken(val cell: Int, val quarry: Boolean, val node: String, val drops: Map<String, Int>, val xp: Int) : WorldEvent()
@@ -215,6 +217,7 @@ class World(val data: GameData, val state: GameState) {
         forestDawn(day)
         workersDawn()
         petDawn(day)
+        giantDawn(day)
         festivalDawn()
         runMarketCart()
         events += WorldEvent.DayStarted(day, state.weather)
@@ -493,6 +496,8 @@ class World(val data: GameData, val state: GameState) {
     fun harvest(i: Int, auto: Boolean = false, into: MutableMap<String, Int>? = null): Boolean {
         val p = plot(i)
         if (!isReady(p)) return false
+        // A giant is the player's to pick: farmhands leave it.
+        if (p.giant >= 0) return into == null && !auto && harvestGiant(p.giant)
         val def = data.crop(p.crop!!)
         if (into == null && !hasRoom(def.id)) { events += WorldEvent.Blocked("Silo full", i); return false }
         val quality = rollQuality(p)

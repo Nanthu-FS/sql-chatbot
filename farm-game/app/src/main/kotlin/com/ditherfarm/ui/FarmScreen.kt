@@ -16,6 +16,7 @@ import com.ditherfarm.game.PlotState
 import com.ditherfarm.game.Quality
 import com.ditherfarm.game.Season
 import com.ditherfarm.game.decorKey
+import com.ditherfarm.game.giantCenter
 import com.ditherfarm.game.pickUpDecor
 import com.ditherfarm.game.placeDecor
 import com.ditherfarm.game.Weather
@@ -495,6 +496,18 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val x = Iso.x(c, r).toFloat()
             val top = Iso.y(c, r).toFloat()
             val cy = Iso.centerY(c, r).toFloat()
+            // A giant crop is drawn once, on its middle plot, sorted by its front plot.
+            if (p.giant >= 0) {
+                if (i != giantCenter(p.giant)) return@forEachIndexed
+                val sprite = "crops/giant_${p.crop}"
+                if (!inView(x, cy, 70f)) return@forEachIndexed
+                hitSprite(c, r, sprite, x, cy)
+                list.add(cy + Iso.HH) {
+                    game.gfx.sprite(sprite, x, cy)
+                    game.gfx.sprite("fx/sparkle", x + 20, cy - 40 + sin(time * 3f) * 2f)
+                }
+                return@forEachIndexed
+            }
             if (!inView(x, top)) return@forEachIndexed
             val crop = cropSprite(p) ?: return@forEachIndexed
             hitSprite(c, r, crop, x, cy)
@@ -942,6 +955,19 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 if (e.quality != Quality.NORMAL) fx.rise(e.quality.icon!!, x + 10, y - 20)
                 flash(e.plot)
                 if (world.state.plots.any { it.owned && world.isReady(it) }) tipHarvest() else tipPlant()
+            }
+            is WorldEvent.GiantGrew -> {
+                game.sfx.play("levelup"); game.haptics.heavy()
+                hud.toast("A giant ${world.data.name(e.crop).lowercase()} grew overnight in Field ${FieldLayout.name(FieldLayout.blockOf(e.anchor))}!")
+                hud.tip("giant", "Giant crops grow from a ripe 3x3 patch of pumpkins, melons or cabbages. Tap it to harvest a big gold haul.")
+            }
+            is WorldEvent.GiantHarvested -> {
+                val (x, y) = plotCenter(giantCenter(e.anchor))
+                game.sfx.play("levelup"); game.haptics.heavy()
+                fx.burst("items/${e.crop}", x, y - 16, 10, speed = 80f)
+                fx.floatText("+${e.qty}", x, y - 40, Gfx.GOLD, icon = "items/${e.crop}")
+                fx.rise(Quality.GOLD.icon!!, x + 12, y - 30)
+                hud.toast("Giant ${world.data.name(e.crop).lowercase()}: ${e.qty} gold ${world.data.name(e.crop).lowercase()}!")
             }
             is WorldEvent.Planted -> {
                 val (x, y) = plotCenter(e.plot)

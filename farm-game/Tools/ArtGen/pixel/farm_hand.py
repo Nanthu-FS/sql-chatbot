@@ -24,6 +24,7 @@ nothing is copied from them.
   buildings/cottage_c(_lit)             the bunkhouse, and its lit windows for the night overlay
   deco/hay_bale, trough, bridge, sign_forest, sign_mine
   decor/<id>                            the decorations the player buys and places (Decor.kt)
+  crops/giant_pumpkin, _melon, _cabbage giant crops filling a 3x3 patch (Giant.kt)
                                         farm machines, each with a cream icon plate
 
 Pivot = the ground centre of the footprint.
@@ -1628,6 +1629,92 @@ def preview_decor(out):
     sheet.resize((sheet.width * 4, sheet.height * 4), Image.NEAREST).save(out)
 
 
+# ---------------------------------------------------------------- giant crops (round 6)
+
+def giant(kind):
+    """A giant crop filling a 3x3 patch: a big shaded body (ribbed pumpkin, striped melon or a
+    leafy cabbage), with vines and leaves at its foot. Pivot = the patch's centre on the ground."""
+    import math
+    c = Iso(80, 64, 40, 52)
+    cx, cy = 40, 52
+    R, H = 30, 34
+    body = {"pumpkin": ("amber", "orange", "rust", "brown"), "melon": ("green", "green_d", "green_dd", "teal_dd"),
+            "cabbage": ("green", "green", "green_d", "green_dd")}[kind]
+    # Leaves and vines on the ground first.
+    for a in range(0, 360, 45):
+        x = round(cx + (R + 4) * math.cos(math.radians(a)))
+        y = round(cy - 4 + (R / 2.6) * math.sin(math.radians(a)))
+        c.ellipse(x, y, 5, 2, "green_d")
+        c.dot(x - 1, y - 1, "green")
+    # The body: a squashed ball, shaded in flat bands from the light (top left).
+    top = cy - H
+    for y in range(top, cy + 1):
+        t = (y - (top + cy) / 2) / (H / 2)
+        half = R * max(0.0, 1 - t * t) ** 0.5
+        for x in range(round(cx - half), round(cx + half) + 1):
+            dx = (x - cx) / R
+            lit = dx * 0.8 + t * 0.6
+            col = body[0] if lit < -0.45 else body[1] if lit < 0.15 else body[2] if lit < 0.6 else body[3]
+            c.dot(x, y, col)
+    if kind == "pumpkin":
+        for k in (-2, -1, 1, 2):                                            # ribs
+            for y in range(top + 3, cy - 1):
+                t = (y - (top + cy) / 2) / (H / 2)
+                half = R * max(0.0, 1 - t * t) ** 0.5
+                c.dot(round(cx + k / 3 * half), y, "rust" if k < 0 else "brown")
+        for j in range(6):                                                  # stem
+            c.dot(cx - 1 + j // 3, top - j + 2, "brown_l"); c.dot(cx + j // 3, top - j + 2, "brown")
+        c.dot(cx + 2, top - 3, "green"); c.dot(cx + 3, top - 4, "green_d")
+    elif kind == "melon":
+        for k in (-3, -2, -1, 0, 1, 2, 3):                                  # stripes
+            for y in range(top + 2, cy - 1):
+                t = (y - (top + cy) / 2) / (H / 2)
+                half = R * max(0.0, 1 - t * t) ** 0.5
+                x = round(cx + k / 3.6 * half)
+                for w in range(3):
+                    c.dot(x + w, y, "teal_dd" if w == 1 else "green_dd")
+        c.dot(cx, top + 1, "brown"); c.dot(cx + 1, top, "brown_l")
+    else:
+        # Leaves wrapped round the head: curved leaf edges and pale veins from the crown.
+        for k in (-3, -2, -1, 0, 1, 2, 3):
+            for y in range(top + 2, cy - 1):
+                t = (y - (top + cy) / 2) / (H / 2)
+                half = R * max(0.0, 1 - t * t) ** 0.5
+                x = round(cx + k / 3.4 * half + 3 * math.sin(t * 2.2 + k))
+                c.dot(x, y, "green_dd" if k % 2 else "yellow")
+        for a in range(200, 341, 14):                                       # the outer leaf's frilly rim
+            x = round(cx + (R - 1) * math.cos(math.radians(a)))
+            y = round(cy - H / 2 + (H / 2) * math.sin(math.radians(a)))
+            c.dot(x, y - 1, "green_dd"); c.dot(x, y, "green_d")
+    # A highlight on the top left and the shadow line where it meets the soil.
+    c.ellipse(cx - 12, top + 9, 4, 2, "white" if kind == "pumpkin" else "yellow")
+    for x in range(cx - R + 4, cx + R - 3):
+        c.dot(x, cy, "brown_d")
+    return c, (cx, cy - 2)
+
+
+GIANTS = [("giant_pumpkin", lambda: giant("pumpkin")), ("giant_melon", lambda: giant("melon")),
+          ("giant_cabbage", lambda: giant("cabbage"))]
+
+
+def preview_giant(out):
+    from PIL import Image
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
+    import polish
+    art = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "app", "src", "main", "assets", "art")
+    hand = Image.open(os.path.join(art, "people/hana_se_idle.png")).convert("RGBA")
+    sheet = Image.new("RGBA", (300, 80), (62, 137, 72, 255))
+    sheet.alpha_composite(hand, (6, 70 - hand.height))
+    for i, (name, fn) in enumerate(GIANTS):
+        cnv, (px_, py_) = fn()
+        x0, y0, x1, y1 = cnv.im.getbbox()
+        body, pad = finish(cnv.im.crop((x0, y0, x1, y1)))
+        body = polish.polish(body, "world", "crops/" + name)
+        ax, ay = 70 + i * 88, 70
+        sheet.alpha_composite(body, (ax - (px_ - x0 + pad), ay - (py_ - y0 + pad)))
+    sheet.resize((sheet.width * 4, sheet.height * 4), Image.NEAREST).save(out)
+
+
 def emit(sp, name, made):
     cnv, (px, py) = made
     x0, y0, x1, y1 = cnv.im.getbbox()
@@ -1662,11 +1749,14 @@ def main():
     dec = Sprites(art, "decor")
     for name, fn in DECOR_ART:
         emit(dec, name, fn())
+    crops = Sprites(art, "crops")
+    for name, fn in GIANTS:
+        emit(crops, name, fn())
     for name, fn in (("barn", barn), ("silo", silo), ("orders", orders), ("workbench", workbench), ("well", well), ("market", market)):
         emit(bld, name, fn(False))
         emit(bld, name + "_snow", fn(True))
     pivots = {}
-    for sp in (veh, bld, deco, dec):
+    for sp in (veh, bld, deco, dec, crops):
         pivots.update(sp.pivots)
     print(json.dumps(pivots))
 
@@ -1722,5 +1812,7 @@ if __name__ == "__main__":
         preview6(sys.argv[2])
     elif len(sys.argv) > 2 and sys.argv[1] == "--preview-decor":
         preview_decor(sys.argv[2])
+    elif len(sys.argv) > 2 and sys.argv[1] == "--preview-giant":
+        preview_giant(sys.argv[2])
     else:
         main()

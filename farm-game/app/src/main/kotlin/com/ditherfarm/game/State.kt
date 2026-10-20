@@ -28,13 +28,15 @@ class PlotState(val index: Int) {
     var harvests = 0
     /** Last crop planted here; the Planter Shed replants it. */
     var lastCrop: String? = null
+    /** Part of a giant crop: the giant's anchor plot (its top-left), or -1 (Giant.kt). */
+    var giant = -1
 
     val empty get() = crop == null && !withered && !scorched
     val needsClearing get() = withered || scorched
 
     fun clear() {
         crop = null; growth = 0.0; cared = false; withered = false; scorched = false
-        battered = false; fertSilver = 0.0; fertGold = 0.0; harvests = 0
+        battered = false; fertSilver = 0.0; fertGold = 0.0; harvests = 0; giant = -1
     }
 
     fun toJson() = JSONObject().apply {
@@ -42,6 +44,7 @@ class PlotState(val index: Int) {
         put("watered", watered); put("cared", cared); put("withered", withered); put("scorched", scorched)
         put("battered", battered); put("fs", fertSilver); put("fg", fertGold); put("h", harvests)
         lastCrop?.let { put("lc", it) }
+        if (giant >= 0) put("gi", giant)
     }
 
     companion object {
@@ -51,6 +54,7 @@ class PlotState(val index: Int) {
             withered = o.optBoolean("withered"); scorched = o.optBoolean("scorched"); battered = o.optBoolean("battered")
             fertSilver = o.optDouble("fs", 0.0); fertGold = o.optDouble("fg", 0.0); harvests = o.optInt("h")
             lastCrop = if (o.has("lc")) o.getString("lc") else null
+            giant = o.optInt("gi", -1)
         }
     }
 }
