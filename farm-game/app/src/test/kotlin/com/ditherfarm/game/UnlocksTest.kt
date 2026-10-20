@@ -82,4 +82,25 @@ class UnlocksTest {
         val back = World(data, GameState.fromJson(w.state.toJson()))
         assertNull(back.quest)
     }
+
+    @Test fun goalsStepDoneByOpeningGoals() {
+        val w = fresh()
+        w.startQuest(QUESTS.indexOfFirst { it.id == "goals" })
+        assertEquals(Pointer.GOALS, w.pointer)
+        assertFalse(w.questDone)
+        w.state.bump("goals_opened")
+        assertTrue(w.questDone)
+    }
+
+    @Test fun versionFourSavesKeepTheirPlaceInTheNotebook() {
+        val w = fresh()
+        val quarry = QUESTS.indexOfFirst { it.id == "quarry" }
+        w.state.questIndex = quarry - 1 // in a version 4 save, the step after "order" was "quarry"
+        w.state.version = 4
+        val back = World(data, GameState.fromJson(w.state.toJson()))
+        assertEquals("quarry", back.quest?.id)
+        // Before "goals": unchanged.
+        w.state.questIndex = QUESTS.indexOfFirst { it.id == "order" }
+        assertEquals("order", World(data, GameState.fromJson(w.state.toJson())).quest?.id)
+    }
 }

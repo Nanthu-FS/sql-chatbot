@@ -113,7 +113,9 @@ class Hud(private val game: Game) {
                 g.text(if (nav == Nav.MINE) "?" else "L${nav.unlockLevel}", x + size / 2, y + 6 + size - 9, Gfx.WHITE, align = 0)
             }
             if (nav == Nav.MINE && world.pointer == com.ditherfarm.game.Pointer.MINE && current != Nav.MINE) navArrow = x + size / 2
-            if (nav == Nav.FOREST && current != Nav.FOREST && world.pointer.let { it == com.ditherfarm.game.Pointer.TREE || it == com.ditherfarm.game.Pointer.ROCK || it == com.ditherfarm.game.Pointer.SAWMILL }) navArrow = x + size / 2
+            if (nav == Nav.FOREST && current != Nav.FOREST && world.pointer.inForest) navArrow = x + size / 2
+            // A farm step while the player is in the forest or mine: point back at the farm.
+            if (nav == Nav.FARM && current != Nav.FARM && world.pointer.onFarm) navArrow = x + size / 2
             val b = badges[nav] ?: 0
             if (b > 0) {
                 g.sprite("ui/badge", (x + size - 3).toFloat(), (y + 9).toFloat())

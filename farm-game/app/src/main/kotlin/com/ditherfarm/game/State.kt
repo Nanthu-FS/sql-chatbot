@@ -250,7 +250,7 @@ class GameState(var seed: Long) {
     }
 
     companion object {
-        const val VERSION = 4
+        const val VERSION = 5
 
         fun fromJson(o: JSONObject): GameState = GameState(o.getLong("seed")).apply {
             version = o.optInt("version", 1)

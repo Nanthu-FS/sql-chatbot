@@ -504,21 +504,29 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     /** Grandpa's notebook points at what its quest needs on the farm. */
     private fun drawPointer(list: DrawList) {
-        val (tile, art) = when (world.pointer) {
+        val (tile, art) = pointerTarget() ?: return
+        val x = Iso.x(tile.first, tile.second).toFloat(); val y = Iso.centerY(tile.first, tile.second).toFloat()
+        val h = (art?.let { spriteTop(it) } ?: 24f) + 10f
+        if (inView(x, y, 60f)) list.add(Float.MAX_VALUE) { game.gfx.sprite("icons/arrow_down", x, y - h + sin(time * 6f) * 2f) }
+    }
+
+    /** Centres the view on what the notebook points at (tapping the quest chip). */
+    fun focusPointer() { pointerTarget()?.let { (t, _) -> centerOnTile(t.first, t.second) } }
+
+    /** The farm tile the notebook's pointer marks, and the art standing there (for the arrow's height). */
+    private fun pointerTarget(): Pair<Pair<Int, Int>, String?>? {
+        return when (world.pointer) {
             com.ditherfarm.game.Pointer.FIELD -> (FarmMap.BLOCKS[0].first + 1 to FarmMap.BLOCKS[0].second + 1) to null
             com.ditherfarm.game.Pointer.MARKET -> FarmMap.MARKET to "buildings/market"
             com.ditherfarm.game.Pointer.ORDERS -> FarmMap.ORDERS to "buildings/orders"
             com.ditherfarm.game.Pointer.WORKBENCH -> FarmMap.WORKBENCH to "buildings/workbench"
-            com.ditherfarm.game.Pointer.WINDMILL -> (slotTiles.getOrNull(machines.indexOfFirst { it.id == "windmill" }) ?: return) to "buildings/windmill"
+            com.ditherfarm.game.Pointer.WINDMILL -> (slotTiles.getOrNull(machines.indexOfFirst { it.id == "windmill" }) ?: return null) to "buildings/windmill"
             com.ditherfarm.game.Pointer.FIELD_B -> (FarmMap.BLOCKS[1].first - 1 to FarmMap.BLOCKS[1].second - 1) to "deco/field_sign"
             com.ditherfarm.game.Pointer.BUNKHOUSE -> FarmMap.BUNKHOUSE to "buildings/cottage_c"
             com.ditherfarm.game.Pointer.TRUCK -> FarmMap.TRUCK to "vehicles/truck_se_0"
             com.ditherfarm.game.Pointer.VILLAGE -> FarmMap.HOUSES[0] to "buildings/house_${world.villageTier}_a"
-            else -> return
+            else -> null
         }
-        val x = Iso.x(tile.first, tile.second).toFloat(); val y = Iso.centerY(tile.first, tile.second).toFloat()
-        val h = (art?.let { spriteTop(it) } ?: 24f) + 10f
-        if (inView(x, y, 60f)) list.add(Float.MAX_VALUE) { game.gfx.sprite("icons/arrow_down", x, y - h + sin(time * 6f) * 2f) }
     }
 
     private val pickTmp = IntArray(2)

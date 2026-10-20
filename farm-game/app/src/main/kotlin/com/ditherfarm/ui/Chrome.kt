@@ -6,6 +6,8 @@ import com.ditherfarm.game.WorldEvent
 import com.ditherfarm.game.claimableCount
 import com.ditherfarm.game.festival
 import com.ditherfarm.game.pet
+import com.ditherfarm.game.pointer
+import com.ditherfarm.game.quarryOpen
 import com.ditherfarm.game.petOffered
 import com.ditherfarm.game.festivalClaimable
 import com.ditherfarm.game.giftReady
@@ -83,6 +85,16 @@ class Chrome(private val game: Game, private val here: Nav) {
         }
     }
 
+    /** Takes the player to what the notebook points at: the right screen, centred on the target. */
+    private fun showPointer(p: com.ditherfarm.game.Pointer) {
+        when {
+            p.onFarm -> { if (here != Nav.FARM) { panel = Panel.NONE; game.goTo(Nav.FARM) }; game.farm.focusPointer() }
+            p.inForest && here != Nav.FOREST && world.level >= Nav.FOREST.unlockLevel -> { panel = Panel.NONE; game.goTo(Nav.FOREST) }
+            p == com.ditherfarm.game.Pointer.MINE && here != Nav.MINE && world.quarryOpen -> { panel = Panel.NONE; game.goTo(Nav.MINE) }
+            p == com.ditherfarm.game.Pointer.GOALS -> open(Panel.GOALS)
+        }
+    }
+
     /** Plays the opening again, asking for a look and a name. */
     fun replayOpening() {
         sceneById("opening")?.let { story.start(it, replay = true); open(Panel.STORY) }
@@ -103,6 +115,8 @@ class Chrome(private val game: Game, private val here: Nav) {
         this.target = target
         game.sfx.play("open")
         if (p == Panel.MARKET) hud.tip("market", "Prices change every day. A green arrow means today is a good day to sell.")
+        if (p == Panel.GOALS) world.state.bump("goals_opened")
+        if (p == Panel.ORDERS) hud.tip("orders", "Send what an order asks for to earn coins and XP. Tap X twice to swap an order you don't want.")
         if (p == Panel.VILLAGE) hud.tip("village", "Give goods and coins a bit at a time. When every bundle is done, rebuild the whole village.")
         if (p == Panel.SKILLS) hud.tip("skills", "Every level gives a skill point. Skills in a branch unlock in order.")
         if (p == Panel.WORKERS) hud.tip("workers", "Farmhands work one field each: they harvest into its crate, replant its crop and water. They eat crops from the Silo each morning.")
@@ -170,6 +184,12 @@ class Chrome(private val game: Game, private val here: Nav) {
         if (festival) g.sprite("icons/festival", x + 30f, y + 7f)
         if (world.merchantHere()) g.sprite("icons/merchant", x + if (festival) 46f else 30f, y + 7f)
         if (goalsClick) open(Panel.GOALS)
+        // The notebook's Goals step: the trophy chip blinks gold until tapped.
+        if (world.pointer == com.ditherfarm.game.Pointer.GOALS && (game.engine.time * 3).toInt() % 2 == 0) {
+            val gw = w - x - 2
+            g.rect(x - 1, y - 1, x + gw + 1, y, Gfx.GOLD); g.rect(x - 1, y + 14, x + gw + 1, y + 15, Gfx.GOLD)
+            g.rect(x - 1, y, x, y + 14, Gfx.GOLD); g.rect(x + gw, y, x + gw + 1, y + 14, Gfx.GOLD)
+        }
         // The level badge opens the skill tree; a badge counts unspent points.
         val ly = game.engine.safeTop + 2
         val pts = world.skillPoints
@@ -220,7 +240,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private fun tapGoal(key: String, line: com.ditherfarm.game.GoalLine) {
         val rest = key.substringAfter(':', "")
         when (key.substringBefore(':')) {
-            "quest" -> if (line.ready) world.claimQuest() else world.quest?.let { hud.toast(it.text) }
+            "quest" -> if (line.ready) world.claimQuest() else world.quest?.let { hud.toast(it.text); showPointer(it.pointer) }
             "village" -> open(Panel.VILLAGE)
             "bundle" -> if (line.ready) world.donate(rest) else open(Panel.VILLAGE)
             "ach" -> if (line.ready) world.claimAchievement(rest.substringBefore(':')) else { panels.goalsTab = Panels.TAB_GOALS; open(Panel.GOALS) }

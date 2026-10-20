@@ -116,6 +116,12 @@ class World(val data: GameData, val state: GameState) {
             for (s in SCENES) if (s.tier <= state.villageTier) state.storySeen += s.id
             state.version = GameState.VERSION
         }
+        // Version 5 put the Goals step after "order" in the notebook: later quests moved down one.
+        if (from < 5) {
+            val goals = QUESTS.indexOfFirst { it.id == "goals" }
+            if (from >= 3 && state.questIndex >= goals) state.questIndex++
+            state.version = GameState.VERSION
+        }
         retireSheds()
         syncGreenhouse()
         while (state.fields.size < FieldLayout.BLOCKS) state.fields.add(FieldState())

@@ -152,7 +152,8 @@ class Panels(private val game: Game, private val hud: Hud) {
     private var selected: String? = null
     private var confirmNewGame = 0
 
-    fun reset() { selected = null; confirmNewGame = 0 }
+    private var trashArmed = -1
+    fun reset() { selected = null; confirmNewGame = 0; trashArmed = -1 }
 
     companion object {
         /** [craftAmount] value for MAX: as many batches as you can afford. */
@@ -378,7 +379,10 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (ui.button("deliver-$i", x + pw - 76, cy + 30, 50, 16, "SEND", style = if (can) "green" else "grey")) {
                 if (world.deliver(i)) { game.sfx.play("sell"); game.haptics.heavy() } else game.sfx.play("error")
             }
-            if (ui.button("trash-$i", x + pw - 24, cy + 30, 14, 16, null, "ui/x", "red")) world.trashOrder(i)
+            // Two taps swap an order: the first asks, the second does it (round 5 playtest).
+            if (ui.button("trash-$i", x + pw - 24, cy + 30, 14, 16, null, "ui/x", "red")) {
+                if (trashArmed == i) { world.trashOrder(i); trashArmed = -1 } else { trashArmed = i; hud.toast("Tap X again to swap this order for a new one") }
+            }
         }
         return true
     }
