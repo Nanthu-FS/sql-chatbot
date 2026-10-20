@@ -403,7 +403,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         for ((k, id) in world.state.decor) {
             val c = (k / 1000).toInt(); val r = (k % 1000).toInt()
             val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()
-            if (inView(x, y)) list.add(y) { game.gfx.sprite("decor/$id", x, y) }
+            // Paths lie flat: under anything standing on or around them.
+            if (inView(x, y)) list.add(if (DECOR[id]?.flat == true) y - Iso.TH * 2 else y) { game.gfx.sprite("decor/$id", x, y) }
         }
         decorPlacing?.let { id ->
             if (decorTile >= 0) {

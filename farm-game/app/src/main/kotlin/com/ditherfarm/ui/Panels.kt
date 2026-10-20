@@ -103,6 +103,9 @@ import com.ditherfarm.game.DECOR
 import com.ditherfarm.game.beauty
 import com.ditherfarm.game.decorBlocker
 import com.ditherfarm.game.decorBonus
+import com.ditherfarm.game.BEST_FARM_BEAUTY
+import com.ditherfarm.game.claimBeautyMilestone
+import com.ditherfarm.game.nextBeautyMilestone
 import com.ditherfarm.game.adoptPet
 import com.ditherfarm.game.petOffered
 import com.ditherfarm.game.BRANCHES
@@ -982,28 +985,45 @@ class Panels(private val game: Game, private val hud: Hud) {
     }
 
     // ------------------------------------------------------------------ decor shop
-    /** Decorations to buy and place; beauty and its order bonus at the top. */
+    private var decorPage = 0
+
+    /** Decorations to buy and place, ten to a page; beauty, its order bonus and milestones on top. */
     fun decor(): Boolean {
-        val rowsN = (DECOR.size + 1) / 2
-        val (x, y, pw, ph) = frame("DECORATE", 44 + rowsN * 40).toList()
+        val all = DECOR.values.toList()
+        val pages = (all.size + 9) / 10
+        decorPage = decorPage.coerceIn(0, pages - 1)
+        val (x, y, pw, ph) = frame("DECORATE", 64 + 5 * 40 + 22).toList()
         if (closeButton(x, y, pw)) return false
         val b = world.beauty
-        g.text("BEAUTY $b: +${(world.decorBonus() * 100).toInt()}% ORDER COINS", x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
+        val best = if (b >= BEST_FARM_BEAUTY) "  BEST FARM!" else ""
+        g.text("BEAUTY $b: +${(world.decorBonus() * 100).toInt()}% ORDER COINS$best", x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
+        world.nextBeautyMilestone()?.let { (need, coins) ->
+            if (b >= need) {
+                if (ui.button("beauty-claim", x + 10, y + 34, pw - 20, 16, "BEAUTY $need REACHED: CLAIM $coins COINS", style = "gold")) world.claimBeautyMilestone()
+            } else g.text("NEXT: $need BEAUTY PAYS $coins COINS" + if (need == BEST_FARM_BEAUTY) " + BEST FARM" else "", x + 10, y + 38, Gfx.GREY, outline = 0, shadow = false)
+        }
         val cw = (pw - 20) / 2
-        DECOR.values.forEachIndexed { i, d ->
+        all.drop(decorPage * 10).take(10).forEachIndexed { i, d ->
             val cx = x + 10 + (i % 2) * cw
-            val cy = y + 34 + (i / 2) * 40
+            val cy = y + 54 + (i / 2) * 40
             g.slice9("ui/slot", cx, cy, cx + 32, cy + 32, 4)
-            g.sprite("decor/${d.id}", (cx + 16).toFloat(), (cy + 28).toFloat())
+            g.sprite("decor/${d.id}", (cx + 16).toFloat(), (cy + if (d.flat) 18 else 28).toFloat())
             g.text(fit(d.name.uppercase(), cw - 40), cx + 36, cy + 2, Gfx.INK, outline = 0, shadow = false)
             g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
             g.text("${d.price}  +${d.beauty}", cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
             val why = world.decorBlocker(d.id)
-            val locked = world.level < d.unlockLevel
-            if (locked) g.text("LEVEL ${d.unlockLevel}", cx + 36, cy + 24, Gfx.GREY, outline = 0, shadow = false)
-            else if (ui.button("decor-$i", cx + cw - 48, cy + 21, 40, 13, "BUY", style = if (why == null) "green" else "grey")) {
-                if (why != null) hud.toast(why) else { onDecor?.invoke(d.id); return false }
+            when {
+                world.level < d.unlockLevel -> g.text("LEVEL ${d.unlockLevel}", cx + 36, cy + 24, Gfx.GREY, outline = 0, shadow = false)
+                d.season != null && world.time.season != d.season -> g.text("IN ${d.season.name}", cx + 36, cy + 24, Gfx.GREY, outline = 0, shadow = false)
+                ui.button("decor-${d.id}", cx + cw - 48, cy + 21, 40, 13, "BUY", style = if (why == null) "green" else "grey") ->
+                    if (why != null) hud.toast(why) else { onDecor?.invoke(d.id); return false }
             }
+        }
+        if (pages > 1) {
+            val by = y + ph - 20
+            if (ui.button("decor-prev", x + 10, by, 40, 14, "<", style = if (decorPage > 0) "wood" else "grey") && decorPage > 0) decorPage--
+            g.text("PAGE ${decorPage + 1}/$pages", x + pw / 2, by + 3, Gfx.INK, align = 0, outline = 0, shadow = false)
+            if (ui.button("decor-next", x + pw - 50, by, 40, 14, ">", style = if (decorPage < pages - 1) "wood" else "grey") && decorPage < pages - 1) decorPage++
         }
         return true
     }

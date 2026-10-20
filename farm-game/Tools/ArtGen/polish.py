@@ -313,11 +313,11 @@ def polish(im, kind, name=""):
 # Groups and the treatment they get; anything else (UI, icons, tiles, fx) is left alone.
 KIND = {
     "buildings": "world", "crops": "world", "deco": "world", "people": "world", "rocks": "world",
-    "trees": "world", "vehicles": "world", "items": "item", "items_big": "item",
+    "trees": "world", "vehicles": "world", "decor": "world", "pets": "world", "items": "item", "items_big": "item",
     "icons": "ui", "icons_big": "ui", "portraits": "ui", "ui": "chrome",
 }
 # The story busts (*_bust) are cut out and already final; they are not polished.
-SKIP = ("_lit", "rocks/crack_", "rocks/ladder_hole", "deco/fence", "trees/branch_pile", "_bust")
+SKIP = ("_lit", "rocks/crack_", "rocks/ladder_hole", "deco/fence", "trees/branch_pile", "_bust", "decor/path_")
 
 
 def kind_of(name):

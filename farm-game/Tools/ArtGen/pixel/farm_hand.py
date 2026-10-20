@@ -1610,6 +1610,191 @@ DECOR_ART = [("flowers_red", lambda: decor_flowers("pink", "red", "red_d")),
              ("topiary", decor_topiary), ("pond", decor_pond), ("arch", decor_arch), ("sheaf", decor_sheaf)]
 
 
+def decor_picket():
+    """A run of cream pickets with pointed tops on two tan rails, between red end posts."""
+    c = Iso(32, 26, 16, 16)
+    for z in (2, 5):                                                        # rails
+        c.uline(-3.2, 3.2, 0, z, "tan")
+        c.uline(-3.2, 3.2, 0.3, z - 0.6, "tan_d")
+    for k in range(5):                                                      # pickets, a gap between each
+        x, y = c.p(-2.6 + k * 1.5, 0, 0)
+        for j in range(8):
+            c.dot(x, y - j, "white"); c.dot(x + 1, y - j, "cream")
+        c.dot(x, y - 8, "cream")
+    for u in (-3.4, 3.2):                                                   # red end posts with cream caps
+        x, y = c.p(u, 0, 0)
+        for j in range(9):
+            c.dot(x, y - j, "red"); c.dot(x + 1, y - j, "red_d")
+        c.dot(x, y - 9, "cream"); c.dot(x + 1, y - 9, "cream")
+    return c, c.pivot(0, 0)
+
+
+def decor_path(stone):
+    """Flat path stones (grey flags) or bricks (red, herringbone) across a tile; drawn flat."""
+    c = Iso(36, 20, 18, 10)
+    if stone:
+        for (u, v, s) in ((-2.6, -2.4, 2.0), (0.2, -2.8, 2.2), (2.4, -1.2, 1.8), (-2.8, 0.3, 2.2), (0.0, 0.0, 2.0),
+                          (2.6, 1.6, 2.0), (-1.4, 2.4, 1.9), (1.0, 2.6, 1.6)):
+            c.poly([(u - s / 2, v - s / 2, 0), (u + s / 2, v - s / 2, 0), (u + s / 2, v + s / 2, 0), (u - s / 2, v + s / 2, 0)], "grey")
+            c.uline(u - s / 2, u + s / 2, v + s / 2, 0, "grey_d")
+            x, y = c.p(u - s / 4, v - s / 4, 0)
+            c.dot(x, y, "grey_l")
+    else:
+        for k in range(-4, 4):
+            for j in range(-3, 4):
+                u0, v0 = k + (0.5 if j % 2 else 0), j
+                col = "red" if (k + j) % 3 else "rust"
+                c.poly([(u0, v0 - 0.45, 0), (u0 + 0.9, v0 - 0.45, 0), (u0 + 0.9, v0 + 0.45, 0), (u0, v0 + 0.45, 0)], col)
+                c.uline(u0, u0 + 1, v0 + 0.45, 0, "tan_d")                   # mortar
+        # Trim to the tile's diamond.
+        px = c.im.load()
+        for y in range(c.h):
+            for x in range(c.w):
+                if abs(x - 18) / 16 + abs(y - 10) / 8 > 1:
+                    px[x, y] = (0, 0, 0, 0)
+    return c, c.pivot(0, 0)
+
+
+def decor_haystack():
+    """A round golden hay stack with a few loose straws."""
+    import math
+    c = Iso(28, 26, 14, 21)
+    cx, cy = 14, 21
+    for z in range(0, 12):
+        r = round(9 * (1 - (z / 12.5) ** 2) ** 0.5)
+        for x in range(cx - r, cx + r + 1):
+            dx = (x - cx) / max(1, r)
+            c.dot(x, cy - z, "yellow" if dx < -0.3 else "amber" if dx < 0.5 else "orange")
+    for a in range(0, 360, 50):
+        x = round(cx + 7 * math.cos(math.radians(a)))
+        c.dot(x, cy - 5 - (a % 3), "brown_l")
+    c.dot(cx - 2, cy - 12, "yellow"); c.dot(cx + 1, cy - 13, "amber")
+    return c, (cx, cy)
+
+
+def decor_sunflowers():
+    """Three tall sunflowers with yellow petals and brown faces."""
+    c = Iso(28, 36, 14, 32)
+    for k, (dx, h) in enumerate(((-6, 22), (1, 27), (7, 19))):
+        x, y = 14 + dx, 32
+        for j in range(h):
+            c.dot(x, y - j, "green_d" if j % 4 else "green")
+        c.dot(x - 1, y - h // 2, "green"); c.dot(x - 2, y - h // 2 + 1, "green"); c.dot(x + 1, y - h // 3, "green")
+        top = y - h
+        for ddx, ddy in ((-2, 0), (2, 0), (0, -2), (0, 2), (-1, -1), (1, -1), (-1, 1), (1, 1), (-2, -1), (2, 1)):
+            c.dot(x + ddx, top + ddy, "yellow")
+        c.dot(x, top, "brown"); c.dot(x - 1, top, "brown_d"); c.dot(x, top - 1, "brown_l")
+    return c, (14, 32)
+
+
+def decor_blossom():
+    """A little blossom tree: brown trunk, a round pink canopy with white petals."""
+    import math
+    c = Iso(30, 40, 15, 36)
+    cx, cy = 15, 36
+    for j in range(14):
+        c.dot(cx, cy - j, "brown"); c.dot(cx + 1, cy - j, "brown_d")
+    c.dot(cx - 1, cy - 9, "brown"); c.dot(cx - 2, cy - 10, "brown")
+    for k, (ox, oy, r) in enumerate(((0, -24, 9), (-6, -19, 6), (6, -19, 6), (0, -17, 6))):
+        c.ellipse(cx + ox, cy + oy, r, r * 0.8, "pink" if k else "pink")
+    for a in range(0, 360, 37):
+        x = round(cx + 7 * math.cos(math.radians(a)))
+        y = round(cy - 22 + 6 * math.sin(math.radians(a)))
+        c.dot(x, y, "white")
+    c.ellipse(cx + 4, cy - 18, 4, 3, "magenta")
+    c.dot(cx - 3, cy - 27, "white"); c.dot(cx - 4, cy - 26, "white")
+    return c, (cx, cy)
+
+
+def decor_pumpkins():
+    """A pile of three pumpkins; the front one is a smiling jack-o'-lantern."""
+    c = Iso(30, 24, 15, 20)
+
+    def pumpkin(x, y, r, face=False):
+        for j in range(-r, r + 1):
+            half = round(r * 1.25 * max(0.0, 1 - (j / (r + 0.5)) ** 2) ** 0.5)
+            for i in range(-half, half + 1):
+                c.dot(x + i, y + j, "amber" if i < -half // 3 else "orange" if i < half // 2 else "rust")
+        c.dot(x, y - r - 1, "green_d"); c.dot(x + 1, y - r - 2, "green_d")
+        for i in (-half // 2, half // 2):
+            for j in range(-r + 1, r):
+                c.dot(x + i, y + j, "rust")
+        if face:
+            c.dot(x - 2, y - 1, "yellow"); c.dot(x + 2, y - 1, "yellow")
+            for i in range(-2, 3):
+                c.dot(x + i, y + 2, "yellow")
+    pumpkin(9, 15, 4)
+    pumpkin(20, 14, 4)
+    pumpkin(15, 18, 5, face=True)
+    return c, (15, 21)
+
+
+def decor_snowman():
+    """A three-ball snowman: coal eyes and buttons, a carrot nose, a red scarf, stick arms."""
+    c = Iso(26, 34, 13, 31)
+    for y0, r in ((26, 6), (17, 5), (9, 4)):
+        c.ellipse(13, y0, r, r, "white", outline="grey_l")
+        c.ellipse(15, y0 + 1, r - 2, r - 2, "white")
+    c.dot(11, 8, "ink"); c.dot(14, 8, "ink")
+    c.dot(13, 10, "orange"); c.dot(14, 10, "orange"); c.dot(15, 11, "orange")
+    for y in (15, 18, 21):
+        c.dot(13, y, "ink")
+    for i in range(-4, 5):
+        c.dot(13 + i, 13, "red")
+    c.dot(16, 14, "red"); c.dot(16, 15, "red_d")
+    for k in range(4):
+        c.dot(7 - k, 16 - k, "brown"); c.dot(19 + k, 16 - k, "brown")
+    c.ellipse(13, 5, 4, 1, "ink"); c.ellipse(13, 3, 2, 2, "ink")
+    return c, (13, 31)
+
+
+def decor_vane():
+    """A rooster weathervane on a red post: the cockerel in iron, N and S arms below it."""
+    c = Iso(24, 40, 12, 37)
+    c.box(-0.8, 0.8, -0.8, 0.8, 0, 1.0, "grey_l", "grey", "grey_d")
+    c.box(-0.3, 0.3, -0.3, 0.3, 1.0, 20, "red", "red", "red_d")
+    x, y = c.p(0, 0, 20)
+    for i in range(-6, 7):
+        c.dot(x + i, y, "grey_d")
+    c.dot(x - 7, y, "grey_d"); c.dot(x + 7, y - 1, "grey_d"); c.dot(x + 7, y + 1, "grey_d")
+    rooster = [
+        "....kk..",
+        "...kkkr.",
+        "..kkkk..",
+        "kkkkkk..",
+        ".kkkkk..",
+        "..k..k..",
+    ]
+    _map(c, x - 4, y - 9, rooster, {"k": "slate_d", "r": "red"})
+    c.dot(x, y - 2, "grey_d"); c.dot(x, y - 1, "grey_d")
+    return c, c.pivot(0, 0)
+
+
+def decor_fountain():
+    """A round stone fountain: a wide basin of water, a column and a spray falling back."""
+    c = Iso(44, 40, 22, 32)
+    cx, cy = 22, 32
+    c.ellipse(cx, cy - 2, 18, 8, "grey_d")
+    c.ellipse(cx, cy - 4, 18, 8, "grey_l")
+    c.ellipse(cx, cy - 4, 15, 6, "blue")
+    c.ellipse(cx + 2, cy - 3, 11, 4, "blue_d")
+    for j in range(14):
+        c.dot(cx - 1, cy - 6 - j, "grey_l"); c.dot(cx, cy - 6 - j, "grey"); c.dot(cx + 1, cy - 6 - j, "grey_d")
+    c.ellipse(cx, cy - 20, 5, 2, "grey_l")
+    for i, (dx, dy) in enumerate(((-4, -24), (-6, -21), (-7, -17), (4, -24), (6, -21), (7, -17), (0, -26), (-2, -25), (2, -25))):
+        c.dot(cx + dx, cy + dy, "cyan" if i % 2 else "white")
+    for dx in (-8, -6, 6, 8):
+        c.dot(cx + dx, cy - 9, "white")
+    c.dot(cx - 9, cy - 6, "cyan"); c.dot(cx + 9, cy - 6, "cyan")
+    return c, (cx, cy)
+
+
+DECOR_ART += [("picket", decor_picket), ("path_stone", lambda: decor_path(True)), ("path_brick", lambda: decor_path(False)),
+              ("haystack", decor_haystack), ("sunflowers", decor_sunflowers), ("blossom", decor_blossom),
+              ("pumpkins", decor_pumpkins), ("snowman", decor_snowman), ("vane", decor_vane), ("fountain", decor_fountain)]
+FLAT_DECOR = {"path_stone", "path_brick"}
+
+
 def preview_decor(out):
     from PIL import Image
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
@@ -1617,14 +1802,14 @@ def preview_decor(out):
     art = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "app", "src", "main", "assets", "art")
     hand = Image.open(os.path.join(art, "people/hana_se_idle.png")).convert("RGBA")
     cw = 40
-    sheet = Image.new("RGBA", (cw * (len(DECOR_ART) + 1), 56), (62, 137, 72, 255))
+    sheet = Image.new("RGBA", (cw * (len(DECOR_ART) + 1), 64), (62, 137, 72, 255))
     sheet.alpha_composite(hand, (8, 52 - hand.height))
     for i, (name, fn) in enumerate(DECOR_ART):
         cnv, (px_, py_) = fn()
         x0, y0, x1, y1 = cnv.im.getbbox()
         body, pad = finish(cnv.im.crop((x0, y0, x1, y1)))
         body = polish.polish(body, "world", "decor/" + name)
-        ax, ay = (i + 1) * cw + 20, 48
+        ax, ay = (i + 1) * cw + 20, 56
         sheet.alpha_composite(body, (ax - (px_ - x0 + pad), ay - (py_ - y0 + pad)))
     sheet.resize((sheet.width * 4, sheet.height * 4), Image.NEAREST).save(out)
 
@@ -1748,7 +1933,12 @@ def main():
     emit_overlay(bld, "cottage_c_lit", bunkhouse(True), "cottage_c")
     dec = Sprites(art, "decor")
     for name, fn in DECOR_ART:
-        emit(dec, name, fn())
+        if name in FLAT_DECOR:
+            cnv, (px, py) = fn()                                            # paths: no outline or shadow
+            x0, y0, x1, y1 = cnv.im.getbbox()
+            dec.save(name, cnv.im.crop((x0, y0, x1, y1)), px - x0, py - y0)
+        else:
+            emit(dec, name, fn())
     crops = Sprites(art, "crops")
     for name, fn in GIANTS:
         emit(crops, name, fn())

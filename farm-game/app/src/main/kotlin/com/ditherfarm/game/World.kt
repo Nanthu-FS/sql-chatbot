@@ -46,6 +46,7 @@ sealed class WorldEvent {
     data class GiantGrew(val anchor: Int, val crop: String) : WorldEvent()
     data class GiantHarvested(val anchor: Int, val crop: String, val qty: Int, val xp: Int) : WorldEvent()
     data class DecorRemoved(val c: Int, val r: Int, val id: String) : WorldEvent()
+    data class BeautyMilestone(val beauty: Int, val coins: Int) : WorldEvent()
     data class Mined(val cell: Int, val quarry: Boolean, val node: String, val crit: Boolean, val hpLeft: Int) : WorldEvent()
     data class RockBroken(val cell: Int, val quarry: Boolean, val node: String, val drops: Map<String, Int>, val xp: Int) : WorldEvent()
     data class HollowKnock(val cell: Int, val onLadder: Boolean) : WorldEvent()

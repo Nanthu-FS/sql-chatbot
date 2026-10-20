@@ -383,6 +383,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             is WorldEvent.ContractNew -> hud.toast("A new truck contract is in. Tap the trophy")
             is WorldEvent.PetAdopted -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Say hello to ${e.name}! Tap them for today's gift") }
             is WorldEvent.PetGift -> { game.sfx.play("coin"); game.haptics.tick() }
+            is WorldEvent.BeautyMilestone -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast(if (e.beauty >= com.ditherfarm.game.BEST_FARM_BEAUTY) "Best Farm in the Valley! +${e.coins} coins" else "Beauty ${e.beauty}! +${e.coins} coins") }
             is WorldEvent.LoanApproved -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Loan approved: +${e.coins} coins!") }
             is WorldEvent.ContractDone -> { game.sfx.play("unlock"); game.haptics.heavy(); hud.toast("Truck contract complete! Claim it in Goals") }
             is WorldEvent.SkillLearned -> {

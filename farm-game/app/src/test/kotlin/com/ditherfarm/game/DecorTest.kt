@@ -4,6 +4,7 @@ import org.json.JSONObject
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -46,5 +47,27 @@ class DecorTest {
         w.placeDecor(7, 8, "gnome")
         val back = GameState.fromJson(JSONObject(w.state.toJson().toString()))
         assertEquals("gnome", back.decor[decorKey(7, 8)])
+    }
+
+    @Test fun seasonalPiecesSellOnlyInTheirSeason() {
+        val w = fresh()
+        assertEquals(Season.SPRING, w.time.season)
+        assertNull(w.decorBlocker("blossom"))
+        assertNotNull(w.decorBlocker("snowman"))
+    }
+
+    @Test fun milestonesPayOnceAndBestFarmAddsMore() {
+        val w = fresh()
+        assertFalse(w.claimBeautyMilestone())
+        w.placeDecor(1, 1, "sheaf")                 // 30 beauty: the 25 milestone
+        val coins = w.state.coins
+        assertTrue(w.claimBeautyMilestone())
+        assertEquals(coins + 500, w.state.coins)
+        assertFalse("paid once", w.claimBeautyMilestone())
+        w.placeDecor(2, 1, "sheaf"); w.placeDecor(3, 1, "sheaf"); w.placeDecor(4, 1, "fountain")  // 110
+        assertEquals(0.15, w.decorBonus(), 1e-9)
+        assertTrue(w.claimBeautyMilestone())        // 50
+        assertTrue(w.claimBeautyMilestone())        // 100
+        assertEquals(BEAUTY_MILESTONES.map { it.first }.toSet(), w.state.beautyClaimed)
     }
 }
