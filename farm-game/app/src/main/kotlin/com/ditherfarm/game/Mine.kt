@@ -94,6 +94,9 @@ class MineState {
     var rumble = -1
     var rumbleEnd = 0.0
     var braceTaps = 0
+    /** Deep-floor critters (Critters.kt), and the inventory when this trip down began. */
+    val critters = ArrayList<Critter>()
+    val tripStart = LinkedHashMap<String, Int>()
 
     fun toJson() = JSONObject().apply {
         put("repaired", repaired); put("quarryLevel", quarryLevel); put("floor", floor); put("deepestStop", deepestStop)
@@ -105,6 +108,8 @@ class MineState {
         put("opened", JSONArray(opened.toList()))
         put("markers", JSONArray(markers.toList()))
         put("gates", JSONArray(gatesOpened.toList()))
+        put("critters", JSONArray().apply { critters.forEach { put(it.toJson()) } })
+        put("trip", JSONObject(tripStart as Map<*, *>))
     }
 
     companion object {
@@ -121,6 +126,8 @@ class MineState {
             o.optJSONArray("opened")?.let { a -> (0 until a.length()).forEach { opened += a.getInt(it) } }
             o.optJSONArray("markers")?.let { a -> (0 until a.length()).forEach { markers += a.getInt(it) } }
             o.optJSONArray("gates")?.let { a -> (0 until a.length()).forEach { gatesOpened += a.getInt(it) } }
+            o.optJSONArray("critters")?.objects()?.forEach { c -> Critter.fromJson(c)?.let { critters += it } }
+            o.optJSONObject("trip")?.toIntMap()?.let { tripStart.putAll(it) }
         }
     }
 }
@@ -287,6 +294,8 @@ fun World.enterFloor(floor: Int): Boolean {
     if (!m.repaired) { events += WorldEvent.Blocked("Repair the mine first"); return false }
     if (floor > MINE_BOTTOM) return false
     gateBlocker(floor)?.let { events += WorldEvent.Blocked(it); return false }
+    // A trip down starts from the surface: what is found from here on can be lost to a knock-out.
+    if (m.floor == 0) { m.tripStart.clear(); m.tripStart.putAll(state.inventory) }
     m.floor = floor
     m.visits++
     generateFloor(floor)
@@ -351,6 +360,7 @@ private fun World.generateFloor(floor: Int) {
     if (floor >= 8 && rng.chance(0.25)) {
         repeat(1 + rng.nextInt(2)) { if (empties.isNotEmpty()) m.markers += empties.removeAt(rng.nextInt(empties.size)) }
     }
+    spawnCritters(floor, rng)
 }
 
 /** The cell the ladder or elevator drops the player onto. */

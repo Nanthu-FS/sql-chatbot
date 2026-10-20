@@ -7,6 +7,11 @@ import com.ditherfarm.engine.Iso
 import com.ditherfarm.engine.Lighting
 import com.ditherfarm.engine.Noise
 import com.ditherfarm.engine.Terrain
+import com.ditherfarm.game.hitCritter
+import com.ditherfarm.game.tickCritters
+import com.ditherfarm.game.CRITTER_FLOOR
+import com.ditherfarm.game.CritterKind
+import com.ditherfarm.game.Critter
 import com.ditherfarm.game.MineLayout
 import com.ditherfarm.game.BRACE_TAPS
 import com.ditherfarm.game.Season
@@ -190,6 +195,9 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         super.update(dt)
         chrome.update(dt)
         if (layoutFloor != m.floor) relayout()
+        // Critters only act while the floor is in play (not behind a panel, never offline).
+        if (under && !chrome.isOpen) world.tickCritters(min(dt, 0.1f).toDouble())
+        stepCritters(dt)
         val it = shake.entries.iterator()
         while (it.hasNext()) { val e = it.next(); e.setValue(e.value - dt); if (e.value <= 0) it.remove() }
         if (under && m.rumble >= 0) fx.shake(1.2f)
@@ -394,6 +402,54 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             val (lx, ly) = center(m.ladder)
             list.add(ly + 0.2f) { g.sprite("icons/arrow_down", lx, ly - 16 + sin(time * 4f) * 2f) }
         }
+        collectCritters(list)
+    }
+
+    // --- critters (round 6) ------------------------------------------------------
+    /** Where each critter is drawn: it slides from cell to cell rather than jumping. */
+    private val critterPos = java.util.IdentityHashMap<Critter, FloatArray>()
+
+    private fun stepCritters(dt: Float) {
+        if (!under) { critterPos.clear(); return }
+        critterPos.keys.retainAll(m.critters.toSet())
+        for (c in m.critters) {
+            val (tx, ty) = center(c.cell)
+            val p = critterPos.getOrPut(c) { floatArrayOf(tx, ty, 0f) }
+            val dx = tx - p[0]; val dy = ty - p[1]
+            val d = kotlin.math.hypot(dx, dy)
+            val step = (if (c.kind == CritterKind.BAT) 60f else 26f) * dt
+            if (d > step) { p[0] += dx / d * step; p[1] += dy / d * step } else { p[0] = tx; p[1] = ty }
+            if (abs(dx) > 0.5f) p[2] = if (dx < 0) 1f else 0f
+        }
+    }
+
+    private fun collectCritters(list: DrawList) {
+        val g = game.gfx
+        for (c in m.critters) {
+            val p = critterPos[c] ?: continue
+            val x = p[0]; val y = p[1]
+            if (!inView(x, y)) continue
+            val lit = world.lit(c.cell)
+            val frame = ((time * if (c.kind == CritterKind.BAT) 8f else 3f).toInt() and 1)
+            val hover = if (c.kind == CritterKind.BAT) -8f + sin(time * 5f + c.cell) * 2f else 0f
+            list.add(y + 0.3f) {
+                g.sprite("critters/${c.kind.id}_$frame", x, y + hover, if (lit) 255 else 110, flipX = p[2] > 0f)
+                if (c.hp < c.kind.hp) drawHpBar(g, x, y + hover - 12f, c.hp, c.kind.hp)
+            }
+        }
+    }
+
+    /** A tap within reach of a critter fights it before anything else on the floor. */
+    override fun onWorldTap(wx: Float, wy: Float): Boolean {
+        if (!under) return false
+        val hit = m.critters.indices.minByOrNull { i ->
+            val p = critterPos[m.critters[i]] ?: return@minByOrNull Float.MAX_VALUE
+            kotlin.math.hypot(wx - p[0], (wy - (p[1] - 5f)) * 1.4f)
+        } ?: return false
+        val p = critterPos[m.critters[hit]] ?: return false
+        if (kotlin.math.hypot(wx - p[0], (wy - (p[1] - 5f)) * 1.4f) > 13f) return false
+        world.hitCritter(hit)
+        return true
     }
 
     /** A cracked ceiling beam; flashes with a tap counter while it rumbles. */
@@ -586,7 +642,30 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
                 game.sfx.play("unlock"); game.haptics.heavy()
                 hud.toast("Ladder found! Tap it to go down")
             }
-            is WorldEvent.FloorEntered -> relayout()
+            is WorldEvent.FloorEntered -> {
+                relayout()
+                if (e.floor >= CRITTER_FLOOR) hud.tip("critters", "Critters live down here. Tap one to fight it before it bites: bites cost energy, and at zero you are carried up and lose half of this trip's finds.")
+            }
+            is WorldEvent.CritterBit -> {
+                game.sfx.play("error"); game.haptics.heavy(); fx.shake(2f)
+                m.critters.getOrNull(e.index)?.let { c -> critterPos[c]?.let { p -> fx.floatText("-${e.energy}", p[0], p[1] - 20, Gfx.RED, icon = "icons/energy") } }
+                if (world.state.energy < 15) hud.toast("Low energy! Head up before you are knocked out")
+            }
+            is WorldEvent.CritterHit -> {
+                game.sfx.play("mine"); game.haptics.tick()
+                m.critters.getOrNull(e.index)?.let { c -> critterPos[c]?.let { p -> fx.burst("fx/sparkle", p[0], p[1] - 8, 3, speed = 30f, gravity = 0f, life = 0.3f); if (e.crit) fx.floatText("CRIT!", p[0], p[1] - 24, Gfx.GOLD) } }
+            }
+            is WorldEvent.CritterDefeated -> {
+                game.sfx.play("coin"); game.haptics.heavy()
+                val (x, y) = center(e.cell)
+                fx.burst("fx/dust", x, y - 4, 8, speed = 40f, gravity = 20f)
+                e.loot.entries.firstOrNull()?.let { (k, n) -> fx.floatText("+$n", x, y - 22, Gfx.WHITE, icon = if (k == "coins") "icons/coin" else "items/$k") }
+            }
+            is WorldEvent.KnockedOut -> {
+                game.sfx.play("thunder"); game.haptics.heavy(); fx.shake(4f)
+                val lost = if (e.lost.isEmpty()) "" else " Lost " + e.lost.entries.take(3).joinToString(", ") { (k, n) -> "$n ${world.data.name(com.ditherfarm.game.baseId(k)).lowercase()}" } + if (e.lost.size > 3) "..." else ""
+                hud.toast("Knocked out! You woke up at ${if (e.to == 0) "the surface" else "B${e.to}"}.$lost")
+            }
             is WorldEvent.StopUnlocked -> { game.sfx.play("unlock"); hud.toast("Elevator stop B${e.floor} unlocked!") }
             is WorldEvent.GateOpened -> { game.sfx.play("gem"); hud.toast("Gate chest: ${costText(e.chest)}") }
             is WorldEvent.GeodeCracked -> {

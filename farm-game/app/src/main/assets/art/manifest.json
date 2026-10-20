@@ -395,6 +395,36 @@
   "ay": 18,
   "bh": 26
  },
+ "critters/bat_0": {
+  "ax": 7,
+  "ay": 7,
+  "bh": 10
+ },
+ "critters/bat_1": {
+  "ax": 7,
+  "ay": 7,
+  "bh": 10
+ },
+ "critters/beetle_0": {
+  "ax": 8,
+  "ay": 7,
+  "bh": 10
+ },
+ "critters/beetle_1": {
+  "ax": 8,
+  "ay": 7,
+  "bh": 10
+ },
+ "critters/slime_0": {
+  "ax": 7,
+  "ay": 8,
+  "bh": 11
+ },
+ "critters/slime_1": {
+  "ax": 7,
+  "ay": 8,
+  "bh": 11
+ },
  "crops/cabbage_0": {
   "ax": 7,
   "ay": 4,

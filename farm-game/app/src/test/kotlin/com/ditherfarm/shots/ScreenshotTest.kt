@@ -264,6 +264,25 @@ class ScreenshotTest {
         })
     }
 
+    @Test fun deepBands() {
+        for (floor in listOf(45, 55, 65, 75)) render("mine_deep_$floor", seconds = 1f, setup = { g ->
+            toLevel(g, 30)
+            g.world.state.tools["pickaxe"] = 4
+            g.world.mine.gatesOpened += listOf(10, 20, 30, 40, 50, 60, 70)
+            g.world.state.coins += 200; g.world.add("wood", 30); g.world.add("torch", 9); g.world.add("lantern", 1)
+            g.world.repairMine(); g.world.enterFloor(floor)
+            g.goTo(Nav.MINE)
+            g.engine.screen?.enter()
+            val m = g.world.mine
+            val n = m.grid
+            // Light the middle and bring the critters near so they show.
+            listOf(n * (n / 2) + n / 2, 2 * n + 2, (n - 3) * n + 3, 3 * n + n - 3).forEach { c -> if (m.cells[c].node == null) g.world.placeTorch(c) }
+            val free = m.cells.indices.filter { m.cells[it].node == null && it % n in 2 until n - 2 && it / n in 3 until n - 2 }
+            m.critters.forEachIndexed { k, c -> free.getOrNull(k * 3)?.let { c.cell = it } }
+            if (m.critters.isNotEmpty()) m.critters[0].hp = 1
+        }, zoom = 2)
+    }
+
     @Test fun mineCliffs() {
         for ((name, at) in listOf("back" to (9 to 11), "left" to (8 to 19))) render("mine_cliffs_$name", seconds = 0.5f, setup = { g ->
             toLevel(g, 8)
