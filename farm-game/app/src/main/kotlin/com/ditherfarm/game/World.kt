@@ -552,7 +552,9 @@ class World(val data: GameData, val state: GameState) {
         val care = if (p.cared) 1 else 0
         val l = state.level
         val luck = if (lucky) 0.10 else 0.0
-        val gold = min(0.50, 0.01 + 0.004 * l + 0.02 * care + p.fertGold + skill("star_grower") + luck)
+        // The Crystal hoe (round 6) turns up a little more gold.
+        val hoe = if (toolTier(Tool.HOE) >= 4) 0.05 else 0.0
+        val gold = min(0.50, 0.01 + 0.004 * l + 0.02 * care + p.fertGold + skill("star_grower") + luck + hoe)
         val silver = min(0.90 - gold, 0.10 + 0.008 * l + 0.06 * care + p.fertSilver + 1.5 * skill("star_grower"))
         val r = rng().nextDouble()
         return when { r < gold -> Quality.GOLD; r < gold + silver -> Quality.SILVER; else -> Quality.NORMAL }

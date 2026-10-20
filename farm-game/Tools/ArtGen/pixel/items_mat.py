@@ -505,6 +505,24 @@ def it_gold_bar(c):
     return c
 
 
+CRYSTAL_NUG = ["teal_dd", "blue_d", "blue", "cyan", "white"]
+CRYSTAL_BAR = ["teal_dd", "blue_d", "blue", "cyan", "white"]
+
+
+def it_crystalite_ore(c):
+    fill(c, ROCK, DARK_STONE, ball(6.4, 6.4, 6.0, 5.4, N=4, bias=0.25), sep="slate_d")
+    for u, v, r in ((5.0, 6.0, 1.9), (9.4, 8.2, 1.7), (7.2, 10.0, 1.2)):
+        nugget(c, u, v, r, CRYSTAL_NUG, "teal_dd")
+    return c
+
+
+def it_crystal_bar(c):
+    bars(c, CRYSTAL_BAR, 3.6, (2.8, 1.8), 1.0)
+    dot(c, 5.5, 4.5, "white")
+    dot(c, 6.5, 10.5, "white")
+    return c
+
+
 def it_brick(c):
     top = poly([(1, 5), (3, 2.6), (11, 2.6), (9, 5)])
     front = rect(1, 5, 9, 12)
@@ -942,7 +960,7 @@ ITEMS = {
     "nails": it_nails, "gear": it_gear, "stone": it_stone, "coal": it_coal,
     "copper_ore": it_copper_ore, "iron_ore": it_iron_ore, "gold_ore": it_gold_ore,
     "quartz": it_quartz, "clay": it_clay, "copper_bar": it_copper_bar, "iron_bar": it_iron_bar,
-    "gold_bar": it_gold_bar, "brick": it_brick, "glass": it_glass, "torch": it_torch,
+    "gold_bar": it_gold_bar, "crystalite_ore": it_crystalite_ore, "crystal_bar": it_crystal_bar, "brick": it_brick, "glass": it_glass, "torch": it_torch,
     "lantern": it_lantern, "support_beam": it_support_beam, "rope_ladder": it_rope_ladder,
     "geode": it_geode, "ember_geode": it_ember_geode, "crystal_geode": it_crystal_geode,
     "amethyst": it_amethyst, "emerald": it_emerald, "ruby": it_ruby, "diamond": it_diamond,

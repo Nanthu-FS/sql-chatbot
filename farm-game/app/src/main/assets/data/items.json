@@ -618,6 +618,20 @@
    "storage": "barn"
   },
   {
+   "id": "crystalite_ore",
+   "name": "Crystalite Ore",
+   "category": "mine",
+   "price": 40,
+   "storage": "barn"
+  },
+  {
+   "id": "crystal_bar",
+   "name": "Crystal Bar",
+   "category": "material",
+   "price": 220,
+   "storage": "barn"
+  },
+  {
    "id": "geode",
    "name": "Geode",
    "category": "mine",

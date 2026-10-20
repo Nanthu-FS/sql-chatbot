@@ -301,7 +301,8 @@
     "brick",
     "iron_bar",
     "glass",
-    "gold_bar"
+    "gold_bar",
+    "crystal_bar"
    ],
    "queue": 3,
    "prebuilt": false,
@@ -428,7 +429,10 @@
     "tool_sickle_2",
     "tool_sickle_3",
     "tool_can_2",
-    "tool_can_3"
+    "tool_can_3",
+    "tool_pickaxe_4",
+    "tool_axe_4",
+    "tool_hoe_4"
    ]
   }
  ]

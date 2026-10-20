@@ -751,7 +751,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val stops = world.elevatorStops()
         val perRow = 5
         val rows = (stops.size + perRow - 1) / perRow
-        val next = (stops.last() + 5).takeIf { it <= 40 }
+        val next = (stops.last() + 5).takeIf { it <= com.ditherfarm.game.MINE_BOTTOM }
         val (x, y, pw, ph) = frame("ELEVATOR", 62 + rows * 22, pw = 220).toList()
         if (closeButton(x, y, pw)) return false
         val bw = (pw - 20 - (perRow - 1) * 4) / perRow

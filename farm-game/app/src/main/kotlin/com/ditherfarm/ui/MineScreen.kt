@@ -614,30 +614,50 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         /** Sandstone quarry cliffs. */
         val QUARRY_ROCK = ramp(0xFF181425, 0xFF3E2731, 0xFF733E39, 0xFFB86F50, 0xFFC28569, 0xFFE4A672)
 
-        /** Per mine band (floors 1-10, 11-20, 21-30, 31-40): wall faces, floor, the cave beyond and glints. */
+        /**
+         * Per mine band (floors 1-10, 11-20, 21-30, 31-40, then the deep mine: crystal caverns,
+         * amethyst depths, emerald grotto and the Golem's obsidian hall): wall faces, floor, the cave
+         * beyond and glints.
+         */
         val BAND_ROCK = listOf(
             ramp(0xFF181425, 0xFF3E2731, 0xFF733E39, 0xFFB86F50, 0xFFC28569, 0xFFE4A672),
             ramp(0xFF181425, 0xFF262B44, 0xFF3A4466, 0xFF5A6988, 0xFF8B9BB4, 0xFFC0CBDC),
             ramp(0xFF181425, 0xFF262B44, 0xFF124E89, 0xFF3A4466, 0xFF5A6988, 0xFF8B9BB4),
             ramp(0xFF181425, 0xFF3E2731, 0xFF68386C, 0xFFA22633, 0xFFBE4A2F, 0xFFD77643),
+            ramp(0xFF181425, 0xFF193C3E, 0xFF262B44, 0xFF3A4466, 0xFF124E89, 0xFF0099DB),
+            ramp(0xFF181425, 0xFF262B44, 0xFF3E2731, 0xFF68386C, 0xFFB55088, 0xFFF6757A),
+            ramp(0xFF181425, 0xFF193C3E, 0xFF265C42, 0xFF3E8948, 0xFF5A6988, 0xFF8B9BB4),
+            ramp(0xFF181425, 0xFF181425, 0xFF262B44, 0xFF3A4466, 0xFF5A6988, 0xFF8B9BB4),
         )
         val BAND_FLOOR = listOf(
             ramp(0xFF3E2731, 0xFF733E39, 0xFF733E39, 0xFFB86F50),
             ramp(0xFF3A4466, 0xFF5A6988, 0xFF8B9BB4, 0xFFC0CBDC),
             ramp(0xFF262B44, 0xFF3A4466, 0xFF124E89, 0xFF5A6988),
             ramp(0xFF181425, 0xFF3E2731, 0xFF68386C, 0xFF733E39),
+            ramp(0xFF193C3E, 0xFF262B44, 0xFF3A4466, 0xFF124E89),
+            ramp(0xFF262B44, 0xFF3E2731, 0xFF68386C, 0xFF5A6988),
+            ramp(0xFF193C3E, 0xFF265C42, 0xFF3A4466, 0xFF3E8948),
+            ramp(0xFF181425, 0xFF262B44, 0xFF3A4466, 0xFF262B44),
         )
         val BAND_CAVE = listOf(
             ramp(0xFF181425, 0xFF3E2731, 0xFF3E2731, 0xFF733E39),
             ramp(0xFF181425, 0xFF262B44, 0xFF3A4466, 0xFF5A6988),
             ramp(0xFF181425, 0xFF262B44, 0xFF262B44, 0xFF124E89),
             ramp(0xFF181425, 0xFF181425, 0xFF3E2731, 0xFF68386C),
+            ramp(0xFF181425, 0xFF193C3E, 0xFF193C3E, 0xFF262B44),
+            ramp(0xFF181425, 0xFF181425, 0xFF262B44, 0xFF68386C),
+            ramp(0xFF181425, 0xFF193C3E, 0xFF193C3E, 0xFF265C42),
+            ramp(0xFF181425, 0xFF181425, 0xFF181425, 0xFF262B44),
         )
         val BAND_ACCENTS = listOf(
             ramp(0xFFF77622, 0xFFE4A672, 0xFFB86F50),
             ramp(0xFFFEAE34, 0xFFC0CBDC, 0xFFFFFFFF),
             ramp(0xFF2CE8F5, 0xFF0099DB, 0xFFFFFFFF),
             ramp(0xFFF77622, 0xFFFEAE34, 0xFFE43B44),
+            ramp(0xFF2CE8F5, 0xFFFFFFFF, 0xFFB55088),
+            ramp(0xFFB55088, 0xFFF6757A, 0xFFFFFFFF),
+            ramp(0xFF63C74D, 0xFFFEE761, 0xFF2CE8F5),
+            ramp(0xFFFEAE34, 0xFFFEE761, 0xFF2CE8F5),
         )
     }
 }

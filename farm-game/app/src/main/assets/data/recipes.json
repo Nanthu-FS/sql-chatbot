@@ -311,6 +311,54 @@
    "coins": 1500
   },
   {
+   "id": "tool_pickaxe_4",
+   "building": "blacksmith",
+   "inputs": {
+    "crystal_bar": 5,
+    "gold_bar": 3,
+    "diamond": 1
+   },
+   "outputs": {
+    "@tool:pickaxe": 4
+   },
+   "minutes": 60,
+   "unlock": 24,
+   "fuel": 0.0,
+   "coins": 4000
+  },
+  {
+   "id": "tool_axe_4",
+   "building": "blacksmith",
+   "inputs": {
+    "crystal_bar": 5,
+    "gold_bar": 3,
+    "diamond": 1
+   },
+   "outputs": {
+    "@tool:axe": 4
+   },
+   "minutes": 60,
+   "unlock": 24,
+   "fuel": 0.0,
+   "coins": 4000
+  },
+  {
+   "id": "tool_hoe_4",
+   "building": "blacksmith",
+   "inputs": {
+    "crystal_bar": 5,
+    "gold_bar": 3,
+    "diamond": 1
+   },
+   "outputs": {
+    "@tool:hoe": 4
+   },
+   "minutes": 60,
+   "unlock": 24,
+   "fuel": 0.0,
+   "coins": 4000
+  },
+  {
    "id": "tool_sickle_1",
    "building": "workbench",
    "inputs": {
@@ -1161,6 +1209,19 @@
    "minutes": 10,
    "unlock": 15,
    "fuel": 1.7
+  },
+  {
+   "id": "crystal_bar",
+   "building": "furnace",
+   "inputs": {
+    "crystalite_ore": 4
+   },
+   "outputs": {
+    "crystal_bar": 1
+   },
+   "minutes": 15,
+   "unlock": 22,
+   "fuel": 2.5
   },
   {
    "id": "wb_copper_sprinkler",

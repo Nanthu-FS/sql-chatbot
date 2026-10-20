@@ -578,6 +578,23 @@ def n_gem(name):
     return build
 
 
+CRYSTALITE = ["ink", "teal_dd", "blue_d", "cyan", "white"]
+
+
+def n_crystalite(v):
+    """Deep-mine crystalite (round 6): a dark slab split by a seam of glowing teal crystal."""
+    r = rand(v, 12)
+    pic = Pic(21, 17)
+    sil = body(pic, 0, 6, 21, 11, 131 + v, STONE_DK)
+    for cx, h, w, lean in ((5, 8, 2.0, -0.7), (9, 12, 2.6, -0.2), (13, 10, 2.4, 0.3), (17, 6, 1.8, 0.8)):
+        shard(pic, cx + r.uniform(-0.5, 0.5), 12, h + r.randint(-1, 1), w, CRYSTALITE, lean)
+    for _ in range(4):
+        x, y = r.randint(2, 18), r.randint(12, 15)
+        if (x, y) in sil:
+            pic.put(x, y, "cyan")
+    return pic
+
+
 def n_boulder(v):
     r = rand(v, 10)
     pic = Pic(26, 18)
@@ -593,6 +610,7 @@ def n_boulder(v):
 NODES = {
     "rock": n_stone, "coal_rock": n_coal, "copper_vein": n_copper, "iron_vein": n_iron, "gold_vein": n_gold,
     "clay_bank": n_clay, "quartz_cluster": n_quartz, "geode_rock": n_geode, "boulder": n_boulder,
+    "crystalite_vein": n_crystalite,
     **{f"gem_node_{g}": n_gem(g) for g in GEMS},
 }
 

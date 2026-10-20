@@ -278,11 +278,14 @@ fun World.gateBlocker(floor: Int): String? {
 fun World.elevatorStops(): List<Int> = listOf(0) + (5..state.mine.deepestStop step 5).toList()
 
 /** Rides the elevator or takes a ladder to [floor] (generates a fresh floor). */
+/** The deepest floor (round 6: 40 more floors, the Crystal Golem at the bottom). */
+const val MINE_BOTTOM = 80
+
 fun World.enterFloor(floor: Int): Boolean {
     val m = state.mine
     if (floor <= 0) { m.floor = 0; events += WorldEvent.FloorEntered(0); return true }
     if (!m.repaired) { events += WorldEvent.Blocked("Repair the mine first"); return false }
-    if (floor > 40) return false
+    if (floor > MINE_BOTTOM) return false
     gateBlocker(floor)?.let { events += WorldEvent.Blocked(it); return false }
     m.floor = floor
     m.visits++
@@ -336,14 +339,14 @@ private fun World.generateFloor(floor: Int) {
         if (empties.isNotEmpty()) m.cells[empties.removeAt(rng.nextInt(empties.size))].node = "glow_mushroom"
     }
     if (rng.chance(0.2) && empties.isNotEmpty()) m.cells[empties.removeAt(rng.nextInt(empties.size))].node = "crate"
-    // Ladder: a breakable rock at least 4 tiles from the entry (no ladder on floor 40).
+    // Ladder: a breakable rock at least 4 tiles from the entry (no ladder on the bottom floor).
     val ec = entry % n; val er = entry / n
     val candidates = m.cells.indices.filter { i ->
         val node = m.cells[i].node ?: return@filter false
         val def = data.mine.nodes[node] ?: return@filter false
         node != "glow_mushroom" && node != "crate" && def.minPick <= pickTier() && abs(i % n - ec) + abs(i / n - er) >= 4
     }
-    m.ladder = if (floor >= 40 || candidates.isEmpty()) -1 else candidates[rng.nextInt(candidates.size)]
+    m.ladder = if (floor >= MINE_BOTTOM || candidates.isEmpty()) -1 else candidates[rng.nextInt(candidates.size)]
     // Cave-in markers from floor 8: a quarter of floors get one or two cracked beams.
     if (floor >= 8 && rng.chance(0.25)) {
         repeat(1 + rng.nextInt(2)) { if (empties.isNotEmpty()) m.markers += empties.removeAt(rng.nextInt(empties.size)) }

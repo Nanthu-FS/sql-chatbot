@@ -1,5 +1,5 @@
 {
- "_doc": "Mine (GAME_DESIGN \u00a79). respawnMinutes are REAL minutes. minPick: 0 wood..3 gold.",
+ "_doc": "Mine (GAME_DESIGN §9). respawnMinutes are REAL minutes. minPick: 0 wood..3 gold.",
  "nodes": [
   {
    "id": "stone",
@@ -162,6 +162,21 @@
    },
    "xp": 25,
    "bonus": {}
+  },
+  {
+   "id": "crystalite_vein",
+   "hp": 16,
+   "minPick": 3,
+   "drops": {
+    "crystalite_ore": [
+     1,
+     2
+    ]
+   },
+   "xp": 14,
+   "bonus": {
+    "crystalite_ore": 0.15
+   }
   },
   {
    "id": "boulder",
@@ -349,12 +364,99 @@
     "diamond_node": 2,
     "geode_rock": 7
    }
+  },
+  {
+   "band": 5,
+   "floors": [
+    41,
+    50
+   ],
+   "grid": 12,
+   "density": 0.55,
+   "dark": 1.0,
+   "geode": "crystal_geode",
+   "weights": {
+    "stone": 30,
+    "coal_rock": 8,
+    "iron_vein": 10,
+    "gold_vein": 16,
+    "crystalite_vein": 10,
+    "emerald_node": 4,
+    "ruby_node": 4,
+    "diamond_node": 3,
+    "geode_rock": 7
+   }
+  },
+  {
+   "band": 6,
+   "floors": [
+    51,
+    60
+   ],
+   "grid": 12,
+   "density": 0.55,
+   "dark": 1.0,
+   "geode": "crystal_geode",
+   "weights": {
+    "stone": 28,
+    "coal_rock": 6,
+    "gold_vein": 16,
+    "crystalite_vein": 14,
+    "emerald_node": 5,
+    "ruby_node": 5,
+    "diamond_node": 4,
+    "geode_rock": 8,
+    "boulder": 4
+   }
+  },
+  {
+   "band": 7,
+   "floors": [
+    61,
+    70
+   ],
+   "grid": 13,
+   "density": 0.55,
+   "dark": 1.0,
+   "geode": "crystal_geode",
+   "weights": {
+    "stone": 25,
+    "coal_rock": 6,
+    "gold_vein": 14,
+    "crystalite_vein": 18,
+    "emerald_node": 5,
+    "ruby_node": 6,
+    "diamond_node": 5,
+    "geode_rock": 9
+   }
+  },
+  {
+   "band": 8,
+   "floors": [
+    71,
+    80
+   ],
+   "grid": 13,
+   "density": 0.55,
+   "dark": 1.0,
+   "geode": "crystal_geode",
+   "weights": {
+    "stone": 22,
+    "coal_rock": 5,
+    "gold_vein": 12,
+    "crystalite_vein": 22,
+    "emerald_node": 6,
+    "ruby_node": 6,
+    "diamond_node": 7,
+    "geode_rock": 10
+   }
   }
  ],
  "minFloor": {
   "iron_vein": 6,
   "gold_vein": 16,
-  "ruby_node": 25
+  "ruby_node": 25,
+  "crystalite_vein": 41
  },
  "gates": [
   {
@@ -392,6 +494,42 @@
    "pick": 0,
    "chest": {
     "coins": 5000
+   }
+  },
+  {
+   "floor": 50,
+   "level": 22,
+   "pick": 3,
+   "chest": {
+    "coins": 6000,
+    "crystal_geode": 4
+   }
+  },
+  {
+   "floor": 60,
+   "level": 24,
+   "pick": 3,
+   "chest": {
+    "coins": 8000,
+    "crystalite_ore": 10
+   }
+  },
+  {
+   "floor": 70,
+   "level": 26,
+   "pick": 4,
+   "chest": {
+    "coins": 10000,
+    "diamond": 2
+   }
+  },
+  {
+   "floor": 80,
+   "level": 28,
+   "pick": 4,
+   "chest": {
+    "coins": 12000,
+    "crystal_bar": 3
    }
   }
  ],

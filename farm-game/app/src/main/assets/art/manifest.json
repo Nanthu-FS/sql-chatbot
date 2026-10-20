@@ -2265,7 +2265,17 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/crystal_bar": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items_big/crystal_geode": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
+ "items_big/crystalite_ore": {
   "ax": 16,
   "ay": 16,
   "bh": 32
@@ -3035,7 +3045,17 @@
   "ay": 9,
   "bh": 18
  },
+ "items/crystal_bar": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
  "items/crystal_geode": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/crystalite_ore": {
   "ax": 9,
   "ay": 9,
   "bh": 18
@@ -4257,6 +4277,21 @@
   "ax": 13,
   "ay": 21,
   "bh": 24
+ },
+ "rocks/crystalite_vein": {
+  "ax": 12,
+  "ay": 18,
+  "bh": 21
+ },
+ "rocks/crystalite_vein_2": {
+  "ax": 12,
+  "ay": 18,
+  "bh": 21
+ },
+ "rocks/crystalite_vein_3": {
+  "ax": 12,
+  "ay": 18,
+  "bh": 21
  },
  "rocks/gem_node_amethyst": {
   "ax": 11,
