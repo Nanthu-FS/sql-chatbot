@@ -29,11 +29,13 @@ class Fishing(private val game: Game, private val toast: (String) -> Unit) {
     private var zoneAt = 0.5f
     private var c = 0
     private var r = 0
+    /** A moment after a catch or a miss when taps on the water don't cast again (playtest round 7: stray taps cost energy). */
+    private var rest = 0f
     private val world get() = game.world
 
     /** Casts at water tile (c, r); false (with a toast) if fishing is not possible now. */
     fun start(c: Int, r: Int): Boolean {
-        if (active) return false
+        if (active || rest > 0f) return false
         world.fishBlocker()?.let { toast(it); game.sfx.play("error"); return false }
         fish = world.cast() ?: return false
         this.c = c; this.r = r
@@ -43,11 +45,12 @@ class Fishing(private val game: Game, private val toast: (String) -> Unit) {
         return true
     }
 
-    fun cancel() { state = State.IDLE; fish = null }
+    fun cancel() { state = State.IDLE; fish = null; rest = REST }
 
     private fun lose(why: String) { toast(why); game.sfx.play("error"); cancel() }
 
     fun update(dt: Float) {
+        if (rest > 0f) rest -= dt
         if (!active) return
         t += dt
         when (state) {
@@ -142,5 +145,6 @@ class Fishing(private val game: Game, private val toast: (String) -> Unit) {
     companion object {
         /** Seconds to tap after the float dips. */
         const val BITE_WINDOW = 1.2f
+        const val REST = 0.8f
     }
 }

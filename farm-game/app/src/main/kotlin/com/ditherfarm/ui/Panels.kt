@@ -447,7 +447,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.sprite("icons/coin", (tx + 2).toFloat(), (cy + 42).toFloat())
             g.text("${o.coins}", tx + 10, cy + 38, Gfx.INK, outline = 0, shadow = false)
             g.sprite("icons/xp", (tx + 20 + g.textWidth("${o.coins}")).toFloat(), (cy + 42).toFloat())
-            g.text("${o.xp}", tx + 28 + g.textWidth("${o.coins}"), cy + 38, Gfx.INK, outline = 0, shadow = false)
+            g.text("${o.xp} XP", tx + 28 + g.textWidth("${o.coins}"), cy + 38, Gfx.INK, outline = 0, shadow = false)
             val can = world.canDeliver(i)
             if (ui.button("deliver-$i", x + pw - 76, cy + 30, 50, 16, "SEND", style = if (can) "green" else "grey")) {
                 if (world.deliver(i)) { game.sfx.play("sell"); game.haptics.heavy() } else game.sfx.play("error")
@@ -462,11 +462,13 @@ class Panels(private val game: Game, private val hud: Hud) {
 
     // -------------------------------------------------------------- settings
     fun settings(): Boolean {
-        val (x, y, pw, ph) = frame("SETTINGS", 274).toList()
+        val (x, y, pw, ph) = frame("MENU", 296).toList()
         if (closeButton(x, y, pw)) return false
+        // First, so it's found (a playtest only found it under the settings, round 7).
+        if (ui.button("decorate", x + 10, y + 24, pw - 20, 18, "DECORATE YOUR FARM", "icons/heart", "gold")) { onDecorShop?.invoke(); return true }
         val s = world.state
         fun row(i: Int, icon: String, label: String, on: Boolean): Boolean {
-            val ry = y + 28 + i * 20
+            val ry = y + 50 + i * 20
             g.sprite(icon, (x + 18).toFloat(), (ry + 6).toFloat())
             g.text(label, x + 30, ry + 2, Gfx.INK, outline = 0, shadow = false)
             return ui.toggle("t-$label", x + pw - 34, ry + 1, on)
@@ -476,7 +478,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         if (row(2, "icons/bell", "NOTIFICATIONS", s.notifications)) s.notifications = !s.notifications
         if (row(3, "icons/sound_on", "MUSIC", s.music)) { s.music = !s.music; game.applySettings() }
         if (row(4, "icons/weather_cloudy", "AMBIENCE", s.ambience)) { s.ambience = !s.ambience; game.applySettings() }
-        val by = y + 136
+        val by = y + 158
         if (ui.button("export", x + 10, by, (pw - 26) / 2, 18, "EXPORT", "icons/export", "blue")) game.host.requestExport()
         if (ui.button("import", x + 16 + (pw - 26) / 2, by, (pw - 26) / 2, 18, "IMPORT", "icons/import", "blue")) game.host.requestImport()
         val label = when (confirmNewGame) { 0 -> "NEW FARM"; 1 -> "SURE? TAP AGAIN"; else -> "REALLY? LAST TAP" }
@@ -485,7 +487,6 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (confirmNewGame >= 3) { game.newGame(); confirmNewGame = 0; hud.toast("A fresh start!"); return false }
         }
         if (ui.button("story", x + 10, by + 48, pw - 20, 18, "STORY: WATCH THE OPENING", "icons/book", "wood")) { onStory?.invoke(); return true }
-        if (ui.button("decorate", x + 10, by + 72, pw - 20, 18, "DECORATE YOUR FARM", "icons/heart", "gold")) { onDecorShop?.invoke(); return true }
         g.text("DITHER FARM 0.1", x + pw / 2, y + ph - 30, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         g.text("FONT SILKSCREEN (OFL) - ENDESGA 32", x + pw / 2, y + ph - 19, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         return true
@@ -917,8 +918,10 @@ class Panels(private val game: Game, private val hud: Hud) {
                 else -> pinToggle("ach:${a.id}:$tier", x + pw - 18, ry + 10)
             }
             if (!done) {
-                val reward = if (t.coins > 0) "${Ui.compact(t.coins)}c" else if (t.xp > 0) "${t.xp}XP" else "GIFT"
+                // A coin icon, not a bare "C" (playtest round 7); the row has little room.
+                val reward = if (t.coins > 0) Ui.compact(t.coins) else if (t.xp > 0) "${t.xp}XP" else "GIFT"
                 g.text(reward, x + pw - 12, ry + 22, 0xFF3E8948.toInt(), align = 1, outline = 0, shadow = false)
+                if (t.coins > 0) g.sprite("icons/coin", (x + pw - 22 - g.textWidth(reward)).toFloat(), (ry + 26).toFloat())
             }
         }
         c.restore()
@@ -1135,7 +1138,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (d.keepsake != null) g.text("GIFT  +${d.beauty}", cx + 36, cy + 13, Gfx.RED, outline = 0, shadow = false)
             else {
                 g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
-                g.text("${d.price}  +${d.beauty}", cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
+                g.text("${d.price}  +${d.beauty}", cx + 49, cy + 13, Gfx.INK, outline = 0, shadow = false)
             }
             val why = world.decorBlocker(d.id)
             when {
@@ -1243,7 +1246,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val hy = y + ph - 46
         g.text("RANCH HAND: FILLS THE TROUGH", x + 10, hy, Gfx.INK, outline = 0, shadow = false)
         g.text("AND COLLECTS EACH MORNING", x + 10, hy + 10, Gfx.INK, outline = 0, shadow = false)
-        g.text(if (r.ranchHand) "HIRED" else RANCH_HAND_COST.entries.joinToString(" ") { (k, v) -> if (k == "coins") "${v}C" else "$v ${world.data.name(k).uppercase()}" }, x + 10, hy + 22, Gfx.MUTED, outline = 0, shadow = false)
+        g.text(if (r.ranchHand) "HIRED" else RANCH_HAND_COST.entries.joinToString(" ") { (k, v) -> if (k == "coins") "$v COINS" else "$v ${world.data.name(k).uppercase()}" }, x + 10, hy + 22, Gfx.MUTED, outline = 0, shadow = false)
         if (!r.ranchHand) {
             val why = world.ranchHandBlocker()
             if (ui.button("ranch-hand", x + pw - 66, hy + 2, 56, 18, if (world.level < RANCH_HAND_LEVEL) "L$RANCH_HAND_LEVEL" else "HIRE", style = if (why == null) "gold" else "grey")) {
@@ -1409,7 +1412,7 @@ class Panels(private val game: Game, private val hud: Hud) {
                 g.sprite("items/${d.fruit}", (x + 40).toFloat(), (ry + 28).toFloat())
                 g.text(d.name.uppercase(), x + 52, ry + 2, Gfx.INK, outline = 0, shadow = false)
                 g.text(d.seasons.sortedBy { it.ordinal }.joinToString(" ") { it.label.uppercase() }, x + 52, ry + 13, Gfx.MUTED, outline = 0, shadow = false)
-                g.text("${d.yield} EVERY ${d.everyDays} DAYS", x + 52, ry + 24, Gfx.MUTED, outline = 0, shadow = false)
+                g.text("${d.yield} FRUIT EVERY ${d.everyDays} DAYS", x + 52, ry + 24, Gfx.MUTED, outline = 0, shadow = false)
                 val why = world.treeBlocker(spot, d.id)
                 val label = if (world.level < d.unlockLevel) "L${d.unlockLevel}" else "${d.price}"
                 if (ui.button("tree-${d.id}", x + pw - 66, ry + 9, 56, 18, label, if (world.level < d.unlockLevel) null else "icons/coin", style = if (why == null) "green" else "grey")) {
@@ -1428,7 +1431,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.text("FRUITS IN", x + 78, y + 44, Gfx.MUTED, outline = 0, shadow = false)
         g.text(d.seasons.sortedBy { it.ordinal }.joinToString(" ") { it.label.uppercase() }, x + 78, y + 54, Gfx.INK, outline = 0, shadow = false)
         g.sprite("items/${d.fruit}", (x + 85).toFloat(), (y + 75).toFloat())
-        g.text("${d.yield} EVERY ${d.everyDays} DAYS", x + 96, y + 71, Gfx.INK, outline = 0, shadow = false)
+        g.text("x${d.yield} EVERY ${d.everyDays} DAYS", x + 96, y + 71, Gfx.INK, outline = 0, shadow = false)
         if (t.fruit > 0 && ui.button("tree-pick", x + 12, y + ph - 30, 100, 20, "PICK", style = "green")) { world.pickFruit(spot); return false }
         if (ui.button("tree-dig", x + pw - 112, y + ph - 30, 100, 20, if (digArmed) "SURE?" else "DIG UP", style = "red")) {
             if (digArmed) { world.digUpTree(spot); digArmed = false; return false }

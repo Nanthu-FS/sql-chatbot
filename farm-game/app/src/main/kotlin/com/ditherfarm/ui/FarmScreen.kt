@@ -201,7 +201,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         props.clear()
         waterTiles.clear()
         val reserved = reservedTiles.also { it.clear() }
-        listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmMap.ORCHARD_SIGN, FarmMap.STATUE, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
+        listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmMap.ORCHARD_SIGN, FarmMap.PASTURE_SIGN, FarmMap.STATUE, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
         for (b in 0 until FieldLayout.BLOCKS) FarmCrew.crateTile(b).let { reserved += key(it.first, it.second) }
         for (dc in 0..1) for (dr in 0..1) reserved += key(FarmMap.TRUCK.first + dc, FarmMap.TRUCK.second + dr)
         (FarmMap.HOUSES + listOf(FarmMap.SHOP_SEED, FarmMap.SHOP_SMITH, FarmMap.SHOP_CARPENTER, FarmMap.SHOP_CAFE)).forEach { reserved += key(it.first, it.second) }
@@ -500,6 +500,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             if (inView(x, y)) { hitSprite(c, r, "decor/festival_statue", x, y); list.add(y) { game.gfx.sprite("decor/festival_statue", x, y) } }
         }
         drawOrchard(list)
+        drawPastureSign(list)
         herd.collect(list, this)
         village.collect(list, this)
         fishing.collect(list)
@@ -573,13 +574,14 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     /** While a decoration is being placed: every free tile in view is marked green (a refused tap flashes red). */
     private fun drawDecorSpots(g: Gfx) {
-        // Full strength: the dawn and dusk tint would wash out anything fainter.
+        // Full strength: the dawn and dusk tint would wash out anything fainter. White, as green
+        // vanished on the grass (playtest round 7).
         val a = (sin(time * 3f) * 25 + 230).toInt()
         for (r in 0 until rows) for (c in 0 until cols) {
             val x = Iso.x(c, r).toFloat(); val y = Iso.y(c, r).toFloat()
             if (!inView(x, y, 8f)) continue
             if (decorKey(c, r) == decorBad && decorBadTime > 0) g.sprite("tiles/cursor_bad", x, y)
-            else if (decorFree(c, r)) g.sprite("tiles/cursor_ok", x, y, a)
+            else if (decorFree(c, r)) g.sprite("tiles/cursor", x, y, a)
         }
     }
 
@@ -597,6 +599,22 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             a.product -> world.collectProduct(i)
             !world.pettedToday(a) -> world.petAnimal(i)
             else -> chrome.open(Chrome.Panel.PASTURE)
+        }
+    }
+
+    /** The pasture's sign: named until the first animal arrives, then an egg; the level while locked. */
+    private fun drawPastureSign(list: DrawList) {
+        val (sc, sr) = FarmMap.PASTURE_SIGN
+        val sx = Iso.x(sc, sr).toFloat(); val sy = Iso.centerY(sc, sr).toFloat()
+        if (!inView(sx, sy)) return
+        hitSprite(sc, sr, "deco/field_sign", sx, sy)
+        val empty = world.ranch.animals.isEmpty()
+        list.add(sy) {
+            val g = game.gfx
+            g.sprite("deco/field_sign", sx, sy)
+            if (empty) g.text("PASTURE", sx.toInt(), (sy - 34).toInt(), Gfx.WHITE, align = 0)
+            if (world.level < com.ditherfarm.game.ANIMAL_LEVEL) g.text("L${com.ditherfarm.game.ANIMAL_LEVEL}", sx.toInt(), (sy - 15).toInt(), 0xFFC0CBDC.toInt(), align = 0)
+            else g.sprite("items/egg", sx, sy - 13)
         }
     }
 
@@ -793,7 +811,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         ui.panel(2, y, w - 4, 30, dark = true)
         g.sprite("decor/$id", 16f, y + 26f)
         g.text("PLACE ${d.name.uppercase()}  ${d.price} COINS", 32, y + 5, Gfx.GOLD)
-        g.text(if (decorTile < 0) "TAP A GREEN TILE ON THE FARM" else "TAP AGAIN TO PLACE IT THERE", 32, y + 17, Gfx.WHITE)
+        g.text(if (decorTile < 0) "TAP A GLOWING TILE ON THE FARM" else "TAP AGAIN TO PLACE IT THERE", 32, y + 17, Gfx.WHITE)
         if (ui.button("decor-cancel", w - 22, y + 4, 16, 12, null, "ui/x", "red")) { decorPlacing = null; decorTile = -1 }
     }
 
@@ -847,7 +865,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             val t = IntArray(2).also { Iso.pick(wx, wy, it) }
             val k = decorKey(t[0], t[1])
             when {
-                !decorFree(t[0], t[1]) -> { hud.toast("Pick a green-marked patch of grass"); game.sfx.play("error"); decorBad = k; decorBadTime = 0.6f }
+                !decorFree(t[0], t[1]) -> { hud.toast("Pick a glowing patch of grass"); game.sfx.play("error"); decorBad = k; decorBadTime = 0.6f }
                 k == decorTile -> if (world.placeDecor(t[0], t[1], id)) {
                     decorPlacing = null; decorTile = -1; game.sfx.play("craft")
                     // Back to the shop for the next piece (playtest round 6).
@@ -967,6 +985,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
         if ((c to r) == FarmMap.STATUE && world.act2.chapter >= com.ditherfarm.game.ACT2_DONE) { hud.toast("The valley's statue: Vexmoor never got the valley"); return }
         if ((c to r) == FarmMap.ORCHARD_SIGN) { chrome.open(Chrome.Panel.ORCHARD); return }
+        if ((c to r) == FarmMap.PASTURE_SIGN) { chrome.open(Chrome.Panel.PASTURE); return }
         FarmMap.ORCHARD_TREES.indexOf(c to r).takeIf { it >= 0 }?.let { i ->
             val t = world.orchard.trees[i]
             if (t != null && t.fruit > 0) world.pickFruit(i) else chrome.open(Chrome.Panel.ORCHARD, i.toString())

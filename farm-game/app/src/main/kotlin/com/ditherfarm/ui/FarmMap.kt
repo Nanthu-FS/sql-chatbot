@@ -54,6 +54,8 @@ object FarmMap {
     /** Fenced pasture kept for animals. */
     val PASTURE_C = 32..37
     val PASTURE_R = 13..16
+    /** Its sign by the mine road, so the empty fence reads as a pasture (playtest round 7). */
+    val PASTURE_SIGN = 31 to 13
 
     /** Orchard by the village, between Fields C and E (round 6): fenced, two rows of four trees. */
     val ORCHARD_C = 17..21
