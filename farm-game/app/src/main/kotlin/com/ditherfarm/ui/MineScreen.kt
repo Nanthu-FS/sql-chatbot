@@ -170,7 +170,8 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         setupCamera()
         recenter()
         if (under) hud.tip("mine-floor", "Break rocks to find the ladder down. A hollow knock means it is close.")
-        else hud.tip("mine", "Tap a rock to mine it (2 energy). Rocks in the quarry grow back.")
+        darkHint()
+        if (!under) hud.tip("mine", "Tap a rock to mine it (2 energy). Rocks in the quarry grow back.")
     }
 
     /** Called when the floor changes while the screen is open. */
@@ -184,7 +185,14 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         cam.setBounds(mapBounds())
         setupCamera()
         recenter()
-        if (under && m.dark) hud.tip("mine-dark", "It is dark down here. Tap empty ground to place a torch.")
+        darkHint()
+    }
+
+    /** A dark floor: how to light it, or with no torches, the way back out (playtest round 7). */
+    private fun darkHint() {
+        if (!under || !m.dark) return
+        if (world.count("torch") > 0) hud.tip("mine-dark", "It is dark down here. Tap empty ground to place a torch.")
+        else hud.toast("Dark floor, no torches! The glowing entry rides back up")
     }
 
     /** The surface keeps the view on painted ground like the farm; a floor sits in its dark cave. */
@@ -558,7 +566,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
         val y = game.engine.safeTop + hud.topHeight + 2
         ui.pill(2, y, 74, 14)
         g.sprite("icons/tool_pickaxe", 10f, y + 7f)
-        g.text(world.data.tools.names[world.pickTier()].uppercase() + " PICK", 18, y + 3, Gfx.WHITE)
+        g.text(world.data.tools.names[world.pickTier()].uppercase(), 18, y + 3, Gfx.WHITE)
         if (under) {
             ui.pill(80, y, 40, 14)
             g.text("B${m.floor}", 100, y + 3, if (m.dark) Gfx.GOLD else Gfx.WHITE, align = 0)
@@ -642,7 +650,7 @@ class MineScreen(game: Game) : IsoMapScreen(game, groundSeed = 71), WorldListene
             i == entryCell(m.grid) -> chrome.open(Chrome.Panel.ELEVATOR)
             m.ladderFound && i == m.ladder -> world.descend()
             cell.node != null -> world.mineFloor(i)
-            m.dark && i !in m.torches -> if (world.count("torch") > 0) world.placeTorch(i) else hud.toast("Make torches at the Workbench")
+            m.dark && i !in m.torches -> if (world.count("torch") > 0) world.placeTorch(i) else hud.toast("No torches. Craft them at the Workbench")
         }
     }
 
