@@ -61,6 +61,43 @@ class StoryTest {
         assertNull(back.pendingScene())
     }
 
+    @Test fun genderFollowsTheLookAndFillsTheLines() {
+        val w = World.newGame(data, 5)
+        assertNull("a new farm hasn't picked", w.state.playerGender)
+        w.setPlayer(1, "Ada")
+        assertEquals(Gender.FEMALE, w.state.playerGender)
+        assertEquals("Ada's granddaughter", w.storyText("{name}'s {grandchild}"))
+        w.setPlayer(3, "Bo")
+        assertEquals(Gender.MALE, w.state.playerGender)
+        assertEquals("my boy", w.storyText("{kid}"))
+        assertTrue(Gender.MALE.looks.intersect(Gender.FEMALE.looks.toSet()).isEmpty())
+        assertEquals(FARMER_LOOKS, (Gender.MALE.looks + Gender.FEMALE.looks).toSet().size)
+    }
+
+    @Test fun theOpeningIsGrandpasStory() {
+        val lines = SCENES.first { it.id == "opening" }.lines
+        assertEquals("three flashbacks end in a stamp, and the bank today too", 4, lines.count { it.cue == Cue.STAMP })
+        assertEquals(1, lines.count { it.cue == Cue.PICK })
+        assertTrue("the picker comes before the player first speaks", lines.indexOfFirst { it.cue == Cue.PICK } < lines.indexOfFirst { it.who == Who.PLAYER })
+        assertTrue(lines.any { it.bg == "bedroom" } && lines.any { it.bg == "porch" } && lines.any { it.bg == "bank_old" })
+        assertTrue(SCENES.first { it.id == "finale" }.lines.any { it.cue == Cue.APPROVE })
+    }
+
+    @Test fun lettersOpenAtMilestonesOneAtATime() {
+        val w = World.newGame(data, 5)
+        w.state.bump("harvested")
+        assertNull("nothing before the opening has played", w.pendingLetter())
+        w.finishScene("opening")
+        assertEquals("harvest", w.pendingLetter()?.id)
+        w.openLetter("harvest")
+        assertNull(w.pendingLetter())
+        w.state.villageTier = 1
+        assertEquals("stone", w.pendingLetter()?.id)
+        w.openLetter("stone")
+        val back = GameState.fromJson(JSONObject(w.state.toJson().toString()))
+        assertEquals(setOf("harvest", "stone"), back.letters)
+    }
+
     @Test fun storySurvivesSaving() {
         val w = World.newGame(data, 5)
         w.setPlayer(2, "Sam")
@@ -68,6 +105,11 @@ class StoryTest {
         val back = GameState.fromJson(JSONObject(w.state.toJson().toString()))
         assertEquals("Sam", back.playerName)
         assertEquals(2, back.playerLook)
+        assertEquals(Gender.FEMALE, back.playerGender)
         assertTrue("opening" in back.storySeen)
+        // A save from before round 7 has no gender until the player picks.
+        val old = w.state.toJson()
+        old.getJSONObject("story").remove("gender")
+        assertNull(GameState.fromJson(JSONObject(old.toString())).playerGender)
     }
 }

@@ -3,6 +3,7 @@ package com.ditherfarm.ui
 import com.ditherfarm.Game
 import com.ditherfarm.engine.Gfx
 import com.ditherfarm.game.pendingAct2Scene
+import com.ditherfarm.game.pendingLetter
 import com.ditherfarm.game.playerName
 import com.ditherfarm.game.villager
 import com.ditherfarm.game.WorldEvent
@@ -42,11 +43,13 @@ class Chrome(private val game: Game, private val here: Nav) {
     val panels = Panels(game, hud)
     /** The bank-loan story's scenes (StoryPanel). */
     val story = StoryPanel(game, hud)
+    /** Grandpa's letters (round 7). */
+    val letter = LetterPanel(game, hud)
     private val ui get() = game.ui
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS, VILLAGER, CONTEST }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS, VILLAGER, CONTEST, LETTER, LETTERS }
 
     var panel = Panel.NONE
         private set
@@ -85,6 +88,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             game.farm.startDecor(id)
         }
         // Scenes play on the farm, so a replay asked for in the Forest or Mine goes there first.
+        panels.onLetters = { open(Panel.LETTERS) }
         panels.onStory = {
             if (here == Nav.FARM) replayOpening()
             else { panel = Panel.NONE; game.goTo(Nav.FARM); game.farm.chrome.replayOpening() }
@@ -102,6 +106,12 @@ class Chrome(private val game: Game, private val here: Nav) {
             p == com.ditherfarm.game.Pointer.MINE && here != Nav.MINE && world.quarryOpen -> { panel = Panel.NONE; game.goTo(Nav.MINE) }
             p == com.ditherfarm.game.Pointer.GOALS -> open(Panel.GOALS)
         }
+    }
+
+    /** Opens one of Grandpa's letters: sealed and animated the first time, straight to the page again later. */
+    fun openLetter(id: String, reread: Boolean) {
+        letter.start(id, reread)
+        open(Panel.LETTER, id)
     }
 
     /** Plays the opening again, asking for a look and a name. */
@@ -157,6 +167,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     fun update(dt: Float) {
         hud.update(dt)
         story.update(dt)
+        letter.update(dt)
         world.rollDaily(game.today())
         // Situational tips (each shows once).
         val s = world.state
@@ -193,6 +204,16 @@ class Chrome(private val game: Game, private val here: Nav) {
         if (festival) g.sprite("icons/festival", x + 30f, y + 7f)
         if (world.merchantHere()) g.sprite("icons/merchant", x + if (festival) 46f else 30f, y + 7f)
         if (goalsClick) open(Panel.GOALS)
+        // A letter from Grandpa waiting: a sealed envelope under the trophy chip, on the farm.
+        world.pendingLetter()?.takeIf { here == Nav.FARM }?.let { l ->
+            val ex = w - 32; val ey = game.engine.safeTop + 36
+            ui.pill(ex, ey, 30, 18)
+            val bob = kotlin.math.sin(game.engine.time * 4f) * 1.5f
+            g.sprite("scenes/envelope_icon", ex + 15f, ey + 9f + bob)
+            if ((game.engine.time * 2).toInt() % 2 == 0) g.sprite("ui/badge", ex + 26f, ey + 2f)
+            if (ui.clickable("hud-letter", ex, ey, 30, 18)) openLetter(l.id, reread = false)
+            if (panel == Panel.NONE) hud.tip("letter", "A letter from Grandpa, tucked in his notebook. Tap the envelope to open it.")
+        }
         // The notebook's Goals step: the trophy chip blinks gold until tapped.
         if (world.pointer == com.ditherfarm.game.Pointer.GOALS && (game.engine.time * 3).toInt() % 2 == 0) {
             val gw = w - x - 2
@@ -322,6 +343,8 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.RELICS -> panels.relics()
             Panel.VILLAGER -> panels.villager(target ?: return)
             Panel.CONTEST -> panels.contest()
+            Panel.LETTER -> letter.draw()
+            Panel.LETTERS -> letter.list { id -> openLetter(id, reread = true) }
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {

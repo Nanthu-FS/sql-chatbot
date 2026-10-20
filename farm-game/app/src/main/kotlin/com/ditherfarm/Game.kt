@@ -62,7 +62,8 @@ class Game(val host: Host) {
     init {
         applySettings()
         engine.onTick = { dt -> tick(dt) }
-        engine.start(farm)
+        // Round 7: the loading screen and title first, then the farm (with the opening on a new one).
+        if (host.showIntro) engine.start(com.ditherfarm.ui.IntroScreen(this) { engine.go(farm) }) else engine.start(farm)
     }
 
     /** The first saved farm that loads, newest candidate first (see [SaveStore.candidates]); a new farm when none does. */
@@ -141,6 +142,7 @@ class Game(val host: Host) {
         val underground = engine.screen === mine && world.state.mine.floor > 0
         val story = (engine.screen as? com.ditherfarm.ui.IsoMapScreen)?.let { (it as? com.ditherfarm.ui.FarmScreen)?.chrome?.story?.music }
         val track = when {
+            engine.screen is com.ditherfarm.ui.IntroScreen -> "title"
             story != null -> story
             underground -> "mine"
             night -> "night"

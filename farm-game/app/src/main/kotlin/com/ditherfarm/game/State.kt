@@ -212,6 +212,8 @@ class GameState(var seed: Long) {
     /** Male or female (round 7); null on a save from before it, until the player picks. */
     var playerGender: Gender? = null
     val storySeen = LinkedHashSet<String>()
+    /** Grandpa's letters already opened (Letters.kt, round 7). */
+    val letters = LinkedHashSet<String>()
 
     fun stat(key: String) = stats[key] ?: 0L
     fun bump(key: String, by: Long = 1) { stats[key] = stat(key) + by }
@@ -269,7 +271,8 @@ class GameState(var seed: Long) {
         })
         put("pinned", pinned)
         put("story", JSONObject().put("name", playerName).put("look", playerLook).put("seen", JSONArray(storySeen.toList()))
-            .also { st -> playerGender?.let { st.put("gender", it.name.lowercase()) } })
+            .also { st -> playerGender?.let { st.put("gender", it.name.lowercase()) } }
+            .put("letters", JSONArray(letters.toList())))
         put("cartLog", JSONArray().apply { cartLog.forEach { put(it.toJson()) } })
         put("events", JSONObject().apply {
             put("giftDay", giftDay); put("giftStreak", giftStreak); put("merchantDay", merchantDay)
@@ -349,6 +352,7 @@ class GameState(var seed: Long) {
                 playerName = st.optString("name"); playerLook = st.optInt("look")
                 playerGender = Gender.entries.firstOrNull { it.name.lowercase() == st.optString("gender") }
                 st.optJSONArray("seen")?.strings()?.let { storySeen.addAll(it) }
+                st.optJSONArray("letters")?.strings()?.let { letters.addAll(it) }
             }
             o.optJSONArray("feats")?.let { a -> for (k in 0 until a.length()) featsSeen += a.getString(k) }
             o.optJSONArray("cartLog")?.objects()?.forEach { cartLog += CartDay(it.getInt("day"), it.getInt("units"), it.getInt("coins")) }

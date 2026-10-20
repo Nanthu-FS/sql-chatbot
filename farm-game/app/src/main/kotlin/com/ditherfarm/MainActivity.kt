@@ -21,6 +21,7 @@ class MainActivity : Activity(), Host {
     override val context: android.content.Context get() = this
     override val density: Float get() = resources.displayMetrics.density
     override val saveDir: java.io.File get() = filesDir
+    override val showIntro: Boolean get() = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

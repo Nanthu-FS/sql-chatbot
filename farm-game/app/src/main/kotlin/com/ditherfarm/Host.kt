@@ -21,4 +21,6 @@ interface Host {
     fun writeDocument(uri: android.net.Uri, text: String) {}
     fun readDocument(uri: android.net.Uri): String? = null
     fun nowMs(): Long = System.currentTimeMillis()
+    /** Show the launch intro (loading screen and title) before the farm; off in tests. */
+    val showIntro: Boolean get() = false
 }

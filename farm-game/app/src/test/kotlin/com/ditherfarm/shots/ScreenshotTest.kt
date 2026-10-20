@@ -836,6 +836,21 @@ class ScreenshotTest {
         })
     }
 
+    /** The launch intro (round 7): loading, then the title at night, while its letters are restored, and done. */
+    @Test fun intro() {
+        val load = com.ditherfarm.ui.IntroScreen.LOAD_TIME + 0.35f
+        for ((tag, secs) in listOf("loading" to 1.4f, "night" to load + 0.6f, "dawn" to load + 2.4f, "restoring" to load + 3.4f, "title" to load + 6.5f)) {
+            render("intro_$tag", seconds = secs, setup = { g -> g.engine.start(com.ditherfarm.ui.IntroScreen(g) {}) })
+        }
+    }
+
+    /** Grandpa's letters (round 7): the envelope on the farm, one opening, one read in full. */
+    @Test fun letters() {
+        render("letter_chip", seconds = 0.5f, setup = { g -> g.world.state.bump("harvested") })
+        render("letter_opening", seconds = 0.95f, setup = { g -> g.world.state.bump("harvested"); g.farm.chrome.openLetter("harvest", reread = false) })
+        render("letter_read", seconds = 8f, setup = { g -> g.farm.chrome.openLetter("loan", reread = true) })
+    }
+
     @Test fun storyPicker() {
         render("story_picker", story = true, seconds = 0.3f, drive = { g, t -> if (t < 0.05f) g.farm.chrome.story.showPicker() })
     }

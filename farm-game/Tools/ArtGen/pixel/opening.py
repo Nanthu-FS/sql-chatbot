@@ -740,6 +740,103 @@ def ribbon():
     return out
 
 
+# ---------------------------------------------------------------- Grandpa's letters
+
+def _outline(im, c="ink"):
+    """A 1px outline round everything opaque (in place, on a padded copy)."""
+    w, h = im.size
+    out = Image.new("RGBA", (w + 2, h + 2), (0, 0, 0, 0))
+    src = im.load()
+    o = out.load()
+    for y in range(h):
+        for x in range(w):
+            if src[x, y][3]:
+                for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1)):
+                    if 0 <= x + dx + 1 < w + 2 and 0 <= y + dy + 1 < h + 2:
+                        o[x + dx + 1, y + dy + 1] = C(c)
+    out.alpha_composite(im, (1, 1))
+    return out
+
+
+def seal(im, cx, cy, r):
+    ellipse(im, (cx - r, cy - r, cx + r, cy + r), "red_d")
+    ellipse(im, (cx - r + 1, cy - r + 1, cx + r - 2, cy + r - 2), "red")
+    px = im.load()
+    px[cx - r // 2, cy - r // 2] = C("pink")
+    # An E pressed into the wax.
+    for yy in range(cy - 2, cy + 3):
+        px[cx - 1, yy] = C("red_d")
+    for xx in range(cx - 1, cx + 2):
+        px[xx, cy - 2] = C("red_d"); px[xx, cy] = C("red_d"); px[xx, cy + 2] = C("red_d")
+
+
+def envelope(w, h, open_=False):
+    flap = h * 2 // 3
+    top = flap if open_ else 0
+    im = Image.new("RGBA", (w, h + top), (0, 0, 0, 0))
+    px = im.load()
+    # Body, with the side folds a shade darker.
+    rect(px, 0, top, w, top + h, "cream", w=w, h=h + top)
+    poly(im, [(0, top + h - 1), (w // 2, top + h // 2), (w - 1, top + h - 1)], "tan")
+    poly(im, [(0, top), (w // 2 - 2, top + h // 2 + 2), (0, top + h - 1)], "tan")
+    poly(im, [(w - 1, top), (w // 2 + 2, top + h // 2 + 2), (w - 1, top + h - 1)], "tan_d")
+    if open_:
+        # The flap folded up, its inside darker; a letter peeking out; the seal snapped in two.
+        rect(px, 3, top - 4, w - 3, top + 6, "white", w=w, h=h + top)
+        for yy in range(top - 2, top + 5, 2):
+            rect(px, 6, yy, w - 6, yy + 1, "grey_l", w=w, h=h + top)
+        poly(im, [(0, top), (w // 2, top - flap), (w - 1, top)], "tan_d")
+        poly(im, [(3, top), (w // 2, top - flap + 4), (w - 4, top)], "tan")
+        seal(im, w // 2 - 4, top - 6, 4)
+        seal(im, w // 2 + 4, top + 2, 4)
+    else:
+        poly(im, [(0, 0), (w // 2, flap), (w - 1, 0)], "tan_d")
+        poly(im, [(2, 0), (w // 2, flap - 3), (w - 3, 0)], "cream")
+        line(im, [(0, 0), (w // 2, flap), (w - 1, 0)], "brown_l")
+        seal(im, w // 2, flap - 1, max(4, w // 10))
+    return _outline(im)
+
+
+def letter_paper():
+    w, h = 236, 300
+    rng = random.Random(21)
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = im.load()
+    for y in range(h):
+        for x in range(w):
+            # Deckled edges: a little bitten in here and there.
+            edge = min(x, y, w - 1 - x, h - 1 - y)
+            if edge < 2 and rng.random() < 0.35:
+                continue
+            c = "cream"
+            if edge < 5 and bayer(x, y, 6):
+                c = "tan"
+            px[x, y] = C(c)
+    # Age spots and a tea ring.
+    for _ in range(14):
+        sx, sy = rng.randrange(10, w - 10), rng.randrange(10, h - 10)
+        for k in range(rng.randrange(3, 9)):
+            x, y = sx + rng.randrange(-3, 4), sy + rng.randrange(-2, 3)
+            if px[x, y][3]:
+                px[x, y] = C("tan")
+    for a in range(0, 360, 4):
+        x = int(196 + 16 * math.cos(math.radians(a))); y = int(262 + 12 * math.sin(math.radians(a)))
+        if bayer(x, y, 9):
+            px[x, y] = C("tan_d")
+    # Faint ruled lines.
+    for y in range(40, h - 26, 13):
+        for x in range(14, w - 14):
+            if (x // 2) % 2 == 0:
+                px[x, y] = C("tan")
+    # A pressed forget-me-not in the corner.
+    for dx, dy in ((0, -2), (-2, 0), (2, 0), (0, 2), (-1, -1), (1, 1), (1, -1), (-1, 1)):
+        px[w - 22 + dx, 16 + dy] = C("blue")
+    px[w - 22, 16] = C("yellow")
+    line(im, [(w - 22, 18), (w - 30, 30)], "green_d")
+    px[w - 27, 25] = C("green")
+    return _outline(im, "brown_l")
+
+
 def main():
     art = sys.argv[1]
     pivots = {}
@@ -750,6 +847,11 @@ def main():
     for name, word, ink, light, seed in (("stamp_refused", "REFUSED", "red_d", "red", 1), ("stamp_approved", "APPROVED", "green_d", "green", 2)):
         im = stamp(word, ink, light, seed)
         sc.save(name, im, im.size[0] // 2, im.size[1] // 2)
+    sc.save("envelope_icon", envelope(16, 11), 9, 7)
+    sc.save("envelope", envelope(70, 44), 36, 23)
+    im = envelope(70, 44, open_=True)
+    sc.save("envelope_open", im, 36, im.size[1] - 23)
+    sc.save("letter", letter_paper(), 118, 150)
     pivots.update(sc.pivots)
     ti = Sprites(art, "title")
     for i in range(len(SKIES)):

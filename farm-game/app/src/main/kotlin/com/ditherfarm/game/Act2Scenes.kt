@@ -15,7 +15,9 @@ val ACT2_SCENES: Map<String, Scene> = listOf(
         n("A sleek green car rolls into the village. Nobody in the valley owns a car that clean."),
         k("{name}, is it? Imelda Kessler, Vexmoor Agri-Corp. I'll be brief."),
         k("Vexmoor wants this valley. Mega-farms from the river to the forest. We'll pay you well for your land."),
-        p("My land isn't for sale."),
+        k("We already own a good part of it. When the bank kept turning your grandfather down, his neighbours sold to us. Cheaply."),
+        p("Grandpa told me. The Pruitts. The Abernathys. Fields he helped them plough."),
+        p("My land isn't for sale. And I want theirs back."),
         k("Everything is for sale. But fine. Let's do this the valley's way."),
         k("Every week, a contest: your little farm against Vexmoor. When you lose, the village will see who really feeds it."),
         n("Chapter 1: The Vexmoor Cup. Tap the trophy to see this week's contest, and beat Vexmoor's score before the week ends."),
@@ -57,6 +59,7 @@ val ACT2_SCENES: Map<String, Scene> = listOf(
         k("For what it's worth, {name}... this is the best food I've eaten in years."),
         p("There's always a seat at the festival for you, Ms. Kessler."),
         n("The village unveils a golden statue on the village road: a farmer holding a wheat sheaf."),
+        n("Vexmoor sells its fields back to the valley for a song. The Pruitts' old farm will be planted again in spring. Grandpa would have danced."),
         n("The valley is saved! +25000 coins."),
     ),
 ).associateBy { it.id }

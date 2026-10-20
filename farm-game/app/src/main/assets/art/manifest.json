@@ -5604,6 +5604,22 @@
   "ax": 0,
   "ay": 0
  },
+ "scenes/envelope": {
+  "ax": 36,
+  "ay": 23
+ },
+ "scenes/envelope_icon": {
+  "ax": 9,
+  "ay": 7
+ },
+ "scenes/envelope_open": {
+  "ax": 36,
+  "ay": 52
+ },
+ "scenes/letter": {
+  "ax": 118,
+  "ay": 150
+ },
  "scenes/porch": {
   "ax": 0,
   "ay": 0

@@ -115,6 +115,9 @@ const SOUNDS = {
   energy_low: () => render(arp([76, 72, 67], 0.07, { vol: 0.3, duty: 0.3, r: 0.03 })),
   drip: () => render([tone({ f0: 1800, f1: 900, dur: 0.05, wave: 'tri', vol: 0.5, r: 0.03 })]),
   pickup: () => render([tone({ f0: 700, f1: 1400, dur: 0.05, vol: 0.25, duty: 0.25, r: 0.02 })]),
+  // Round 7: the bank's rubber stamp coming down hard, and the hammer on a nail as the title is rebuilt.
+  stamp: () => lowpass(render([tone({ f0: 120, f1: 45, dur: 0.2, wave: 'tri', vol: 1 }), tone({ wave: 'noise', dur: 0.09, vol: 0.9, crush: 6, r: 0.07 })]), 0.35),
+  tink: () => render([tone({ f0: 2400, f1: 2280, dur: 0.03, wave: 'tri', vol: 0.5, r: 0.16 }), tone({ f0: 3600, dur: 0.02, duty: 0.2, vol: 0.22, r: 0.08 }), tone({ wave: 'noise', dur: 0.015, vol: 0.4, crush: 2 })]),
 };
 
 // Extra takes of the most frequent sounds (name_2, name_3) so repeats don't grate; the

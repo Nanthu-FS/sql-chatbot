@@ -211,6 +211,8 @@ class Panels(private val game: Game, private val hud: Hud) {
     var onPlace: ((String) -> Unit)? = null
     /** Called when Settings' STORY button is tapped (replays the opening). */
     var onStory: (() -> Unit)? = null
+    /** The list of Grandpa's letters (set by Chrome). */
+    var onLetters: (() -> Unit)? = null
     /** Called with a decoration id when BUY is tapped in the decor shop, and to open the shop. */
     var onDecor: ((String) -> Unit)? = null
     var onDecorShop: (() -> Unit)? = null
@@ -487,6 +489,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (confirmNewGame >= 3) { game.newGame(); confirmNewGame = 0; hud.toast("A fresh start!"); return false }
         }
         if (ui.button("story", x + 10, by + 48, pw - 20, 18, "STORY: WATCH THE OPENING", "icons/book", "wood")) { onStory?.invoke(); return true }
+        if (ui.button("letters", x + 10, by + 72, pw - 20, 18, "GRANDPA'S LETTERS", null, "wood")) { onLetters?.invoke(); return true }
         g.text("REBUILD THE VILLAGE 0.2", x + pw / 2, y + ph - 30, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         g.text("FONT SILKSCREEN (OFL) - ENDESGA 32", x + pw / 2, y + ph - 19, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         return true

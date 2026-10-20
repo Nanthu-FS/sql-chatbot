@@ -287,6 +287,9 @@ const TRACKS = {
   farm_winter: { seed: 14, bpm: 64, chords: [P(51, 55, 58, 62), P(48, 51, 55, 58), P(44, 48, 51, 55), P(46, 51, 53, 56)], roots: [39, 36, 32, 34], scale: [70, 72, 75, 77, 79, 82], cutoff: 2600 },
   night: { seed: 15, bpm: 58, chords: [P(49, 53, 56, 60), P(51, 54, 58, 61)], roots: [37, 39], barsPer: 2, loops: 4, drums: false, scale: [68, 70, 73, 75, 77, 80], cutoff: 2200 },
   forest: { seed: 16, bpm: 68, chords: [P(55, 59, 62, 66), P(47, 50, 54, 57), P(52, 55, 59, 62), P(48, 52, 55, 59)], roots: [43, 35, 40, 36], scale: [74, 76, 78, 81, 83, 86], echo: 0.31 },
+  // Round 7: the launch title (hopeful, a light beat) and the opening's elegy for Grandpa Elias (slow, minor, no drums).
+  title: { seed: 21, bpm: 80, chords: [P(48, 52, 55, 59, 64), P(53, 57, 60, 65), P(45, 52, 57, 60), P(43, 50, 55, 59)], roots: [36, 41, 33, 31], scale: [72, 74, 76, 79, 81, 84], echo: 0.25 },
+  elegy: { seed: 22, bpm: 50, chords: [P(45, 48, 52, 57), P(41, 48, 53, 57), P(48, 52, 55, 60), P(40, 47, 52, 56)], roots: [33, 29, 36, 28], barsPer: 2, loops: 3, drums: false, scale: [69, 71, 72, 76, 77, 81], echo: 0.45, cutoff: 2400 },
   mine: { seed: 17, bpm: 62, chords: [P(50, 53, 57, 60, 64), P(46, 50, 53, 57), P(43, 46, 50, 53, 57), P(45, 49, 52, 55, 58)], roots: [38, 34, 31, 33], scale: [62, 65, 67, 69, 72, 74], echo: 0.43, cutoff: 2000 },
 };
 
