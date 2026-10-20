@@ -25,7 +25,7 @@ FONT = os.path.join(ASSETS, "fonts", "Silkscreen-Regular.ttf")
 
 SCALE = 4
 W, H = 1024 // SCALE, 500 // SCALE      # 256 x 125 game pixels
-TITLE = "DITHER FARM"
+TITLE = "REBUILD THE VILLAGE"
 TAGLINE = "GROW. BUILD. RESTORE THE VALLEY."
 
 

@@ -1,6 +1,6 @@
-# Dither Farm
+# Rebuild The Village
 
-A cozy isometric pixel-art farming game for Android: tap to plant, water and harvest, chop wood in the Forest, dig ore in the Mine, craft tools, and build machines that automate the farm. It's a personal project with no ads and no in-app purchases.
+(Formerly Dither Farm.) A cozy isometric pixel-art farming game for Android: tap to plant, water and harvest, chop wood in the Forest, dig ore in the Mine, craft tools, and build machines that automate the farm. It's a personal project with no ads and no in-app purchases.
 
 - **Native Android** (Kotlin, no engine): a custom Canvas renderer draws a small pixel buffer and scales it up by a whole number, so every art pixel stays a crisp square.
 - **All art and sound are generated from code**, under `Tools/ArtGen`.

@@ -487,7 +487,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (confirmNewGame >= 3) { game.newGame(); confirmNewGame = 0; hud.toast("A fresh start!"); return false }
         }
         if (ui.button("story", x + 10, by + 48, pw - 20, 18, "STORY: WATCH THE OPENING", "icons/book", "wood")) { onStory?.invoke(); return true }
-        g.text("DITHER FARM 0.1", x + pw / 2, y + ph - 30, Gfx.MUTED, align = 0, outline = 0, shadow = false)
+        g.text("REBUILD THE VILLAGE 0.2", x + pw / 2, y + ph - 30, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         g.text("FONT SILKSCREEN (OFL) - ENDESGA 32", x + pw / 2, y + ph - 19, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         return true
     }

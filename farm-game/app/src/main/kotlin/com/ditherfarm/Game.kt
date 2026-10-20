@@ -188,7 +188,7 @@ class Game(val host: Host) {
         soundscape.pause()
         if (world.state.notifications) {
             world.secondsUntilNextCrop()?.let { s ->
-                if (s > 30) host.scheduleReadyNotification(host.nowMs() + (s * 1000).toLong(), "Dither Farm", "Your crops are ready to harvest!")
+                if (s > 30) host.scheduleReadyNotification(host.nowMs() + (s * 1000).toLong(), "Rebuild The Village", "Your crops are ready to harvest!")
             }
         }
     }
@@ -246,7 +246,7 @@ class Game(val host: Host) {
     fun importFrom(uri: Uri) {
         val text = runCatching { host.readDocument(uri) }.getOrNull()
         val imported = text?.let { parseWorld(it) }
-        if (imported == null) { toast("Not a Dither Farm save"); return }
+        if (imported == null) { toast("Not a Rebuild The Village save"); return }
         world = imported
         startOver()
         toast("Save imported")

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Dither Farm</string>
+    <string name="app_name">Rebuild The Village</string>
     <string name="notif_channel_name">Farm ready</string>
     <string name="notif_channel_desc">Crops and machines that are ready to collect</string>
 </resources>

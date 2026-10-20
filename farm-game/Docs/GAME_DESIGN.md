@@ -1,6 +1,6 @@
 > **Status: draft v1.** Merged from the forest, mine, machines, progression and tools designs. The balance and scope critiques have not been applied yet, and numbers in the JSON data tables (`app/src/main/assets/data`) are authoritative when they differ.
 
-# Dither Farm: Master Game Design Document (v1)
+# Rebuild The Village (formerly Dither Farm): Master Game Design Document (v1)
 
 Merged from five domain designs: Progression and Economy, Tools and Crafting, Forest, Mine, and Machines and Automation. Where sources disagree, §0 gives the canonical value. All systems are data-driven JSON tables.
 

@@ -11,7 +11,7 @@ nothing is copied from them.
   buildings/workbench(_snow)            the farmyard workbench
   buildings/well(_snow)                 the stone well
   buildings/market(_snow)               the market stall
-  buildings/barn(_snow)                 the barn, with DITHER FARM painted on its roof
+  buildings/barn(_snow)                 the barn, its slate roof plain
   buildings/silo(_snow)                 the silo
   buildings/orders(_snow)               the orders notice board
   vehicles/harvester_se_0/1, _ne_0/1    the yellow combine (its reel turns between frames)
@@ -373,9 +373,7 @@ def barn(winter):
     c.line((U + 1, 0, R + 1), (U + 1, -V - 1, ze), "cream")
     c.line((U + 1, 0, R), (U + 1, -V - 1, ze - 1), "tan")
     c.uline(-U - 1, U + 1, 0, R + 1, "cream")
-    ink = "grey" if winter else "cream"                                  # the name shows through the snow
-    c.text_u(-U + 0.6, 2.6, R - PK * 2.6 / V + 1, "DITHER", ink, shadow=None if winter else shade)
-    c.text_u(-U + 2.6, 5.0, R - PK * 5.0 / V + 1, "FARM", ink, shadow=None if winter else shade)
+    # Round 7: the roof is plain now (the game is Rebuild The Village; owner asked to remove the lettering).
     # Cupola: cream box with the wheat on its face, red pyramid cap, weathervane.
     c.box(-1.6, 1.6, -1.6, 1.6, R - 3, R + 4, "cream", "cream", "tan")
     c.wheat(*c.p(-1.2, 1.6, R + 3))
