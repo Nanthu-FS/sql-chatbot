@@ -1020,6 +1020,21 @@
   "ay": 31,
   "bh": 36
  },
+ "fishing/float": {
+  "ax": 2,
+  "ay": 5,
+  "bh": 7
+ },
+ "fishing/float_bite": {
+  "ax": 2,
+  "ay": 3,
+  "bh": 5
+ },
+ "fishing/ring": {
+  "ax": 4,
+  "ay": 5,
+  "bh": 7
+ },
  "fx/chip_stone": {
   "ax": 2,
   "ay": 2
@@ -1486,6 +1501,11 @@
   "bh": 32
  },
  "icons_big/tool_pickaxe": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
+ "icons_big/tool_rod": {
   "ax": 16,
   "ay": 16,
   "bh": 32
@@ -1995,6 +2015,11 @@
   "ay": 9,
   "bh": 18
  },
+ "icons/tool_rod": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
  "icons/tool_scythe": {
   "ax": 9,
   "ay": 9,
@@ -2105,6 +2130,11 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/bass": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items_big/beam": {
   "ax": 16,
   "ay": 16,
@@ -2156,6 +2186,11 @@
   "bh": 32
  },
  "items_big/carrot_pickles": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
+ "items_big/catfish": {
   "ax": 16,
   "ay": 16,
   "bh": 32
@@ -2330,6 +2365,11 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/golden_koi": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items_big/grapes": {
   "ax": 16,
   "ay": 16,
@@ -2500,6 +2540,11 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/minnow": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items_big/mulch": {
   "ax": 16,
   "ay": 16,
@@ -2540,7 +2585,17 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/perch": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items_big/petrified_wood": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
+ "items_big/pike": {
   "ax": 16,
   "ay": 16,
   "bh": 32
@@ -2636,6 +2691,11 @@
   "bh": 32
  },
  "items_big/ruby": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
+ "items_big/salmon": {
   "ax": 16,
   "ay": 16,
   "bh": 32
@@ -2765,6 +2825,11 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/trout": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items_big/veggie_stew": {
   "ax": 16,
   "ay": 16,
@@ -2835,6 +2900,11 @@
   "ay": 9,
   "bh": 18
  },
+ "items/bass": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
  "items/beam": {
   "ax": 9,
   "ay": 9,
@@ -2886,6 +2956,11 @@
   "bh": 18
  },
  "items/carrot_pickles": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/catfish": {
   "ax": 9,
   "ay": 9,
   "bh": 18
@@ -3060,6 +3135,11 @@
   "ay": 9,
   "bh": 18
  },
+ "items/golden_koi": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
  "items/grapes": {
   "ax": 9,
   "ay": 9,
@@ -3230,6 +3310,11 @@
   "ay": 9,
   "bh": 18
  },
+ "items/minnow": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
  "items/mulch": {
   "ax": 9,
   "ay": 9,
@@ -3270,7 +3355,17 @@
   "ay": 9,
   "bh": 18
  },
+ "items/perch": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
  "items/petrified_wood": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/pike": {
   "ax": 9,
   "ay": 9,
   "bh": 18
@@ -3366,6 +3461,11 @@
   "bh": 18
  },
  "items/ruby": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/salmon": {
   "ax": 9,
   "ay": 9,
   "bh": 18
@@ -3491,6 +3591,11 @@
   "bh": 18
  },
  "items/torch": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/trout": {
   "ax": 9,
   "ay": 9,
   "bh": 18

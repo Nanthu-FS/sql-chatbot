@@ -50,6 +50,7 @@ sealed class WorldEvent {
     data class ProductCollected(val index: Int, val item: String, val quality: Quality, val xp: Int, val byHand: Boolean) : WorldEvent()
     data class AnimalPetted(val index: Int, val hearts: Int) : WorldEvent()
     object RanchHandHired : WorldEvent()
+    data class FishCaught(val fish: String, val xp: Int) : WorldEvent()
     data class OrchardPlanted(val spot: Int, val kind: String) : WorldEvent()
     data class TreeDugUp(val spot: Int) : WorldEvent()
     data class OrchardFruit(val trees: Int) : WorldEvent()

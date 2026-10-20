@@ -415,6 +415,56 @@ def it_orange(c):
     leaf(c, (7.2, 2.6), (11.8, 1.0), 1.5, LEAF, sep="green_dd")
 
 
+def fish(c, ramp, fin, mark=None, long=1.0, whiskers=False):
+    """A fish swimming left: shaded body, forked tail, back fin and an eye; [mark] adds its pattern."""
+    body = rot_ellipse(c, 6.2, 7.6, 5.0 * long, 2.9, -12)
+    tail = poly(c, [(10.0, 6.8), (13.4, 3.6), (12.4, 7.0), (13.6, 10.6)])
+    top = poly(c, [(4.6, 5.4), (7.4, 3.4), (8.8, 5.0)])
+    paint(c, {p: fin[1] for p in tail | top}, sep=fin[0])
+    dome(c, body, ramp, depth=2.2, off=0.3, sep=ramp[0])
+    if mark:
+        mark(c, body)
+    c.dot(3.0, 7.0, "ink")
+    if c.n > 14:
+        c.dot(2.8, 6.6, "white")
+    if whiskers:
+        paint(c, {p: "ink" for p in stroke(c, (1.8, 8.4), (0.4, 10.4), 0.6)})
+
+
+def bands(col, step=2.4, x0=4.6):
+    def m(c, body):
+        k = c.k
+        paint(c, {(x, y): col for (x, y) in body if (x / k - x0) % step < 0.8 and x / k > x0 - 0.4 and y / k < 8.6})
+    return m
+
+
+def spots(col, pts):
+    def m(c, body):
+        for x, y in pts:
+            if (int(x * c.k), int(y * c.k)) in body:
+                c.dot(x, y, col)
+    return m
+
+
+def stripe(col):
+    def m(c, body):
+        k = c.k
+        paint(c, {(x, y): col for (x, y) in body if abs(y / k - (7.6 - (x / k - 6.2) * 0.2)) < 0.5})
+    return m
+
+
+FISH = {
+    "minnow": (["slate", "grey_d", "grey", "grey_l", "white"], ["slate", "grey"], None, 0.8, False),
+    "perch": (["green_dd", "green_d", "green", "yellow", "cream"], ["rust", "orange"], bands("green_dd"), 1.0, False),
+    "trout": (["slate", "grey_d", "grey_l", "pink", "white"], ["slate", "grey"], spots("slate_d", [(5.0, 6.4), (7.2, 6.0), (8.6, 7.0), (6.2, 8.0), (4.0, 8.0)]), 1.0, False),
+    "bass": (["green_dd", "green_d", "green", "yellow", "cream"], ["green_dd", "green_d"], stripe("green_dd"), 1.0, False),
+    "catfish": (["ink", "slate_d", "slate", "grey_d", "grey"], ["ink", "slate_d"], None, 1.0, True),
+    "salmon": (["red_d", "red", "pink", "pink", "cream"], ["red_d", "red"], spots("red_d", [(5.4, 6.2), (7.6, 6.2)]), 1.0, False),
+    "pike": (["teal_dd", "green_dd", "green_d", "yellow", "cream"], ["green_dd", "green_d"], spots("cream", [(4.8, 6.8), (6.8, 6.4), (8.4, 7.4), (5.8, 8.2)]), 1.1, False),
+    "golden_koi": (["rust", "orange", "amber", "yellow", "white"], ["orange", "amber"], spots("white", [(5.2, 6.6), (6.0, 6.6), (8.0, 7.6), (8.4, 8.0)]), 1.0, False),
+}
+
+
 def it_egg(c):
     ball(c, 7.0, 7.8, 4.4, 5.4, EGG, sep="tan_d", spec=[(5.4, 5.0, "white")])
 
@@ -686,6 +736,14 @@ ITEMS = {
     "blackberry": it_blackberry,
     "cherry": it_cherry,
     "egg": it_egg,
+    "minnow": lambda c, f=FISH["minnow"]: fish(c, f[0], f[1], f[2], f[3], f[4]),
+    "perch": lambda c, f=FISH["perch"]: fish(c, f[0], f[1], f[2], f[3], f[4]),
+    "trout": lambda c, f=FISH["trout"]: fish(c, f[0], f[1], f[2], f[3], f[4]),
+    "bass": lambda c, f=FISH["bass"]: fish(c, f[0], f[1], f[2], f[3], f[4]),
+    "catfish": lambda c, f=FISH["catfish"]: fish(c, f[0], f[1], f[2], f[3], f[4]),
+    "salmon": lambda c, f=FISH["salmon"]: fish(c, f[0], f[1], f[2], f[3], f[4]),
+    "pike": lambda c, f=FISH["pike"]: fish(c, f[0], f[1], f[2], f[3], f[4]),
+    "golden_koi": lambda c, f=FISH["golden_koi"]: fish(c, f[0], f[1], f[2], f[3], f[4]),
     "wool": it_wool,
     "peach": it_peach,
     "orange": it_orange,

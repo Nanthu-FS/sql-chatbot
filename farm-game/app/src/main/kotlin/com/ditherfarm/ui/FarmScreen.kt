@@ -138,6 +138,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private val crew = FarmCrew(game, this)
     /** The pasture's animals. */
     private val herd = Herd(game)
+    /** Fishing on the river. */
+    private val fishing = Fishing(game) { hud.toast(it) }
     /** Plot of the farmhand job just announced: its result events stay quiet (the crew shows them). */
     private var workerPlot = -1
 
@@ -276,6 +278,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         chrome.update(dt)
         crew.update(dt)
         herd.update(dt)
+        fishing.update(dt)
         if (infoTime > 0) infoTime -= dt
         if (decorBadTime > 0) decorBadTime -= dt
         if (flashTime > 0) flashTime -= dt
@@ -487,6 +490,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
         drawOrchard(list)
         herd.collect(list, this)
+        fishing.collect(list)
         for (b in Building.entries) {
             val x = Iso.x(b.c, b.r).toFloat()
             val y = Iso.centerY(b.c, b.r).toFloat()
@@ -566,6 +570,13 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             else if (decorFree(c, r)) g.sprite("tiles/cursor_ok", x, y, a)
         }
     }
+
+    /** Fishing hooks for screenshot tests. */
+    fun fishAt(c: Int, r: Int) = fishing.start(c, r)
+    val fishingState get() = fishing.state
+    fun fishingTap() = fishing.tap()
+
+    private fun camCenter() = cam.x + cam.viewWidth / 2f to cam.y + cam.viewHeight / 2f
 
     /** A tap on an animal: collect its product (and pet it), else pet it, else open the pasture. */
     private fun tapAnimal(i: Int) {
@@ -711,7 +722,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         if (trayOpen && !chrome.isOpen) drawSeedTray(g)
         if (placing != null && !chrome.isOpen) drawPlaceBanner(g)
         if (decorPlacing != null && !chrome.isOpen) drawDecorBanner(g)
-        chrome.drawBottom(tipLift = if (trayOpen) 2 * 34 + 22 else if (placing != null || decorPlacing != null) 34 else 0)
+        if (fishing.active && !chrome.isOpen) fishing.drawUi(g, ui, game.engine.h - game.engine.safeBottom - hud.bottomHeight)
+        chrome.drawBottom(tipLift = if (trayOpen) 2 * 34 + 22 else if (placing != null || decorPlacing != null || fishing.active) 34 else 0)
     }
 
     private fun drawSeedTray(g: Gfx) {
@@ -812,6 +824,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     }
 
     override fun onWorldTap(wx: Float, wy: Float): Boolean {
+        if (fishing.active) { fishing.tap(); return true }
         if (decorPlacing == null && placing == null) herd.at(wx, wy).takeIf { it >= 0 }?.let { i -> tapAnimal(i); return true }
         decorPlacing?.let { id ->
             val t = IntArray(2).also { Iso.pick(wx, wy, it) }
@@ -943,6 +956,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
         if (FarmMap.inOrchard(c, r)) { chrome.open(Chrome.Panel.ORCHARD); return }
         if (FarmMap.inPasture(c, r)) { chrome.open(Chrome.Panel.PASTURE); return }
+        if (FarmMap.isRiver(c, r) && !FarmMap.isWall(c, r) && !FarmMap.isBridge(c, r)) { fishing.start(c, r); return }
         signAt(c, r).takeIf { it >= 0 }?.let { b ->
             if (world.blockOwned(b)) chrome.open(Chrome.Panel.FIELD, b.toString()) else chrome.offerBlock(b)
             return
@@ -1037,6 +1051,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         if (chrome.close()) return true
         if (placing != null) { placing = null; placeVertex = -1; return true }
         if (decorPlacing != null) { decorPlacing = null; decorTile = -1; return true }
+        if (fishing.active) { fishing.cancel(); return true }
         if (trayOpen) { trayOpen = false; return true }
         return false
     }
@@ -1143,6 +1158,13 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 e.quality.icon?.let { fx.rise(it, x + 8, y - 6) }
             }
             is WorldEvent.AnimalPetted -> herd.head(e.index)?.let { (x, y) -> game.sfx.play("collect"); fx.rise("fx/heart", x, y) }
+            is WorldEvent.FishCaught -> {
+                game.sfx.play("levelup"); game.haptics.heavy()
+                hud.toast("Caught a ${world.data.name(e.fish).lowercase()}! +${e.xp} XP")
+                val (cx, cy) = camCenter()
+                fx.floatText("+1", cx, cy - 20, Gfx.WHITE, icon = "items/${e.fish}")
+                hud.tip("fishing", "Fish sell at the Market and fill orders. Each season has its own fish; catfish bite best at night and in the rain.")
+            }
             is WorldEvent.FruitPicked -> {
                 val (c, r) = FarmMap.ORCHARD_TREES[e.spot]
                 val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()

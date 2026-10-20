@@ -201,6 +201,22 @@
    "coins": 1200
   },
   {
+   "id": "tool_rod_1",
+   "name": "Fishing rod",
+   "building": "workbench",
+   "inputs": {
+    "wood": 6,
+    "fibre": 4
+   },
+   "outputs": {
+    "@tool:rod": 1
+   },
+   "minutes": 1,
+   "unlock": 6,
+   "fuel": 0.0,
+   "coins": 30
+  },
+  {
    "id": "tool_axe_1",
    "building": "workbench",
    "inputs": {

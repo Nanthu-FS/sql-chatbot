@@ -268,6 +268,62 @@
    "storage": "barn"
   },
   {
+   "id": "minnow",
+   "name": "Minnow",
+   "category": "fish",
+   "price": 6,
+   "storage": "barn"
+  },
+  {
+   "id": "perch",
+   "name": "Perch",
+   "category": "fish",
+   "price": 14,
+   "storage": "barn"
+  },
+  {
+   "id": "trout",
+   "name": "Trout",
+   "category": "fish",
+   "price": 24,
+   "storage": "barn"
+  },
+  {
+   "id": "bass",
+   "name": "Bass",
+   "category": "fish",
+   "price": 30,
+   "storage": "barn"
+  },
+  {
+   "id": "catfish",
+   "name": "Catfish",
+   "category": "fish",
+   "price": 40,
+   "storage": "barn"
+  },
+  {
+   "id": "salmon",
+   "name": "Salmon",
+   "category": "fish",
+   "price": 55,
+   "storage": "barn"
+  },
+  {
+   "id": "pike",
+   "name": "Pike",
+   "category": "fish",
+   "price": 45,
+   "storage": "barn"
+  },
+  {
+   "id": "golden_koi",
+   "name": "Golden Koi",
+   "category": "fish",
+   "price": 400,
+   "storage": "barn"
+  },
+  {
    "id": "blackberry",
    "name": "Blackberry",
    "category": "forest",

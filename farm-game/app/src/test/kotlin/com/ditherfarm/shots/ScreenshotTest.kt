@@ -598,6 +598,16 @@ class ScreenshotTest {
         })
     }
 
+    @Test fun fishing() {
+        render("farm_fishing", seconds = 5.6f, setup = { g ->
+            toLevel(g, 8)
+            g.world.state.pet.offered = true
+            g.world.state.tools["rod"] = 1
+            g.farm.centerOnTile(21, 9)
+            g.farm.fishAt(22, 8)
+        }, drive = { g, _ -> if (g.farm.fishingState == com.ditherfarm.ui.Fishing.State.BITE) g.farm.fishingTap() }, zoom = 2)
+    }
+
     @Test fun orchardPanels() {
         render("panel_orchard_buy", setup = { g -> toLevel(g, 10); g.world.state.coins += 2000; g.farm.showPanel("orchard") })
         render("panel_orchard_plant", setup = { g ->

@@ -1840,13 +1840,34 @@ def pin(n):
     return c
 
 
+def tool_rod(n):
+    """Fishing rod (round 6): a thin cane with a reel by the grip, its line hanging to a red float."""
+    c = Canvas(n)
+    k = n / 14
+    s = handle(c, (1.6, 13.2), (11.6, 1.2), n, r14=0.55, r28=1.0)
+    grip(c, s, n, 0, 3)
+    rc = P(4.6, 9.4, n)
+    reel = ell(rc[0], rc[1], 1.5 * k, 1.5 * k)
+    c.bevel(reel, IRON, lit=2.2, sep="ink")
+    tip = P(11.6, 1.2, n)
+    end = P(12.2, 9.4, n)
+    steps = max(2, int(abs(end[1] - tip[1])))
+    c.pts([(round(tip[0] + (end[0] - tip[0]) * i / steps), round(tip[1] + (end[1] - tip[1]) * i / steps)) for i in range(1, steps)], "white")
+    fc = P(12.2, 10.8, n)
+    c.sphere(fc[0], fc[1], 1.4 * k, 1.4 * k, REDS, s=ell(fc[0], fc[1], 1.4 * k, 1.4 * k), sep="red_d")
+    c.fill({p for p in ell(fc[0], fc[1], 1.4 * k, 1.4 * k) if p[1] > fc[1]}, "white")
+    if n == 28:
+        sparkle(c, 3, 3, big=True)
+    return c
+
+
 ICONS = {
     "nav_farm": nav_farm, "nav_forest": nav_forest, "nav_mine": nav_mine, "bag": bag, "build": build,
     "craft": craft, "orders": orders, "market": market, "shop": shop, "sell": sell, "menu": menu,
     "settings": settings, "trophy": trophy, "book": book, "gift": gift, "merchant": merchant, "festival": festival,
     "bell": bell, "sound_on": sound_on, "sound_off": sound_off, "vibrate": vibrate, "export": export,
     "import": import_, "info": info, "close": close, "tool_hoe": tool_hoe, "tool_water_can": tool_water_can,
-    "tool_axe": tool_axe, "tool_pickaxe": tool_pickaxe, "tool_scythe": tool_scythe, "tool_sickle": tool_sickle,
+    "tool_axe": tool_axe, "tool_rod": tool_rod, "tool_pickaxe": tool_pickaxe, "tool_scythe": tool_scythe, "tool_sickle": tool_sickle,
     "seeds": seeds, "fertilizer": fertilizer, "sprinkler": sprinkler, "harvest": harvest, "pin": pin,
 }
 

@@ -463,6 +463,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         // Round 6: the orchard and each fruit tree announce themselves.
         val news = when (level) {
             ORCHARD_LEVEL -> "NEW: THE ORCHARD!"
+            com.ditherfarm.game.FISHING_LEVEL -> "NEW: FISHING ROD AT THE BENCH"
             ANIMAL_LEVEL -> "NEW: FARM ANIMALS!"
             RANCH_HAND_LEVEL -> "NEW: RANCH HAND"
             else -> FRUIT_TREES.values.firstOrNull { it.unlockLevel == level }?.let { "NEW: ${it.name.uppercase()}" }

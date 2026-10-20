@@ -97,6 +97,8 @@ class ProgressionTest {
             FRUIT_TREES.values.forEach { offer(it.fruit, it.unlockLevel) }
             // Farm animals (round 6).
             AnimalKind.entries.forEach { offer(it.product, it.unlockLevel) }
+            // River fishing, once the rod is made (round 6).
+            FISH.keys.forEach { offer(it, maxOf(FISHING_LEVEL, at("@tool:rod:1"))) }
         } while (changed)
         // Never a source: nothing to fix if unused.
         zoneLevel.size
