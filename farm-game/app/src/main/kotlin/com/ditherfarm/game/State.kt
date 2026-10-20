@@ -153,6 +153,8 @@ class GameState(var seed: Long) {
     val beautyClaimed = LinkedHashSet<Int>()
     /** The orchard across the river (Orchard.kt). */
     var orchard = OrchardState()
+    /** The pasture's animals and trough (Animals.kt). */
+    var ranch = RanchState()
     var harvesterNext = 0.0
     /** Timed building id → game minute of its next run, and whether it is blocked (tray full). */
     val shedNext = HashMap<String, Double>()
@@ -234,6 +236,7 @@ class GameState(var seed: Long) {
         put("decor", decorToJson(decor))
         put("beautyClaimed", JSONArray(beautyClaimed.toList()))
         put("orchard", orchard.toJson())
+        put("ranch", ranch.toJson())
         put("harvesterNext", harvesterNext)
         put("shedNext", JSONObject(shedNext as Map<*, *>))
         put("achievements", JSONObject(achievements as Map<*, *>))
@@ -301,6 +304,7 @@ class GameState(var seed: Long) {
             o.optJSONObject("decor")?.let { decorFromJson(it, decor) }
             o.optJSONArray("beautyClaimed")?.let { a -> for (k in 0 until a.length()) beautyClaimed += a.getInt(k) }
             o.optJSONObject("orchard")?.let { orchard = OrchardState.fromJson(it) }
+            o.optJSONObject("ranch")?.let { ranch = RanchState.fromJson(it) }
             harvesterNext = o.optDouble("harvesterNext", 0.0)
             o.optJSONObject("shedNext")?.let { m -> m.keys().forEach { shedNext[it] = m.getDouble(it) } }
             o.optJSONObject("achievements")?.toIntMap()?.forEach { (k, v) -> achievements[k] = v }

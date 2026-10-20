@@ -43,7 +43,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE }
 
     var panel = Panel.NONE
         private set
@@ -310,6 +310,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.DECOR -> panels.decor()
             Panel.PET_INFO -> panels.petInfo()
             Panel.ORCHARD -> panels.orchard(target?.toIntOrNull() ?: -1)
+            Panel.PASTURE -> panels.pasture()
             Panel.LEVEL_UP -> levelUps.firstOrNull()?.let { (l, c) -> panels.levelUp(l, c) } ?: false
         }
         if (!keep) {
@@ -395,6 +396,14 @@ class Chrome(private val game: Game, private val here: Nav) {
                 game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("The orchard is yours! Tap a spot to plant a tree")
                 hud.tip("orchard", "Fruit trees grow for a day or two, then fruit every few days in their seasons. Tap a tree with fruit to pick it.")
             }
+            is WorldEvent.AnimalBought -> {
+                game.sfx.play("levelup"); game.haptics.heavy()
+                hud.toast("A new ${e.kind.label.lowercase()} joins the pasture!")
+                hud.tip("animals", "Animals eat from the trough each morning: keep it filled with wheat or corn. Fed animals make eggs, milk or wool. Tap one to collect and pet it.")
+            }
+            is WorldEvent.TroughFilled -> { game.sfx.play("collect"); game.haptics.tick() }
+            is WorldEvent.AnimalsFed -> if (e.hungry > 0) hud.toast(if (e.hungry == 1) "An animal went hungry. Fill the trough!" else "${e.hungry} animals went hungry. Fill the trough!")
+            is WorldEvent.RanchHandHired -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("The ranch hand starts tomorrow morning") }
             is WorldEvent.OrchardFruit -> hud.toast(if (e.trees == 1) "A tree in the orchard has fruit" else "${e.trees} trees in the orchard have fruit")
             is WorldEvent.PetLevelUp -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("${e.name} is now level ${e.level}! Bigger gifts") }
             is WorldEvent.BeautyMilestone -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast(if (e.beauty >= com.ditherfarm.game.BEST_FARM_BEAUTY) "Best Farm in the Valley! +${e.coins} coins" else "Beauty ${e.beauty}! +${e.coins} coins") }

@@ -1,4 +1,64 @@
 {
+ "animals/cow_0": {
+  "ax": 11,
+  "ay": 12,
+  "bh": 15
+ },
+ "animals/cow_1": {
+  "ax": 11,
+  "ay": 12,
+  "bh": 15
+ },
+ "animals/cow_eat": {
+  "ax": 11,
+  "ay": 12,
+  "bh": 15
+ },
+ "animals/hen_0": {
+  "ax": 7,
+  "ay": 10,
+  "bh": 13
+ },
+ "animals/hen_1": {
+  "ax": 7,
+  "ay": 10,
+  "bh": 13
+ },
+ "animals/hen_eat": {
+  "ax": 7,
+  "ay": 10,
+  "bh": 13
+ },
+ "animals/sheep_0": {
+  "ax": 9,
+  "ay": 10,
+  "bh": 13
+ },
+ "animals/sheep_1": {
+  "ax": 9,
+  "ay": 10,
+  "bh": 13
+ },
+ "animals/sheep_eat": {
+  "ax": 9,
+  "ay": 10,
+  "bh": 13
+ },
+ "animals/sheep_shorn_0": {
+  "ax": 9,
+  "ay": 10,
+  "bh": 13
+ },
+ "animals/sheep_shorn_1": {
+  "ax": 9,
+  "ay": 10,
+  "bh": 13
+ },
+ "animals/sheep_shorn_eat": {
+  "ax": 9,
+  "ay": 10,
+  "bh": 13
+ },
  "buildings/bakery_oven": {
   "ax": 13,
   "ay": 21,
@@ -2180,6 +2240,11 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/egg": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items_big/eggplant": {
   "ax": 16,
   "ay": 16,
@@ -2351,6 +2416,11 @@
   "bh": 32
  },
  "items_big/melon_juice": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
+ "items_big/milk": {
   "ax": 16,
   "ay": 16,
   "bh": 32
@@ -2725,6 +2795,11 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/wool": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items/acorn": {
   "ax": 9,
   "ay": 9,
@@ -2891,6 +2966,11 @@
   "bh": 18
  },
  "items/diamond": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/egg": {
   "ax": 9,
   "ay": 9,
   "bh": 18
@@ -3066,6 +3146,11 @@
   "bh": 18
  },
  "items/melon_juice": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/milk": {
   "ax": 9,
   "ay": 9,
   "bh": 18
@@ -3436,6 +3521,11 @@
   "bh": 18
  },
  "items/wood": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/wool": {
   "ax": 9,
   "ay": 9,
   "bh": 18

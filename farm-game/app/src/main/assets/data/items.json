@@ -247,6 +247,27 @@
    "storage": "barn"
   },
   {
+   "id": "egg",
+   "name": "Egg",
+   "category": "animal",
+   "price": 14,
+   "storage": "barn"
+  },
+  {
+   "id": "milk",
+   "name": "Milk",
+   "category": "animal",
+   "price": 30,
+   "storage": "barn"
+  },
+  {
+   "id": "wool",
+   "name": "Wool",
+   "category": "animal",
+   "price": 70,
+   "storage": "barn"
+  },
+  {
    "id": "blackberry",
    "name": "Blackberry",
    "category": "forest",

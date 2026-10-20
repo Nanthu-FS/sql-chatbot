@@ -59,6 +59,7 @@ FEATHER_W = ["slate", "grey", "grey_l", "white", "white"]
 GOLD_FEATHER = ["rust", "orange", "amber", "yellow", "white"]
 MULCH = ["brown_d", "brown", "brown_l", "tan_d", "tan"]
 PEACH = ["rust", "red", "pink", "amber", "cream"]
+WOOL = ["tan_d", "tan", "cream", "white", "white"]
 QUALITY = ["slate_d", "blue_d", "blue", "cyan", "white"]
 BLUE_BG = ["blue_d", "blue", "blue", "cyan"]
 
@@ -414,6 +415,15 @@ def it_orange(c):
     leaf(c, (7.2, 2.6), (11.8, 1.0), 1.5, LEAF, sep="green_dd")
 
 
+def it_egg(c):
+    ball(c, 7.0, 7.8, 4.4, 5.4, EGG, sep="tan_d", spec=[(5.4, 5.0, "white")])
+
+
+def it_wool(c):
+    for x, y, r in ((4.6, 9.0, 3.0), (9.4, 9.0, 3.0), (7.0, 5.6, 3.2), (7.0, 10.0, 3.0), (3.6, 6.4, 2.2), (10.4, 6.4, 2.2)):
+        ball(c, x, y, r, r * 0.9, WOOL, sep="tan_d", spec=[(x - 1.0, y - 1.0, "white")])
+
+
 def it_blackberry(c):
     pts = [(4.4, 4.8), (9.6, 4.8), (3.2, 8.0), (7.0, 7.6), (10.8, 8.0), (5.4, 11.0), (8.6, 11.0)]
     for x, y in pts:
@@ -675,6 +685,8 @@ ITEMS = {
     "apple": it_apple,
     "blackberry": it_blackberry,
     "cherry": it_cherry,
+    "egg": it_egg,
+    "wool": it_wool,
     "peach": it_peach,
     "orange": it_orange,
     "apple_sapling": it_apple_sapling,

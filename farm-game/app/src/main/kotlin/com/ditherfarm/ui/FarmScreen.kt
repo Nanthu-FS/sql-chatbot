@@ -10,6 +10,10 @@ import com.ditherfarm.engine.Terrain
 import android.graphics.Paint
 import android.graphics.Path
 import com.ditherfarm.game.quest
+import com.ditherfarm.game.ranch
+import com.ditherfarm.game.collectProduct
+import com.ditherfarm.game.petAnimal
+import com.ditherfarm.game.pettedToday
 import com.ditherfarm.game.ORCHARD_COST
 import com.ditherfarm.game.ORCHARD_LEVEL
 import com.ditherfarm.game.orchard
@@ -132,8 +136,13 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     /** Farmhands, crates, harvester and truck. */
     private val crew = FarmCrew(game, this)
+    /** The pasture's animals. */
+    private val herd = Herd(game)
     /** Plot of the farmhand job just announced: its result events stay quiet (the crew shows them). */
     private var workerPlot = -1
+
+    /** Forest painted past the map edge, so the view can reach the pasture and the orchard by the edge. */
+    override val margin = EDGE
 
     override fun terrain(c: Int, r: Int): Terrain = FarmMap.terrain(c, r, world.villageTier) { cc, rr -> isYard(cc, rr) }
 
@@ -169,7 +178,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         cam.maxZoom = 3
         // Keep the whole view on painted ground: inside the map diamond, one tile in from its edge.
         val n = FarmMap.SIZE
-        cam.setDiamond(0f, n * Iso.TH / 2f, (n - 2) * Iso.TW / 2f, (n - 2) * Iso.TH / 2f)
+        cam.setDiamond(0f, n * Iso.TH / 2f, (n - 2 + 2 * EDGE) * Iso.TW / 2f, (n - 2 + 2 * EDGE) * Iso.TH / 2f)
         recenter()
         weather.onThunder = { game.sfx.play("thunder") }
         scatterProps()
@@ -190,8 +199,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         for (b in 0 until FieldLayout.BLOCKS) FarmCrew.crateTile(b).let { reserved += key(it.first, it.second) }
         for (dc in 0..1) for (dr in 0..1) reserved += key(FarmMap.TRUCK.first + dc, FarmMap.TRUCK.second + dr)
         (FarmMap.HOUSES + listOf(FarmMap.SHOP_SEED, FarmMap.SHOP_SMITH, FarmMap.SHOP_CARPENTER, FarmMap.SHOP_CAFE)).forEach { reserved += key(it.first, it.second) }
-        for (r in 0 until rows) for (c in 0 until cols) {
-            if (FarmMap.isRiver(c, r)) waterTiles += c to r
+        for (r in -EDGE until rows + EDGE) for (c in -EDGE until cols + EDGE) {
+            if (FarmMap.isRiver(c, r) && !FarmMap.isWall(c, r)) waterTiles += c to r
             if (key(c, r) in buildingAt || (c to r) in lanterns || (c to r) in slotTiles || key(c, r) in reserved) continue
             if (plotAt[key(c, r)]?.let { world.plot(it).owned } == true || FarmMap.isRoad(c, r) || FarmMap.inPasture(c, r) || FarmMap.inOrchard(c, r)) continue
             if (FarmMap.isWall(c, r)) {
@@ -254,8 +263,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
         fun at(t: Pair<Int, Int>, sprite: String, fallback: String) =
             Prop(if (game.assets.has(sprite)) sprite else fallback, Iso.x(t.first, t.second).toFloat(), Iso.centerY(t.first, t.second).toFloat(), false)
-        props += at(34 to 13, "deco/hay_bale", "deco/bush")
-        props += at(36 to 15, "deco/trough", "deco/log")
+        props += at(33 to 13, "deco/hay_bale", "deco/bush")
+        props += at(34 to 16, "deco/trough", "deco/log")
         props += at(FarmMap.SIGN_FOREST, "deco/sign_forest", "trees/signpost")
         props += at(FarmMap.SIGN_MINE, "deco/sign_mine", "trees/signpost")
         for ((t, sprite) in houses() + shops()) props += at(t, sprite, "buildings/cottage_a")
@@ -266,6 +275,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         super.update(dt)
         chrome.update(dt)
         crew.update(dt)
+        herd.update(dt)
         if (infoTime > 0) infoTime -= dt
         if (decorBadTime > 0) decorBadTime -= dt
         if (flashTime > 0) flashTime -= dt
@@ -476,6 +486,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             }
         }
         drawOrchard(list)
+        herd.collect(list, this)
         for (b in Building.entries) {
             val x = Iso.x(b.c, b.r).toFloat()
             val y = Iso.centerY(b.c, b.r).toFloat()
@@ -553,6 +564,16 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             if (!inView(x, y, 8f)) continue
             if (decorKey(c, r) == decorBad && decorBadTime > 0) g.sprite("tiles/cursor_bad", x, y)
             else if (decorFree(c, r)) g.sprite("tiles/cursor_ok", x, y, a)
+        }
+    }
+
+    /** A tap on an animal: collect its product (and pet it), else pet it, else open the pasture. */
+    private fun tapAnimal(i: Int) {
+        val a = world.ranch.animals.getOrNull(i) ?: return
+        when {
+            a.product -> world.collectProduct(i)
+            !world.pettedToday(a) -> world.petAnimal(i)
+            else -> chrome.open(Chrome.Panel.PASTURE)
         }
     }
 
@@ -791,6 +812,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     }
 
     override fun onWorldTap(wx: Float, wy: Float): Boolean {
+        if (decorPlacing == null && placing == null) herd.at(wx, wy).takeIf { it >= 0 }?.let { i -> tapAnimal(i); return true }
         decorPlacing?.let { id ->
             val t = IntArray(2).also { Iso.pick(wx, wy, it) }
             val k = decorKey(t[0], t[1])
@@ -920,6 +942,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             return
         }
         if (FarmMap.inOrchard(c, r)) { chrome.open(Chrome.Panel.ORCHARD); return }
+        if (FarmMap.inPasture(c, r)) { chrome.open(Chrome.Panel.PASTURE); return }
         signAt(c, r).takeIf { it >= 0 }?.let { b ->
             if (world.blockOwned(b)) chrome.open(Chrome.Panel.FIELD, b.toString()) else chrome.offerBlock(b)
             return
@@ -992,6 +1015,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             "tonics" -> { chrome.open(Chrome.Panel.WORKBENCH); chrome.panels.benchTab = 2 }
             "goals" -> chrome.open(Chrome.Panel.GOALS); "gift" -> chrome.open(Chrome.Panel.GIFT); "merchant" -> chrome.open(Chrome.Panel.MERCHANT); "cart" -> chrome.open(Chrome.Panel.CART); "pet" -> chrome.open(Chrome.Panel.PET); "decor" -> chrome.open(Chrome.Panel.DECOR); "pet_info" -> chrome.open(Chrome.Panel.PET_INFO)
             "orchard" -> chrome.open(Chrome.Panel.ORCHARD)
+            "pasture" -> chrome.open(Chrome.Panel.PASTURE)
             else -> if (name.startsWith("orchard:")) chrome.open(Chrome.Panel.ORCHARD, name.removePrefix("orchard:"))
             else if (name.startsWith("machine:")) chrome.open(Chrome.Panel.MACHINE, name.removePrefix("machine:"))
             else if (name.startsWith("build:")) chrome.open(Chrome.Panel.BUILD, name.removePrefix("build:"))
@@ -1113,6 +1137,12 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
                 val (c, r) = FarmMap.ORCHARD_TREES[e.spot]
                 game.sfx.play("pickup"); fx.burst("fx/leaf", Iso.x(c, r).toFloat(), Iso.centerY(c, r) - 10f, 8, speed = 50f)
             }
+            is WorldEvent.ProductCollected -> if (!e.byHand) herd.head(e.index)?.let { (x, y) ->
+                game.sfx.play("harvest"); game.haptics.tick()
+                fx.floatText("+1", x, y - 12, Gfx.WHITE, icon = "items/${e.item}")
+                e.quality.icon?.let { fx.rise(it, x + 8, y - 6) }
+            }
+            is WorldEvent.AnimalPetted -> herd.head(e.index)?.let { (x, y) -> game.sfx.play("collect"); fx.rise("fx/heart", x, y) }
             is WorldEvent.FruitPicked -> {
                 val (c, r) = FarmMap.ORCHARD_TREES[e.spot]
                 val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()
@@ -1144,6 +1174,8 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
 
     companion object {
         const val MAP = FarmMap.SIZE
+        /** Tiles of forest painted (and planted) beyond the map on every side. */
+        const val EDGE = 4
         /** Greenhouse plots sit in a 4x3 block west of the farmstead. */
         val GH_C0 = FarmMap.GREENHOUSE.first
         val GH_R0 = FarmMap.GREENHOUSE.second

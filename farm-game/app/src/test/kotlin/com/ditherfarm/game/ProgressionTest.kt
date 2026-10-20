@@ -95,6 +95,8 @@ class ProgressionTest {
             offer("golden_acorn", 20)
             // Orchard trees (round 6).
             FRUIT_TREES.values.forEach { offer(it.fruit, it.unlockLevel) }
+            // Farm animals (round 6).
+            AnimalKind.entries.forEach { offer(it.product, it.unlockLevel) }
         } while (changed)
         // Never a source: nothing to fix if unused.
         zoneLevel.size

@@ -57,6 +57,21 @@ import com.ditherfarm.game.treeMature
 import com.ditherfarm.game.treeStatus
 import com.ditherfarm.game.pickFruit
 import com.ditherfarm.game.digUpTree
+import com.ditherfarm.game.AnimalKind
+import com.ditherfarm.game.MAX_HEARTS
+import com.ditherfarm.game.TROUGH_MAX
+import com.ditherfarm.game.RANCH_HAND_COST
+import com.ditherfarm.game.RANCH_HAND_LEVEL
+import com.ditherfarm.game.ranch
+import com.ditherfarm.game.dailyFeed
+import com.ditherfarm.game.troughBlocker
+import com.ditherfarm.game.fillTrough
+import com.ditherfarm.game.animalCount
+import com.ditherfarm.game.animalBlocker
+import com.ditherfarm.game.buyAnimal
+import com.ditherfarm.game.ranchHandBlocker
+import com.ditherfarm.game.hireRanchHand
+import com.ditherfarm.game.ANIMAL_LEVEL
 import com.ditherfarm.game.festivalItems
 import com.ditherfarm.game.festivalProgress
 import com.ditherfarm.game.giftFor
@@ -446,7 +461,13 @@ class Panels(private val game: Game, private val hud: Hud) {
     fun levelUp(level: Int, coins: Int): Boolean {
         val unlocks = world.data.crops.values.filter { it.unlockLevel == level }.map { it.id }
         // Round 6: the orchard and each fruit tree announce themselves.
-        val news = if (level == ORCHARD_LEVEL) "NEW: THE ORCHARD!" else FRUIT_TREES.values.firstOrNull { it.unlockLevel == level }?.let { "NEW: ${it.name.uppercase()}" }
+        val news = when (level) {
+            ORCHARD_LEVEL -> "NEW: THE ORCHARD!"
+            ANIMAL_LEVEL -> "NEW: FARM ANIMALS!"
+            RANCH_HAND_LEVEL -> "NEW: RANCH HAND"
+            else -> FRUIT_TREES.values.firstOrNull { it.unlockLevel == level }?.let { "NEW: ${it.name.uppercase()}" }
+                ?: AnimalKind.entries.firstOrNull { it.unlockLevel == level }?.let { "NEW: ${it.label.uppercase()}S" }
+        }
         val ph = 102 + (if (unlocks.isEmpty()) 0 else 24) + (if (news == null) 0 else 12)
         val pw = 200
         val w = game.engine.w
@@ -1085,6 +1106,66 @@ class Panels(private val game: Game, private val hud: Hud) {
             val ok = wearing || world.accessoryBlocker(a.id) == null
             if (ui.button("acc-${a.id}", x + pw - 58, ry + 3, 48, 14, label, style = if (ok) "green" else "grey")) {
                 if (wearing) world.wearAccessory(null) else world.accessoryBlocker(a.id)?.let { hud.toast(it) } ?: world.wearAccessory(a.id)
+            }
+        }
+        return true
+    }
+
+    // ------------------------------------------------------------------ pasture
+    /** The pasture (round 6): the trough, buying animals, each animal's hearts and the Ranch hand. */
+    fun pasture(): Boolean {
+        val r = world.ranch
+        val (x, y, pw, ph) = frame("PASTURE", 292).toList()
+        if (closeButton(x, y, pw)) return false
+        // Trough.
+        g.slice9("ui/slot", x + 10, y + 22, x + 34, y + 46, 4)
+        g.sprite("deco/trough", (x + 22).toFloat(), (y + 40).toFloat())
+        g.text("TROUGH ${r.feed}/$TROUGH_MAX", x + 40, y + 24, Gfx.INK, outline = 0, shadow = false)
+        val eat = world.dailyFeed()
+        g.text(if (eat == 0) "WHEAT 1 FEED, CORN 2" else "THEY EAT $eat A DAY", x + 40, y + 35, if (eat > r.feed) Gfx.RED else Gfx.GREY, outline = 0, shadow = false)
+        listOf("wheat" to 10, "corn" to 5).forEachIndexed { i, (crop, n) ->
+            val bx = x + pw - 104 + i * 50
+            val why = world.troughBlocker(crop)
+            if (ui.button("feed-$crop", bx, y + 26, 46, 16, "+$n", "items/$crop", style = if (why == null) "green" else "grey")) {
+                if (why != null) hud.toast(why) else world.fillTrough(crop, n)
+            }
+        }
+        // Buying.
+        AnimalKind.entries.forEachIndexed { i, k ->
+            val ry = y + 54 + i * 30
+            g.slice9("ui/slot", x + 10, ry, x + 36, ry + 26, 4)
+            g.sprite("animals/${k.id}_0", (x + 23).toFloat(), (ry + 21).toFloat())
+            g.text("${k.label.uppercase()}  ${world.animalCount(k)}/${k.max}", x + 42, ry + 3, Gfx.INK, outline = 0, shadow = false)
+            g.sprite("items/${k.product}", (x + 47).toFloat(), (ry + 18).toFloat())
+            g.text(if (k.everyDays == 1) "EVERY DAY, EATS ${k.eats}" else "EVERY ${k.everyDays} DAYS, EATS ${k.eats}", x + 55, ry + 14, Gfx.GREY, outline = 0, shadow = false)
+            val why = world.animalBlocker(k)
+            val label = if (world.level < k.unlockLevel) "L${k.unlockLevel}" else "${k.price}"
+            if (ui.button("buy-${k.id}", x + pw - 66, ry + 5, 56, 16, label, if (world.level < k.unlockLevel) null else "icons/coin", style = if (why == null) "green" else "grey")) {
+                if (why != null) hud.toast(why) else world.buyAnimal(k)
+            }
+        }
+        // Your animals: hearts, and a ready product.
+        val gy = y + 148
+        g.text(if (r.animals.isEmpty()) "NO ANIMALS YET" else "YOUR ANIMALS (TAP ONE TO PET IT)", x + 10, gy, Gfx.GREY, outline = 0, shadow = false)
+        val cw = (pw - 20) / 4
+        r.animals.forEachIndexed { i, a ->
+            val cx = x + 10 + (i % 4) * cw
+            val cy = gy + 12 + (i / 4) * 36
+            g.slice9("ui/slot", cx, cy, cx + cw - 4, cy + 32, 4)
+            val art = if (a.kind == AnimalKind.SHEEP && !a.product) "animals/sheep_shorn_0" else "animals/${a.kind.id}_0"
+            g.sprite(art, (cx + 14).toFloat(), (cy + 22).toFloat())
+            if (a.product) g.sprite("items/${a.kind.product}", (cx + cw - 14).toFloat(), (cy + 12).toFloat())
+            for (h in 0 until MAX_HEARTS) g.rect(cx + 4 + h * 6, cy + 26, cx + 8 + h * 6, cy + 29, if (h < a.hearts) Gfx.RED else 0xFFC0CBDC.toInt())
+        }
+        // Ranch hand.
+        val hy = y + ph - 46
+        g.text("RANCH HAND: FILLS THE TROUGH", x + 10, hy, Gfx.INK, outline = 0, shadow = false)
+        g.text("AND COLLECTS EACH MORNING", x + 10, hy + 10, Gfx.INK, outline = 0, shadow = false)
+        g.text(if (r.ranchHand) "HIRED" else RANCH_HAND_COST.entries.joinToString(" ") { (k, v) -> if (k == "coins") "${v}C" else "$v ${world.data.name(k).uppercase()}" }, x + 10, hy + 22, Gfx.GREY, outline = 0, shadow = false)
+        if (!r.ranchHand) {
+            val why = world.ranchHandBlocker()
+            if (ui.button("ranch-hand", x + pw - 66, hy + 2, 56, 18, if (world.level < RANCH_HAND_LEVEL) "L$RANCH_HAND_LEVEL" else "HIRE", style = if (why == null) "gold" else "grey")) {
+                if (why != null) hud.toast(why) else world.hireRanchHand()
             }
         }
         return true

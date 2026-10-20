@@ -53,7 +53,7 @@ object FarmMap {
 
     /** Fenced pasture kept for animals. */
     val PASTURE_C = 32..37
-    val PASTURE_R = 12..16
+    val PASTURE_R = 13..16
 
     /** Orchard by the village, between Fields C and E (round 6): fenced, two rows of four trees. */
     val ORCHARD_C = 17..21

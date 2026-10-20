@@ -171,6 +171,7 @@ fun World.obtainableNow(): Set<String> {
         }
     }
     got += orchardFruitNow()
+    got += animalProductsNow()
     // Quarry and the floors already reached, with nodes the pickaxe can break.
     val pick = toolTier(Tool.PICKAXE)
     val nodes = HashSet<String>()

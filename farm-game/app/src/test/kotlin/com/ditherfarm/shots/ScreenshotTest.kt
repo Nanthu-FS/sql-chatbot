@@ -6,6 +6,11 @@ import com.ditherfarm.Game
 import com.ditherfarm.Host
 import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
+import com.ditherfarm.game.ranch
+import com.ditherfarm.game.collectProduct
+import com.ditherfarm.game.fillTrough
+import com.ditherfarm.game.buyAnimal
+import com.ditherfarm.game.AnimalKind
 import com.ditherfarm.game.digUpTree
 import com.ditherfarm.game.plantOrchardTree
 import com.ditherfarm.game.buyOrchard
@@ -568,6 +573,29 @@ class ScreenshotTest {
             w.events.clear()
             g.farm.centerOnTile(19, 33)
         }, zoom = 2)
+    }
+
+    @Test fun pasture() {
+        render("farm_pasture", seconds = 1.5f, setup = { g ->
+            toLevel(g, 16); g.world.state.coins += 20_000
+            val w = g.world
+            w.state.pet.offered = true
+            w.add("wheat", 50)
+            listOf(AnimalKind.HEN, AnimalKind.HEN, AnimalKind.HEN, AnimalKind.SHEEP, AnimalKind.SHEEP, AnimalKind.COW).forEach { w.buyAnimal(it) }
+            w.fillTrough("wheat", 40)
+            w.advance(com.ditherfarm.game.Time.REAL_SECONDS_PER_DAY)
+            w.collectProduct(4)
+            w.events.clear()
+            g.farm.centerOnTile(34, 14)
+        }, zoom = 2)
+        render("panel_pasture", setup = { g ->
+            toLevel(g, 12); g.world.state.coins += 5000; g.world.add("wheat", 30)
+            listOf(AnimalKind.HEN, AnimalKind.HEN, AnimalKind.SHEEP).forEach { g.world.buyAnimal(it) }
+            g.world.fillTrough("wheat", 10)
+            g.world.ranch.animals[0].hearts = 3; g.world.ranch.animals[0].product = true
+            g.world.events.clear()
+            g.farm.showPanel("pasture")
+        })
     }
 
     @Test fun orchardPanels() {
