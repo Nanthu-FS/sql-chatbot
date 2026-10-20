@@ -69,7 +69,7 @@ class StoreShotsTest {
         game.engine.resize(w, h)
         game.engine.screen?.enter()
         // Scenes are of the game, not the story, unless asked for.
-        val seen = SCENES.map { it.id }
+        val seen = SCENES.map { it.id } + com.ditherfarm.game.ACT2_SCENES.keys
         if (!story) game.world.state.storySeen.addAll(seen)
         setup(game)
         if (!story) game.world.state.storySeen.addAll(seen)

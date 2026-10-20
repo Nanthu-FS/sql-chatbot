@@ -62,7 +62,7 @@ class FrameTimeTest {
     /** Generous: only a runaway regression should trip it. */
     private val ceilingMs = 400.0
 
-    private fun seen(g: Game) = g.world.state.storySeen.addAll(SCENES.map { it.id })
+    private fun seen(g: Game) = g.world.state.storySeen.addAll(SCENES.map { it.id } + com.ditherfarm.game.ACT2_SCENES.keys)
 
     /** Builds the scene with [setup], then times [frames] frames per round. Returns the mean ms/frame. */
     private fun bench(name: String, setup: (Game) -> Unit): Double {

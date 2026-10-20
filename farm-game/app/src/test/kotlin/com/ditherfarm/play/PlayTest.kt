@@ -143,7 +143,7 @@ class PlayTest {
         for (raw in lines) {
             val p = raw.trim().split(Regex("\\s+"))
             when (p[0].lowercase()) {
-                "skipstory" -> { w.state.storySeen.addAll(SCENES.map { it.id }); if (w.state.playerName.isBlank()) w.state.playerName = "Tester"; game.farm.chrome.reset() }
+                "skipstory" -> { w.state.storySeen.addAll(SCENES.map { it.id } + com.ditherfarm.game.ACT2_SCENES.keys); if (w.state.playerName.isBlank()) w.state.playerName = "Tester"; game.farm.chrome.reset() }
                 "level" -> w.gainXp(w.data.level(p[1].toInt()).totalXp - w.state.xp)
                 "coins" -> w.state.coins += p[1].toInt()
                 "item" -> w.add(p[1], p[2].toInt())

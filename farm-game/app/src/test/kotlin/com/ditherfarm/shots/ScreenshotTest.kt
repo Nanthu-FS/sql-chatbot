@@ -92,7 +92,7 @@ class ScreenshotTest {
         game.engine.resize(w, h)
         game.engine.screen?.enter()
         // Shots are of the game, not the story, unless asked for.
-        val seen = com.ditherfarm.game.SCENES.map { it.id }
+        val seen = com.ditherfarm.game.SCENES.map { it.id } + com.ditherfarm.game.ACT2_SCENES.keys
         if (!story) game.world.state.storySeen.addAll(seen)
         setup(game)
         if (!story) game.world.state.storySeen.addAll(seen)

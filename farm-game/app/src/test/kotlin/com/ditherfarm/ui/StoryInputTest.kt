@@ -75,7 +75,7 @@ class StoryInputTest {
 
     /** A game past its opening, on the farm with nothing open. */
     private fun playing(): Game = newGame().also { g ->
-        g.world.state.storySeen.addAll(SCENES.map { it.id })
+        g.world.state.storySeen.addAll(SCENES.map { it.id } + com.ditherfarm.game.ACT2_SCENES.keys)
         g.farm.chrome.reset()
         frames(g, 2)
         assertEquals(Chrome.Panel.NONE, g.farm.chrome.panel)

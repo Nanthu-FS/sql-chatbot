@@ -52,7 +52,7 @@ class TouchPlayTest {
     private fun start(): Pair<Game, TestTouch> {
         val g = Game(TestHost())
         g.engine.resize(270, 480)
-        g.world.state.storySeen.addAll(SCENES.map { it.id })
+        g.world.state.storySeen.addAll(SCENES.map { it.id } + com.ditherfarm.game.ACT2_SCENES.keys)
         g.world.state.tips.addAll(listOf("harvest", "plant", "water"))
         g.engine.screen?.enter()
         val t = TestTouch(g, canvas)
@@ -96,7 +96,7 @@ class TouchPlayTest {
         g.world.state.pet.offered = true
         g.world.events.clear()
         t.frames(3)
-        while (f.chrome.isOpen) { f.chrome.close(); t.frames(2) }
+        repeat(5) { if (f.chrome.isOpen) { f.chrome.close(); t.frames(2) } }
         for (tile in listOf(FarmMap.ORCHARD_SIGN, 19 to 33, 18 to 30)) {
             f.centerOnTile(tile.first, tile.second)
             t.frames(3)
