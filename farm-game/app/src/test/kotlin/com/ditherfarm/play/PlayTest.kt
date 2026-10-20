@@ -10,6 +10,10 @@ import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
 import com.ditherfarm.game.QUESTS
 import com.ditherfarm.game.SCENES
+import com.ditherfarm.game.adoptPet
+import com.ditherfarm.game.finishScene
+import com.ditherfarm.game.befriend
+import com.ditherfarm.game.enterFloor
 import com.ditherfarm.game.startQuest
 import com.ditherfarm.shots.ScreenshotTest
 import com.ditherfarm.ui.Chrome
@@ -50,6 +54,11 @@ import java.io.File
  *       quest ID             Grandpa's notebook is at step ID
  *       tool NAME TIER       the tool (pickaxe, axe, hoe, rod...) is at that tier
  *       mine STOP            the mine is repaired, its gates open and the elevator reaches STOP
+ *       floor N              start on mine floor N (after "mine")
+ *       time H               the clock reads hour H today (daytime for villagers, say 10)
+ *       hearts ID N          N friendship points with villager ID
+ *       act2 N               Story Act 2 is at chapter N, with this week's contest running
+ *       pet KIND             a dog or cat is already adopted
  *  3. saves the farm and writes <dir>/shots/turn_NNN.png (2x), turn_NNN_grid.png (the same with a
  *     30-pixel coordinate grid) and <dir>/state.txt (what is on screen and in the farm).
  */
@@ -149,6 +158,15 @@ class PlayTest {
                 "item" -> w.add(p[1], p[2].toInt())
                 "quest" -> w.startQuest(QUESTS.indexOfFirst { it.id == p[1] }.coerceAtLeast(0))
                 "tool" -> w.state.tools[p[1]] = p[2].toInt()
+                "floor" -> { w.enterFloor(p[1].toInt()); game.goTo(Nav.MINE); game.engine.screen?.enter() }
+                "time" -> w.state.minutes = w.time.dayIndex * 1440.0 + p[1].toDouble() * 60
+                "hearts" -> w.befriend(p[1], p[2].toInt())
+                "act2" -> {
+                    w.state.storySeen += "finale"
+                    w.state.storySeen.removeAll(com.ditherfarm.game.ACT2_SCENES.keys)
+                    (1..p[1].toInt()).forEach { w.finishScene("act2_$it") }
+                }
+                "pet" -> { w.gainXp(maxOf(0, w.data.level(com.ditherfarm.game.PET_LEVEL).totalXp - w.state.xp)); w.adoptPet(com.ditherfarm.game.PetKind.valueOf(p[1].uppercase()), "") }
                 "mine" -> w.state.mine.apply {
                     val stop = p[1].toInt()
                     repaired = true; gatesOpened += (10..stop step 10); deepestStop = stop; deepestFloor = stop
