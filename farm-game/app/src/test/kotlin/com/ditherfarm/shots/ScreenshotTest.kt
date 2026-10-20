@@ -844,6 +844,39 @@ class ScreenshotTest {
         }
     }
 
+    /** Frames for an animated preview of the intro and a stamp (only with -Dframes.out). */
+    @Test fun previewFrames() {
+        val out = System.getProperty("frames.out") ?: return
+        File(out).mkdirs()
+        val bmp = Bitmap.createBitmap(270, 585, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        fun run(prefix: String, seconds: Float, every: Int, setup: (Game) -> Unit) {
+            val game = Game(TestHost())
+            game.engine.resize(270, 585)
+            game.engine.screen?.enter()
+            setup(game)
+            var now = 1_000L
+            var f = 0
+            var k = 0
+            while (f * (1f / 30f) < seconds) {
+                canvas.drawColor(0xFF181425.toInt())
+                game.engine.frame(1f / 30f, canvas, now)
+                now += 33
+                if (f % every == 0) File(out, "${prefix}_%04d.png".format(k++)).outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
+                f++
+            }
+        }
+        run("intro", 11f, 2) { g -> g.engine.start(com.ditherfarm.ui.IntroScreen(g) {}) }
+        val lines = com.ditherfarm.game.SCENES.first { it.id == "opening" }.lines
+        val stamp = lines.indexOfFirst { it.cue == com.ditherfarm.game.Cue.STAMP }
+        run("stamp", 1.6f, 1) { g ->
+            g.world.setPlayer(2, "Rosa")
+            g.farm.chrome.replayOpening()
+            g.farm.chrome.story.showLine(stamp - 1, 0f)
+            g.farm.chrome.story.showLine(stamp, 0f)
+        }
+    }
+
     /** Grandpa's letters (round 7): the envelope on the farm, one opening, one read in full. */
     @Test fun letters() {
         render("letter_chip", seconds = 0.5f, setup = { g -> g.world.state.bump("harvested") })

@@ -38,6 +38,7 @@ tasks.test {
     // gradle test -Pplay=<dir> --tests '*PlayTest*' plays one turn of the game from <dir> (see PlayTest).
     (project.findProperty("play") as String?)?.let { systemProperty("play.dir", it); outputs.upToDateWhen { false } }
     if (project.hasProperty("shots")) systemProperty("shots.out", (project.findProperty("shotsOut") as String?) ?: layout.buildDirectory.dir("shots").get().asFile.absolutePath)
+    if (project.hasProperty("frames")) systemProperty("frames.out", project.findProperty("frames") as String)
     testLogging {
         events("failed")
         exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
