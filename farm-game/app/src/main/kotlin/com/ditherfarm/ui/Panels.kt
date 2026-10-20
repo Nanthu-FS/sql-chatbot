@@ -312,7 +312,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             Quality.of(k).icon?.let { g.sprite(it, (sx + 7).toFloat(), (sy + 7).toFloat()) }
         }
         c.restore()
-        if (keys.isEmpty()) g.text("EMPTY", x + pw / 2, gridY + 20, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        if (keys.isEmpty()) g.text("EMPTY", x + pw / 2, gridY + 20, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         selected?.let { k -> if (world.count(k) > 0) itemActions(k, x, y + ph - 60, pw) else selected = null }
         return true
     }
@@ -336,7 +336,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.text("$unit", x + 60, y + 18, Gfx.INK, outline = 0, shadow = false)
             val trend = world.trend(baseId(key))
             if (trend != 0) g.sprite(if (trend > 0) "ui/arrow_up" else "ui/arrow_down", (x + 64 + g.textWidth("$unit")).toFloat(), (y + 22).toFloat())
-            g.text("${world.percentOfBase(baseId(key))}%", x + 74 + g.textWidth("$unit"), y + 18, Gfx.GREY, outline = 0, shadow = false)
+            g.text("${world.percentOfBase(baseId(key))}%", x + 74 + g.textWidth("$unit"), y + 18, Gfx.MUTED, outline = 0, shadow = false)
         }
         var bx = x + pw - 10
         val have = world.count(key)
@@ -377,7 +377,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val maxH = game.engine.h - game.engine.safeTop - game.engine.safeBottom - hud.topHeight - hud.bottomHeight - 12
         val (x, y, pw, ph) = frame("MARKET", maxH).toList()
         if (closeButton(x, y, pw)) return false
-        g.text("PRICES CHANGE DAILY", x + 10, y + 20, Gfx.GREY, outline = 0, shadow = false)
+        g.text("PRICES CHANGE DAILY", x + 10, y + 20, Gfx.MUTED, outline = 0, shadow = false)
         val keys = world.state.inventory.keys.filter { world.unitPrice(it) > 0 }.sortedByDescending { world.unitPrice(it) * world.count(it) }
         val rowH = 24
         val listY = y + 34
@@ -402,7 +402,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             }
         }
         c.restore()
-        if (keys.isEmpty()) g.text("NOTHING TO SELL", x + pw / 2, listY + 20, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        if (keys.isEmpty()) g.text("NOTHING TO SELL", x + pw / 2, listY + 20, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         val total = keys.filter { world.data.item(baseId(it)).storage == Storage.SILO }.sumOf { world.quoteSale(it, world.count(it)) }
         if (total > 0 && ui.button("sell-crops", x + 10, y + ph - 24, pw - 20, 18, "SELL ALL CROPS  ${total}c", style = "green")) {
             keys.filter { world.data.item(baseId(it)).storage == Storage.SILO }.forEach { world.sell(it, world.count(it)) }
@@ -424,7 +424,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             val o = s.order
             if (o == null) {
                 val left = Time.gameMinutesToRealSeconds((s.nextAt - world.state.minutes).coerceAtLeast(0.0)).toInt()
-                g.text(if (left > 0) "NEXT ORDER IN %d:%02d".format(left / 60, left % 60) else "WAITING FOR A VILLAGER", x + pw / 2, cy + cardH / 2 - 4, Gfx.GREY, align = 0, outline = 0, shadow = false)
+                g.text(if (left > 0) "NEXT ORDER IN %d:%02d".format(left / 60, left % 60) else "WAITING FOR A VILLAGER", x + pw / 2, cy + cardH / 2 - 4, Gfx.MUTED, align = 0, outline = 0, shadow = false)
                 return@forEachIndexed
             }
             val v = world.data.villagers.firstOrNull { it.id == o.villager }
@@ -486,8 +486,8 @@ class Panels(private val game: Game, private val hud: Hud) {
         }
         if (ui.button("story", x + 10, by + 48, pw - 20, 18, "STORY: WATCH THE OPENING", "icons/book", "wood")) { onStory?.invoke(); return true }
         if (ui.button("decorate", x + 10, by + 72, pw - 20, 18, "DECORATE YOUR FARM", "icons/heart", "gold")) { onDecorShop?.invoke(); return true }
-        g.text("DITHER FARM 0.1", x + pw / 2, y + ph - 30, Gfx.GREY, align = 0, outline = 0, shadow = false)
-        g.text("FONT SILKSCREEN (OFL) - ENDESGA 32", x + pw / 2, y + ph - 19, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        g.text("DITHER FARM 0.1", x + pw / 2, y + ph - 30, Gfx.MUTED, align = 0, outline = 0, shadow = false)
+        g.text("FONT SILKSCREEN (OFL) - ENDESGA 32", x + pw / 2, y + ph - 19, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         return true
     }
 
@@ -607,7 +607,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         }
         val mins = r.minutes * n
         val time = when { mins < 1 -> "${(mins * 60).toInt()}S"; mins < 60 -> "${mins.toInt()}M"; else -> "${(mins / 60).toInt()}H${(mins % 60).toInt()}M" }
-        g.text(time, x + w - 62, y + 4, Gfx.GREY, outline = 0, shadow = false)
+        g.text(time, x + w - 62, y + 4, Gfx.MUTED, outline = 0, shadow = false)
         val blocker = world.recipeBlocker(r, n)
         val text = when { locked -> "LV ${r.unlockLevel}"; n > 1 -> "$label x$n"; else -> label }
         val clicked = ui.button("make-${r.id}", x + w - 56, y + 15, 50, 15, text, style = if (blocker == null) "green" else "grey")
@@ -637,7 +637,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.text("%d:%02d".format(s / 60, s % 60), qx, y + 12, Gfx.INK, outline = 0, shadow = false)
             if (ui.button("cancel", x + w - 60, y + 3, 16, 16, null, "ui/x", "red")) { if (world.cancelLast(id)) game.sfx.play("close") }
         } else {
-            g.text("IDLE", qx, y + 7, Gfx.GREY, outline = 0, shadow = false)
+            g.text("IDLE", qx, y + 7, Gfx.MUTED, outline = 0, shadow = false)
         }
         val ready = world.trayCount(id)
         if (ui.button("collect", x + w - 40, y + 3, 40, 16, if (ready > 0) "x$ready" else "-", style = if (ready > 0) "gold" else "grey")) {
@@ -727,10 +727,10 @@ class Panels(private val game: Game, private val hud: Hud) {
                     g.slice9("ui/slot", x + 8, ry, x + pw - 12, ry + 34, 4)
                     g.sprite(toolIcon(tool.name.lowercase()), (x + 20).toFloat(), (ry + 12).toFloat())
                     g.text("NEXT ${tool.label.uppercase()}: AT THE BLACKSMITH", x + 32, ry + 6, Gfx.INK, outline = 0, shadow = false)
-                    g.text(if (world.villageTier >= 1) "IN THE VILLAGE" else "OPENS WITH THE STONE VILLAGE", x + 32, ry + 18, Gfx.GREY, outline = 0, shadow = false)
+                    g.text(if (world.villageTier >= 1) "IN THE VILLAGE" else "OPENS WITH THE STONE VILLAGE", x + 32, ry + 18, Gfx.MUTED, outline = 0, shadow = false)
                 } else {
                     recipeRow(next, x + 8, ry, pw - 20, "UPGRADE")
-                    g.text(world.data.tools.names[world.toolTier(tool)].uppercase(), x + 8 + pw - 20 - 104, ry + 4, Gfx.GREY, outline = 0, shadow = false)
+                    g.text(world.data.tools.names[world.toolTier(tool)].uppercase(), x + 8 + pw - 20 - 104, ry + 4, Gfx.MUTED, outline = 0, shadow = false)
                 }
             }
             // The fishing rod (round 6): made once, here.
@@ -824,8 +824,8 @@ class Panels(private val game: Game, private val hud: Hud) {
     fun relics(): Boolean {
         val (x, y, pw, ph) = frame("RELICS ${world.relicsFound}/${RELICS.size}", 236).toList()
         if (closeButton(x, y, pw)) return false
-        g.text("FROM RELIC ROCKS AND TREASURE", x + 10, y + 22, Gfx.GREY, outline = 0, shadow = false)
-        g.text("ROOMS BELOW FLOOR 40", x + 10, y + 32, Gfx.GREY, outline = 0, shadow = false)
+        g.text("FROM RELIC ROCKS AND TREASURE", x + 10, y + 22, Gfx.MUTED, outline = 0, shadow = false)
+        g.text("ROOMS BELOW FLOOR 40", x + 10, y + 32, Gfx.MUTED, outline = 0, shadow = false)
         val cw = (pw - 20) / 4
         RELICS.entries.forEachIndexed { i, (id, name) ->
             val cx = x + 10 + (i % 4) * cw
@@ -835,7 +835,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (found) g.spriteScaled("relics/$id", (cx + cw / 2).toFloat(), (cy + 22).toFloat(), 2f, 2f)
             else g.text("?", cx + cw / 2, cy + 18, Gfx.GREY, align = 0)
             val words = (if (found) name else if (id == GOLEM_RELIC) "THE GOLEM" else "???").uppercase().split(" ")
-            words.take(2).forEachIndexed { k, w -> g.text(w, cx + cw / 2, cy + 47 + k * 9, if (found) Gfx.INK else Gfx.GREY, align = 0, outline = 0, shadow = false) }
+            words.take(2).forEachIndexed { k, w -> g.text(w, cx + cw / 2, cy + 47 + k * 9, if (found) Gfx.INK else Gfx.MUTED, align = 0, outline = 0, shadow = false) }
         }
         val why = world.relicRewardBlocker()
         val label = if (world.state.relicsClaimed) "SET COMPLETE!" else "ALL 8: ${RELIC_REWARD["coins"]} COINS + PRISMATIC"
@@ -854,8 +854,8 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.text("NEXT RUN IN %d:%02d".format(secs / 60, secs % 60), x + 10, y + 24, Gfx.INK, outline = 0, shadow = false)
         g.text(if (hut) "TRAY: ${world.trayCount(id)}/${world.hutCap()}" else "TRAY: ${world.trayCount(id)}", x + 10, y + 35, Gfx.INK, outline = 0, shadow = false)
         val trees = when (world.hutTier()) { 1 -> "PINE, BIRCH"; 2 -> "PINE, BIRCH, OAK"; else -> "PINE, BIRCH, OAK, MAPLE" }
-        g.text(if (hut) "FELLS $trees" else "CLEARS STUMPS, PLANTS SEEDS", x + 10, y + 48, Gfx.GREY, outline = 0, shadow = false)
-        g.text(if (hut) "NEVER TOUCHES ANCIENT OR HIVE TREES" else "USES TREE SEEDS FROM THE BARN", x + 10, y + 60, Gfx.GREY, outline = 0, shadow = false)
+        g.text(if (hut) "FELLS $trees" else "CLEARS STUMPS, PLANTS SEEDS", x + 10, y + 48, Gfx.MUTED, outline = 0, shadow = false)
+        g.text(if (hut) "NEVER TOUCHES ANCIENT OR HIVE TREES" else "USES TREE SEEDS FROM THE BARN", x + 10, y + 60, Gfx.MUTED, outline = 0, shadow = false)
         if (world.trayCount(id) > 0 && ui.button("shed-collect", x + pw - 70, y + 30, 60, 16, "COLLECT", style = "gold")) world.collect(id)
         return true
     }
@@ -872,7 +872,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val (x, y, pw, ph) = frame("GOALS", maxPanelH).toList()
         if (closeButton(x, y, pw)) return false
         // Story Act 2: the Vexmoor Cup opens from here once it has begun.
-        if (world.act2.chapter >= 1 && ui.button("cup", x + pw - 76, y + 4, 50, 14, "CUP", "icons/trophy", style = "gold")) { onContest?.invoke(); return false }
+        if (world.act2.chapter >= 1 && ui.button("cup", x + pw - 76, y + 4, 50, 14, "CUP", "icons/trophy", style = "gold")) { onContest?.invoke(); return true }
         goalsTab = ui.tabs("goal-tabs", x + 8, y + 22, pw - 16, listOf("DAILY", "GOALS", "BOOK", "EVENTS"), goalsTab)
         val top = y + 42
         when (goalsTab) {
@@ -904,7 +904,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.sprite("icons/trophy", (x + 18).toFloat(), (ry + 12).toFloat(), if (done || world.claimable(a)) 255 else 110)
             val title = a.name.uppercase() + if (a.tiers.size > 1) " " + roman(shown + 1) else ""
             g.text(title, x + 30, ry + 3, Gfx.INK, outline = 0, shadow = false)
-            g.text(a.desc.uppercase().take(30), x + 30, ry + 13, Gfx.GREY, outline = 0, shadow = false)
+            g.text(a.desc.uppercase().take(30), x + 30, ry + 13, Gfx.MUTED, outline = 0, shadow = false)
             val target = world.target(a, shown)
             val have = minOf(world.metric(a.metric), target)
             val bw = pw - 110
@@ -948,13 +948,13 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (ui.slot("entry-$e", sx, sy, if (found) entryIcon(e) else null, -1, false, 20) && found) {
                 hud.toast(if (e.startsWith("villager:")) world.data.villagers.firstOrNull { "villager:${it.id}" == e }?.name ?: e else world.data.name(e))
             }
-            if (!found) g.text("?", sx + 10, sy + 6, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            if (!found) g.text("?", sx + 10, sy + 6, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         }
         val by = top + h - 40
         g.text("PAGE REWARD: ${p.bonusText.uppercase()}", x + pw / 2, by, Gfx.INK, align = 0, outline = 0, shadow = false)
         g.text("+${Ui.compact(p.coins)} COINS", x + pw / 2, by + 10, 0xFF3E8948.toInt(), align = 0, outline = 0, shadow = false)
         when {
-            p.id in world.state.pagesClaimed -> g.text("CLAIMED", x + pw / 2, by + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            p.id in world.state.pagesClaimed -> g.text("CLAIMED", x + pw / 2, by + 24, Gfx.MUTED, align = 0, outline = 0, shadow = false)
             world.pageClaimable(p) -> if (ui.button("claim-page", x + pw / 2 - 30, by + 20, 60, 16, "CLAIM", style = "gold")) world.claimPage(p.id)
             else -> {}
         }
@@ -971,7 +971,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         y += 12
         val chores = world.state.chores
         if (world.level < CHORES_LEVEL || chores.isEmpty()) {
-            g.text("CHORES START AT LEVEL $CHORES_LEVEL", x + pw / 2, y + 8, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            g.text("CHORES START AT LEVEL $CHORES_LEVEL", x + pw / 2, y + 8, Gfx.MUTED, align = 0, outline = 0, shadow = false)
             y += 26
         } else {
             val (coins, _) = world.choreReward()
@@ -1004,14 +1004,14 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.text("TRUCK CONTRACT", x + 10, y, Gfx.INK, outline = 0, shadow = false)
         val c = world.state.contract
         if (c == null) {
-            g.text("HIRE A FARMHAND TO TAKE CONTRACTS", x + pw / 2, y + 18, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            g.text("HIRE A FARMHAND TO TAKE CONTRACTS", x + pw / 2, y + 18, Gfx.MUTED, align = 0, outline = 0, shadow = false)
             return
         }
         val done = world.contractDone(c)
         val left = contractDaysLeft(today)
         g.text(if (c.claimed) "NEXT ONE MONDAY" else "$left DAY${if (left > 1) "S" else ""} LEFT", x + pw - (if (c.claimed || done) 10 else 28), y, 0xFF68386C.toInt(), align = 1, outline = 0, shadow = false)
         if (!c.claimed && !done) pinToggle("contract:${c.week}", x + pw - 16, y + 3)
-        g.text("SHIP BY TRUCK THIS WEEK:", x + 10, y + 11, Gfx.GREY, outline = 0, shadow = false)
+        g.text("SHIP BY TRUCK THIS WEEK:", x + 10, y + 11, Gfx.MUTED, outline = 0, shadow = false)
         y += 22
         val bw = pw - 110
         for ((crop, n) in c.crops) {
@@ -1027,9 +1027,9 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.text("PAYS ${Ui.compact(coins)} COINS, $xp XP, $extra", x + pw / 2, y + 2, green, align = 0, outline = 0, shadow = false)
         y += 14
         when {
-            c.claimed -> g.text("CLAIMED. WELL DONE!", x + pw / 2, y + 4, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            c.claimed -> g.text("CLAIMED. WELL DONE!", x + pw / 2, y + 4, Gfx.MUTED, align = 0, outline = 0, shadow = false)
             done -> if (ui.button("contract-claim", x + pw / 2 - 30, y, 60, 16, "CLAIM", style = "gold")) world.claimContract()
-            else -> g.text("SET FIELDS TO TRUCK, THEN SEND IT", x + pw / 2, y + 4, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            else -> g.text("SET FIELDS TO TRUCK, THEN SEND IT", x + pw / 2, y + 4, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         }
     }
 
@@ -1039,7 +1039,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.sprite("icons/festival", (x + 18).toFloat(), (y + 8).toFloat())
         if (f != null) {
             g.text(f.name.uppercase() + " TODAY!", x + 30, y + 2, Gfx.INK, outline = 0, shadow = false)
-            g.text(f.goal.uppercase(), x + 30, y + 13, Gfx.GREY, outline = 0, shadow = false)
+            g.text(f.goal.uppercase(), x + 30, y + 13, Gfx.MUTED, outline = 0, shadow = false)
             val have = world.festivalProgress()
             ui.bar(x + 30, y + 24, pw - 100, have.toFloat() / f.target, "gold", 6)
             g.text("$have/${f.target}", x + pw - 66, y + 23, Gfx.INK, outline = 0, shadow = false)
@@ -1056,7 +1056,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         } else {
             val next = FESTIVALS.first { it.season == if (world.time.dayOfSeason < FESTIVAL_DAYS.first) world.time.season else Season.entries[(world.time.season.ordinal + 1) % 4] }
             g.text("NEXT FESTIVAL: ${next.name.uppercase()}", x + 30, y + 2, Gfx.INK, outline = 0, shadow = false)
-            g.text("${next.season.label.uppercase()} ${FESTIVAL_DAYS.first}-${FESTIVAL_DAYS.last}: ${next.goal.uppercase()}".take(36), x + 30, y + 13, Gfx.GREY, outline = 0, shadow = false)
+            g.text("${next.season.label.uppercase()} ${FESTIVAL_DAYS.first}-${FESTIVAL_DAYS.last}: ${next.goal.uppercase()}".take(36), x + 30, y + 13, Gfx.MUTED, outline = 0, shadow = false)
             y += 30
         }
         g.rect(x + 8, y, x + pw - 8, y + 1, 0xFFC28569.toInt())
@@ -1068,13 +1068,13 @@ class Panels(private val game: Game, private val hud: Hud) {
             world.merchantHere() -> "HERE TODAY! HIS CART IS BY THE MARKET"
             else -> "NEXT VISIT IN ${6 - world.time.dayIndex % 7} DAYS"
         }
-        g.text(note, x + 30, y + 13, Gfx.GREY, outline = 0, shadow = false)
+        g.text(note, x + 30, y + 13, Gfx.MUTED, outline = 0, shadow = false)
         y += 30
         g.rect(x + 8, y, x + pw - 8, y + 1, 0xFFC28569.toInt())
         y += 6
         g.sprite("icons/gift", (x + 18).toFloat(), (y + 8).toFloat())
         g.text("DAILY GIFT STREAK: ${world.state.giftStreak} DAYS", x + 30, y + 2, Gfx.INK, outline = 0, shadow = false)
-        g.text("COME BACK EVERY DAY. DAY 7 IS BIGGER!", x + 30, y + 13, Gfx.GREY, outline = 0, shadow = false)
+        g.text("COME BACK EVERY DAY. DAY 7 IS BIGGER!", x + 30, y + 13, Gfx.MUTED, outline = 0, shadow = false)
     }
 
     /** The daily login gift popup. */
@@ -1120,7 +1120,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         world.nextBeautyMilestone()?.let { (need, coins) ->
             if (b >= need) {
                 if (ui.button("beauty-claim", x + 10, y + 34, pw - 20, 16, "BEAUTY $need REACHED: CLAIM $coins COINS", style = "gold")) world.claimBeautyMilestone()
-            } else g.text("NEXT: $need BEAUTY PAYS $coins COINS" + if (need == BEST_FARM_BEAUTY) " + BEST FARM" else "", x + 10, y + 38, Gfx.GREY, outline = 0, shadow = false)
+            } else g.text("NEXT: $need BEAUTY PAYS $coins COINS" + if (need == BEST_FARM_BEAUTY) " + BEST FARM" else "", x + 10, y + 38, Gfx.MUTED, outline = 0, shadow = false)
         }
         val cw = (pw - 20) / 2
         all.drop(decorPage * 10).take(10).forEachIndexed { i, d ->
@@ -1139,8 +1139,8 @@ class Panels(private val game: Game, private val hud: Hud) {
             }
             val why = world.decorBlocker(d.id)
             when {
-                world.level < d.unlockLevel -> g.text("LEVEL ${d.unlockLevel}", cx + 36, cy + 24, Gfx.GREY, outline = 0, shadow = false)
-                d.season != null && world.time.season != d.season -> g.text("IN ${d.season.name}", cx + 36, cy + 24, Gfx.GREY, outline = 0, shadow = false)
+                world.level < d.unlockLevel -> g.text("LEVEL ${d.unlockLevel}", cx + 36, cy + 24, Gfx.MUTED, outline = 0, shadow = false)
+                d.season != null && world.time.season != d.season -> g.text("IN ${d.season.name}", cx + 36, cy + 24, Gfx.MUTED, outline = 0, shadow = false)
                 ui.button("decor-${d.id}", cx + cw - 48, cy + 21, 40, 13, if (d.keepsake != null) "PLACE" else "BUY", style = if (why == null) "green" else "grey") ->
                     if (why != null) hud.toast(why) else { onDecor?.invoke(d.id); return false }
             }
@@ -1168,10 +1168,10 @@ class Panels(private val game: Game, private val hud: Hud) {
         world.petLoveToNext()?.let { (have, need) ->
             val from = PET_LEVELS[lv - 1]
             ui.bar(x + 84, y + 36, pw - 98, (have - from).toFloat() / (need - from), "red")
-            g.text("LOVE $have/$need", x + 84, y + 46, Gfx.GREY, outline = 0, shadow = false)
+            g.text("LOVE $have/$need", x + 84, y + 46, Gfx.MUTED, outline = 0, shadow = false)
         } ?: g.text("LOVE: BEST FRIENDS!", x + 84, y + 40, Gfx.RED, outline = 0, shadow = false)
         g.text("GIFTS: UP TO ${3 + (lv - 1) / 2} FINDS", x + 84, y + 60, Gfx.INK, outline = 0, shadow = false)
-        g.text("TAP: GIFT OR FETCH", x + 84, y + 72, Gfx.GREY, outline = 0, shadow = false)
+        g.text("TAP: GIFT OR FETCH", x + 84, y + 72, Gfx.MUTED, outline = 0, shadow = false)
         PET_ACCESSORIES.values.forEachIndexed { i, a ->
             val ry = y + 96 + i * 24
             g.slice9("ui/slot", x + 10, ry, x + 30, ry + 20, 4)
@@ -1179,7 +1179,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.text(a.name.uppercase(), x + 36, ry + 3, Gfx.INK, outline = 0, shadow = false)
             val owned = a.id in p.accessories
             val wearing = p.accessory == a.id
-            g.text(when { wearing -> "WEARING"; owned -> "OWNED"; lv < a.petLevel -> "PET LEVEL ${a.petLevel}"; else -> "${a.price} COINS" }, x + 36, ry + 12, Gfx.GREY, outline = 0, shadow = false)
+            g.text(when { wearing -> "WEARING"; owned -> "OWNED"; lv < a.petLevel -> "PET LEVEL ${a.petLevel}"; else -> "${a.price} COINS" }, x + 36, ry + 12, Gfx.MUTED, outline = 0, shadow = false)
             val label = when { wearing -> "OFF"; owned -> "WEAR"; lv < a.petLevel -> "LV ${a.petLevel}"; else -> "BUY" }
             val ok = wearing || world.accessoryBlocker(a.id) == null
             if (ui.button("acc-${a.id}", x + pw - 58, ry + 3, 48, 14, label, style = if (ok) "green" else "grey")) {
@@ -1200,7 +1200,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.sprite("deco/trough", (x + 22).toFloat(), (y + 40).toFloat())
         g.text("TROUGH ${r.feed}/$TROUGH_MAX", x + 40, y + 24, Gfx.INK, outline = 0, shadow = false)
         val eat = world.dailyFeed()
-        g.text(if (eat == 0) "WHEAT 1 FEED, CORN 2" else "THEY EAT $eat A DAY", x + 40, y + 35, if (eat > r.feed) Gfx.RED else Gfx.GREY, outline = 0, shadow = false)
+        g.text(if (eat == 0) "WHEAT 1 FEED, CORN 2" else "THEY EAT $eat A DAY", x + 40, y + 35, if (eat > r.feed) Gfx.RED else Gfx.MUTED, outline = 0, shadow = false)
         listOf("wheat" to 10, "corn" to 5).forEachIndexed { i, (crop, n) ->
             val bx = x + pw - 104 + i * 50
             val why = world.troughBlocker(crop)
@@ -1215,7 +1215,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.sprite("animals/${k.id}_0", (x + 23).toFloat(), (ry + 21).toFloat())
             g.text("${k.label.uppercase()}  ${world.animalCount(k)}/${k.max}", x + 42, ry + 3, Gfx.INK, outline = 0, shadow = false)
             g.sprite("items/${k.product}", (x + 47).toFloat(), (ry + 18).toFloat())
-            g.text(if (k.everyDays == 1) "EVERY DAY, EATS ${k.eats}" else "EVERY ${k.everyDays} DAYS, EATS ${k.eats}", x + 55, ry + 14, Gfx.GREY, outline = 0, shadow = false)
+            g.text(if (k.everyDays == 1) "EVERY DAY, EATS ${k.eats}" else "EVERY ${k.everyDays} DAYS, EATS ${k.eats}", x + 55, ry + 14, Gfx.MUTED, outline = 0, shadow = false)
             val why = world.animalBlocker(k)
             val label = if (world.level < k.unlockLevel) "L${k.unlockLevel}" else "${k.price}"
             if (ui.button("buy-${k.id}", x + pw - 66, ry + 5, 56, 16, label, if (world.level < k.unlockLevel) null else "icons/coin", style = if (why == null) "green" else "grey")) {
@@ -1224,7 +1224,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         }
         // Your animals: hearts, and a ready product.
         val gy = y + 148
-        g.text(if (r.animals.isEmpty()) "NO ANIMALS YET" else "YOUR ANIMALS (TAP ONE TO PET IT)", x + 10, gy, Gfx.GREY, outline = 0, shadow = false)
+        g.text(if (r.animals.isEmpty()) "NO ANIMALS YET" else "YOUR ANIMALS (TAP ONE TO PET IT)", x + 10, gy, Gfx.MUTED, outline = 0, shadow = false)
         val cw = (pw - 20) / 4
         r.animals.forEachIndexed { i, a ->
             val cx = x + 10 + (i % 4) * cw
@@ -1243,7 +1243,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val hy = y + ph - 46
         g.text("RANCH HAND: FILLS THE TROUGH", x + 10, hy, Gfx.INK, outline = 0, shadow = false)
         g.text("AND COLLECTS EACH MORNING", x + 10, hy + 10, Gfx.INK, outline = 0, shadow = false)
-        g.text(if (r.ranchHand) "HIRED" else RANCH_HAND_COST.entries.joinToString(" ") { (k, v) -> if (k == "coins") "${v}C" else "$v ${world.data.name(k).uppercase()}" }, x + 10, hy + 22, Gfx.GREY, outline = 0, shadow = false)
+        g.text(if (r.ranchHand) "HIRED" else RANCH_HAND_COST.entries.joinToString(" ") { (k, v) -> if (k == "coins") "${v}C" else "$v ${world.data.name(k).uppercase()}" }, x + 10, hy + 22, Gfx.MUTED, outline = 0, shadow = false)
         if (!r.ranchHand) {
             val why = world.ranchHandBlocker()
             if (ui.button("ranch-hand", x + pw - 66, hy + 2, 56, 18, if (world.level < RANCH_HAND_LEVEL) "L$RANCH_HAND_LEVEL" else "HIRE", style = if (why == null) "gold" else "grey")) {
@@ -1268,7 +1268,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.text("CUP WEEKS WON: ${a.wins}", x + pw / 2, y + 136, Gfx.INK, align = 0, outline = 0, shadow = false)
             return true
         }
-        g.text("CHAPTER ${a.chapter} OF $ACT2_CHAPTERS", x + 10, y + 22, Gfx.GREY, outline = 0, shadow = false)
+        g.text("CHAPTER ${a.chapter} OF $ACT2_CHAPTERS", x + 10, y + 22, Gfx.MUTED, outline = 0, shadow = false)
         // The two things this chapter needs.
         fun check(row: Int, done: Boolean, text: String) {
             val ry = y + 36 + row * 14
@@ -1295,8 +1295,8 @@ class Panels(private val game: Game, private val hud: Hud) {
         ui.bar(x + 60, cy + 52, pw - 120, 1f, "red")
         g.text("${a.target}", x + pw - 52, cy + 52, Gfx.INK, outline = 0, shadow = false)
         val left = world.contestDaysLeft()
-        g.text(if (a.weekWon) "WON THIS WEEK! NEXT CONTEST SOON" else "$left DAY${if (left == 1) "" else "S"} LEFT", x + pw / 2, cy + 72, if (a.weekWon) 0xFF3E8948.toInt() else Gfx.GREY, align = 0, outline = 0, shadow = false)
-        g.text("WEEKS WON: ${a.wins}", x + 10, y + ph - 18, Gfx.GREY, outline = 0, shadow = false)
+        g.text(if (a.weekWon) "WON THIS WEEK! NEXT CONTEST SOON" else "$left DAY${if (left == 1) "" else "S"} LEFT", x + pw / 2, cy + 72, if (a.weekWon) 0xFF3E8948.toInt() else Gfx.MUTED, align = 0, outline = 0, shadow = false)
+        g.text("WEEKS WON: ${a.wins}", x + 10, y + ph - 18, Gfx.MUTED, outline = 0, shadow = false)
         return true
     }
 
@@ -1304,6 +1304,8 @@ class Panels(private val game: Game, private val hud: Hud) {
     /** What the villager just said (a chat or a thank-you), shown in their panel. */
     var villagerSays = ""
     private var giftMode = false
+    /** The gift picked in the villager panel, given with GIVE (playtest round 7: tiles have no names). */
+    private var giftPick: String? = null
 
     /** Plays a heart event (set by Chrome). */
     var onHeartEvent: ((String) -> Unit)? = null
@@ -1312,13 +1314,13 @@ class Panels(private val game: Game, private val hud: Hud) {
     fun villager(id: String): Boolean {
         val v = world.villager(id) ?: return false
         val (x, y, pw, ph) = frame(v.name.uppercase(), if (giftMode) 280 else 196).toList()
-        if (closeButton(x, y, pw)) { giftMode = false; villagerSays = ""; return false }
+        if (closeButton(x, y, pw)) { giftMode = false; giftPick = null; villagerSays = ""; return false }
         g.slice9("ui/slot", x + 10, y + 22, x + 58, y + 70, 4)
         g.spriteScaled("portraits/$id", (x + 34).toFloat(), (y + 46).toFloat(), 1.3f, 1.3f)
-        g.text(v.role.uppercase(), x + 66, y + 24, Gfx.GREY, outline = 0, shadow = false)
+        g.text(v.role.uppercase(), x + 66, y + 24, Gfx.MUTED, outline = 0, shadow = false)
         val h = world.hearts(id)
         for (k in 0 until FRIEND_HEARTS) miniHeart(x + 66 + k * 7, y + 36, k < h)
-        world.nextHeart(id)?.let { (have, need) -> g.text("$have/$need", x + 66, y + 45, Gfx.GREY, outline = 0, shadow = false) }
+        world.nextHeart(id)?.let { (have, need) -> g.text("$have/$need", x + 66, y + 45, Gfx.MUTED, outline = 0, shadow = false) }
             ?: g.text("BEST FRIENDS!", x + 66, y + 45, Gfx.RED, outline = 0, shadow = false)
         g.text("LOVES", x + 66, y + 57, Gfx.INK, outline = 0, shadow = false)
         v.favorites.take(5).forEachIndexed { k, item -> g.sprite(icon(item), (x + 106 + k * 16).toFloat(), (y + 61).toFloat()) }
@@ -1333,24 +1335,31 @@ class Panels(private val game: Game, private val hud: Hud) {
         }
         val talkY = by + 24
         if (ui.button("talk", x + 10, talkY, pw / 2 - 14, 18, if (world.talkedToday(id)) "TALKED" else "TALK", style = if (world.talkedToday(id)) "grey" else "green") && !world.talkedToday(id)) world.talk(id)
-        if (ui.button("gift", x + pw / 2 + 4, talkY, pw / 2 - 14, 18, if (world.giftedToday(id)) "GIFT GIVEN" else if (giftMode) "CANCEL" else "GIVE GIFT", style = if (world.giftedToday(id)) "grey" else "wood") && !world.giftedToday(id)) giftMode = !giftMode
-        g.text("ORDERS FROM ${v.name.uppercase()} ADD HEARTS TOO", x + pw / 2, talkY + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        if (ui.button("gift", x + pw / 2 + 4, talkY, pw / 2 - 14, 18, if (world.giftedToday(id)) "GIFT GIVEN" else if (giftMode) "CANCEL" else "GIVE GIFT", style = if (world.giftedToday(id)) "grey" else "wood") && !world.giftedToday(id)) { giftMode = !giftMode; giftPick = null }
+        g.text("ORDERS FROM ${v.name.uppercase()} ADD HEARTS TOO", x + pw / 2, talkY + 24, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         if (giftMode && !world.giftedToday(id)) {
             // Everything in storage that can be given; loved gifts are marked with a heart.
             val keys = world.state.inventory.keys.filter { world.giftable(it) && world.count(it) > 0 }.sortedByDescending { world.giftReaction(id, it).ordinal == 0 }
-            val gy = talkY + 38
+            // The picked gift's name and the button that gives it.
+            val pick = giftPick?.takeIf { it in keys }
+            val ny = talkY + 38
+            if (pick != null) {
+                g.text(fit(world.data.name(baseId(pick)).uppercase(), pw - 96), x + 12, ny + 5, Gfx.INK, outline = 0, shadow = false)
+                if (ui.button("give", x + pw - 74, ny, 64, 16, "GIVE")) { world.giveGift(id, pick); giftMode = false; giftPick = null }
+            } else if (keys.isNotEmpty()) g.text("PICK A GIFT", x + 12, ny + 5, Gfx.MUTED, outline = 0, shadow = false)
+            val gy = ny + 20
             val cols = (pw - 20) / 26
             val rows = (ph - (gy - y) - 8) / 26
             keys.take(cols * rows).forEachIndexed { k, key ->
                 val cx = x + 10 + (k % cols) * 26; val cy = gy + (k / cols) * 26
-                g.slice9("ui/slot", cx, cy, cx + 24, cy + 24, 4)
+                g.slice9(if (key == pick) "ui/slot_sel" else "ui/slot", cx, cy, cx + 24, cy + 24, 4)
                 g.sprite(icon(baseId(key)), (cx + 12).toFloat(), (cy + 11).toFloat())
                 com.ditherfarm.game.Quality.of(key).icon?.let { g.sprite(it, (cx + 5).toFloat(), (cy + 19).toFloat()) }
                 if (world.giftReaction(id, key) == GiftReaction.LOVED) miniHeart(cx + 17, cy + 2, true)
                 g.text("${world.count(key)}", cx + 22, cy + 15, Gfx.WHITE, align = 1)
-                if (ui.clickable("gift-$key", cx, cy, 24, 24)) { world.giveGift(id, key); giftMode = false }
+                if (ui.clickable("gift-$key", cx, cy, 24, 24)) giftPick = key
             }
-            if (keys.isEmpty()) g.text("NOTHING TO GIVE", x + pw / 2, gy + 8, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            if (keys.isEmpty()) g.text("NOTHING TO GIVE", x + pw / 2, gy + 8, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         }
         return true
     }
@@ -1399,8 +1408,8 @@ class Panels(private val game: Game, private val hud: Hud) {
                 g.sprite("trees/orchard_${d.id}_sapling", (x + 28).toFloat(), (ry + 32).toFloat())
                 g.sprite("items/${d.fruit}", (x + 40).toFloat(), (ry + 28).toFloat())
                 g.text(d.name.uppercase(), x + 52, ry + 2, Gfx.INK, outline = 0, shadow = false)
-                g.text(d.seasons.sortedBy { it.ordinal }.joinToString(" ") { it.label.uppercase() }, x + 52, ry + 13, Gfx.GREY, outline = 0, shadow = false)
-                g.text("${d.yield} EVERY ${d.everyDays} DAYS", x + 52, ry + 24, Gfx.GREY, outline = 0, shadow = false)
+                g.text(d.seasons.sortedBy { it.ordinal }.joinToString(" ") { it.label.uppercase() }, x + 52, ry + 13, Gfx.MUTED, outline = 0, shadow = false)
+                g.text("${d.yield} EVERY ${d.everyDays} DAYS", x + 52, ry + 24, Gfx.MUTED, outline = 0, shadow = false)
                 val why = world.treeBlocker(spot, d.id)
                 val label = if (world.level < d.unlockLevel) "L${d.unlockLevel}" else "${d.price}"
                 if (ui.button("tree-${d.id}", x + pw - 66, ry + 9, 56, 18, label, if (world.level < d.unlockLevel) null else "icons/coin", style = if (why == null) "green" else "grey")) {
@@ -1416,7 +1425,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val art = when { !world.treeMature(t) -> "trees/orchard_${d.id}_sapling"; t.fruit > 0 -> "trees/orchard_${d.id}_fruit"; else -> "trees/orchard_${d.id}" }
         g.sprite(art, (x + 40).toFloat(), (y + 94).toFloat())
         g.text(world.treeStatus(t).uppercase(), x + 78, y + 28, if (t.fruit > 0) Gfx.GREEN else Gfx.INK, outline = 0, shadow = false)
-        g.text("FRUITS IN", x + 78, y + 44, Gfx.GREY, outline = 0, shadow = false)
+        g.text("FRUITS IN", x + 78, y + 44, Gfx.MUTED, outline = 0, shadow = false)
         g.text(d.seasons.sortedBy { it.ordinal }.joinToString(" ") { it.label.uppercase() }, x + 78, y + 54, Gfx.INK, outline = 0, shadow = false)
         g.sprite("items/${d.fruit}", (x + 85).toFloat(), (y + 75).toFloat())
         g.text("${d.yield} EVERY ${d.everyDays} DAYS", x + 96, y + 71, Gfx.INK, outline = 0, shadow = false)
@@ -1501,7 +1510,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.text(fit(world.data.name(o.item).uppercase(), cw - 40), cx + 36, cy + 2, Gfx.INK, outline = 0, shadow = false)
             g.sprite("icons/coin", (cx + 40).toFloat(), (cy + 17).toFloat())
             g.text(Ui.compact(world.merchantPrice(o)), cx + 47, cy + 13, Gfx.INK, outline = 0, shadow = false)
-            if (world.merchantBought(i)) g.text("SOLD", cx + cw - 30, cy + 24, Gfx.GREY, align = 0, outline = 0, shadow = false)
+            if (world.merchantBought(i)) g.text("SOLD", cx + cw - 30, cy + 24, Gfx.MUTED, align = 0, outline = 0, shadow = false)
             else if (ui.button("buy-$i", cx + cw - 48, cy + 20, 40, 14, "BUY", style = if (world.state.coins >= world.merchantPrice(o)) "green" else "grey")) world.buyFromMerchant(i)
         }
         return true
@@ -1518,7 +1527,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val want = if (cartPicking) 80 + ((pickable.size + per - 1) / per) * 26 else 84 + rules.size * 34
         val (x, y, pw, ph) = frame("MARKET CART", minOf(maxPanelH, want)).toList()
         if (closeButton(x, y, pw)) { cartPicking = false; return false }
-        g.text("SELLS UP TO $CART_DAILY_CAP A DAY AT DAWN, TOP RULE FIRST", x + pw / 2, y + 22, Gfx.GREY, align = 0, outline = 0, shadow = false)
+        g.text("SELLS UP TO $CART_DAILY_CAP A DAY AT DAWN, TOP RULE FIRST", x + pw / 2, y + 22, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         var ry = y + 34
         if (cartPicking) {
             g.text("PICK AN ITEM TO SELL", x + 10, ry, Gfx.INK, outline = 0, shadow = false)
@@ -1535,7 +1544,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             g.slice9("ui/slot", x + 8, ry, x + pw - 8, ry + 30, 4)
             g.sprite(icon(r.item), (x + 20).toFloat(), (ry + 15).toFloat())
             g.text(fit(world.data.name(r.item).uppercase(), pw - 186), x + 32, ry + 4, Gfx.INK, outline = 0, shadow = false)
-            g.text("${world.percentOfBase(r.item)}% TODAY", x + 32, ry + 16, Gfx.GREY, outline = 0, shadow = false)
+            g.text("${world.percentOfBase(r.item)}% TODAY", x + 32, ry + 16, Gfx.MUTED, outline = 0, shadow = false)
             if (ui.button("cond-$i", x + pw - 150, ry + 7, 44, 16, CartRule.CONDITIONS[r.cond], style = "wood")) r.cond = (r.cond + 1) % CartRule.CONDITIONS.size
             if (ui.button("keep-$i-m", x + pw - 102, ry + 7, 14, 16, "-", style = "wood")) r.keep = maxOf(0, r.keep - 5)
             g.text("KEEP ${r.keep}", x + pw - 66, ry + 11, Gfx.INK, align = 0, outline = 0, shadow = false)
@@ -1563,17 +1572,17 @@ class Panels(private val game: Game, private val hud: Hud) {
         val ripe = plots.count { world.isReady(world.plot(it)) }
         val growing = plots.count { world.plot(it).crop != null } - ripe
         g.text("$growing GROWING, $ripe RIPE, CRATE ${f.crate.values.sum()}/$CRATE_CAP", x + 10, y + 22, Gfx.INK, outline = 0, shadow = false)
-        g.text("CROP FOR THIS FIELD", x + 10, y + 36, Gfx.GREY, outline = 0, shadow = false)
+        g.text("CROP FOR THIS FIELD", x + 10, y + 36, Gfx.MUTED, outline = 0, shadow = false)
         crops.forEachIndexed { i, c ->
             val sx = x + 12 + (i % per) * 33
             val sy = y + 48 + (i / per) * 28
             if (ui.slot("fcrop-${c.id}", sx, sy, icon(c.seedItem), -1, f.crop == c.id, 24)) f.crop = if (f.crop == c.id) null else c.id
         }
         val ty = y + 52 + rows * 28
-        g.text("HARVEST GOES TO", x + 10, ty, Gfx.GREY, outline = 0, shadow = false)
+        g.text("HARVEST GOES TO", x + 10, ty, Gfx.MUTED, outline = 0, shadow = false)
         if (ui.button("fdest-truck", x + 10, ty + 12, 96, 16, "TRUCK (SELL)", style = if (f.toTruck) "gold" else "wood")) f.toTruck = true
         if (ui.button("fdest-silo", x + pw - 106, ty + 12, 96, 16, "SILO (KEEP)", style = if (!f.toTruck) "gold" else "wood")) f.toTruck = false
-        g.text("FARMHAND", x + 10, ty + 40, Gfx.GREY, outline = 0, shadow = false)
+        g.text("FARMHAND", x + 10, ty + 40, Gfx.MUTED, outline = 0, shadow = false)
         val hand = world.workerOn(block)
         val free = world.state.workers.values.filter { it.field < 0 }
         val label = hand?.name?.uppercase() ?: if (world.state.workers.isEmpty()) "HIRE AT BUNKHOUSE" else "NOBODY"
@@ -1631,7 +1640,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             if (world.donateCoins() > 0) game.sfx.play("coin")
         }
         ry += 34
-        g.text("BRINGS:", x + 10, ry, Gfx.GREY, outline = 0, shadow = false)
+        g.text("BRINGS:", x + 10, ry, Gfx.MUTED, outline = 0, shadow = false)
         val lines = next.rewards.flatMap { hud.wrap(("- " + it).uppercase(), pw - 24) }
         lines.forEachIndexed { i, l -> g.text(l, x + 12, ry + 11 + i * 10, Gfx.INK, outline = 0, shadow = false) }
         val why = world.rebuildBlocker()
@@ -1647,7 +1656,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val rowH = 26
         val (x, y, pw, ph) = frame("SEED SHOP", minOf(maxPanelH, 40 + crops.size * rowH)).toList()
         if (closeButton(x, y, pw)) return false
-        g.text("PACKS OF $SEED_PACK, 20% OFF", x + 10, y + 22, Gfx.GREY, outline = 0, shadow = false)
+        g.text("PACKS OF $SEED_PACK, 20% OFF", x + 10, y + 22, Gfx.MUTED, outline = 0, shadow = false)
         val top = y + 34
         val off = ui.scroll("seed-list", x + 6, top, pw - 12, ph - 40, crops.size * rowH)
         val c = g.canvas
@@ -1675,12 +1684,12 @@ class Panels(private val game: Game, private val hud: Hud) {
             val cost = world.respecCost()
             if (ui.button("respec", x + pw - 92, y + 19, 82, 14, "RESET ${Ui.compact(cost)}", style = "red",
                     enabled = world.state.skills.isNotEmpty() && world.state.coins >= cost)) world.respec()
-        } else g.text("RESET AT THE WORKBENCH", x + pw - 10, y + 22, Gfx.GREY, align = 1, outline = 0, shadow = false)
+        } else g.text("RESET AT THE WORKBENCH", x + pw - 10, y + 22, Gfx.MUTED, align = 1, outline = 0, shadow = false)
         skillTab = ui.tabs("skill-tabs", x + 8, y + 36, pw - 16, BRANCHES.map { it.short }, skillTab)
         val br = BRANCHES[skillTab]
         g.sprite("icons_big/skill_branch_${br.id}", (x + 24).toFloat(), (y + 72).toFloat())
         g.text(br.name.uppercase(), x + 44, y + 64, Gfx.INK, outline = 0, shadow = false)
-        g.text("${br.skills.sumOf { world.rank(it.id) }} POINTS IN THIS BRANCH", x + 44, y + 75, Gfx.GREY, outline = 0, shadow = false)
+        g.text("${br.skills.sumOf { world.rank(it.id) }} POINTS IN THIS BRANCH", x + 44, y + 75, Gfx.MUTED, outline = 0, shadow = false)
         val rowH = 50
         br.skills.forEachIndexed { i, s ->
             val ry = y + 92 + i * rowH
@@ -1696,7 +1705,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             }
             g.text(s.name.uppercase(), x + 46, ry + 4, if (locked) Gfx.GREY else Gfx.INK, outline = 0, shadow = false)
             val lines = hud.wrap((if (locked) why!! else s.desc + " a rank").uppercase(), pw - 120)
-            lines.take(2).forEachIndexed { li, l -> g.text(l, x + 46, ry + 16 + li * 10, Gfx.GREY, outline = 0, shadow = false) }
+            lines.take(2).forEachIndexed { li, l -> g.text(l, x + 46, ry + 16 + li * 10, Gfx.MUTED, outline = 0, shadow = false) }
             val label = if (rank >= s.ranks) "MAX" else "LEARN"
             if (ui.button("learn-${s.id}", x + pw - 64, ry + 14, 52, 16, label, style = if (why == null) "green" else "grey")) {
                 if (why == null) world.learn(s.id) else hud.toast(why)
@@ -1726,16 +1735,16 @@ class Panels(private val game: Game, private val hud: Hud) {
             val bx = x + pw - 72
             if (ws == null) {
                 g.text(d.name.uppercase(), tx, ry + 4, if (locked) Gfx.GREY else Gfx.INK, outline = 0, shadow = false)
-                if (locked) g.text("LOOKING FOR WORK AT L${d.unlockLevel}", tx, ry + 16, Gfx.GREY, outline = 0, shadow = false)
+                if (locked) g.text("LOOKING FOR WORK AT L${d.unlockLevel}", tx, ry + 16, Gfx.MUTED, outline = 0, shadow = false)
                 else {
-                    g.text("WANTS ${d.hireCost} COINS", tx, ry + 16, Gfx.GREY, outline = 0, shadow = false)
+                    g.text("WANTS ${d.hireCost} COINS", tx, ry + 16, Gfx.MUTED, outline = 0, shadow = false)
                     if (ui.button("hire-${d.id}", bx, ry + 11, 62, 16, "HIRE", style = "green", enabled = world.state.coins >= d.hireCost)) world.hire(d.id)
                 }
                 return@forEachIndexed
             }
             g.text("${ws.name.uppercase()}  LV ${ws.level}", tx, ry + 4, Gfx.INK, outline = 0, shadow = false)
             if (ws.hungry) g.text("HUNGRY - NEEDS SILO CROPS", tx, ry + 15, Gfx.RED, outline = 0, shadow = false)
-            else g.text("${workerPlotsPerMinute(ws.level)} PLOTS/MIN, EATS ${workerAppetite(ws.level)}/DAY", tx, ry + 15, Gfx.GREY, outline = 0, shadow = false)
+            else g.text("${workerPlotsPerMinute(ws.level)} PLOTS/MIN, EATS ${workerAppetite(ws.level)}/DAY", tx, ry + 15, Gfx.MUTED, outline = 0, shadow = false)
             g.text(if (ws.field >= 0) "WORKS FIELD ${FieldLayout.name(ws.field)}" else "IDLE - PICK A FIELD", tx, ry + 26, Gfx.INK, outline = 0, shadow = false)
             if (ui.button("wfield-${d.id}", bx, ry + 2, 62, 16, if (ws.field >= 0) "FIELD ${FieldLayout.name(ws.field)}" else "NO FIELD", style = "wood")) {
                 val options = listOf(-1) + (0 until FieldLayout.BLOCKS).filter { b -> world.blockOwned(b) && world.workerOn(b).let { it == null || it === ws } }

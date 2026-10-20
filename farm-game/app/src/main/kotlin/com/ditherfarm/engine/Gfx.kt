@@ -185,6 +185,8 @@ class Gfx(val assets: Assets) {
         const val GREEN = 0xFF63C74D.toInt()
         const val BLUE = 0xFF2CE8F5.toInt()
         const val GREY = 0xFF8B9BB4.toInt()
+        /** Grey that reads on the cream panels (GREY is for dark backgrounds). */
+        const val MUTED = 0xFF5A6988.toInt()
 
         /** Margin round a cached text image: the outline reaches 1 px out, the shadow 2 px down, ink sits within 12 px of the baseline. */
         const val TEXT_PAD_X = 4

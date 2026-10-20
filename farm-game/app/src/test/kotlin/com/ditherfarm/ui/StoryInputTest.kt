@@ -8,6 +8,7 @@ import com.ditherfarm.engine.AssetSource
 import com.ditherfarm.engine.FileAssets
 import com.ditherfarm.game.SCENES
 import com.ditherfarm.game.enterFloor
+import com.ditherfarm.game.finishScene
 import com.ditherfarm.game.knowEverything
 import com.ditherfarm.game.setPlayer
 import com.ditherfarm.shots.ScreenshotTest
@@ -135,6 +136,19 @@ class StoryInputTest {
         tap(g, 220f, g.engine.safeTop + 25f)
         assertTrue(g.farm.chrome.panel != Chrome.Panel.GOALS)
         assertFalse(answered)
+    }
+
+    @Test fun cupButtonInGoalsOpensTheContest() {
+        val g = playing()
+        g.world.state.storySeen.remove("act2_1")
+        g.world.finishScene("act2_1")
+        val chrome = g.farm.chrome
+        chrome.open(Chrome.Panel.GOALS)
+        frames(g, 2)
+        // The gold CUP button in the Goals title bar (a playtest found it only closed Goals).
+        tap(g, 211f, g.engine.safeTop + chrome.hud.topHeight + 15f)
+        frames(g, 2)
+        assertEquals(Chrome.Panel.CONTEST, chrome.panel)
     }
 
     @Test fun mineRopeButtonUnderAPanelDoesNothing() {

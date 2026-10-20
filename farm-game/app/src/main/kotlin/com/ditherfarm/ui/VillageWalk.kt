@@ -95,9 +95,9 @@ class VillageWalk(private val game: Game) {
         }
     }
 
-    /** The villager under world point (wx, wy), or null. */
+    /** The villager under world point (wx, wy), or null. The box is roomy: they keep walking (playtest round 7). */
     fun at(wx: Float, wy: Float): String? {
         if (night()) return null
-        return walkers.filter { abs(wx - it.x) <= 7f && wy in it.y - 24f..it.y + 2f }.maxByOrNull { it.y }?.id
+        return walkers.filter { abs(wx - it.x) <= 11f && wy in it.y - 28f..it.y + 6f }.minByOrNull { hypot(wx - it.x, wy - (it.y - 11f)) }?.id
     }
 }
