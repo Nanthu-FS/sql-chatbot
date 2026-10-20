@@ -263,6 +263,12 @@ abstract class IsoMapScreen(protected val game: Game, private val groundSeed: In
         hits[hitCount++].also { it.c = c; it.r = r; it.sprite = game.assets[sprite]; it.x = x; it.y = y; it.depth = depth }
     }
 
+    /** True if a sprite registered this frame in front of [depth] has a solid pixel at world (wx, wy). */
+    fun covered(wx: Float, wy: Float, depth: Float): Boolean {
+        for (k in 0 until hitCount) { val h = hits[k]; if (h.depth > depth && solidAt(h, wx, wy)) return true }
+        return false
+    }
+
     private fun solidAt(h: Hit, wx: Float, wy: Float): Boolean {
         val s = h.sprite ?: return false
         val lx = floor(wx).toInt() - (Math.round(h.x) - s.ax)

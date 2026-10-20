@@ -584,6 +584,25 @@ class ScreenshotTest {
         }, zoom = 2)
     }
 
+    /** The pet just behind a tree: the tree hides it, with a faint outline so it is never lost (owner, round 7). */
+    @Test fun petBehindTree() {
+        render("forest_pet_behind", seconds = 3f, setup = { g ->
+            toLevel(g, com.ditherfarm.game.PET_LEVEL)
+            g.world.adoptPet(com.ditherfarm.game.PetKind.DOG, "Biscuit")
+            g.world.events.clear()
+            g.goTo(Nav.FOREST)
+            g.engine.screen?.enter()
+            val s = g.engine.screen as com.ditherfarm.ui.IsoMapScreen
+            s.cam.minZoom = 2
+            s.cam.zoomAt(2 - s.cam.zoom, 135f, 292f)
+            val sp = g.world.forestSpots.first { it.zone == "A" && it.native == "pine" }
+            val bx = com.ditherfarm.engine.Iso.x(sp.c, sp.r).toFloat()
+            val by = com.ditherfarm.engine.Iso.centerY(sp.c, sp.r).toFloat()
+            // The pet heads for a point right of and below the view's centre: put that just behind the trunk.
+            s.cam.centerOn(bx - 30f, by - 5f - s.cam.viewHeight * 0.1f)
+        })
+    }
+
     @Test fun petPage() {
         render("panel_pet_info", setup = { g ->
             toLevel(g, com.ditherfarm.game.PET_LEVEL)

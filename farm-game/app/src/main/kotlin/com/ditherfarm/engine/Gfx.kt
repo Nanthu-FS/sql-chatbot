@@ -40,9 +40,9 @@ class Gfx(val assets: Assets) {
 
     /** Draws a sprite scaled around its pivot (for squash/pop effects). */
     /** A sprite drawn through a colour filter (e.g. darkened scenery). */
-    fun spriteFiltered(name: String, x: Float, y: Float, filter: android.graphics.ColorFilter) {
+    fun spriteFiltered(name: String, x: Float, y: Float, filter: android.graphics.ColorFilter, alpha: Int = 255, flipX: Boolean = false) {
         paint.colorFilter = filter
-        sprite(assets[name], x, y)
+        sprite(assets[name], x, y, alpha, flipX)
         paint.colorFilter = null
     }
 

@@ -140,9 +140,13 @@ class PetWalker(private val game: Game) {
             val sy = homeY + (stickY - homeY) * t - sin(t * Math.PI.toFloat()) * 24f
             list.add(stickY) { g.sprite("pets/stick", sx, sy) }
         }
-        // Drawn over the world: the pet follows the view and must never be lost behind a building.
+        // At its own depth, so trees, crops and buildings in front hide it (owner, round 7). Mostly
+        // hidden, a faint outline over the world still shows where it is (it must never be lost).
+        list.add(y + 0.3f) { drawPet(g, kind, x, y, faceLeft) }
+        if (s.covered(x, y - 4f, y + 0.3f) && s.covered(x, y - 9f, y + 0.3f)) {
+            list.add(y + ON_TOP - 1f) { g.spriteFiltered(sprite(kind, pose), x, y, GHOST, alpha = 110, flipX = faceLeft) }
+        }
         list.add(y + ON_TOP) {
-            drawPet(g, kind, x, y, faceLeft)
             if (mode == Mode.FETCH_BACK) {
                 g.sprite("pets/stick", x + if (faceLeft) -5f else 5f, y - 5f, flipX = faceLeft)
                 drawMeter(g, x, y - 20f)
@@ -222,5 +226,6 @@ class PetWalker(private val game: Game) {
         const val GREEN_FROM = 0.33f
         const val GREEN_TO = 0.67f
         const val ON_TOP = 100_000f
+        private val GHOST = android.graphics.PorterDuffColorFilter(0xFFFFFFFF.toInt(), android.graphics.PorterDuff.Mode.SRC_IN)
     }
 }
