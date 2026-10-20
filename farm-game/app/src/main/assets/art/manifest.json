@@ -4475,7 +4475,137 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/bram_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/bram_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/bram_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/bram_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/bram_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/coco": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_bed": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_bed_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_bed_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_bed_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_bed_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_bed_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_mid": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_mid_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_mid_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_mid_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_mid_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_mid_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_old": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_old_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_old_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_old_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_old_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_old_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_young": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_young_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/elias_young_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_young_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_young_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/elias_young_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4485,7 +4615,20 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/farmer_0_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/farmer_0_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_0_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_0_bust_talk": {
   "ax": 17,
   "ay": 31
  },
@@ -4494,11 +4637,39 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/farmer_0_det_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/farmer_0_det_bust": {
   "ax": 17,
   "ay": 31
  },
+ "portraits/farmer_0_det_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_0_det_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_0_det_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_0_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/farmer_1": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_1_blink": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4507,7 +4678,20 @@
   "ax": 17,
   "ay": 31
  },
+ "portraits/farmer_1_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_1_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
  "portraits/farmer_1_det": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_1_det_blink": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4516,7 +4700,30 @@
   "ax": 17,
   "ay": 31
  },
+ "portraits/farmer_1_det_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_1_det_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_1_det_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_1_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/farmer_2": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_2_blink": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4525,7 +4732,20 @@
   "ax": 17,
   "ay": 31
  },
+ "portraits/farmer_2_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_2_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
  "portraits/farmer_2_det": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_2_det_blink": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4534,7 +4754,30 @@
   "ax": 17,
   "ay": 31
  },
+ "portraits/farmer_2_det_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_2_det_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_2_det_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_2_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/farmer_3": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_3_blink": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4543,7 +4786,20 @@
   "ax": 17,
   "ay": 31
  },
+ "portraits/farmer_3_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_3_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
  "portraits/farmer_3_det": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_3_det_blink": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4552,7 +4808,47 @@
   "ax": 17,
   "ay": 31
  },
+ "portraits/farmer_3_det_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_3_det_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/farmer_3_det_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/farmer_3_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/fennel": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/fennel_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/fennel_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/fennel_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/fennel_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/fennel_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4587,7 +4883,51 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/ivy_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/ivy_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/ivy_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/ivy_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/ivy_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/juniper": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/juniper_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/juniper_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/juniper_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/juniper_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/juniper_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4597,7 +4937,20 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/kessler_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/kessler_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/kessler_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/kessler_bust_talk": {
   "ax": 17,
   "ay": 31
  },
@@ -4606,11 +4959,56 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/kessler_shock_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/kessler_shock_bust": {
   "ax": 17,
   "ay": 31
  },
+ "portraits/kessler_shock_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/kessler_shock_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/kessler_shock_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/kessler_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/mara": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/mara_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/mara_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/mara_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/mara_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/mara_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4620,7 +5018,20 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/officer_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/officer_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/officer_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/officer_bust_talk": {
   "ax": 17,
   "ay": 31
  },
@@ -4629,11 +5040,56 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/officer_shock_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/officer_shock_bust": {
   "ax": 17,
   "ay": 31
  },
+ "portraits/officer_shock_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/officer_shock_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/officer_shock_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/officer_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/pip": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/pip_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/pip_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/pip_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/pip_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/pip_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4648,7 +5104,132 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/sela_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sela_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sela_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sela_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sela_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sterling_sr_mid": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sterling_sr_mid_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sterling_sr_mid_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sterling_sr_mid_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sterling_sr_mid_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sterling_sr_mid_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sterling_sr_old": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sterling_sr_old_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sterling_sr_old_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sterling_sr_old_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sterling_sr_old_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sterling_sr_old_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sterling_sr_young": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sterling_sr_young_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sterling_sr_young_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sterling_sr_young_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sterling_sr_young_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sterling_sr_young_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/tobias": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/tobias_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/tobias_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/tobias_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/tobias_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/tobias_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -5015,6 +5596,26 @@
   "ax": 0,
   "ay": 0
  },
+ "scenes/bank_old": {
+  "ax": 0,
+  "ay": 0
+ },
+ "scenes/bedroom": {
+  "ax": 0,
+  "ay": 0
+ },
+ "scenes/porch": {
+  "ax": 0,
+  "ay": 0
+ },
+ "scenes/stamp_approved": {
+  "ax": 89,
+  "ay": 39
+ },
+ "scenes/stamp_refused": {
+  "ax": 75,
+  "ay": 36
+ },
  "tiles/cursor": {
   "ax": 16,
   "ay": 0
@@ -5154,6 +5755,170 @@
  "tiles/winter_d": {
   "ax": 16,
   "ay": 0
+ },
+ "title/cloud_a": {
+  "ax": 29,
+  "ay": 9
+ },
+ "title/cloud_b": {
+  "ax": 22,
+  "ay": 7
+ },
+ "title/ground": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/hills": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/hills_far": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/rebuild_0_new": {
+  "ax": 17,
+  "ay": 34
+ },
+ "title/rebuild_0_old": {
+  "ax": 20,
+  "ay": 38
+ },
+ "title/rebuild_1_new": {
+  "ax": 15,
+  "ay": 34
+ },
+ "title/rebuild_1_old": {
+  "ax": 17,
+  "ay": 38
+ },
+ "title/rebuild_2_new": {
+  "ax": 17,
+  "ay": 34
+ },
+ "title/rebuild_2_old": {
+  "ax": 19,
+  "ay": 38
+ },
+ "title/rebuild_3_new": {
+  "ax": 17,
+  "ay": 34
+ },
+ "title/rebuild_3_old": {
+  "ax": 19,
+  "ay": 38
+ },
+ "title/rebuild_4_new": {
+  "ax": 13,
+  "ay": 34
+ },
+ "title/rebuild_4_old": {
+  "ax": 15,
+  "ay": 36
+ },
+ "title/rebuild_5_new": {
+  "ax": 14,
+  "ay": 34
+ },
+ "title/rebuild_5_old": {
+  "ax": 17,
+  "ay": 38
+ },
+ "title/rebuild_6_new": {
+  "ax": 17,
+  "ay": 34
+ },
+ "title/rebuild_6_old": {
+  "ax": 19,
+  "ay": 38
+ },
+ "title/ribbon": {
+  "ax": 36,
+  "ay": 11
+ },
+ "title/sky_0": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/sky_1": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/sky_2": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/sky_3": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/sky_4": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/sun": {
+  "ax": 48,
+  "ay": 48
+ },
+ "title/village": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/village_0_new": {
+  "ax": 18,
+  "ay": 35
+ },
+ "title/village_0_old": {
+  "ax": 21,
+  "ay": 41
+ },
+ "title/village_1_new": {
+  "ax": 13,
+  "ay": 34
+ },
+ "title/village_1_old": {
+  "ax": 16,
+  "ay": 38
+ },
+ "title/village_2_new": {
+  "ax": 14,
+  "ay": 34
+ },
+ "title/village_2_old": {
+  "ax": 16,
+  "ay": 36
+ },
+ "title/village_3_new": {
+  "ax": 14,
+  "ay": 34
+ },
+ "title/village_3_old": {
+  "ax": 16,
+  "ay": 36
+ },
+ "title/village_4_new": {
+  "ax": 18,
+  "ay": 34
+ },
+ "title/village_4_old": {
+  "ax": 20,
+  "ay": 38
+ },
+ "title/village_5_new": {
+  "ax": 17,
+  "ay": 34
+ },
+ "title/village_5_old": {
+  "ax": 20,
+  "ay": 38
+ },
+ "title/village_6_new": {
+  "ax": 15,
+  "ay": 34
+ },
+ "title/village_6_old": {
+  "ax": 17,
+  "ay": 38
  },
  "trees/ancient_oak": {
   "ax": 32,

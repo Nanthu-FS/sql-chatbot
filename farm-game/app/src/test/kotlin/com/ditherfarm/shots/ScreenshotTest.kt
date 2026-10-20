@@ -53,6 +53,7 @@ import com.ditherfarm.game.mineQuarry
 import com.ditherfarm.game.placeFixture
 import com.ditherfarm.game.placeTorch
 import com.ditherfarm.game.repairMine
+import com.ditherfarm.game.setPlayer
 import com.ditherfarm.ui.Chrome
 import com.ditherfarm.ui.FarmScreen
 import com.ditherfarm.ui.MineScreen
@@ -836,13 +837,23 @@ class ScreenshotTest {
     }
 
     @Test fun storyPicker() {
-        render("story_picker", story = true, seconds = 0.3f)
+        render("story_picker", story = true, seconds = 0.3f, drive = { g, t -> if (t < 0.05f) g.farm.chrome.story.showPicker() })
     }
 
+    /** The round 7 opening: the flashbacks, the deathbed, the porch and the bank today. */
     @Test fun storyOpening() {
-        for ((line, tag) in listOf(6 to "officer", 10 to "vow")) render("story_opening_$tag", story = true, seconds = 0.3f, setup = { g ->
-            g.world.state.playerName = "Rosa"; g.world.state.playerLook = 2
-        }, drive = { g, t -> if (t < 0.05f) g.farm.chrome.story.showLine(line) })
+        val lines = com.ditherfarm.game.SCENES.first { it.id == "opening" }.lines
+        fun at(text: String) = lines.indexOfFirst { text in it.text }
+        val stamps = lines.indices.filter { lines[it].cue == com.ditherfarm.game.Cue.STAMP }
+        val shots = listOf(
+            "card" to (0 to 5f), "flash_young" to (at("spring floods") to 5f), "flash_stamp" to (stamps[0] to 0.2f),
+            "flash_old" to (at("Before there's nothing") to 5f), "deathbed" to (at("Look at that sky") to 5f),
+            "promise" to (at("Rebuild the village. Not") to 5f), "lamp_out" to (at("burns low") to 2.2f),
+            "porch" to (at("every single day") to 5f), "officer" to (at("Let me guess") to 5f), "vow" to (at("best farming village in the country. You") to 5f),
+        )
+        for ((tag, pos) in shots) render("story_opening_$tag", story = true, seconds = 0.3f, setup = { g ->
+            g.world.setPlayer(2, "Rosa")
+        }, drive = { g, t -> if (t < 0.05f) g.farm.chrome.story.showLine(pos.first, pos.second) })
     }
 
     @Test fun storyVisits() {

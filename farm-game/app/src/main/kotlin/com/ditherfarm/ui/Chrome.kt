@@ -286,6 +286,8 @@ class Chrome(private val game: Game, private val here: Nav) {
                 // Story scenes play on the farm (the officer visits the village).
                 val scene = if (here == Nav.FARM) world.pendingScene() ?: world.pendingAct2Scene() else null
                 if (scene != null) { story.start(scene); open(Panel.STORY) }
+                // A farm from before round 7 picks male or female once (it keeps its name and progress).
+                else if (world.state.playerGender == null && world.state.playerName.isNotBlank()) { story.startPick(); open(Panel.STORY) }
                 else if (levelUps.isNotEmpty()) panel = Panel.LEVEL_UP
                 else if (!giftShown && world.giftReady(game.today())) { giftShown = true; open(Panel.GIFT) }
                 else if (here == Nav.FARM && world.petOffered && !world.pet.offered) { world.pet.offered = true; open(Panel.PET) }

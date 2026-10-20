@@ -139,7 +139,9 @@ class Game(val host: Host) {
         val t = world.time
         val night = t.hour >= 20f || t.hour < 5f
         val underground = engine.screen === mine && world.state.mine.floor > 0
+        val story = (engine.screen as? com.ditherfarm.ui.IsoMapScreen)?.let { (it as? com.ditherfarm.ui.FarmScreen)?.chrome?.story?.music }
         val track = when {
+            story != null -> story
             underground -> "mine"
             night -> "night"
             engine.screen === forest -> "forest"

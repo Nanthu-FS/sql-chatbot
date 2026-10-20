@@ -147,6 +147,27 @@ def paint(spec, bust=False):
     assert len(grid) == H, len(grid)
     for (x, y), ch in spec.get("patch", {}).items():
         grid[y][x] = ch
+    anim = spec.get("anim")
+    if anim == "talk":
+        # The mouth opens: its pixels go dark and the skin under them becomes the lower lip.
+        mouth = {(x, y) for y, row in enumerate(grid) for x, ch in enumerate(row) if ch == "m"}
+        for x, y in mouth:
+            grid[y][x] = "k"
+        for x, y in mouth:
+            if y + 1 < H and (x, y + 1) not in mouth and grid[y + 1][x] == "S":
+                grid[y + 1][x] = "m"
+    elif anim == "blink":
+        # Eyes shut: in the eye rows every eye pixel becomes skin, and the lowest one in each column a lid line.
+        eyes = spec.get("eyes", "ew")
+        rows = [y for y, row in enumerate(grid) if any(ch in eyes.replace("k", "") for ch in row)]
+        cols = {}
+        for y in rows:
+            for x, ch in enumerate(grid[y]):
+                if ch in eyes:
+                    cols.setdefault(x, []).append(y)
+        for x, ys in cols.items():
+            for y in ys:
+                grid[y][x] = "k" if y == max(ys) else "S"
     key = dict(BASE)
     key.update(spec.get("key", {}))
     c = Canvas()
@@ -746,6 +767,226 @@ FARMER_BEANIE = dict(
 )
 
 
+# ---------------------------------------------------------------- round 7: Rebuild The Village
+
+# The second female look (replaces the bandana look): long curly black hair under a wide straw sun
+# hat with a green band and a pink flower, deep brown skin, gold earrings, a magenta dress.
+FARMER_CURLY = dict(
+    rows=[
+        "_______________",
+        "_______________",
+        "__________AAAAA",
+        "_________AAAAAA",
+        "________AAAAAAA",
+        "________DDDDDDD",
+        "__BBBBBBBBBBBBB",
+        "_BBBBBBBBBBBBBB",
+        "___HHHHHSSSSSSS",
+        "__HHHHHSSbbbSSS",
+        "__HHHHHSSSweSSS",
+        "__HHHHHSSSeeSSS",
+        "__HHHHHSSrSSSSS",
+        "__HHHHHSSSSSSSn",
+        "__HHHHHHSSSSSSS",
+        "__HHHHHHHSSSSSS",
+        "__HHHHHHHSSmSSS",
+        "__HHHHHHHHSSmmm",
+        "__HHHHHHHHHSSSS",
+        "_HHHHHHHHH__SSS",
+        "_HHHHHHHHH__SSS",
+        "_HHHHHHHHHCCSSS",
+        "__HHHHHHHCCCCCC",
+        "__HHHHHHCCCCCCC",
+        "_HHHHHHHCCCCCCC",
+        "_HHHHHHCCCCCCCC",
+        "__HHHHCCCCCCCCC",
+        "__HHHCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+        "__CCCCCCCCCCCCC",
+    ],
+    bg=["rust", "clay", "tan"],
+    ramps={"hair": HAIR_INK, "skin": SKIN_BROWN, "cloth": PURPLE, "cloth2": GREEN, "cap": STRAW, "brim": STRAW_BRIM, "collar": CREAM},
+    key={"m": ("skin", "red_d"), "h": ("hair", "slate"), "z": ("hair", "grey_d")},
+    # Curls: a scalloped outer edge, highlight loops through the hair; the flower on the band.
+    patch={(8, 16): "y", (21, 16): "y", (19, 5): "p", (20, 5): "y", (21, 5): "p", (20, 4): "p", (20, 6): "p"},
+)
+
+
+def _curls(spec):
+    """Little lit arcs with a dark underside all through the hair, and a bumpy outer edge: curls."""
+    grid = [list(r + r[::-1] if len(r) == 15 else r) for r in spec["rows"]]
+    hair = {(x, y) for y, row in enumerate(grid) for x, ch in enumerate(row) if ch == "H"}
+    patch = {}
+    for cy in range(8, 30, 3):
+        for cx in range(1 + (cy // 3) % 2 * 1, 30, 3):
+            arc = [(cx - 1, cy), (cx, cy - 1), (cx + 1, cy)]
+            if all(p in hair for p in arc) and (cx, cy + 1) in hair and cy > 8:
+                for p in arc:
+                    patch[p] = "h"
+                patch[(cx, cy + 1)] = "z"
+    for y in range(9, 28):
+        for x in range(30):
+            if (x, y) in hair and ((x - 1, y) not in hair or (x + 1, y) not in hair) and (x < 6 or x > 23) and (y % 3 == 0):
+                patch[(x, y)] = "_"
+    spec["patch"] = {**patch, **spec["patch"]}
+
+
+_curls(FARMER_CURLY)
+
+CAP_TWEED = ["slate_d", "slate", "grey_d", "grey"]
+CAP_FADED = ["slate", "grey_d", "grey", "grey_l"]
+SUSPENDER = ["brown_d", "brown", "brown_l"]
+JACKET_GREEN = ["teal_dd", "green_dd", "green_d", "green"]
+CARDIGAN = ["brown_d", "rust", "clay", "tan_d"]
+SKIN_PALE = ["tan_d", "tan", "skin", "cream"]
+PILLOW = ["slate", "grey_d", "grey", "grey_l"]
+QUILT = ["purple", "red_d", "red", "pink"]
+PAJAMA = ["blue_d", "blue", "cyan"]
+
+# Grandpa Elias, who spent his life asking the bank to help rebuild Willowmere. The same face at
+# three ages: a square jaw, a strong nose and a flat cap he never took off.
+ELIAS_YOUNG = dict(
+    # About thirty: dark hair, clean-shaven, blue work shirt and brown suspenders, eager.
+    rows=[
+        "_______________",
+        "_______________",
+        "_________AAAAAA",
+        "_______AAAAAAAA",
+        "______AAAAAAAAA",
+        "______AAAAAAAAA",
+        "______BBBBBBBBB",
+        "______HHSSSSSSS",
+        "______HSSSSSSSS",
+        "______HSSbbbSSS",
+        "______SSSSweSSS",
+        "______SSSSeeSSS",
+        "______SSSSSSSSS",
+        "______SSSSSSSSn",
+        "_______SSSSSSSS",
+        "_______SSSSSSSS",
+        "________SSSmmmm",
+        "________SSSSSSS",
+        "_________SSSSSS",
+        "___________SSSS",
+        "____________SSS",
+        "_________CCGSSS",
+        "______CCCCCGSSS",
+        "____CCCDCCCCGSS",
+        "___CCCCDCCCCCGS",
+        "__CCCCCDCCCCCCC",
+        "__CCCCCDCCCCCCC",
+        "__CCCCCDCCCCCCC",
+        "__CCCCCDCCCCCCC",
+        "__CCCCCDCCCCCCC",
+    ],
+    bg=["brown", "brown_l", "tan_d"],
+    ramps={"hair": HAIR_BROWN, "skin": SKIN_TAN, "cloth": BLUE, "cloth2": SUSPENDER, "cap": CAP_TWEED, "brim": ["ink", "slate_d", "slate"], "collar": CREAM},
+    patch={(7, 26): "Y", (22, 26): "Y"},
+)
+
+ELIAS_MID = mood(ELIAS_YOUNG, {
+    # About fifty: greying, a full mustache, a green work jacket, tired lines under the eyes.
+    12: "______SSSSxSSSS",
+    15: "_______SSSHHHHH",
+    16: "________SSSSmmm",
+})
+ELIAS_MID.update(ramps=dict(ELIAS_YOUNG["ramps"], hair=HAIR_GREY, cloth=JACKET_GREEN, cap=CAP_FADED), bg=["slate", "grey_d", "grey"])
+
+ELIAS_OLD = mood(ELIAS_YOUNG, {
+    # About seventy-five: white hair and beard, round glasses, a rust cardigan, still smiling.
+    9: "______HSSbbbSSS",
+    10: "______SSLLLLLLL",
+    11: "______SSLSeeSLS",
+    12: "______SSLLLLLLS",
+    14: "______HSSSSSSSS",
+    15: "______HSSHHHHHH",
+    16: "______HHHSSSmmm",
+    17: "______HHHHHHHHH",
+    18: "_______HHHHHHHH",
+    19: "_________HHHHHH",
+    20: "___________HHHH",
+    21: "_________CCGHHH",
+    22: "______CCCCCGSHH",
+})
+ELIAS_OLD.update(ramps=dict(ELIAS_YOUNG["ramps"], hair=HAIR_WHITE, cloth=CARDIGAN, cloth2=CARDIGAN, cap=CAP_FADED),
+                 key={"L": ("acc", "slate_d")}, bg=["green_dd", "green_d", "green"])
+ELIAS_OLD["patch"] = {(14, 24): "Y", (15, 24): "Y", (14, 27): "Y", (15, 27): "Y"}
+# No suspenders under the cardigan: the D strap becomes cardigan front.
+ELIAS_OLD["rows"] = [r.replace("D", "C") for r in ELIAS_OLD["rows"]]
+
+ELIAS_BED = dict(
+    eyes="ek",
+    # The last evening: propped on pillows, cap off, white hair loose, pale, eyes heavy, under the
+    # quilt Grandma made.
+    rows=[
+        "_______________",
+        "____PPPPPPPPPPP",
+        "__PPPPPPPPPPPPP",
+        "_PPPPPPPHHHHHHH",
+        "_PPPPPHHHHHHHHH",
+        "_PPPPHHHHHHHHHH",
+        "_PPPPHHHHSSSSSS",
+        "_PPPPHHSSSSSSSS",
+        "_PPPPHSSSSSSSSS",
+        "_PPPPHSSSbbbSSS",
+        "_PPPPPSSLLLLLLL",
+        "_PPPPPSSLkeeSLS",
+        "_PPPPPSSLLLLLLS",
+        "_PPPPPSSSSSSSSn",
+        "_PPPPPHSSSSSSSS",
+        "_PPPPPHSSHHHHHH",
+        "_PPPPPHHHSSSmmm",
+        "_PPPPPHHHHHHHHH",
+        "_PPPPPPHHHHHHHH",
+        "_PPPPPPPPHHHHHH",
+        "_PPPPPPPPPPHHHH",
+        "_PPPPPPPPCCGHHH",
+        "_PPPPPCCCCCGSHH",
+        "_PPPCCCCCCCCGSS",
+        "_DDDDDDDDDDDDDD",
+        "DDDDDDDDDDDDDDD",
+        "DDDDDDDDDDDDDDD",
+        "DDDDDDDDDDDDDDD",
+        "DDDDDDDDDDDDDDD",
+        "DDDDDDDDDDDDDDD",
+    ],
+    bg=["slate_d", "slate", "grey_d"],
+    ramps={"hair": HAIR_WHITE, "skin": SKIN_PALE, "cloth": PAJAMA, "cloth2": QUILT, "collar": CREAM, "pillow": PILLOW},
+    key={"P": ("pillow", None), "L": ("acc", "grey_d"), "k": ("skin", "brown"), "m": ("skin", "brown")},
+    # Patchwork: some squares of the quilt in other colours, with stitched seams.
+    patch={**{(x, y): ("y" if ((x // 5) + (y // 3)) % 3 == 0 else "Q") for x in range(0, 30) for y in range(24, 30)
+              if ((x // 5) + (y // 3)) % 3 != 1 and x % 5 and y % 3},
+           **{(x, 24): "M" for x in range(1, 29, 2)}},
+)
+
+# Old Mr. Sterling, who refused Elias for forty years: his son's face (the officer), the family's
+# round glasses and smirk, with a pencil mustache that grows and greys, and a balding head at the end.
+STERLING_SR_YOUNG = mood(OFFICER, {14: "______SSSSSSkkk"})
+STERLING_SR_YOUNG["ramps"] = dict(OFFICER["ramps"], cloth2=["ink", "slate_d", "slate"])
+STERLING_SR_YOUNG["bg"] = ["purple", "magenta", "pink"]
+
+STERLING_SR_MID = mood(OFFICER, {13: "______SSSSSSSSn", 14: "______SSSSSHHHH", 15: "_______SSSSSSSSSSHHSSSSS______"})
+STERLING_SR_MID["ramps"] = dict(OFFICER["ramps"], hair=HAIR_GREY, cloth2=["ink", "slate_d", "slate"])
+STERLING_SR_MID["bg"] = ["purple", "magenta", "pink"]
+
+STERLING_SR_OLD = mood(OFFICER, {
+    1: "_______________",
+    2: "_______________",
+    3: "_________SSSSSS",
+    4: "_______SSSSSSSS",
+    5: "______HSSSSSSSS",
+    6: "______HSSSSSSSS",
+    7: "______HSSSSSSSS",
+    8: "______HSSbbbbSS",
+    14: "______SSSSHHHHH",
+    15: "_______SSSSSHHHHHHHHSSSS______",
+    16: "_______SSSSSSkkkkkkSSSSS______",
+})
+STERLING_SR_OLD["ramps"] = dict(OFFICER["ramps"], hair=HAIR_WHITE, skin=SKIN_PALE, cloth2=["ink", "slate_d", "slate"])
+STERLING_SR_OLD["bg"] = ["purple", "magenta", "pink"]
+STERLING_SR_OLD["patch"] = {(11, 4): "c", (12, 4): "c", (10, 5): "c"}
+
+
 def determined(spec, brow, eye, mouth):
     """Brows pulled down at the middle and a flat mouth: the face for "you'll see"."""
     rows = spec["rows"]
@@ -754,10 +995,10 @@ def determined(spec, brow, eye, mouth):
     return mood(spec, {b: brow, b + 1: eye, m - 1: rows[m - 1].replace("m", "S"), m: mouth})
 
 
-FARMERS = [FARMER_HAT, FARMER_BANDANA, FARMER_BRAID, FARMER_BEANIE]
+FARMERS = [FARMER_HAT, FARMER_CURLY, FARMER_BRAID, FARMER_BEANIE]
 FARMERS_DET = [
     determined(FARMER_HAT, "______HSbbSSSSS", "______HSSSbeSSS", "_________SSSSmm"),
-    determined(FARMER_BANDANA, "_____HHSbbSSSSS", "_____HHSSSbeSSS", "_________SSSSmm"),
+    determined(FARMER_CURLY, "__HHHHHSbbSSSSS", "__HHHHHSSSbeSSS", "__HHHHHHHHSSSmm"),
     determined(FARMER_BRAID, "_____HHSbbSSSSS", "_____HHSSSbeSSS", "____HHHH_SSSSmm"),
     determined(FARMER_BEANIE, "______HSbbSSSSS", "______SSSSbeSSS", "_________SSSSmm"),
 ]
@@ -769,14 +1010,27 @@ PORTRAITS += [(f"farmer_{i}", f) for i, f in enumerate(FARMERS)]
 PORTRAITS += [(f"farmer_{i}_det", f) for i, f in enumerate(FARMERS_DET)]
 
 
+# Round 7: Grandpa Elias and old Mr. Sterling for the new opening.
+PORTRAITS += [("elias_young", ELIAS_YOUNG), ("elias_mid", ELIAS_MID), ("elias_old", ELIAS_OLD), ("elias_bed", ELIAS_BED),
+              ("sterling_sr_young", STERLING_SR_YOUNG), ("sterling_sr_mid", STERLING_SR_MID), ("sterling_sr_old", STERLING_SR_OLD)]
+# Glints and pupils behind the Sterlings' glasses blink too.
+for _spec in (OFFICER, OFFICER_SHOCK, KESSLER, KESSLER_SHOCK, STERLING_SR_YOUNG, STERLING_SR_MID, STERLING_SR_OLD):
+    _spec["eyes"] = "ewck"
+# Round 7: every villager has a bust too, for the porch scene and the heart events.
+BUSTS = ("officer", "farmer_", "kessler", "elias", "sterling", "mara", "tobias", "ivy", "bram", "juniper", "pip", "sela", "fennel", "rook", "willa", "coco")
+
+
 def main():
     sp = Sprites(sys.argv[1], "portraits")
     for name, spec in PORTRAITS:
-        out, pad = paint(spec)
-        sp.save(name, out, 15 + pad, 15 + pad)
-        if name.startswith(("officer", "farmer_", "kessler")):
-            out, pad = paint(spec, bust=True)
-            sp.save(name + "_bust", out, 15 + pad, 29 + pad)
+        # Each face also talks (mouth open) and blinks (round 7: the story scenes animate them).
+        for suffix, anim in (("", None), ("_talk", "talk"), ("_blink", "blink")):
+            frame = dict(spec, anim=anim)
+            out, pad = paint(frame)
+            sp.save(name + suffix, out, 15 + pad, 15 + pad)
+            if name.startswith(BUSTS):
+                out, pad = paint(frame, bust=True)
+                sp.save(name + "_bust" + suffix, out, 15 + pad, 29 + pad)
     sp.done()
 
 

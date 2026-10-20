@@ -209,6 +209,8 @@ class GameState(var seed: Long) {
     /** The story: the farmer's name and look, and the scenes already played (Story.kt). */
     var playerName = ""
     var playerLook = 0
+    /** Male or female (round 7); null on a save from before it, until the player picks. */
+    var playerGender: Gender? = null
     val storySeen = LinkedHashSet<String>()
 
     fun stat(key: String) = stats[key] ?: 0L
@@ -266,7 +268,8 @@ class GameState(var seed: Long) {
             contract?.let { put("contract", it.toJson()) }
         })
         put("pinned", pinned)
-        put("story", JSONObject().put("name", playerName).put("look", playerLook).put("seen", JSONArray(storySeen.toList())))
+        put("story", JSONObject().put("name", playerName).put("look", playerLook).put("seen", JSONArray(storySeen.toList()))
+            .also { st -> playerGender?.let { st.put("gender", it.name.lowercase()) } })
         put("cartLog", JSONArray().apply { cartLog.forEach { put(it.toJson()) } })
         put("events", JSONObject().apply {
             put("giftDay", giftDay); put("giftStreak", giftStreak); put("merchantDay", merchantDay)
@@ -344,6 +347,7 @@ class GameState(var seed: Long) {
             pinned = o.optString("pinned")
             o.optJSONObject("story")?.let { st ->
                 playerName = st.optString("name"); playerLook = st.optInt("look")
+                playerGender = Gender.entries.firstOrNull { it.name.lowercase() == st.optString("gender") }
                 st.optJSONArray("seen")?.strings()?.let { storySeen.addAll(it) }
             }
             o.optJSONArray("feats")?.let { a -> for (k in 0 until a.length()) featsSeen += a.getString(k) }
