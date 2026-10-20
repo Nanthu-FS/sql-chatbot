@@ -1017,10 +1017,20 @@
   "ay": 10,
   "bh": 13
  },
+ "decor/ks_finn": {
+  "ax": 10,
+  "ay": 15,
+  "bh": 18
+ },
  "decor/ks_ivy": {
   "ax": 11,
   "ay": 11,
   "bh": 14
+ },
+ "decor/ks_jasper": {
+  "ax": 10,
+  "ay": 15,
+  "bh": 18
  },
  "decor/ks_juniper": {
   "ax": 9,
@@ -1028,6 +1038,11 @@
   "bh": 14
  },
  "decor/ks_mara": {
+  "ax": 10,
+  "ay": 12,
+  "bh": 15
+ },
+ "decor/ks_marco": {
   "ax": 10,
   "ay": 12,
   "bh": 15
@@ -4095,6 +4110,36 @@
   "ay": 22,
   "bh": 25
  },
+ "people/v_finn_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_finn_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_finn_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_finn_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_finn_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_finn_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
  "people/v_ivy_ne_idle": {
   "ax": 8,
   "ay": 22,
@@ -4121,6 +4166,36 @@
   "bh": 25
  },
  "people/v_ivy_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_jasper_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_jasper_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_jasper_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_jasper_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_jasper_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_jasper_se_walk1": {
   "ax": 8,
   "ay": 22,
   "bh": 25
@@ -4181,6 +4256,36 @@
   "bh": 25
  },
  "people/v_mara_se_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_marco_ne_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_marco_ne_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_marco_ne_walk1": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_marco_se_idle": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_marco_se_walk0": {
+  "ax": 8,
+  "ay": 22,
+  "bh": 25
+ },
+ "people/v_marco_se_walk1": {
   "ax": 8,
   "ay": 22,
   "bh": 25
@@ -4498,6 +4603,55 @@
   "bh": 34
  },
  "portraits/coco": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/coco_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/coco_blush": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/coco_blush_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/coco_blush_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/coco_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/coco_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/coco_bust_blush": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/coco_bust_blush_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/coco_bust_blush_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/coco_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/coco_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4878,12 +5032,81 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/finn": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/finn_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/finn_blush": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/finn_blush_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/finn_blush_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/finn_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/finn_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/finn_bust_blush": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/finn_bust_blush_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/finn_bust_blush_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/finn_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/finn_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/ivy": {
   "ax": 17,
   "ay": 17,
   "bh": 34
  },
  "portraits/ivy_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/ivy_blush": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/ivy_blush_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/ivy_blush_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -4896,11 +5119,77 @@
   "ax": 17,
   "ay": 31
  },
+ "portraits/ivy_bust_blush": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/ivy_bust_blush_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/ivy_bust_blush_talk": {
+  "ax": 17,
+  "ay": 31
+ },
  "portraits/ivy_bust_talk": {
   "ax": 17,
   "ay": 31
  },
  "portraits/ivy_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/jasper": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/jasper_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/jasper_blush": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/jasper_blush_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/jasper_blush_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/jasper_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/jasper_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/jasper_bust_blush": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/jasper_bust_blush_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/jasper_bust_blush_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/jasper_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/jasper_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34
@@ -5013,6 +5302,60 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/marco": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/marco_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/marco_blush": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/marco_blush_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/marco_blush_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/marco_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/marco_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/marco_bust_blush": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/marco_bust_blush_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/marco_bust_blush_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/marco_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/marco_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/officer": {
   "ax": 17,
   "ay": 17,
@@ -5099,6 +5442,55 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/rook_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/rook_blush": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/rook_blush_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/rook_blush_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/rook_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/rook_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/rook_bust_blush": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/rook_bust_blush_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/rook_bust_blush_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/rook_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/rook_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/sela": {
   "ax": 17,
   "ay": 17,
@@ -5109,11 +5501,38 @@
   "ay": 17,
   "bh": 34
  },
+ "portraits/sela_blush": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sela_blush_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/sela_blush_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
  "portraits/sela_bust": {
   "ax": 17,
   "ay": 31
  },
  "portraits/sela_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sela_bust_blush": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sela_bust_blush_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/sela_bust_blush_talk": {
   "ax": 17,
   "ay": 31
  },
@@ -5235,6 +5654,55 @@
   "bh": 34
  },
  "portraits/willa": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/willa_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/willa_blush": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/willa_blush_blink": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/willa_blush_talk": {
+  "ax": 17,
+  "ay": 17,
+  "bh": 34
+ },
+ "portraits/willa_bust": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/willa_bust_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/willa_bust_blush": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/willa_bust_blush_blink": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/willa_bust_blush_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/willa_bust_talk": {
+  "ax": 17,
+  "ay": 31
+ },
+ "portraits/willa_talk": {
   "ax": 17,
   "ay": 17,
   "bh": 34

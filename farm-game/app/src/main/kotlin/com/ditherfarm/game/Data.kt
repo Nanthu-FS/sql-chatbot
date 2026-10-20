@@ -39,7 +39,11 @@ class LevelDef(
 class StorageTier(val level: Int, val capacity: Int, val unlockLevel: Int, val cost: Map<String, Int>)
 
 /** [tier]: the village tier they move in with (0 = from the start, by level). */
-class VillagerDef(val id: String, val name: String, val role: String, val unlockLevel: Int, val favorites: Set<String>, val tier: Int = 0)
+/** A villager; round 7 adds [female], [romance] (can be courted by a farmer of the other gender) and [act2] (the Story Act 2 chapter they arrive in). */
+class VillagerDef(
+    val id: String, val name: String, val role: String, val unlockLevel: Int, val favorites: Set<String>, val tier: Int = 0,
+    val female: Boolean = false, val romance: Boolean = false, val act2: Int = 0,
+)
 
 class TreeDef(
     val id: String,
@@ -122,7 +126,8 @@ class GameData(
                 StorageTier(o.getInt("level"), o.getInt("capacity"), o.getInt("unlock"), o.getJSONObject("cost").toIntMap())
             }
             val villagers = JSONObject(read("villagers.json")).getJSONArray("villagers").objects().map { o ->
-                VillagerDef(o.getString("id"), o.getString("name"), o.getString("role"), o.getInt("unlock"), o.getJSONArray("favorites").strings().toSet(), o.optInt("tier", 0))
+                VillagerDef(o.getString("id"), o.getString("name"), o.getString("role"), o.getInt("unlock"), o.getJSONArray("favorites").strings().toSet(), o.optInt("tier", 0),
+                    female = o.optString("gender") == "f", romance = o.optBoolean("romance"), act2 = o.optInt("act2", 0))
             }
             val buildings = JSONObject(read("buildings.json")).getJSONArray("buildings").objects().map { o ->
                 BuildingDef(

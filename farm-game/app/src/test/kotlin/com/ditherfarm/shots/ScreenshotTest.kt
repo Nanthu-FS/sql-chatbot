@@ -718,6 +718,21 @@ class ScreenshotTest {
             g.farm.chrome.story.start(com.ditherfarm.game.HEART_SCENES.getValue("heart_pip_8"))
             g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
             g.farm.chrome.story.showLine(0)
+        })        // Round 7: the newcomers, out walking and in a heart scene.
+        render("farm_newcomers", seconds = 3f, setup = { g ->
+            toLevel(g, 20)
+            g.world.state.pet.offered = true
+            g.world.state.villageTier = 1
+            g.world.state.act2.chapter = 3
+            g.world.state.minutes += 240.0
+            g.world.events.clear()
+            g.farm.centerOnTile(12, 27)
+        }, zoom = 2)
+        for (id in listOf("jasper", "marco")) render("story_heart_$id", setup = { g ->
+            toLevel(g, 14)
+            g.farm.chrome.story.start(com.ditherfarm.game.HEART_SCENES.getValue("heart_${id}_8"))
+            g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
+            g.farm.chrome.story.showLine(1)
         })
     }
 

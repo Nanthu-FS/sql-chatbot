@@ -122,14 +122,13 @@ def recolour(pt):
 
 def main():
     sp = Sprites(sys.argv[1], "buildings")
-    pt = Sprites(sys.argv[1], "portraits")
-    recolour(pt)
+    # Round 7: Rook, Willa and Coco have their own faces in portraits.py now (no recolours).
     for t, tier in enumerate(TIERS):
         for i, (_, spec) in enumerate(T.STYLES[tier]):
             emit_with_night(sp, f"house_{t}_{'abc'[i]}", lambda spec=spec: T.house(spec))
     for kind in ("seed", "smith", "carpenter", "cafe"):
         emit_with_night(sp, f"shop_{kind}", lambda kind=kind: shop(kind))
-    print(json.dumps({**sp.pivots, **pt.pivots}))
+    print(json.dumps(sp.pivots))
 
 
 main()

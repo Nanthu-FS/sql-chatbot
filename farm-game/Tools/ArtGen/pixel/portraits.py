@@ -147,6 +147,20 @@ def paint(spec, bust=False):
     assert len(grid) == H, len(grid)
     for (x, y), ch in spec.get("patch", {}).items():
         grid[y][x] = ch
+    if spec.get("blush"):
+        # Round 7 (romance): rosy cheeks. Existing blush grows a row; else two pixels under each eye.
+        cheeks = {(x, y) for y, row in enumerate(grid) for x, ch in enumerate(row) if ch == "r"}
+        if not cheeks:
+            eye = [(x, y) for y, row in enumerate(grid) for x, ch in enumerate(row) if ch in "ew"]
+            if eye:
+                ey = max(y for _, y in eye) + 2
+                xs = sorted({x for x, _ in eye})
+                for x in (xs[0] - 1, xs[0], xs[-1], xs[-1] + 1):
+                    cheeks.add((x, ey))
+        for x, y in list(cheeks):
+            for cx, cy in ((x, y), (x, y + 1), (x + (-1 if x < W // 2 else 1), y)):
+                if 0 <= cy < H and 0 <= cx < W and grid[cy][cx] in "Sr":
+                    grid[cy][cx] = "r"
     anim = spec.get("anim")
     if anim == "talk":
         # The mouth opens: its pixels go dark and the skin under them becomes the lower lip.
@@ -987,6 +1001,274 @@ STERLING_SR_OLD["bg"] = ["purple", "magenta", "pink"]
 STERLING_SR_OLD["patch"] = {(11, 4): "c", (12, 4): "c", (10, 5): "c"}
 
 
+# ---------------------------------------------------------------- round 7: the romance candidates
+
+LEATHER = ["brown_d", "brown", "brown_l"]
+NECKERCHIEF = ["red_d", "red", "pink"]
+DENIM = ["slate_d", "blue_d", "blue", "cyan"]
+BLONDE = ["clay", "amber", "yellow", "cream"]
+SANDY = ["brown_l", "tan_d", "tan", "cream"]
+RAINCOAT = ["clay", "amber", "yellow", "cream"]
+VEXMOOR = ["teal_dd", "green_dd", "green_d", "green"]
+HAIR_DARK = ["ink", "brown_d", "brown", "brown_l"]
+
+ROOK = dict(
+    # The young smith: messy black hair, soot on one cheek, a red neckerchief, a leather apron over a grey tee.
+    rows=[
+        "_______________",
+        "_________H_HH_H",
+        "________HHHHHHH",
+        "_______HHHHHHHH",
+        "______HHHHHHHHH",
+        "______HHHHHHHHH",
+        "______HHSSSHSSS",
+        "______HSSSSSSSS",
+        "______HSSbbbSSS",
+        "______SSSSweSSS",
+        "______SSSSeeSSS",
+        "______SSSSSSSSS",
+        "_______SSSSSSSn",
+        "_______SSSSSSSS",
+        "________SSSSSSS",
+        "________SSSmSSS",
+        "_________SSSmmm",
+        "__________SSSSS",
+        "___________SSSS",
+        "_________GGGSSS",
+        "________GGGGGGG",
+        "______CCCCGGGGG",
+        "____CCCCCCDDDDD",
+        "___CCCCCCDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+    ],
+    bg=["rust", "orange", "amber"],
+    ramps={"hair": HAIR_INK, "skin": SKIN_DEEP, "cloth": GREY, "cloth2": LEATHER, "collar": NECKERCHIEF},
+    key={"m": ("skin", "brown_d")},
+    patch={(9, 12): "x", (10, 13): "x", (14, 23): "M", (15, 23): "M"},
+)
+
+WILLA = dict(
+    # The young carpenter: a high blonde ponytail, freckles, a pencil behind her ear, a red plaid shirt
+    # under denim overalls.
+    rows=[
+        "_____________HH",
+        "____________HHH",
+        "_________HHHHHH",
+        "_______HHHHHHHH",
+        "______HHHHHHHHH",
+        "______HHHHHHHHH",
+        "______HHSSSSSSS",
+        "______HSSSSSSSS",
+        "______HSSbbbSSS",
+        "______HSSSweSSS",
+        "______HSSSeeSSS",
+        "______HSSrfSSSS",
+        "______HSSSSSSSn",
+        "_______SSSSSSSS",
+        "________SSSSSSS",
+        "________SSSmSSS",
+        "_________SSSmmm",
+        "__________SSSSS",
+        "___________SSSS",
+        "____________SSS",
+        "_________CCCSSS",
+        "______CCCCCCSSS",
+        "____CCCCDDCCCCC",
+        "___CCCCCDDCCCCC",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+    ],
+    bg=["green_d", "green", "yellow"],
+    ramps={"hair": BLONDE, "skin": SKIN_FAIR, "cloth": RED, "cloth2": DENIM},
+    key={"m": ("skin", "red_d"), "u": ("cloth", "red_d")},
+    patch={**{(x, y): "u" for y in range(21, 30) for x in list(range(2, 8)) + list(range(22, 28)) if x % 3 == 0 or y % 3 == 0},
+           (22, 7): "Y", (23, 6): "y", (24, 5): "y", (25, 4): "p", (10, 26): "y", (19, 26): "y"},
+)
+
+COCO = dict(
+    # The cafe owner: a big curly bun, warm brown skin, gold earrings, a wide smile, an orange top
+    # under a white apron.
+    rows=[
+        "____________HHH",
+        "__________HHHHH",
+        "__________HHHHH",
+        "___________HHHH",
+        "_______HHHHHHHH",
+        "______HHHHHHHHH",
+        "______HHHSSSSSS",
+        "______HHSSSSSSS",
+        "______HSSbbbSSS",
+        "______HSSSweSSS",
+        "______HSSSeeSSS",
+        "______HSSrrSSSS",
+        "______HSSSSSSSn",
+        "_______SSSSSSSS",
+        "________SSSSSSS",
+        "________SSmSSSS",
+        "_________SSmmmm",
+        "__________SSSSS",
+        "___________SSSS",
+        "____________SSS",
+        "_________CCCSSS",
+        "______CCCCCCSSS",
+        "____CCCCCCDDDDD",
+        "___CCCCCCDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+        "__CCCCCCDDDDDDD",
+    ],
+    bg=["red_d", "red", "pink"],
+    ramps={"hair": HAIR_DARK, "skin": SKIN_BROWN, "cloth": ORANGE, "cloth2": APRON},
+    key={"m": ("skin", "red_d"), "h": ("hair", "brown_l")},
+    patch={(8, 13): "y", (21, 13): "y", (13, 0): "h", (11, 1): "h", (16, 1): "h", (12, 2): "h", (18, 2): "h", (14, 4): "h", (9, 5): "h", (20, 5): "h",
+           (13, 26): "Y", (16, 26): "Y"},
+)
+
+FINN = dict(
+    # The river fisher: sun-bleached hair under a teal bucket hat, a sunburnt nose, stubble, a yellow
+    # raincoat open over a striped shirt.
+    rows=[
+        "_______________",
+        "_______________",
+        "_________AAAAAA",
+        "________AAAAAAA",
+        "________AAAAAAA",
+        "_____BBBBBBBBBB",
+        "_____HHHSSSSSSS",
+        "______HSSSSSSSS",
+        "______HSSbbbSSS",
+        "______SSSSweSSS",
+        "______SSSSeeSSS",
+        "______SSSSSSSrr",
+        "_______SSSSSSSn",
+        "_______SSSSSSSS",
+        "________SSSSSSS",
+        "________SSSSSSS",
+        "_________SSSSmm",
+        "__________SSSSS",
+        "___________SSSS",
+        "____________SSS",
+        "_________CCCSSS",
+        "______CCCCCCSSS",
+        "____CCCCCCCGDDD",
+        "___CCCCCCCCGDDD",
+        "__CCCCCCCCCGDDD",
+        "__CCCCCCCCCGDDD",
+        "__CCCCCCCCCGDDD",
+        "__CCCCCCCCCGDDD",
+        "__CCCCCCCCCGDDD",
+        "__CCCCCCCCCGDDD",
+    ],
+    bg=["blue_d", "blue", "cyan"],
+    ramps={"hair": SANDY, "skin": SKIN_TAN, "cloth": RAINCOAT, "cloth2": BLUE, "collar": ["rust", "clay", "amber"],
+           "cap": BEANIE, "brim": BEANIE_FOLD},
+    key={"m": ("skin", "brown_d"), "r": ("skin", "pink"), "f": ("skin", "brown_l")},
+    patch={**{(x, y): "F" for y in range(22, 30, 2) for x in range(12, 18)},
+           **{(x, y): "f" for (x, y) in ((10, 16), (12, 17), (17, 17), (19, 16), (14, 18), (15, 18), (11, 15), (18, 15))}},
+)
+
+JASPER = dict(
+    # The travelling fiddler: wavy auburn hair to the jaw, a goatee, a crooked grin, a green scarf and a
+    # brown waistcoat with a gold watch chain.
+    rows=[
+        "_______________",
+        "_________HHHHHH",
+        "_______HHHHHHHH",
+        "______HHHHHHHHH",
+        "_____HHHHHHHHHH",
+        "_____HHHHHHHHHH",
+        "_____HHHHSSSSSS",
+        "_____HHHSSSSSSS",
+        "_____HHSSbbbSSS",
+        "_____HHSSSweSSS",
+        "_____HHSSSeeSSS",
+        "_____HHSSSSSSSS",
+        "_____HHSSSSSSSn",
+        "_____HHHSSSSSSS",
+        "______HHSSSSSSS",
+        "______HHSSSmSSS",
+        "_______H_SSSmmm",
+        "__________SSSHH",
+        "___________SSHH",
+        "____________SSS",
+        "_________GGGSSS",
+        "______GGGGGGGSS",
+        "____CCCGGGGGDDD",
+        "___CCCCCGGCCDDD",
+        "__CCCCCCCGCCDDD",
+        "__CCCCCCCCCCDDD",
+        "__CCCCCCCCCCDDD",
+        "__CCCCCCCCCCDDD",
+        "__CCCCCCCCCCDDD",
+        "__CCCCCCCCCCDDD",
+    ],
+    bg=["blue_d", "purple", "magenta"],
+    ramps={"hair": HAIR_AUBURN, "skin": SKIN_FAIR, "cloth": LEATHER, "cloth2": CREAM, "collar": GREEN},
+    key={"m": ("skin", "brown_d")},
+    patch={(6, 14): "y", (8, 26): "Y", (9, 27): "Y", (10, 27): "Y", (11, 26): "Y", (12, 25): "y",
+           # The grin is crooked: one corner up.
+           (17, 15): "m", (18, 15): "S"},
+)
+
+MARCO = dict(
+    # Kessler's surveyor who quit to stay: neat black hair with a side part, olive skin, a shy smile, the
+    # Vexmoor-green jacket worn open over a white shirt, the tie loosened.
+    rows=[
+        "_______________",
+        "_______________",
+        "_________HHHHHH",
+        "_______HHHHHHHH",
+        "______HHHHHHHHH",
+        "______HHHHHHHHH",
+        "______HHSSSSSSS",
+        "______HSSSSSSSS",
+        "______HSSbbbSSS",
+        "______SSSSweSSS",
+        "______SSSSeeSSS",
+        "______SSSSSSSSS",
+        "_______SSSSSSSn",
+        "_______SSSSSSSS",
+        "________SSSSSSS",
+        "________SSSSSSS",
+        "_________SSSmmm",
+        "__________SSSSS",
+        "___________SSSS",
+        "____________SSS",
+        "_________CCGGGG",
+        "______CCCCCGGGG",
+        "____CCCCCCCCGGD",
+        "___CCCCCCCCCCGD",
+        "__CCCCCCCCCCCGD",
+        "__CCCCCCCCCCCCG",
+        "__CCCCCCCCCCCCG",
+        "__CCCCCCCCCCCCG",
+        "__CCCCCCCCCCCCG",
+        "__CCCCCCCCCCCCG",
+    ],
+    bg=["slate", "grey_d", "grey"],
+    ramps={"hair": HAIR_INK, "skin": SKIN_TAN, "cloth": VEXMOOR, "cloth2": RED, "collar": CREAM},
+    key={"m": ("skin", "brown_d")},
+    # The side part, and the tie pulled loose and askew.
+    patch={(11, 2): "S", (11, 3): "S", (12, 4): "H", (14, 22): "G", (15, 22): "D", (16, 23): "D", (15, 23): "G", (14, 23): "G",
+           (6, 24): "y", (7, 24): "Y"},
+)
+
+# Who can be courted (Part 2/3 of round 7), with a blushing face for the romance scenes.
+ROMANCE = ["ivy", "sela", "willa", "coco", "rook", "finn", "jasper", "marco"]
+
+
 def determined(spec, brow, eye, mouth):
     """Brows pulled down at the middle and a flat mouth: the face for "you'll see"."""
     rows = spec["rows"]
@@ -1010,6 +1292,8 @@ PORTRAITS += [(f"farmer_{i}", f) for i, f in enumerate(FARMERS)]
 PORTRAITS += [(f"farmer_{i}_det", f) for i, f in enumerate(FARMERS_DET)]
 
 
+# Round 7: the romance candidates' new faces (Rook, Willa and Coco were recolours of older villagers).
+PORTRAITS += [("rook", ROOK), ("willa", WILLA), ("coco", COCO), ("finn", FINN), ("jasper", JASPER), ("marco", MARCO)]
 # Round 7: Grandpa Elias and old Mr. Sterling for the new opening.
 PORTRAITS += [("elias_young", ELIAS_YOUNG), ("elias_mid", ELIAS_MID), ("elias_old", ELIAS_OLD), ("elias_bed", ELIAS_BED),
               ("sterling_sr_young", STERLING_SR_YOUNG), ("sterling_sr_mid", STERLING_SR_MID), ("sterling_sr_old", STERLING_SR_OLD)]
@@ -1017,15 +1301,19 @@ PORTRAITS += [("elias_young", ELIAS_YOUNG), ("elias_mid", ELIAS_MID), ("elias_ol
 for _spec in (OFFICER, OFFICER_SHOCK, KESSLER, KESSLER_SHOCK, STERLING_SR_YOUNG, STERLING_SR_MID, STERLING_SR_OLD):
     _spec["eyes"] = "ewck"
 # Round 7: every villager has a bust too, for the porch scene and the heart events.
-BUSTS = ("officer", "farmer_", "kessler", "elias", "sterling", "mara", "tobias", "ivy", "bram", "juniper", "pip", "sela", "fennel", "rook", "willa", "coco")
+BUSTS = ("officer", "farmer_", "kessler", "elias", "sterling", "mara", "tobias", "ivy", "bram", "juniper", "pip", "sela", "fennel", "rook", "willa", "coco",
+         "finn", "jasper", "marco")
 
 
 def main():
     sp = Sprites(sys.argv[1], "portraits")
     for name, spec in PORTRAITS:
-        # Each face also talks (mouth open) and blinks (round 7: the story scenes animate them).
-        for suffix, anim in (("", None), ("_talk", "talk"), ("_blink", "blink")):
-            frame = dict(spec, anim=anim)
+        # Each face also talks (mouth open) and blinks (round 7: the story scenes animate them); the
+        # romance candidates blush too.
+        moods = [("", False)] + ([("_blush", True)] if name in ROMANCE else [])
+        for (mood_suffix, blush), (suffix, anim) in [(m, a) for m in moods for a in (("", None), ("_talk", "talk"), ("_blink", "blink"))]:
+            suffix = mood_suffix + suffix
+            frame = dict(spec, anim=anim, blush=blush)
             out, pad = paint(frame)
             sp.save(name + suffix, out, 15 + pad, 15 + pad)
             if name.startswith(BUSTS):

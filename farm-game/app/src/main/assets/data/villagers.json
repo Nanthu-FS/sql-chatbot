@@ -1,5 +1,5 @@
 {
- "_doc": "Villagers who post orders (GAME_DESIGN §14).",
+ "_doc": "Villagers who post orders (GAME_DESIGN §14). Round 7: gender (m/f) and romance (can be courted, by the other gender); act2 = the Story Act 2 chapter they arrive in.",
  "villagers": [
   {
    "id": "mara",
@@ -12,7 +12,8 @@
     "corn",
     "bread",
     "pumpkin_pie"
-   ]
+   ],
+   "gender": "f"
   },
   {
    "id": "tobias",
@@ -24,7 +25,8 @@
     "plank",
     "stone",
     "hardwood"
-   ]
+   ],
+   "gender": "m"
   },
   {
    "id": "ivy",
@@ -36,7 +38,9 @@
     "strawberry",
     "carrot",
     "honey"
-   ]
+   ],
+   "gender": "f",
+   "romance": true
   },
   {
    "id": "bram",
@@ -51,7 +55,8 @@
     "copper_bar",
     "iron_bar",
     "gold_bar"
-   ]
+   ],
+   "gender": "m"
   },
   {
    "id": "juniper",
@@ -65,7 +70,8 @@
     "bread",
     "veggie_stew",
     "roast_veggies"
-   ]
+   ],
+   "gender": "f"
   },
   {
    "id": "pip",
@@ -78,7 +84,8 @@
     "melon",
     "quartz",
     "strawberry_jam"
-   ]
+   ],
+   "gender": "m"
   },
   {
    "id": "sela",
@@ -89,7 +96,9 @@
     "grapes",
     "grapes_juice",
     "cooking_oil"
-   ]
+   ],
+   "gender": "f",
+   "romance": true
   },
   {
    "id": "fennel",
@@ -102,7 +111,8 @@
     "honey",
     "cabbage_pickles",
     "amethyst"
-   ]
+   ],
+   "gender": "m"
   },
   {
    "id": "rook",
@@ -116,7 +126,9 @@
     "coal",
     "stone",
     "hardwood"
-   ]
+   ],
+   "gender": "m",
+   "romance": true
   },
   {
    "id": "willa",
@@ -130,7 +142,9 @@
     "hardwood",
     "nails",
     "wood"
-   ]
+   ],
+   "gender": "f",
+   "romance": true
   },
   {
    "id": "coco",
@@ -144,7 +158,56 @@
     "veggie_stew",
     "strawberry_jam",
     "carrot_juice"
-   ]
+   ],
+   "gender": "f",
+   "romance": true
+  },
+  {
+   "id": "finn",
+   "name": "Finn",
+   "role": "Fisher",
+   "unlock": 6,
+   "favorites": [
+    "trout",
+    "salmon",
+    "pike",
+    "catfish",
+    "veggie_stew"
+   ],
+   "gender": "m",
+   "romance": true
+  },
+  {
+   "id": "jasper",
+   "name": "Jasper",
+   "role": "Fiddler",
+   "unlock": 8,
+   "tier": 1,
+   "favorites": [
+    "grapes_juice",
+    "honey",
+    "apple_juice",
+    "strawberry_tart",
+    "maple_syrup"
+   ],
+   "gender": "m",
+   "romance": true
+  },
+  {
+   "id": "marco",
+   "name": "Marco",
+   "role": "Surveyor",
+   "unlock": 1,
+   "act2": 3,
+   "favorites": [
+    "amethyst",
+    "emerald",
+    "quartz",
+    "pancakes",
+    "maple_syrup"
+   ],
+   "gender": "m",
+   "romance": true
   }
  ]
 }

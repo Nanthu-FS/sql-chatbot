@@ -113,6 +113,14 @@ VILLAGERS = {
     "coco": ("bun", "apron", look(hair=("brown_d", "ink", "brown"), skin=("brown_l", "brown", "brown"), shirt=("orange", "rust"),
                                   bib=("white", "grey_l", "grey_l"), legs=("brown_d", "ink"), band=("white", "grey_l"),
                                   p="red", m="ink", O="white", P="tan", V="orange")),
+    # Round 7: the three newcomers who can be courted.
+    "finn": ("cap", "plain", look(hair=("tan", "tan_d"), skin=("tan", "tan_d", "brown_l"), shirt=("yellow", "amber"),
+                                  legs=("blue_d", "slate"), hat=("blue_d", "teal_dd", "blue"), brim=("teal_dd", "ink"),
+                                  beard=("tan", "tan_d"), Y="brown_l", m="brown_d", O="white", P="blue", V="yellow")),
+    "jasper": ("bob", "plain", look(hair=("rust", "red_d", "clay"), skin=("skin", "tan", "tan_d"), shirt=("brown", "brown_d"),
+                                    legs=("slate", "slate_d"), p="tan", m="brown_d", O="cream", P="green", V="green")),
+    "marco": ("bob", "plain", look(hair=("ink", "slate_d", "slate"), skin=("tan", "tan_d", "tan_d"), shirt=("green_d", "green_dd"),
+                                   legs=("slate_d", "ink"), p="tan", m="brown_d", O="white", P="red", V="green")),
 }
 for _, _, _lk in VILLAGERS.values():
     for _k, _c in (("p", "pink"), ("z", "tan_d"), ("m", "red_d"), ("O", "white"), ("P", "tan"), ("V", "red")):

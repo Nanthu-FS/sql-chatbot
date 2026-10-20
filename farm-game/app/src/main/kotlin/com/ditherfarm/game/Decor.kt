@@ -52,6 +52,9 @@ val DECOR = listOf(
     DecorDef("ks_rook", "Rook's anvil", 0, 8, 1, keepsake = "rook"),
     DecorDef("ks_willa", "Willa's bench", 0, 8, 1, keepsake = "willa"),
     DecorDef("ks_coco", "Coco's table", 0, 8, 1, keepsake = "coco"),
+    DecorDef("ks_finn", "Finn's tackle", 0, 8, 1, keepsake = "finn"),
+    DecorDef("ks_jasper", "Jasper's fiddle", 0, 8, 1, keepsake = "jasper"),
+    DecorDef("ks_marco", "Marco's telescope", 0, 8, 1, keepsake = "marco"),
 ).associateBy { it.id }
 
 /** Keepsakes the player has been given and not yet set out on the farm. */

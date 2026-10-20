@@ -688,7 +688,7 @@ class World(val data: GameData, val state: GameState) {
         }
     }
 
-    fun villagersUnlocked() = data.villagers.filter { it.unlockLevel <= state.level && it.tier <= state.villageTier }
+    fun villagersUnlocked() = data.villagers.filter { it.unlockLevel <= state.level && it.tier <= state.villageTier && state.act2.chapter >= it.act2 }
 
     /** Builds a random order from items the player has obtained (GAME_DESIGN §14). */
     fun generateOrder(): Order? {

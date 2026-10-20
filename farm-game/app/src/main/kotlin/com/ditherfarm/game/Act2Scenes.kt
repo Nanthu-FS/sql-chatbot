@@ -32,6 +32,8 @@ val ACT2_SCENES: Map<String, Scene> = listOf(
         k("I offered your neighbours twice the pay to work our fields. They laughed at me.", 1),
         p("People here look after each other."),
         k("Sentiment doesn't scale, {name}. Vexmoor is planting a thousand fruit trees on the hill."),
+        k("And my best surveyor has quit to stay in your valley. Marco. Traitor.", 1),
+        n("Marco the surveyor has moved to Willowmere."),
         n("Chapter 3: Roots. Grow 4 trees in your orchard, and win another week."),
     ),
     act2("act2_4",

@@ -16,6 +16,34 @@ class FriendsTest {
         knowEverything(); add("wheat", 20); add("stone", 20); add("carrot", 5); add(Quality.GOLD.key("bread"), 2); events.clear()
     }
 
+    @Test fun everyVillagerHasTalkAndThreeHeartScenesAndAKeepsake() {
+        for (v in data.villagers) {
+            assertTrue(v.id, TALK[v.id]?.isNotEmpty() == true)
+            for (h in HEART_EVENTS) assertNotNull("${v.id} at $h", HEART_SCENES[heartScene(v.id, h)])
+            assertTrue(v.id, DECOR.values.any { it.keepsake == v.id })
+            for (f in v.favorites) assertNotNull("${v.id} loves $f", data.items[f])
+        }
+    }
+
+    @Test fun theNewcomersArriveOnCue() {
+        val w = World.newGame(data, 31)
+        fun here(id: String) = w.villagersUnlocked().any { it.id == id }
+        assertFalse(here("finn"))
+        w.gainXp(w.data.level(8).totalXp - w.state.xp)
+        assertTrue("Finn comes with fishing", here("finn"))
+        assertFalse("Jasper waits for the stone village", here("jasper"))
+        w.state.villageTier = 1
+        assertTrue(here("jasper"))
+        assertFalse("Marco is still with Vexmoor", here("marco"))
+        w.state.act2.chapter = 3
+        assertTrue(here("marco"))
+        // Courting is by the other gender: four brides, four grooms.
+        val rom = data.villagers.filter { it.romance }
+        assertEquals(4, rom.count { it.female })
+        assertEquals(4, rom.count { !it.female })
+        assertFalse("Pip is a child", data.villagers.first { it.id == "pip" }.romance)
+    }
+
     @Test fun aChatOnceADay() {
         val w = village()
         assertTrue(w.talk("mara"))

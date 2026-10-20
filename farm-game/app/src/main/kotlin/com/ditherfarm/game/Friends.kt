@@ -112,4 +112,7 @@ val TALK: Map<String, List<String>> = mapOf(
     "rook" to listOf("Bram taught me the anvil. I'm teaching it to listen.", "The Mine's deeper than anyone thought. Bring me what you find.", "Good steel takes a lot of hitting."),
     "willa" to listOf("Every house in this village has a story nailed into it.", "Hand me a beam and I'll hand you a home.", "I like the sound of a busy village. Saws and laughter."),
     "coco" to listOf("Coffee's on! Always.", "A pumpkin pie in the window brings in half the valley.", "Sit, sit. The cafe's quieter before the lunch rush."),
+    "finn" to listOf("River's low today. The fish are sulking.", "Best bait's patience. Second best is worms.", "Saw a heron this morning. Bigger than Pip."),
+    "jasper" to listOf("Got a request? I know three hundred songs, and half of them are about cows.", "Juniper says I can stay at the inn as long as I play at supper.", "Every town sounds different, {name}. This one sounds like hammers."),
+    "marco" to listOf("Your top field is exactly one point six acres. Sorry. Old habits.", "Ms. Kessler still writes to me. I use the letters to light the stove.", "Finn's teaching me to fish. He says I talk too much."),
 )
