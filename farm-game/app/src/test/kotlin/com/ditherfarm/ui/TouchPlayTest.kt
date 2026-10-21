@@ -17,6 +17,9 @@ import com.ditherfarm.game.spot
 import com.ditherfarm.game.treeStage
 import com.ditherfarm.game.zoneOpen
 import com.ditherfarm.game.quarryOpen
+import com.ditherfarm.game.befriend
+import com.ditherfarm.game.setPlayer
+import com.ditherfarm.game.isDating
 import com.ditherfarm.shots.ScreenshotTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -164,5 +167,22 @@ class TouchPlayTest {
         val swings = w.state.stat("swings")
         t.tap(bufX(fs, wx), bufY(fs, wy))
         assertEquals("a tap on a crown swings at the frontmost tree there", swings + 1, w.state.stat("swings"))
+    }
+
+    /** Playtest round 7: the bouquet button on a villager's panel starts dating and plays the scene. */
+    @Test fun bouquetButtonPlaysTheScene() {
+        val (g, t) = start()
+        val w = g.world
+        w.setPlayer(0, "Sam")
+        w.gainXp(w.data.level(16).totalXp - w.state.xp)
+        w.befriend("ivy", 2_600)
+        w.add(com.ditherfarm.game.BOUQUET, 2)
+        w.state.minutes = w.time.dayIndex * 1440.0 + 600
+        t.frames(3)
+        g.farm.chrome.open(Chrome.Panel.VILLAGER, "ivy")
+        t.frames(3)
+        t.tap(135f, 203f)
+        assertTrue("dating after the bouquet", w.isDating("ivy"))
+        assertEquals(Chrome.Panel.STORY, g.farm.chrome.panel)
     }
 }

@@ -1399,7 +1399,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             label != null && act != null -> {
                 val divorce = world.isSpouse(id)
                 val style = if (divorce) "red" else if (blocker == null) "gold" else "wood"
-                if (ui.button("romance", x + 10, ry, pw - 20, 16, label, style = style)) {
+                if (ui.button("romance", x + 10, ry, pw - 20, 18, label, style = style)) {
                     if (blocker != null) hud.toast(blocker) else { giftMode = false; villagerSays = ""; act(); if (!divorce) return true }
                 }
             }
