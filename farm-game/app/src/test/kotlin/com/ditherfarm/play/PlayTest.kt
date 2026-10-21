@@ -14,6 +14,7 @@ import com.ditherfarm.game.adoptPet
 import com.ditherfarm.game.finishScene
 import com.ditherfarm.game.befriend
 import com.ditherfarm.game.setPlayer
+import com.ditherfarm.game.villager
 import com.ditherfarm.game.enterFloor
 import com.ditherfarm.game.startQuest
 import com.ditherfarm.shots.ScreenshotTest
@@ -63,6 +64,7 @@ import java.io.File
  *       look N               the farmer's look 0..3 (0, 3 male; 1, 2 female), which sets their gender
  *       dating ID            dating villager ID (their hearts can go past 8)
  *       farmhouse            the family farmhouse is built
+ *       tier N               the village is restored to tier N (0..3; brings its villagers)
  *       married ID           married to ID (the farmhouse built, the courting scenes seen)
  *  3. saves the farm and writes <dir>/shots/turn_NNN.png (2x), turn_NNN_grid.png (the same with a
  *     30-pixel coordinate grid) and <dir>/state.txt (what is on screen and in the farm).
@@ -170,9 +172,11 @@ class PlayTest {
                 "look" -> w.setPlayer(p[1].toInt(), w.state.playerName.ifBlank { "Tester" })
                 "dating" -> w.state.romance.dating += p[1]
                 "farmhouse" -> w.state.romance.farmhouse = 1
+                "tier" -> w.state.villageTier = p[1].toInt()
                 "married" -> {
                     val id = p[1]
                     w.state.romance.farmhouse = 1; w.state.romance.spouse = id
+                    w.villager(id)?.let { v -> w.state.villageTier = maxOf(w.state.villageTier, v.tier); w.state.act2.chapter = maxOf(w.state.act2.chapter, v.act2) }
                     w.state.storySeen.addAll(listOf("romance_${id}_bouquet", "romance_${id}_date", "romance_${id}_propose", "wedding_$id") +
                         com.ditherfarm.game.HEART_EVENTS.map { com.ditherfarm.game.heartScene(id, it) })
                 }

@@ -1355,7 +1355,8 @@ class Panels(private val game: Game, private val hud: Hud) {
      * portrait, hearts, where you stand, a "!" when they want to talk. Tap one for their panel.
      */
     fun friends(): Boolean {
-        val vs = world.villagersUnlocked()
+        // The spouse is always listed, whatever the village has unlocked.
+        val vs = world.villagersUnlocked().let { l -> l + listOfNotNull(world.romance.spouse?.let { world.villager(it) }?.takeIf { it !in l }) }
         val rows = (vs.size + 1) / 2
         val (x, y, pw, ph) = frame("FRIENDS", 34 + rows * 34).toList()
         if (closeButton(x, y, pw)) return false
@@ -1503,6 +1504,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             lines.forEachIndexed { i, line -> g.text(line, x + 92, y + 28 + i * 12, Gfx.INK, outline = 0, shadow = false) }
         } else {
             g.spriteScaled("portraits/${spouse.id}", (x + pw - 30).toFloat(), (y + 46).toFloat(), 0.6f, 0.6f)
+            if (ui.clickable("home-spouse", x + pw - 46, y + 30, 32, 32)) { onVillager?.invoke(spouse.id); return true }
             g.text("MARRIED TO", x + 92, y + 26, Gfx.MUTED, outline = 0, shadow = false)
             g.text(spouse.name.uppercase(), x + 92, y + 37, Gfx.RED, outline = 0, shadow = false)
             world.spousePerk()?.let { p -> hud.wrap(p.text.uppercase(), pw - 104).take(3).forEachIndexed { i, l -> g.text(l, x + 92, y + 62 + i * 10, Gfx.INK, outline = 0, shadow = false) } }
