@@ -755,6 +755,10 @@ class ScreenshotTest {
             toLevel(g, 16); g.world.setPlayer(0, "Sam"); g.world.befriend("ivy", 2_500); g.world.add(com.ditherfarm.game.BOUQUET, 1)
             g.world.events.clear(); g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.VILLAGER, "ivy")
         })
+        render("panel_friends", setup = { g ->
+            married(g); g.world.state.villageTier = 2; g.world.befriend("mara", 900); g.world.events.clear()
+            g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.FRIENDS)
+        })
         render("panel_farmhouse_old", setup = { g -> toLevel(g, 16); g.world.events.clear(); g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.FARMHOUSE) })
         render("story_date", setup = { g ->
             toLevel(g, 16); g.world.setPlayer(0, "Sam")

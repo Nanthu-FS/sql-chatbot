@@ -185,4 +185,29 @@ class TouchPlayTest {
         assertTrue("dating after the bouquet", w.isDating("ivy"))
         assertEquals(Chrome.Panel.STORY, g.farm.chrome.panel)
     }
+
+    /** Playtest round 7: a spouse's 12-heart button plays the porch scene (they ask about a family). */
+    @Test fun spouseHeartEventPlaysTheScene() {
+        val (g, t) = start()
+        val w = g.world
+        w.setPlayer(2, "Sam")
+        w.gainXp(w.data.level(18).totalXp - w.state.xp)
+        w.state.romance.farmhouse = 1; w.state.romance.spouse = "rook"
+        w.state.storySeen.addAll(com.ditherfarm.game.HEART_EVENTS.map { com.ditherfarm.game.heartScene("rook", it) })
+        w.befriend("rook", 4_500)
+        w.state.minutes = w.time.dayIndex * 1440.0 + 600
+        t.frames(3)
+        g.farm.chrome.open(Chrome.Panel.VILLAGER, "rook")
+        t.frames(3)
+        // The gold "12 HEARTS" button sits under the chat line.
+        var hit = false
+        for (y in 150..175 step 3) {
+            t.tap(135f, y.toFloat())
+            if (g.farm.chrome.panel == Chrome.Panel.STORY) { hit = true; break }
+            if (g.farm.chrome.panel != Chrome.Panel.VILLAGER) { g.farm.chrome.open(Chrome.Panel.VILLAGER, "rook"); t.frames(2) }
+        }
+        assertTrue("the porch scene plays", hit)
+        t.frames(10)
+        assertEquals(Chrome.Panel.STORY, g.farm.chrome.panel)
+    }
 }

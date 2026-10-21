@@ -52,7 +52,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS, VILLAGER, CONTEST, LETTER, LETTERS, FARMHOUSE }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS, VILLAGER, CONTEST, LETTER, LETTERS, FARMHOUSE, FRIENDS }
 
     var panel = Panel.NONE
         private set
@@ -92,6 +92,8 @@ class Chrome(private val game: Game, private val here: Nav) {
         }
         // Scenes play on the farm, so a replay asked for in the Forest or Mine goes there first.
         panels.onLetters = { open(Panel.LETTERS) }
+        panels.onFriends = { open(Panel.FRIENDS) }
+        panels.onVillager = { id -> panels.villagerSays = ""; open(Panel.VILLAGER, id) }
         panels.onDivorce = { id ->
             val name = world.villager(id)?.name ?: id
             confirm("DIVORCE", "Mr. Sterling files the papers at the bank for ${com.ditherfarm.game.DIVORCE_COST} coins. $name moves back home, and your friendship drops to ${com.ditherfarm.game.DIVORCE_HEARTS} hearts.", "FILE") {
@@ -214,7 +216,8 @@ class Chrome(private val game: Game, private val here: Nav) {
         if (world.merchantHere()) g.sprite("icons/merchant", x + if (festival) 46f else 30f, y + 7f)
         if (goalsClick) open(Panel.GOALS)
         // A letter from Grandpa waiting: a sealed envelope under the trophy chip, on the farm.
-        world.pendingLetter()?.takeIf { here == Nav.FARM }?.let { l ->
+        // Only with nothing open: it sits where a panel's close button is (playtest round 7).
+        world.pendingLetter()?.takeIf { here == Nav.FARM && panel == Panel.NONE }?.let { l ->
             val ex = w - 32; val ey = game.engine.safeTop + 36
             ui.pill(ex, ey, 30, 18)
             val bob = kotlin.math.sin(game.engine.time * 4f) * 1.5f
@@ -354,6 +357,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.RELICS -> panels.relics()
             Panel.VILLAGER -> panels.villager(target ?: return)
             Panel.FARMHOUSE -> panels.farmhouse()
+            Panel.FRIENDS -> panels.friends()
             Panel.CONTEST -> panels.contest()
             Panel.LETTER -> letter.draw()
             Panel.LETTERS -> letter.list { id -> openLetter(id, reread = true) }

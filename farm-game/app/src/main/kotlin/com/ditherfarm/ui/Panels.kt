@@ -489,7 +489,7 @@ class Panels(private val game: Game, private val hud: Hud) {
 
     // -------------------------------------------------------------- settings
     fun settings(): Boolean {
-        val (x, y, pw, ph) = frame("MENU", 296).toList()
+        val (x, y, pw, ph) = frame("MENU", 344).toList()
         if (closeButton(x, y, pw)) return false
         // First, so it's found (a playtest only found it under the settings, round 7).
         if (ui.button("decorate", x + 10, y + 24, pw - 20, 18, "DECORATE YOUR FARM", "icons/heart", "gold")) { onDecorShop?.invoke(); return true }
@@ -508,13 +508,15 @@ class Panels(private val game: Game, private val hud: Hud) {
         val by = y + 158
         if (ui.button("export", x + 10, by, (pw - 26) / 2, 18, "EXPORT", "icons/export", "blue")) game.host.requestExport()
         if (ui.button("import", x + 16 + (pw - 26) / 2, by, (pw - 26) / 2, 18, "IMPORT", "icons/import", "blue")) game.host.requestImport()
+        if (ui.button("friends", x + 10, by + 24, pw - 20, 18, "FRIENDS", "icons/heart", "wood")) { onFriends?.invoke(); return true }
+        if (ui.button("story", x + 10, by + 48, pw - 20, 18, "STORY: WATCH THE OPENING", "icons/book", "wood")) { onStory?.invoke(); return true }
+        if (ui.button("letters", x + 10, by + 72, pw - 20, 18, "GRANDPA'S LETTERS", null, "wood")) { onLetters?.invoke(); return true }
+        // Last and apart from the rest (playtest round 7: it sat one row under Export).
         val label = when (confirmNewGame) { 0 -> "NEW FARM"; 1 -> "SURE? TAP AGAIN"; else -> "REALLY? LAST TAP" }
-        if (ui.button("newgame", x + 10, by + 24, pw - 20, 18, label, style = "red")) {
+        if (ui.button("newgame", x + 10, by + 108, pw - 20, 18, label, style = "red")) {
             confirmNewGame++
             if (confirmNewGame >= 3) { game.newGame(); confirmNewGame = 0; hud.toast("A fresh start!"); return false }
         }
-        if (ui.button("story", x + 10, by + 48, pw - 20, 18, "STORY: WATCH THE OPENING", "icons/book", "wood")) { onStory?.invoke(); return true }
-        if (ui.button("letters", x + 10, by + 72, pw - 20, 18, "GRANDPA'S LETTERS", null, "wood")) { onLetters?.invoke(); return true }
         g.text("REBUILD THE VILLAGE 0.2", x + pw / 2, y + ph - 30, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         g.text("FONT SILKSCREEN (OFL) - ENDESGA 32", x + pw / 2, y + ph - 19, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         return true
@@ -1344,6 +1346,35 @@ class Panels(private val game: Game, private val hud: Hud) {
     var onHeartEvent: ((String) -> Unit)? = null
     /** Asks before filing for divorce (set by Chrome). */
     var onDivorce: ((String) -> Unit)? = null
+    /** Opens the friends list, and a villager's panel from it (set by Chrome). */
+    var onFriends: (() -> Unit)? = null
+    var onVillager: ((String) -> Unit)? = null
+
+    /**
+     * Everyone in the village (playtest round 7: a villager walking about was hard to find and tap):
+     * portrait, hearts, where you stand, a "!" when they want to talk. Tap one for their panel.
+     */
+    fun friends(): Boolean {
+        val vs = world.villagersUnlocked()
+        val rows = (vs.size + 1) / 2
+        val (x, y, pw, ph) = frame("FRIENDS", 34 + rows * 34).toList()
+        if (closeButton(x, y, pw)) return false
+        val cw = (pw - 24) / 2
+        vs.forEachIndexed { i, v ->
+            val cx = x + 10 + (i % 2) * (cw + 4)
+            val cy = y + 24 + (i / 2) * 34
+            g.slice9("ui/slot", cx, cy, cx + cw, cy + 31, 4)
+            g.spriteScaled("portraits/${v.id}", (cx + 16).toFloat(), (cy + 15).toFloat(), 0.52f, 0.52f)
+            g.text(v.name.uppercase(), cx + 32, cy + 4, Gfx.INK, outline = 0, shadow = false)
+            val h = world.hearts(v.id)
+            miniHeart(cx + 32, cy + 16, h > 0)
+            g.text("$h", cx + 39, cy + 15, Gfx.INK, outline = 0, shadow = false)
+            world.romanceLabel(v.id)?.let { g.text(it, cx + cw - 4, cy + 15, Gfx.RED, align = 1, outline = 0, shadow = false) }
+            if (world.pendingHeartEvent(v.id) != null || world.pendingDate(v.id)) g.text("!", cx + cw - 6, cy + 3, Gfx.GOLD, align = 0)
+            if (ui.clickable("friend-${v.id}", cx, cy, cw, 31)) { onVillager?.invoke(v.id); return true }
+        }
+        return true
+    }
 
     /** A villager (round 6): hearts, a chat, a gift a day, and their heart events. */
     fun villager(id: String): Boolean {
