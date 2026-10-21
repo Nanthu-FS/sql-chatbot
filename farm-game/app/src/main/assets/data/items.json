@@ -1092,6 +1092,20 @@
    "category": "tonic",
    "price": 0,
    "storage": "barn"
+  },
+  {
+   "id": "bouquet",
+   "name": "Bouquet",
+   "category": "romance",
+   "price": 0,
+   "storage": "barn"
+  },
+  {
+   "id": "ring",
+   "name": "Gold Ring",
+   "category": "romance",
+   "price": 0,
+   "storage": "barn"
   }
  ]
 }

@@ -820,7 +820,7 @@ FARMER_CURLY = dict(
     ],
     bg=["rust", "clay", "tan"],
     ramps={"hair": HAIR_INK, "skin": SKIN_BROWN, "cloth": PURPLE, "cloth2": GREEN, "cap": STRAW, "brim": STRAW_BRIM, "collar": CREAM},
-    key={"m": ("skin", "red_d"), "h": ("hair", "slate"), "z": ("hair", "grey_d")},
+    key={"m": ("skin", "red"), "h": ("hair", "slate"), "z": ("hair", "grey_d")},
     # Curls: a scalloped outer edge, highlight loops through the hair; the flower on the band.
     patch={(8, 16): "y", (21, 16): "y", (19, 5): "p", (20, 5): "y", (21, 5): "p", (20, 4): "p", (20, 6): "p"},
 )
@@ -1131,7 +1131,7 @@ COCO = dict(
     ],
     bg=["red_d", "red", "pink"],
     ramps={"hair": HAIR_DARK, "skin": SKIN_BROWN, "cloth": ORANGE, "cloth2": APRON},
-    key={"m": ("skin", "red_d"), "h": ("hair", "brown_l")},
+    key={"m": ("skin", "red"), "h": ("hair", "brown_l")},
     patch={(8, 13): "y", (21, 13): "y", (13, 0): "h", (11, 1): "h", (16, 1): "h", (12, 2): "h", (18, 2): "h", (14, 4): "h", (9, 5): "h", (20, 5): "h",
            (13, 26): "Y", (16, 26): "Y"},
 )

@@ -29,7 +29,10 @@ fun World.nextHeart(id: String): Pair<Int, Int>? = World.HEARTS.firstOrNull { fr
 /** Adds friendship and announces any new heart. */
 fun World.befriend(id: String, points: Int) {
     val before = hearts(id)
-    state.friendship[id] = friendship(id) + points
+    // Round 7: points stop at the hearts this villager can reach for now (8 for a sweetheart until a
+    // bouquet; 14 for a spouse); a friendship already past the cap is never cut back.
+    val now = friendship(id)
+    state.friendship[id] = if (points <= 0) now + points else maxOf(now, minOf(now + points, friendshipCap(id)))
     val after = hearts(id)
     if (after > before) events += WorldEvent.HeartUp(id, after)
     // Best friends: their keepsake, once.
@@ -91,6 +94,7 @@ fun World.giveGift(id: String, key: String): Boolean {
     state.bump("gifts")
     events += WorldEvent.GiftGiven(id, baseId(key), reaction, points)
     befriend(id, points)
+    if (reaction == GiftReaction.LOVED && isDating(id)) jealous(id)
     return true
 }
 

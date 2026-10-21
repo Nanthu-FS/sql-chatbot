@@ -74,19 +74,20 @@ class FriendsTest {
     }
 
     @Test fun tenHeartsAndHeartEvents() {
+        // Mara can't be courted, so her friendship goes all the way to ten (round 7).
         val w = village()
-        assertEquals(0, w.hearts("ivy"))
-        w.befriend("ivy", 250)
-        assertEquals(2, w.hearts("ivy"))
-        assertEquals(2, w.pendingHeartEvent("ivy"))
-        assertTrue(w.events.any { it is WorldEvent.HeartUp && it.villager == "ivy" && it.hearts == 2 })
-        w.finishScene(heartScene("ivy", 2))
-        assertNull(w.pendingHeartEvent("ivy"))
-        assertTrue(w.friendship("ivy") > 250)
-        w.befriend("ivy", 5000)
-        assertEquals(FRIEND_HEARTS, w.hearts("ivy"))
-        assertNull(w.nextHeart("ivy"))
-        assertEquals(5, w.pendingHeartEvent("ivy"))
+        assertEquals(0, w.hearts("mara"))
+        w.befriend("mara", 250)
+        assertEquals(2, w.hearts("mara"))
+        assertEquals(2, w.pendingHeartEvent("mara"))
+        assertTrue(w.events.any { it is WorldEvent.HeartUp && it.villager == "mara" && it.hearts == 2 })
+        w.finishScene(heartScene("mara", 2))
+        assertNull(w.pendingHeartEvent("mara"))
+        assertTrue(w.friendship("mara") > 250)
+        w.befriend("mara", 5000)
+        assertEquals(FRIEND_HEARTS, w.hearts("mara"))
+        assertNull(w.nextHeart("mara"))
+        assertEquals(5, w.pendingHeartEvent("mara"))
     }
 
     @Test fun bestFriendsGiveAKeepsakeOnce() {

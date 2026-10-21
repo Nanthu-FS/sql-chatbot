@@ -120,6 +120,8 @@ class GameState(var seed: Long) {
     val keepsakes = LinkedHashSet<String>()
     /** Story Act 2: the Vexmoor Cup (Act2.kt). */
     var act2 = Act2State()
+    /** Dating, engagement, marriage and the farmhouse (Romance.kt, round 7). */
+    var romance = RomanceState()
     val recentOrderItems = ArrayList<String>()
 
     var weather = Weather.SUNNY
@@ -233,6 +235,7 @@ class GameState(var seed: Long) {
         put("talked", JSONObject(talked as Map<*, *>)); put("gifted", JSONObject(gifted as Map<*, *>))
         put("keepsakes", JSONArray(keepsakes.toList()))
         put("act2", act2.toJson())
+        put("romance", romance.toJson())
         put("recentOrderItems", JSONArray(recentOrderItems))
         put("weather", weather.name); put("forecast", forecast.name)
         put("glut", JSONObject(glut as Map<*, *>))
@@ -305,6 +308,7 @@ class GameState(var seed: Long) {
             o.optJSONObject("gifted")?.toIntMap()?.let { gifted.putAll(it) }
             o.optJSONArray("keepsakes")?.let { a -> for (k in 0 until a.length()) a.getString(k).takeIf { DECOR.containsKey(it) }?.let { keepsakes += it } }
             o.optJSONObject("act2")?.let { act2 = Act2State.fromJson(it) }
+            o.optJSONObject("romance")?.let { romance = RomanceState.fromJson(it) }
             o.optJSONArray("recentOrderItems")?.strings()?.let { recentOrderItems.addAll(it) }
             weather = Weather.valueOf(o.optString("weather", "SUNNY")); forecast = Weather.valueOf(o.optString("forecast", "SUNNY"))
             o.optJSONObject("glut")?.let { g -> g.keys().forEach { glut[it] = g.getDouble(it) } }

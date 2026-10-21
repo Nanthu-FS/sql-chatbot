@@ -74,6 +74,12 @@ sealed class WorldEvent {
     data class ContestWon(val contest: String, val coins: Int) : WorldEvent()
     data class ContestLost(val contest: String) : WorldEvent()
     data class Act2Complete(val coins: Int) : WorldEvent()
+    // Romance (round 7).
+    data class Dating(val villager: String) : WorldEvent()
+    data class Jealous(val villager: String, val rival: String) : WorldEvent()
+    data class Engaged(val villager: String, val days: Int) : WorldEvent()
+    data class Married(val villager: String) : WorldEvent()
+    object FarmhouseBuilt : WorldEvent()
     data class OrchardPlanted(val spot: Int, val kind: String) : WorldEvent()
     data class TreeDugUp(val spot: Int) : WorldEvent()
     data class OrchardFruit(val trees: Int) : WorldEvent()
@@ -769,7 +775,8 @@ class World(val data: GameData, val state: GameState) {
 
     fun hearts(villager: String): Int {
         val f = state.friendship[villager] ?: 0
-        return HEARTS.count { f >= it }
+        // Round 7: a spouse goes past ten; everyone else stops where they may (8 for a farmer's sweetheart-to-be).
+        return (HEARTS.count { f >= it } + SPOUSE_EXTRA.count { f >= it }).coerceAtMost(maxHearts(villager))
     }
 
     // ----------------------------------------------------------- notifications

@@ -1334,6 +1334,35 @@
    },
    "minutes": 8,
    "unlock": 11
+  },
+  {
+   "id": "wb_bouquet",
+   "building": "workbench",
+   "inputs": {
+    "sunflower": 3,
+    "fibre": 2
+   },
+   "outputs": {
+    "bouquet": 1
+   },
+   "minutes": 1,
+   "unlock": 11,
+   "fuel": 0.0
+  },
+  {
+   "id": "wb_ring",
+   "building": "workbench",
+   "inputs": {
+    "gold_bar": 1,
+    "amethyst": 1
+   },
+   "outputs": {
+    "ring": 1
+   },
+   "minutes": 3,
+   "unlock": 16,
+   "fuel": 0.0,
+   "coins": 500
   }
  ]
 }

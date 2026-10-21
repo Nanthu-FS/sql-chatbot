@@ -2280,6 +2280,11 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/bouquet": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items_big/bread": {
   "ax": 16,
   "ay": 16,
@@ -2810,6 +2815,11 @@
   "ay": 16,
   "bh": 32
  },
+ "items_big/ring": {
+  "ax": 16,
+  "ay": 16,
+  "bh": 32
+ },
  "items_big/roast_veggies": {
   "ax": 16,
   "ay": 16,
@@ -3056,6 +3066,11 @@
   "bh": 18
  },
  "items/blackberry": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/bouquet": {
   "ax": 9,
   "ay": 9,
   "bh": 18
@@ -3586,6 +3601,11 @@
   "bh": 18
  },
  "items/resin": {
+  "ax": 9,
+  "ay": 9,
+  "bh": 18
+ },
+ "items/ring": {
   "ax": 9,
   "ay": 9,
   "bh": 18
