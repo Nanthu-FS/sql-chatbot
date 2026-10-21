@@ -13,6 +13,7 @@ import com.ditherfarm.game.SCENES
 import com.ditherfarm.game.adoptPet
 import com.ditherfarm.game.finishScene
 import com.ditherfarm.game.befriend
+import com.ditherfarm.game.setPlayer
 import com.ditherfarm.game.enterFloor
 import com.ditherfarm.game.startQuest
 import com.ditherfarm.shots.ScreenshotTest
@@ -59,6 +60,10 @@ import java.io.File
  *       hearts ID N          N friendship points with villager ID
  *       act2 N               Story Act 2 is at chapter N, with this week's contest running
  *       pet KIND             a dog or cat is already adopted
+ *       look N               the farmer's look 0..3 (0, 3 male; 1, 2 female), which sets their gender
+ *       dating ID            dating villager ID (their hearts can go past 8)
+ *       farmhouse            the family farmhouse is built
+ *       married ID           married to ID (the farmhouse built, the courting scenes seen)
  *  3. saves the farm and writes <dir>/shots/turn_NNN.png (2x), turn_NNN_grid.png (the same with a
  *     30-pixel coordinate grid) and <dir>/state.txt (what is on screen and in the farm).
  */
@@ -161,6 +166,16 @@ class PlayTest {
                 "floor" -> { w.enterFloor(p[1].toInt()); game.goTo(Nav.MINE); game.engine.screen?.enter() }
                 "time" -> w.state.minutes = w.time.dayIndex * 1440.0 + p[1].toDouble() * 60
                 "hearts" -> w.befriend(p[1], p[2].toInt())
+                // Round 7 romance shortcuts: who the farmer is, dating, the farmhouse, a marriage.
+                "look" -> w.setPlayer(p[1].toInt(), w.state.playerName.ifBlank { "Tester" })
+                "dating" -> w.state.romance.dating += p[1]
+                "farmhouse" -> w.state.romance.farmhouse = 1
+                "married" -> {
+                    val id = p[1]
+                    w.state.romance.farmhouse = 1; w.state.romance.spouse = id
+                    w.state.storySeen.addAll(listOf("romance_${id}_bouquet", "romance_${id}_date", "romance_${id}_propose", "wedding_$id") +
+                        com.ditherfarm.game.HEART_EVENTS.map { com.ditherfarm.game.heartScene(id, it) })
+                }
                 "act2" -> {
                     w.state.storySeen += "finale"
                     w.state.storySeen.removeAll(com.ditherfarm.game.ACT2_SCENES.keys)
