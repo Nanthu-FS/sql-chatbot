@@ -96,7 +96,8 @@ class Chrome(private val game: Game, private val here: Nav) {
         panels.onVillager = { id -> panels.villagerSays = ""; open(Panel.VILLAGER, id) }
         panels.onDivorce = { id ->
             val name = world.villager(id)?.name ?: id
-            confirm("DIVORCE", "Mr. Sterling files the papers at the bank for ${com.ditherfarm.game.DIVORCE_COST} coins. $name moves back home, and your friendship drops to ${com.ditherfarm.game.DIVORCE_HEARTS} hearts.", "FILE") {
+            val kid = world.state.romance.kidName?.let { " $it stays with you on the farm." } ?: ""
+            confirm("DIVORCE", "Mr. Sterling files the papers at the bank for ${com.ditherfarm.game.DIVORCE_COST} coins. $name moves back home, and your friendship drops to ${com.ditherfarm.game.DIVORCE_HEARTS} hearts.$kid", "FILE") {
                 world.divorce()
             }
         }

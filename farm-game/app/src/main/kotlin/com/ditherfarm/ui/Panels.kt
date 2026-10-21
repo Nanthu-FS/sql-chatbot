@@ -1420,7 +1420,7 @@ class Panels(private val game: Game, private val hud: Hud) {
                 Triple("GIVE A BOUQUET", world.bouquetBlocker(id)) { if (world.giveBouquet(id)) onHeartEvent?.invoke(bouquetScene(id)) }
             world.isDating(id) && r.engaged == null && r.spouse == null && h >= FRIEND_HEARTS ->
                 Triple("PROPOSE", world.proposeBlocker(id)) { if (world.propose(id)) onHeartEvent?.invoke(proposalScene(id)) }
-            world.isSpouse(id) -> Triple("DIVORCE (BANK, ${DIVORCE_COST / 1000}K)", null) { onDivorce?.invoke(id) }
+            world.isSpouse(id) -> Triple("DIVORCE: ${Ui.compact(DIVORCE_COST)} COINS", null) { onDivorce?.invoke(id) }
             else -> Triple(null, null, null)
         }
         when {
