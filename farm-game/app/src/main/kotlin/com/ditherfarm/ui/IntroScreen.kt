@@ -203,10 +203,20 @@ class IntroScreen(private val game: Game, private val onDone: () -> Unit) : Scre
             val tw = (sin(t * 3f + s * 1.7f) * 0.5f + 0.5f) * night
             g.rect(sx, sy, sx + 1, sy + 1, (((tw * 255).toInt()) shl 24) or 0xFFFFFF)
         }
-        // The sun climbs out from behind the far hills.
+        // The camera settles: it starts low and rises as the sun does, the near layers moving further
+        // than the far ones (parallax), then sways a touch while the title idles.
+        val settle = (1f - (t / IDLE_AT).coerceIn(0f, 1f)).let { it * it }
+        fun lift(depth: Float) = settle * 80f * depth + (if (t > IDLE_AT) sin(t * 0.7f) * 1.5f * depth else 0f)
+        // The sun climbs out from behind the far hills, its rays turning slowly.
         val rise = ((t - 0.8f) / 4.2f).coerceIn(0f, 1f)
         val ease = 1f - (1f - rise) * (1f - rise)
-        val sunY = farTop + 50f - ease * 120f
+        val sunY = farTop + 50f - ease * 120f + lift(0.1f)
+        if (rise > 0f) {
+            val c = g.canvas
+            c.save(); c.translate(192f, sunY); c.rotate(t * 3f)
+            g.sprite("title/rays", 0f, 0f, (rise * 200).toInt())
+            c.restore()
+        }
         g.sprite("title/sun", 192f, sunY, (80 + 175 * rise).toInt())
         // Clouds drift.
         g.sprite("title/cloud_a", ((t * 4f + 30f) % (w + 80f)) - 40f, farTop - 110f, (120 + 135 * rise).toInt())
@@ -219,12 +229,30 @@ class IntroScreen(private val game: Game, private val onDone: () -> Unit) : Scre
         }
         // The land, lit as the sun rises.
         val lit = landFilter()
-        fun layer(name: String, y: Int) = if (lit != null) g.spriteFiltered(name, 0f, y.toFloat(), lit) else g.sprite(name, 0f, y.toFloat())
-        layer("title/hills_far", farTop)
-        g.rect(0, groundTop - 40, w, h, lit?.let { mulColor(0xFF265C42.toInt(), landTints[k], landTints[k + 1], f) } ?: 0xFF265C42.toInt())
-        layer("title/hills", groundTop - 96)
-        layer("title/village", groundTop - 86)
-        layer("title/ground", groundTop - 20)
+        fun layer(name: String, y: Float) = if (lit != null) g.spriteFiltered(name, 0f, y, lit) else g.sprite(name, 0f, y)
+        // Haze between the ridges takes the colour of the sky at the horizon, so the far land melts
+        // into the air.
+        val horizon = (if (f > 0.5f) game.assets["title/sky_${k + 1}"] else a).let { it.bmp.getPixel(0, it.h - 1) } and 0xFFFFFF
+        fun mist(y: Float, strength: Int) {
+            for (m in 0 until 6) g.rect(0, (y - m * 4).toInt(), w, (y - m * 4 + 4).toInt(), ((strength * (6 - m) / 6) shl 24) or horizon)
+        }
+        layer("title/mountains", farTop - 34 + lift(0.18f))
+        mist(farTop + 70 + lift(0.18f), 120)
+        layer("title/hills_far", farTop + lift(0.32f))
+        mist(groundTop - 30 + lift(0.32f), 80)
+        val groundFill = lit?.let { mulColor(0xFF265C42.toInt(), landTints[k], landTints[k + 1], f) } ?: 0xFF265C42.toInt()
+        g.rect(0, (groundTop - 30 + lift(0.55f)).toInt(), w, h, groundFill)
+        layer("title/hills", groundTop - 96 + lift(0.55f))
+        layer("title/village", groundTop - 86 + lift(0.62f))
+        layer("title/ground", groundTop - 20 + lift(0.85f))
+        layer("title/fore", h + 4f + lift(1.4f))
+        // A soft vignette.
+        for (v in 0 until 6) {
+            val va = (0x10 + v * 0x08) shl 24
+            val inset = 36 - v * 6
+            g.rect(0, h - inset, w, h, va or 0x181425)
+            g.rect(0, 0, w, inset / 2, va or 0x181425)
+        }
         drawLetters(w, h)
         drawPetals(w, h)
         for (c in chips) c.draw(g)
@@ -256,7 +284,7 @@ class IntroScreen(private val game: Game, private val onDone: () -> Unit) : Scre
         val rows = listOf("rebuild" to y1, "village" to y1 + 66)
         var idx = 0
         for ((word, by) in rows) {
-            val widths = (0 until 7).map { game.assets["title/${word}_${it}_new"].w - 7 }
+            val widths = (0 until 7).map { game.assets["title/${word}_${it}_new"].w - 14 }
             var x = (w - widths.sum()) / 2f
             for (i in 0 until 7) {
                 val cx = x + widths[i] / 2f + 3f

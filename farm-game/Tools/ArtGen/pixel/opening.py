@@ -10,7 +10,10 @@ scenes/bank_old         the loan office forty years ago (older poster, no clock)
 scenes/stamp_refused    the bank's rubber stamp, slammed onto the screen; stamp_approved for the finale
 title/sky_0..4          the sky from night to morning, crossfaded while the sun rises
 title/sun, cloud_a/b    the rising sun with its glow; drifting clouds
-title/hills_far, hills  the ridges behind the village
+title/mountains, hills_far, hills  the ridges behind the village, far to near: shaded toward the sun,
+                        hazy at the foot, snow on the peaks, trees along the near crest
+title/rays              the sun's rays (pivot = centre), turned slowly in the code
+title/fore              tall grass and flowers in the bottom corners, close to the eye (pivot = bottom left)
 title/village           ruined Willowmere on the ridge: broken huts, the windmill without its sails, the
                         collapsed barn, a dead tree
 title/ground            the hill in front: tall grass, flowers and the broken WILLOWMERE sign
@@ -512,19 +515,132 @@ def cloud(seed, w=58, h=18):
     return im
 
 
-def hills(far):
-    h = 80 if far else 90
+SUN_X = 192   # where the sun rises (the light comes from up there, slightly right)
+
+
+def ridge(x, kind):
+    if kind == "mountains":
+        # Peaks: tents of different heights, with a little roughness on the slopes.
+        peaks = ((18, 30, 0.55), (70, 16, 0.75), (128, 26, 0.6), (190, 10, 0.8), (246, 22, 0.65), (300, 30, 0.6))
+        y = min(60 - max(0.0, (60 - top) - abs(x - px_) * k) for (px_, top, k) in peaks)
+        return int(y) + (1 if (x * 7) % 5 == 0 else 0)
+    if kind == "far":
+        return 26 + int(10 * math.sin(x * 0.025 + 0.6) + 6 * math.sin(x * 0.07))
+    return 20 + int(8 * math.sin(x * 0.03 + 2.1) + 4 * math.sin(x * 0.11))
+
+
+def hills(kind):
+    """A ridge layer, shaded so it reads as land and not a cut-out: the slopes facing the sun lit with
+    a bright rim, the slopes turned away in shadow, and the colour fading into haze at the foot
+    (where the mist sits between the layers). Mountains get snow on their peaks; the near hills a
+    line of round trees along the crest."""
+    h = {"mountains": 90, "far": 80, "near": 90}[kind]
+    ramp = {"mountains": ("slate", "grey_d", "grey", "grey_l"),
+            "far": ("slate_d", "purple", "magenta", "pink"),
+            "near": ("green_dd", "teal_dd", "green_d", "green")}[kind]
+    haze = {"mountains": "grey_l", "far": "pink", "near": "green_d"}[kind]
     im = Image.new("RGBA", (W, h), (0, 0, 0, 0))
     px = im.load()
+    tops = [ridge(x, kind) for x in range(W)]
     for x in range(W):
-        if far:
-            top = 26 + int(10 * math.sin(x * 0.025 + 0.6) + 6 * math.sin(x * 0.07))
-            cols = ("purple", "magenta")
-        else:
-            top = 20 + int(8 * math.sin(x * 0.03 + 2.1) + 4 * math.sin(x * 0.11))
-            cols = ("green_dd", "green_d")
+        top = tops[x]
+        slope = tops[min(W - 1, x + 1)] - tops[max(0, x - 1)]
+        toward = (SUN_X - x) * slope < 0 or abs(slope) < 1       # this slope faces the sun
         for y in range(top, h):
-            px[x, y] = C(cols[1] if y - top < 2 else cols[0])
+            k = y - top
+            if k < 2:
+                c = ramp[3] if toward else ramp[2]
+            elif k < 7:
+                c = ramp[2] if toward and bayer(x, y, 10) else ramp[1]
+            else:
+                c = ramp[1] if bayer(x, y, max(0, 9 - (k - 7) // 2)) else ramp[0]
+            # The haze at the foot of the layer.
+            f = (y - (h - 26)) / 26
+            if f > 0 and bayer(x, y, int(f * 13)):
+                c = haze
+            px[x, y] = C(c)
+        if kind == "mountains" and top < 30:
+            for y in range(top, min(h, top + (30 - top) // 2 + 2)):
+                px[x, y] = C("white" if toward else "grey_l")
+    if kind == "near":
+        rng = random.Random(8)
+        x = 2
+        while x < W:
+            r = rng.randrange(4, 8)
+            if rng.random() < 0.55:
+                cy = tops[min(W - 1, x)] + 1
+                for yy in range(cy - r * 2, cy + 2):
+                    for xx in range(x - r, x + r + 1):
+                        if 0 <= xx < W and 0 <= yy < h and ((xx - x) / r) ** 2 + ((yy - (cy - r)) / (r * 1.1)) ** 2 <= 1:
+                            lit = (xx - x) * (1 if SUN_X > x else -1) + (cy - r - yy) * 0.8
+                            c = "green" if lit > r * 0.5 else "green_d" if lit > -r * 0.3 else "green_dd"
+                            px[xx, yy] = C(c)
+                for yy in range(cy - 1, cy + 3):
+                    if 0 <= yy < h:
+                        px[x, yy] = C("brown_d")
+            x += r * 2 + rng.randrange(0, 6)
+    return im
+
+
+def rays():
+    """Sun rays: soft wedges round a centre, drawn rotating slowly behind the hills."""
+    s = 300
+    im = Image.new("RGBA", (s, s), (0, 0, 0, 0))
+    px = im.load()
+    c = s / 2
+    for y in range(s):
+        for x in range(s):
+            d = math.hypot(x + 0.5 - c, y + 0.5 - c)
+            if d < 20 or d > c:
+                continue
+            a = math.atan2(y - c, x - c)
+            w = math.cos(a * 9) * 0.5 + 0.5
+            if w < 0.72:
+                continue
+            fade = (1 - d / c) * (w - 0.72) / 0.28
+            if bayer(x, y, int(fade * 16)):
+                px[x, y] = C("cream")[:3] + (int(70 * fade) + 30,)
+    return im
+
+
+def fore():
+    """Tall grass and flower heads in the bottom corners, close to the eye, framing the view."""
+    w, h = W, 120
+    im = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    px = im.load()
+    rng = random.Random(21)
+    for side in (0, 1):
+        for _ in range(110):
+            bx = rng.randrange(0, 80)
+            bx = bx if side == 0 else W - 1 - bx
+            height = int(rng.randrange(40, 118) * (1 - abs(bx - (0 if side == 0 else W)) / 100))
+            if height < 12:
+                continue
+            lean = rng.uniform(-0.35, 0.35) + (0.25 if side == 0 else -0.25)
+            for k in range(height):
+                x = int(bx + lean * k * k / height)
+                y = h - 1 - k
+                width = 3 if k < height * 0.4 else 2 if k < height * 0.75 else 1
+                for dx in range(width):
+                    if 0 <= x + dx < w:
+                        px[x + dx, y] = C("ink" if dx == 0 and k < height * 0.3 else "green_dd" if k < height * 0.7 else "teal_dd")
+        for _ in range(6):
+            fx = rng.randrange(8, 60)
+            fx = fx if side == 0 else W - 1 - fx
+            fy = rng.randrange(h - 80, h - 40)
+            for yy in range(fy, h):
+                px[fx, yy] = C("green_dd")
+            col = rng.choice((("red_d", "red"), ("purple", "magenta"), ("rust", "amber")))
+            for dx in range(-3, 4):
+                for dy in range(-3, 4):
+                    if dx * dx + dy * dy <= 9 and 0 <= fx + dx < w:
+                        px[fx + dx, fy + dy] = C(col[1] if dx + dy < 0 else col[0])
+            px[fx, fy] = C("yellow")
+        # A solid dark base where the blades crowd together.
+        for x in range(0, 70):
+            xx = x if side == 0 else W - 1 - x
+            for y in range(h - int(26 * (1 - x / 70)), h):
+                px[xx, y] = C("ink" if y > h - 6 else "green_dd")
     return im
 
 
@@ -593,20 +709,31 @@ def ground():
         for y in range(top, h):
             k = y - top
             px[x, y] = C("green" if k < 2 else "green_d" if k < 10 or bayer(x, y, 6) else "green_dd")
-    for _ in range(160):
+    # Perspective: the grass tufts and flowers grow bigger toward the viewer.
+    for _ in range(260):
         gx = rng.randrange(w)
         top = 30 + int(12 * math.sin(gx * 0.018 + 0.4) + 3 * math.sin(gx * 0.09))
         gy = rng.randrange(top + 2, h)
-        for k in range(rng.randrange(3, 7)):
-            if gy - k >= 0:
-                px[gx, gy - k] = C("green" if k > 1 else "green_d")
-    for _ in range(40):
+        near = (gy - top) / (h - top)
+        size = 2 + int(near * 9)
+        for blade in (-1, 0, 1) if near > 0.4 else (0,):
+            for k in range(size - abs(blade) * 2):
+                x = gx + blade * (1 + k // 3)
+                if gy - k >= 0 and 0 <= x < w:
+                    px[x, gy - k] = C("green" if k > size // 3 else "green_d")
+            if near > 0.6:
+                px[gx, gy] = C("green_dd")
+    for _ in range(60):
         fx = rng.randrange(4, w - 4)
         top = 30 + int(12 * math.sin(fx * 0.018 + 0.4) + 3 * math.sin(fx * 0.09))
         fy = rng.randrange(top + 6, h - 4)
-        c = rng.choice(("pink", "yellow", "white", "cyan", "red"))
-        for dx, dy in ((0, -1), (-1, 0), (1, 0), (0, 1)):
-            px[fx + dx, fy + dy] = C(c)
+        near = (fy - top) / (h - top)
+        c = rng.choice((("pink", "magenta"), ("yellow", "amber"), ("white", "grey_l"), ("cyan", "blue"), ("red", "red_d")))
+        r = 1 if near < 0.45 else 2
+        for dx in range(-r, r + 1):
+            for dy in range(-r, r + 1):
+                if abs(dx) + abs(dy) <= r and 0 <= fx + dx < w and fy + dy < h:
+                    px[fx + dx, fy + dy] = C(c[0] if dx + dy < 0 else c[1])
         px[fx, fy] = C("amber")
     # The sign: one post, the board hanging by a single nail.
     sx = 30
@@ -622,6 +749,9 @@ def ground():
     im.alpha_composite(board, (sx - 2, 10))
     rect(px, sx + 1, 12, sx + 4, 15, "grey_l")
     return im
+
+
+DEPTH = 5
 
 
 def letter(ch, ruined, seed):
@@ -692,8 +822,25 @@ def letter(ch, ruined, seed):
             px[mx + pad, my + pad] = C("green_dd")
             if (mx + 1, my) in on:
                 px[mx + 1 + pad, my + pad] = C("green_d")
-    # Outline: dark wood (or slate), then ink; a hard shadow down-right.
+    # The depth: the letter's side, extruded down and to the right (dark wood or dark slate, a
+    # little lighter along its top edge), so the boards stand out of the screen.
     body = {(x + pad, y + pad) for (x, y) in on}
+    side = set()
+    for d in range(1, DEPTH + 1):
+        for (x, y) in body:
+            q = (x + d // 2, y + d)
+            if q not in body:
+                side.add(q)
+    w, h = w + DEPTH, h + DEPTH
+    big = Image.new("RGBA", (w, h), (0, 0, 0, 0))
+    big.alpha_composite(im, (0, 0))
+    im = big
+    px = im.load()
+    sides = ("ink", "slate_d") if ruined else ("brown_d", "brown")
+    for (x, y) in side:
+        top_edge = (x, y - 1) in body
+        px[x, y] = C(sides[1] if top_edge or (x + y) % 5 == 0 else sides[0])
+    body = body | side
     ring1 = {(x + dx, y + dy) for (x, y) in body for dx, dy in ((1, 0), (-1, 0), (0, 1), (0, -1))} - body
     for (x, y) in ring1:
         if 0 <= x < w and 0 <= y < h:
@@ -703,12 +850,12 @@ def letter(ch, ruined, seed):
     for (x, y) in ring2:
         if 0 <= x < w and 0 <= y < h:
             px[x, y] = C("ink")
-    shadow = Image.new("RGBA", (w + 3, h + 3), (0, 0, 0, 0))
+    shadow = Image.new("RGBA", (w + 5, h + 6), (0, 0, 0, 0))
     sp = shadow.load()
     for y in range(h):
         for x in range(w):
             if px[x, y][3]:
-                sp[x + 2, y + 3] = C("ink")[:3] + (130,)
+                sp[x + 3, y + 5] = C("ink")[:3] + (110,)
     shadow.alpha_composite(im, (0, 0))
     if ruined:
         shadow = shadow.rotate(rng.choice((-7, -5, 4, 6, 8)), resample=Image.NEAREST, expand=True)
@@ -859,8 +1006,11 @@ def main():
     ti.save("sun", sun(), 48, 48)
     ti.save("cloud_a", cloud(1), 29, 9)
     ti.save("cloud_b", cloud(4, 44, 14), 22, 7)
-    ti.save("hills_far", hills(True), 0, 0)
-    ti.save("hills", hills(False), 0, 0)
+    ti.save("mountains", hills("mountains"), 0, 0)
+    ti.save("hills_far", hills("far"), 0, 0)
+    ti.save("hills", hills("near"), 0, 0)
+    ti.save("rays", rays(), 150, 150)
+    ti.save("fore", fore(), 0, 120)
     ti.save("village", village(), 0, 0)
     ti.save("ground", ground(), 0, 0)
     for word in ("REBUILD", "VILLAGE"):

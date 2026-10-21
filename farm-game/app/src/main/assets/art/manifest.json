@@ -6378,6 +6378,10 @@
   "ax": 22,
   "ay": 7
  },
+ "title/fore": {
+  "ax": 0,
+  "ay": 120
+ },
  "title/ground": {
   "ax": 0,
   "ay": 0
@@ -6390,61 +6394,69 @@
   "ax": 0,
   "ay": 0
  },
+ "title/mountains": {
+  "ax": 0,
+  "ay": 0
+ },
+ "title/rays": {
+  "ax": 150,
+  "ay": 150
+ },
  "title/rebuild_0_new": {
-  "ax": 17,
-  "ay": 34
+  "ax": 20,
+  "ay": 42
  },
  "title/rebuild_0_old": {
-  "ax": 20,
-  "ay": 38
+  "ax": 23,
+  "ay": 48
  },
  "title/rebuild_1_new": {
-  "ax": 15,
-  "ay": 34
+  "ax": 18,
+  "ay": 42
  },
  "title/rebuild_1_old": {
-  "ax": 17,
-  "ay": 38
+  "ax": 20,
+  "ay": 46
  },
  "title/rebuild_2_new": {
-  "ax": 17,
-  "ay": 34
+  "ax": 20,
+  "ay": 42
  },
  "title/rebuild_2_old": {
-  "ax": 19,
-  "ay": 38
+  "ax": 22,
+  "ay": 46
  },
  "title/rebuild_3_new": {
-  "ax": 17,
-  "ay": 34
+  "ax": 21,
+  "ay": 42
  },
  "title/rebuild_3_old": {
-  "ax": 19,
-  "ay": 38
+  "ax": 24,
+  "ay": 48
  },
  "title/rebuild_4_new": {
-  "ax": 13,
-  "ay": 34
+  "ax": 17,
+  "ay": 42
  },
  "title/rebuild_4_old": {
-  "ax": 15,
-  "ay": 36
+  "ax": 19,
+  "ay": 46
  },
  "title/rebuild_5_new": {
-  "ax": 14,
-  "ay": 34
+  "ax": 17,
+  "ay": 42
  },
  "title/rebuild_5_old": {
-  "ax": 17,
-  "ay": 38
+  "ax": 20,
+  "ay": 46
  },
  "title/rebuild_6_new": {
-  "ax": 17,
-  "ay": 34
+  "ax": 20,
+  "ay": 42
  },
  "title/rebuild_6_old": {
-  "ax": 19,
-  "ay": 38
+  "ax": 22,
+  "ay": 46
  },
  "title/ribbon": {
   "ax": 36,
@@ -6479,60 +6491,60 @@
   "ay": 0
  },
  "title/village_0_new": {
-  "ax": 18,
-  "ay": 35
+  "ax": 21,
+  "ay": 43
  },
  "title/village_0_old": {
-  "ax": 21,
-  "ay": 41
+  "ax": 24,
+  "ay": 49
  },
  "title/village_1_new": {
-  "ax": 13,
-  "ay": 34
+  "ax": 17,
+  "ay": 42
  },
  "title/village_1_old": {
-  "ax": 16,
-  "ay": 38
+  "ax": 20,
+  "ay": 46
  },
  "title/village_2_new": {
-  "ax": 14,
-  "ay": 34
+  "ax": 17,
+  "ay": 42
  },
  "title/village_2_old": {
-  "ax": 16,
-  "ay": 36
+  "ax": 19,
+  "ay": 46
  },
  "title/village_3_new": {
-  "ax": 14,
-  "ay": 34
+  "ax": 17,
+  "ay": 42
  },
  "title/village_3_old": {
-  "ax": 16,
-  "ay": 36
+  "ax": 19,
+  "ay": 46
  },
  "title/village_4_new": {
-  "ax": 18,
-  "ay": 34
+  "ax": 21,
+  "ay": 42
  },
  "title/village_4_old": {
-  "ax": 20,
-  "ay": 38
+  "ax": 23,
+  "ay": 46
  },
  "title/village_5_new": {
-  "ax": 17,
-  "ay": 34
+  "ax": 21,
+  "ay": 42
  },
  "title/village_5_old": {
-  "ax": 20,
-  "ay": 38
+  "ax": 24,
+  "ay": 48
  },
  "title/village_6_new": {
-  "ax": 15,
-  "ay": 34
+  "ax": 18,
+  "ay": 42
  },
  "title/village_6_old": {
-  "ax": 17,
-  "ay": 38
+  "ax": 21,
+  "ay": 46
  },
  "trees/ancient_oak": {
   "ax": 32,
