@@ -3,6 +3,7 @@
 house_<tier>_<a|b|c>   tier 0 wooden huts, 1 stone, 2 brick, 3 concrete; the village mixes the
                        three styles of its tier (picked in playtest round 2)
 shop_seed, shop_smith, shop_carpenter, shop_cafe   the shops the tiers bring
+farmhouse_old, farmhouse_big   the farmer's home: Grandpa's log cabin, then the family farmhouse (round 7)
 <name>_lit             night overlay: only the window panes, warm (see night.py)
 
 Built with _village_tiers.house(): same ray-caster, 1x1 footprint, pivot = tile centre.
@@ -98,6 +99,11 @@ def main():
             emit_with_night(sp, f"house_{t}_{'abc'[i]}", lambda spec=spec: T.house(spec))
     for kind in ("seed", "smith", "carpenter", "cafe"):
         emit_with_night(sp, f"shop_{kind}", lambda kind=kind: shop(kind))
+    # Round 7: the farmer's own home. Grandpa's old log cabin, and the family farmhouse built to
+    # propose (two storeys, white walls, a red roof, a porch awning).
+    emit_with_night(sp, "farmhouse_old", lambda: T.house(dict(wall=T.logs, roof="shingle", trim="brown_d", chimney=True, half=0.55)))
+    emit_with_night(sp, "farmhouse_big", lambda: T.house(dict(wall=T.render_wall(["tan", "cream", "white"]), roof="red_tile", trim="white",
+                                                                  chimney=True, storeys=2, wh=11.0, band=True, half=0.62, awning="green", base=True)))
     print(json.dumps(sp.pivots))
 
 

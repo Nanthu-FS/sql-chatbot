@@ -28,6 +28,8 @@ object FarmMap {
     val BUNKHOUSE = 10 to 15
     val TRUCK = 15 to 15
     val MERCHANT = 17 to 13
+    /** The farmer's home (round 7): Grandpa's log cabin, later the family farmhouse. */
+    val FARMHOUSE = 7 to 8
 
     // Village along the Forest road.
     val ORDERS = 14 to 27

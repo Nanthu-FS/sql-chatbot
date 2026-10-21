@@ -80,6 +80,11 @@ sealed class WorldEvent {
     data class Engaged(val villager: String, val days: Int) : WorldEvent()
     data class Married(val villager: String) : WorldEvent()
     object FarmhouseBuilt : WorldEvent()
+    data class SpouseMorning(val villager: String, val gift: String, val chore: String?) : WorldEvent()
+    data class Divorced(val villager: String) : WorldEvent()
+    data class KidOnTheWay(val days: Int) : WorldEvent()
+    object KidArrived : WorldEvent()
+    data class KidNamed(val name: String) : WorldEvent()
     data class OrchardPlanted(val spot: Int, val kind: String) : WorldEvent()
     data class TreeDugUp(val spot: Int) : WorldEvent()
     data class OrchardFruit(val trees: Int) : WorldEvent()
@@ -265,6 +270,7 @@ class World(val data: GameData, val state: GameState) {
         orchardDawn(day)
         ranchDawn(day)
         act2Dawn(day)
+        familyDawn(day)
         festivalDawn()
         runMarketCart()
         events += WorldEvent.DayStarted(day, state.weather)
@@ -626,7 +632,7 @@ class World(val data: GameData, val state: GameState) {
     }
 
     /** Collection page bonus: ores sell for 5% more once the Mine page is complete. */
-    private fun bonusMult(id: String) = sellSkillMult() * cafeMult(id) * if (id.endsWith("_ore") && hasBonus("ore_price")) 1.05 else 1.0
+    private fun bonusMult(id: String) = sellSkillMult() * cafeMult(id) * spouseMult(id) * if (id.endsWith("_ore") && hasBonus("ore_price")) 1.05 else 1.0
 
     /** Current sell price of one unit of [key] (quality included). */
     fun unitPrice(key: String): Int {

@@ -62,6 +62,19 @@ private val VOICES = mapOf(
         "Wherever we go, I'll know exactly where home is. It's next to you."),
 )
 
+
+/** The married scenes: at 12 hearts the spouse asks about a family; at 14, a quiet anniversary. */
+private val MARRIED = mapOf(
+    "ivy" to (listOf("I planted a row of baby sunflowers by the porch today.", "And I caught myself thinking... how nice it would be to watch someone small run between them.") to listOf("Ten years from now, this porch will be covered in roses. I'm sure of it.", "And I'll still be bringing you flowers. Even though you're the farmer.")),
+    "sela" to (listOf("My grandmother had a saying: a vineyard is planted for the grandchildren.", "I'd like to plant one with you. A family, I mean. If you'd like that too.") to listOf("A year married. I opened a bottle I laid down the week we met.", "It's perfect. Of course it is. I'm never wrong about vintages. Or about you.")),
+    "willa" to (listOf("I measured the spare room today. Twice.", "It'd fit a crib. Just saying. A little one running round the farm... I'd like that. Would you?") to listOf("I carved our initials into the porch beam. Don't tell Tobias, he'd say I ruined good oak.", "It's the best thing I ever built. Us, I mean. Not the beam.")),
+    "coco" to (listOf("I baked tiny cupcakes today. The baby-sized kind.", "...Okay, I'll just say it. I want a little one to share them with. Our little one.") to listOf("You know what I love about mornings? You, stealing the first slice before I've even cut it.", "Never stop doing that. Ever.")),
+    "rook" to (listOf("Bram's teaching his nephew the anvil. Kid's got good arms.", "I keep thinking I'd like to teach someone too. Our kid. If you want that.") to listOf("I made you something. It's just a little iron heart.", "Took me three nights. The first two were terrible. Like me, before you.")),
+    "finn" to (listOf("...I made a little fishing rod today. Small. Really small.", "Thought maybe someday someone would need it. Someone of ours.") to listOf("Quiet up on the hill again.", "Remember our first date? I still don't talk much. But I'm still here. I'm staying.")),
+    "jasper" to (listOf("I wrote a lullaby last night. I didn't even mean to.", "Then I realised who I wanted to sing it to. A little one. Ours.") to listOf("A wandering fiddler, settled on a farm. Who'd have guessed?", "I've played in forty towns, {name}. None of them sounded like home until you.")),
+    "marco" to (listOf("I drew a new map of the farm today. I added a little room by the window.", "For someone small. A family. I'd like that, if you would.") to listOf("I found my old company map of the valley. All numbers and acres.", "I burned it. We make our own maps now.")),
+)
+
 private fun scenesFor(id: String): List<Scene> {
     val voice = VOICES.getValue(id)
     val blush = "$id:blush"
@@ -87,13 +100,22 @@ private fun scenesFor(id: String): List<Scene> {
         p("I came to Willowmere to keep a promise to my grandpa. I'm staying because of you."),
         v(voice.vow, blush),
         other("JUNIPER", "juniper", "Then by the power of this whole stubborn village... you're married! Go on, then."),
-        n("The kiss.", cue = Cue.KISS),
+        Line(Who.NARRATOR, "The kiss.", right = blush, cue = Cue.KISS),
         other("MARA", "mara", "Oh, I'm not crying. It's the flour."),
         other("TOBIAS", "tobias", "Forty years I waited to see this square full again. Worth every one."),
         other("PIP", "pip", "Does this mean there's cake? There's CAKE!"),
         n("You're married! Your spouse moves to the farm."),
     ), villager = id)
-    return listOf(bouquet, date, propose, wedding)
+    val (ask, anniv) = MARRIED.getValue(id)
+    val family = Scene(heartScene(id, KID_ASK_HEARTS), 0, false, listOf(n("An evening on the porch. The fireflies are out.", bg = "porch")) +
+        ask.mapIndexed { i, t -> v(t, if (i == ask.size - 1) blush else null) } +
+        p("I'd love that.") +
+        n("In a few days, a little one will join the family."), villager = id)
+    val year = Scene(heartScene(id, 14), 0, false, listOf(n("A blanket on the hill above Willowmere, a year on.", bg = "hill")) +
+        anniv.mapIndexed { i, t -> v(t, if (i == anniv.size - 1) blush else null) } +
+        p("Happy anniversary.") +
+        n("Fourteen hearts. Some things only get better."), villager = id)
+    return listOf(bouquet, date, propose, wedding, family, year)
 }
 
 val ROMANCE_SCENES: Map<String, Scene> = VOICES.keys.flatMap { scenesFor(it) }.associateBy { it.id }

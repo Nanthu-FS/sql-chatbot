@@ -85,6 +85,31 @@ import com.ditherfarm.game.pettedToday
 import com.ditherfarm.game.villager
 import com.ditherfarm.game.FRIEND_HEARTS
 import com.ditherfarm.game.nextHeart
+import com.ditherfarm.game.canCourt
+import com.ditherfarm.game.isDating
+import com.ditherfarm.game.isSpouse
+import com.ditherfarm.game.maxHearts
+import com.ditherfarm.game.romanceLabel
+import com.ditherfarm.game.pendingDate
+import com.ditherfarm.game.giveBouquet
+import com.ditherfarm.game.propose
+import com.ditherfarm.game.bouquetBlocker
+import com.ditherfarm.game.proposeBlocker
+import com.ditherfarm.game.bouquetScene
+import com.ditherfarm.game.dateScene
+import com.ditherfarm.game.proposalScene
+import com.ditherfarm.game.romance
+import com.ditherfarm.game.COURT_HEARTS
+import com.ditherfarm.game.farmhouseBlocker
+import com.ditherfarm.game.buildFarmhouse
+import com.ditherfarm.game.FARMHOUSE_COST
+import com.ditherfarm.game.FARMHOUSE_LEVEL
+import com.ditherfarm.game.spousePerk
+import com.ditherfarm.game.kidStage
+import com.ditherfarm.game.kidAgeLabel
+import com.ditherfarm.game.SPOUSE_HEARTS
+import com.ditherfarm.game.DIVORCE_COST
+import com.ditherfarm.game.WEDDING_DAYS
 import com.ditherfarm.game.talkedToday
 import com.ditherfarm.game.giftedToday
 import com.ditherfarm.game.talk
@@ -1317,6 +1342,8 @@ class Panels(private val game: Game, private val hud: Hud) {
 
     /** Plays a heart event (set by Chrome). */
     var onHeartEvent: ((String) -> Unit)? = null
+    /** Asks before filing for divorce (set by Chrome). */
+    var onDivorce: ((String) -> Unit)? = null
 
     /** A villager (round 6): hearts, a chat, a gift a day, and their heart events. */
     fun villager(id: String): Boolean {
@@ -1326,10 +1353,18 @@ class Panels(private val game: Game, private val hud: Hud) {
         g.slice9("ui/slot", x + 10, y + 22, x + 58, y + 70, 4)
         g.spriteScaled("portraits/$id", (x + 34).toFloat(), (y + 46).toFloat(), 0.92f, 0.92f)
         g.text(v.role.uppercase(), x + 66, y + 24, Gfx.MUTED, outline = 0, shadow = false)
+        world.romanceLabel(id)?.let { g.text(it, x + pw - 12, y + 24, Gfx.RED, align = 1, outline = 0, shadow = false) }
         val h = world.hearts(id)
-        for (k in 0 until FRIEND_HEARTS) miniHeart(x + 66 + k * 7, y + 36, k < h)
+        // Up to 14 hearts for a spouse (round 7), drawn a little closer together.
+        val top = maxOf(FRIEND_HEARTS, world.maxHearts(id))
+        val step = if (top > FRIEND_HEARTS) 6 else 7
+        for (k in 0 until top) miniHeart(x + 66 + k * step, y + 36, k < h)
         world.nextHeart(id)?.let { (have, need) -> g.text("$have/$need", x + 66, y + 45, Gfx.MUTED, outline = 0, shadow = false) }
-            ?: g.text("BEST FRIENDS!", x + 66, y + 45, Gfx.RED, outline = 0, shadow = false)
+            ?: g.text(when {
+                world.isSpouse(id) -> "SOULMATES!"
+                world.canCourt(id) && h >= COURT_HEARTS && h < FRIEND_HEARTS -> "A BOUQUET OPENS MORE HEARTS"
+                else -> "BEST FRIENDS!"
+            }, x + 66, y + 45, Gfx.RED, outline = 0, shadow = false)
         g.text("LOVES", x + 66, y + 57, Gfx.INK, outline = 0, shadow = false)
         v.favorites.take(5).forEachIndexed { k, item -> g.sprite(icon(item), (x + 106 + k * 16).toFloat(), (y + 61).toFloat()) }
         // What they said last.
@@ -1338,19 +1373,44 @@ class Panels(private val game: Game, private val hud: Hud) {
         val by = y + 112
         world.pendingHeartEvent(id)?.let { n ->
             if (ui.button("heart-event", x + 10, by, pw - 20, 18, "$n HEARTS: ${v.name.uppercase()} WANTS TO TALK", style = "gold")) {
-                giftMode = false; villagerSays = ""; onHeartEvent?.invoke(heartScene(id, n)); return false
+                giftMode = false; villagerSays = ""; onHeartEvent?.invoke(heartScene(id, n)); return true
             }
         }
         val talkY = by + 24
         if (ui.button("talk", x + 10, talkY, pw / 2 - 14, 18, if (world.talkedToday(id)) "TALKED" else "TALK", style = if (world.talkedToday(id)) "grey" else "green") && !world.talkedToday(id)) world.talk(id)
         if (ui.button("gift", x + pw / 2 + 4, talkY, pw / 2 - 14, 18, if (world.giftedToday(id)) "GIFT GIVEN" else if (giftMode) "CANCEL" else "GIVE GIFT", style = if (world.giftedToday(id)) "grey" else "wood") && !world.giftedToday(id)) { giftMode = !giftMode; giftPick = null }
-        g.text("ORDERS FROM ${v.name.uppercase()} ADD HEARTS TOO", x + pw / 2, talkY + 24, Gfx.MUTED, align = 0, outline = 0, shadow = false)
+        // Romance (round 7): a bouquet, the date, the proposal; the wedding day; divorce at the bank.
+        val ry = talkY + 22
+        val r = world.romance
+        val (label, blocker, act) = when {
+            world.pendingDate(id) -> Triple("GO ON A DATE", null) { onHeartEvent?.invoke(dateScene(id)) }
+            world.canCourt(id) && !world.isDating(id) && !world.isSpouse(id) && r.engaged != id && h >= COURT_HEARTS ->
+                Triple("GIVE A BOUQUET", world.bouquetBlocker(id)) { if (world.giveBouquet(id)) onHeartEvent?.invoke(bouquetScene(id)) }
+            world.isDating(id) && r.engaged == null && r.spouse == null && h >= FRIEND_HEARTS ->
+                Triple("PROPOSE", world.proposeBlocker(id)) { if (world.propose(id)) onHeartEvent?.invoke(proposalScene(id)) }
+            world.isSpouse(id) -> Triple("DIVORCE (BANK, ${DIVORCE_COST / 1000}K)", null) { onDivorce?.invoke(id) }
+            else -> Triple(null, null, null)
+        }
+        when {
+            r.engaged == id -> {
+                val days = (r.weddingDay - world.time.dayIndex).coerceAtLeast(0)
+                g.text(if (days == 0L) "THE WEDDING IS TODAY!" else "THE WEDDING IS IN $days DAY${if (days == 1L) "" else "S"}", x + pw / 2, ry + 4, Gfx.RED, align = 0, outline = 0, shadow = false)
+            }
+            label != null && act != null -> {
+                val divorce = world.isSpouse(id)
+                val style = if (divorce) "red" else if (blocker == null) "gold" else "wood"
+                if (ui.button("romance", x + 10, ry, pw - 20, 16, label, style = style)) {
+                    if (blocker != null) hud.toast(blocker) else { giftMode = false; villagerSays = ""; act(); if (!divorce) return true }
+                }
+            }
+            else -> g.text("ORDERS FROM ${v.name.uppercase()} ADD HEARTS TOO", x + pw / 2, ry + 2, Gfx.MUTED, align = 0, outline = 0, shadow = false)
+        }
         if (giftMode && !world.giftedToday(id)) {
             // Everything in storage that can be given; loved gifts are marked with a heart.
             val keys = world.state.inventory.keys.filter { world.giftable(it) && world.count(it) > 0 }.sortedByDescending { world.giftReaction(id, it).ordinal == 0 }
             // The picked gift's name and the button that gives it.
             val pick = giftPick?.takeIf { it in keys }
-            val ny = talkY + 38
+            val ny = talkY + 42
             if (pick != null) {
                 g.text(fit(world.data.name(baseId(pick)).uppercase(), pw - 96), x + 12, ny + 5, Gfx.INK, outline = 0, shadow = false)
                 if (ui.button("give", x + pw - 74, ny, 64, 16, "GIVE")) { world.giveGift(id, pick); giftMode = false; giftPick = null }
@@ -1369,6 +1429,68 @@ class Panels(private val game: Game, private val hud: Hud) {
             }
             if (keys.isEmpty()) g.text("NOTHING TO GIVE", x + pw / 2, gy + 8, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         }
+        return true
+    }
+
+    /**
+     * The farmer's home (round 7): Grandpa's old cabin, with what it takes to build the family
+     * farmhouse (needed to propose); once built, the family page: the spouse, their morning, their
+     * trade bonus, and the kid.
+     */
+    fun farmhouse(): Boolean {
+        val r = world.romance
+        if (r.farmhouse < 1) {
+            val (x, y, pw, ph) = frame("GRANDPA'S FARMHOUSE", 196).toList()
+            if (closeButton(x, y, pw)) return false
+            g.slice9("ui/slot", x + 10, y + 24, x + 84, y + 98, 4)
+            g.sprite("buildings/farmhouse_old", (x + 47).toFloat(), (y + 80).toFloat())
+            listOf("THE OLD LOG CABIN, ONE", "ROOM AND A LEAKY ROOF.", "BUILD A FAMILY FARMHOUSE", "TO MAKE ROOM FOR TWO.").forEachIndexed { i, line ->
+                g.text(line, x + 92, y + 28 + i * 12, Gfx.INK, outline = 0, shadow = false)
+            }
+            g.sprite("buildings/farmhouse_big", (x + pw - 40).toFloat(), (y + 150).toFloat())
+            var cy = y + 106
+            for ((k, v) in FARMHOUSE_COST) {
+                g.sprite(if (k == "coins") "icons/coin" else "items/$k", (x + 19).toFloat(), (cy + 5).toFloat())
+                val have = if (k == "coins") world.state.coins >= v else world.count(k) >= v
+                val got = if (k == "coins") "" else " (${world.count(k)})"
+                g.text(if (k == "coins") "$v COINS" else "$v ${world.data.name(k).uppercase()}$got", x + 30, cy + 1, if (have) Gfx.INK else Gfx.RED, outline = 0, shadow = false)
+                cy += 13
+            }
+            val why = world.farmhouseBlocker()
+            if (ui.button("farmhouse-build", x + pw / 2 - 50, y + ph - 28, 100, 20, if (world.level < FARMHOUSE_LEVEL) "LEVEL $FARMHOUSE_LEVEL" else "BUILD", style = if (why == null) "gold" else "grey")) {
+                if (why != null) hud.toast(why) else { world.buildFarmhouse(); return false }
+            }
+            return true
+        }
+        val (x, y, pw, ph) = frame("HOME", 200).toList()
+        if (closeButton(x, y, pw)) return false
+        g.slice9("ui/slot", x + 10, y + 24, x + 84, y + 98, 4)
+        g.sprite("buildings/farmhouse_big", (x + 47).toFloat(), (y + 86).toFloat())
+        val spouse = r.spouse?.let { world.villager(it) }
+        if (spouse == null) {
+            val lines = if (r.engaged != null) listOf("ALL READY FOR TWO.", "THE WEDDING IS COMING!") else listOf("ROOM FOR TWO, AND A", "PORCH FOR THE EVENINGS.", "COURT SOMEONE WITH A", "BOUQUET FROM THE BENCH.")
+            lines.forEachIndexed { i, line -> g.text(line, x + 92, y + 28 + i * 12, Gfx.INK, outline = 0, shadow = false) }
+        } else {
+            g.spriteScaled("portraits/${spouse.id}", (x + pw - 30).toFloat(), (y + 46).toFloat(), 0.6f, 0.6f)
+            g.text("MARRIED TO", x + 92, y + 26, Gfx.MUTED, outline = 0, shadow = false)
+            g.text(spouse.name.uppercase(), x + 92, y + 37, Gfx.RED, outline = 0, shadow = false)
+            world.spousePerk()?.let { p -> hud.wrap(p.text.uppercase(), pw - 104).take(3).forEachIndexed { i, l -> g.text(l, x + 92, y + 62 + i * 10, Gfx.INK, outline = 0, shadow = false) } }
+            r.lastGift?.let { gift ->
+                g.text("THIS MORNING:", x + 12, y + 106, Gfx.MUTED, outline = 0, shadow = false)
+                g.sprite(icon(gift), (x + 20).toFloat(), (y + 124).toFloat())
+                g.text("BROUGHT YOU ${world.data.name(gift).uppercase()}", x + 30, y + 120, Gfx.INK, outline = 0, shadow = false)
+                r.lastChore?.let { g.text(it.uppercase(), x + 30, y + 132, Gfx.INK, outline = 0, shadow = false) }
+            }
+        }
+        r.kidName?.let { kid ->
+            val ky = y + ph - 46
+            g.slice9("ui/slot", x + 10, ky, x + 40, ky + 30, 4)
+            val stage = world.kidStage()
+            val art = "people/kid_${listOf("baby", "toddler", "child")[stage]}_${if (r.kidFemale) "g" else "b"}_idle"
+            g.sprite(art, (x + 25).toFloat(), (ky + 27).toFloat())
+            g.text(kid.uppercase(), x + 48, ky + 6, Gfx.INK, outline = 0, shadow = false)
+            g.text(world.kidAgeLabel() + if (stage < 2) " - GROWS WITH THE SEASONS" else "", x + 48, ky + 17, Gfx.MUTED, outline = 0, shadow = false)
+        } ?: if (r.kidDue >= 0) g.text("A LITTLE ONE IS ON THE WAY!", x + pw / 2, y + ph - 30, Gfx.RED, align = 0, outline = 0, shadow = false) else Unit
         return true
     }
 

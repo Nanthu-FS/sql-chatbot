@@ -91,7 +91,7 @@ fun World.buyAnimal(kind: AnimalKind): Boolean {
 }
 
 /** Takes up to [n] of [item] from storage, plain quality first; returns how many it took. */
-private fun World.takeAny(item: String, n: Int): Int {
+internal fun World.takeAny(item: String, n: Int): Int {
     var left = n
     for (q in Quality.entries) {
         val k = q.key(item)

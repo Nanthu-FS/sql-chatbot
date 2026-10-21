@@ -29,6 +29,13 @@ class RomanceState {
     var spouse: String? = null
     /** 0: Grandpa's old farmhouse; 1: the family farmhouse (needed to propose). */
     var farmhouse = 0
+    /** Part 5: the kid. [kidDue] is the day the baby arrives (-1: none on the way); the player names it. */
+    var kidDue = -1L
+    var kidName: String? = null
+    var kidFemale = false
+    /** Part 4: what the spouse did this morning (for the farmhouse page). */
+    var lastGift: String? = null
+    var lastChore: String? = null
 
     fun toJson(): JSONObject = JSONObject().apply {
         put("dating", JSONArray(dating.toList()))
@@ -36,6 +43,11 @@ class RomanceState {
         put("weddingDay", weddingDay)
         spouse?.let { put("spouse", it) }
         put("farmhouse", farmhouse)
+        put("kidDue", kidDue)
+        kidName?.let { put("kidName", it) }
+        put("kidFemale", kidFemale)
+        lastGift?.let { put("lastGift", it) }
+        lastChore?.let { put("lastChore", it) }
     }
 
     companion object {
@@ -45,6 +57,11 @@ class RomanceState {
             weddingDay = o.optLong("weddingDay", -1)
             spouse = o.optString("spouse").ifEmpty { null }
             farmhouse = o.optInt("farmhouse")
+            kidDue = o.optLong("kidDue", -1)
+            kidName = o.optString("kidName").ifEmpty { null }
+            kidFemale = o.optBoolean("kidFemale")
+            lastGift = o.optString("lastGift").ifEmpty { null }
+            lastChore = o.optString("lastChore").ifEmpty { null }
         }
     }
 }
@@ -135,6 +152,20 @@ internal fun World.marry(id: String) {
 
 /** True on (or after) the wedding day. */
 fun World.weddingDue(): Boolean = romance.engaged != null && time.dayIndex >= romance.weddingDay
+
+/** The wedding scene, on the day (Chrome plays it on the farm). */
+fun World.pendingWedding(): Scene? = romance.engaged?.takeIf { weddingDue() }?.let { sceneById(weddingScene(it)) }
+
+/** The date on the hill, once dating reaches ten hearts (played from their panel). */
+fun World.pendingDate(id: String) = isDating(id) && hearts(id) >= FRIEND_HEARTS && dateScene(id) !in state.storySeen
+
+/** Shown under their hearts: where the two of you stand. */
+fun World.romanceLabel(id: String): String? = when {
+    isSpouse(id) -> if (state.playerGender == Gender.FEMALE) "HUSBAND" else "WIFE"
+    romance.engaged == id -> "ENGAGED"
+    isDating(id) -> "DATING"
+    else -> null
+}
 
 // ------------------------------------------------------------------ the family farmhouse
 

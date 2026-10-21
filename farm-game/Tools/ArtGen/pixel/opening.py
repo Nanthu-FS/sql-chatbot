@@ -7,6 +7,8 @@ scenes/bedroom          Grandpa Elias's bedroom at dusk, 270x480 like the bank (
 scenes/porch            the farmhouse porch after dark: Grandpa's empty rocking chair with the quilt over it,
                         the lantern, and Willowmere's ruins on the hills under the first stars
 scenes/bank_old         the loan office forty years ago (older poster, no clock); the flashbacks tint it sepia
+scenes/hill             the hill above Willowmere at sunset (dates, the proposal, the anniversary)
+scenes/square           the village square dressed for the wedding
 scenes/stamp_refused    the bank's rubber stamp, slammed onto the screen; stamp_approved for the finale
 title/sky_0..4          the sky from night to morning, crossfaded while the sun rises
 title/sun, cloud_a/b    the rising sun with its glow; drifting clouds
@@ -984,6 +986,430 @@ def letter_paper():
     return _outline(im, "brown_l")
 
 
+# ---------------------------------------------------------------- romance backdrops (round 7, Part 3)
+
+def tint(px, x, y, col, a):
+    """Blends colour [col] over pixel (x, y) by [a] (cast shadows, glows, haze)."""
+    if not (0 <= x < W and 0 <= y < H):
+        return
+    r, g, b, al = px[x, y]
+    c = C(col)
+    px[x, y] = (int(r + (c[0] - r) * a), int(g + (c[1] - g) * a), int(b + (c[2] - b) * a), al or 255)
+
+
+def shadow_poly(im, pts, col="ink", a=0.38):
+    """A cast shadow: the polygon's pixels darkened (not painted over)."""
+    mask = Image.new("L", (W, H), 0)
+    ImageDraw.Draw(mask).polygon(pts, fill=255)
+    m = mask.load()
+    px = im.load()
+    x0, x1 = max(0, int(min(p[0] for p in pts))), min(W, int(max(p[0] for p in pts)) + 1)
+    y0, y1 = max(0, int(min(p[1] for p in pts))), min(H, int(max(p[1] for p in pts)) + 1)
+    for y in range(y0, y1):
+        for x in range(x0, x1):
+            if m[x, y]:
+                tint(px, x, y, col, a)
+
+
+def blob(px, cx, cy, rx, ry, ramp, sun=(1.0, -0.4), rim=None):
+    """A rounded form shaded toward the [sun] direction: dark core, mid, light, an optional rim."""
+    for y in range(int(cy - ry) - 1, int(cy + ry) + 2):
+        for x in range(int(cx - rx) - 1, int(cx + rx) + 2):
+            nx, ny = (x + 0.5 - cx) / rx, (y + 0.5 - cy) / ry
+            d = nx * nx + ny * ny
+            if d > 1 or not (0 <= x < W and 0 <= y < H):
+                continue
+            # A sphere: its normal against a light from [sun], tilted toward the viewer.
+            nz = math.sqrt(max(0.0, 1 - d))
+            ln = math.sqrt(sun[0] ** 2 + sun[1] ** 2 + 0.5)
+            lit = (nx * sun[0] + ny * sun[1] + nz * 0.7) / ln
+            v = (lit + 0.2) / 1.1 * (len(ramp) - 1)
+            k = max(0, min(len(ramp) - 1, int(v)))
+            frac = v - int(v)
+            if rim and d > 0.8 and (nx * sun[0] + ny * sun[1]) > 0.3:
+                px[x, y] = C(rim)
+            elif k + 1 < len(ramp) and bayer(x, y, int(frac * 16)):
+                px[x, y] = C(ramp[k + 1])
+            else:
+                px[x, y] = C(ramp[k])
+
+
+def hill():
+    """The hill above Willowmere at sunset, lit from the low sun behind and to the right: the old
+    oak's canopy rimmed in gold, long shadows reaching toward the viewer, the far ridge melting into
+    haze, the village's windows lighting up, a checked blanket and a basket on the near slope."""
+    rng = random.Random(31)
+    im = new(W, H)
+    px = im.load()
+    sx, sy = 176, 232
+    vgrad(px, 0, 0, W, 250, ["slate_d", "purple", "magenta", "pink", "orange", "amber", "yellow"])
+    # The glow round the sun, wide and soft, and long thin rays fanning up.
+    for y in range(0, 300):
+        for x in range(W):
+            d = math.hypot(x - sx, (y - sy) * 1.6)
+            if d < 120:
+                tint(px, x, y, "yellow", 0.55 * (1 - d / 120) ** 2)
+    for k in range(9):
+        a = math.pi + 0.25 + k * 0.33
+        for t in range(30, 240):
+            x, y = int(sx + math.cos(a) * t), int(sy + math.sin(a) * t * 0.9)
+            for w_ in range(-1 - t // 60, 2 + t // 60):
+                if 0 <= x + w_ < W and 0 <= y < 240 and bayer(x + w_, y, 3):
+                    tint(px, x + w_, y, "cream", 0.18 * (1 - t / 240))
+    ellipse(im, (sx - 15, sy - 15, sx + 15, sy + 15), "yellow")
+    ellipse(im, (sx - 10, sy - 10, sx + 10, sy + 10), "white")
+    # Clouds: dark undersides, edges lit pink and gold toward the sun.
+    for cy, cx0, cw in ((92, 18, 96), (126, 150, 112), (166, 36, 74), (60, 168, 70)):
+        for x in range(cx0, cx0 + cw):
+            t = (x - cx0) / cw
+            hgt = int(4 * math.sin(t * math.pi)) + 1
+            for y in range(cy - hgt, cy + 2):
+                px[x, y] = C("purple" if y > cy - 1 else "magenta")
+            px[x, cy - hgt] = C("orange" if x > sx - 60 else "pink")
+    # Far ridge in haze, the village's rooftops on it, windows lit, the windmill turning again.
+    for x in range(W):
+        y = 238 + int(5 * math.sin(x * 0.035 + 1) + 2 * math.sin(x * 0.14))
+        for yy in range(y, 300):
+            px[x, yy] = C("magenta" if yy - y < 2 else "purple")
+            tint(px, x, yy, "pink", max(0.0, 0.35 - (yy - y) * 0.02))
+    for i, hx in enumerate(range(6, 262, 21)):
+        if 146 < hx < 204:
+            continue
+        hh = 7 + (i * 5) % 6
+        b = 244 + (i % 3)
+        wdt = 10 + (i % 2) * 3
+        rect(px, hx, b - hh, hx + wdt, b, "purple")
+        rect(px, hx + wdt - 3, b - hh, hx + wdt, b, "slate_d")
+        poly(im, [(hx - 2, b - hh), (hx + wdt + 2, b - hh), (hx + wdt // 2, b - hh - wdt // 2 - 2)], "slate_d")
+        line(im, [(hx + wdt // 2, b - hh - wdt // 2 - 2), (hx + wdt + 2, b - hh)], "magenta")
+        rect(px, hx + 2, b - hh + 3, hx + 4, b - hh + 5, "yellow")
+        if wdt > 11:
+            rect(px, hx + 7, b - hh + 3, hx + 9, b - hh + 5, "amber")
+    mx, my = 222, 244
+    poly(im, [(mx - 4, my), (mx + 4, my), (mx + 2, my - 22), (mx - 2, my - 22)], "slate_d")
+    line(im, [(mx + 2, my - 22), (mx + 4, my)], "magenta")
+    for a in (0.6, 2.17, 3.74, 5.31):
+        line(im, [(mx, my - 22), (mx + 13 * math.cos(a), my - 22 + 13 * math.sin(a))], "slate_d", 2)
+    # A band of mist in the valley.
+    for y in range(250, 272):
+        for x in range(W):
+            tint(px, x, y, "pink", 0.28 * (1 - abs(y - 261) / 11))
+    # The fields below: rows that converge toward the far ridge, gold where the light rakes them.
+    for x in range(W):
+        y = 264 + int(4 * math.sin(x * 0.05 + 2))
+        rect(px, x, y, x + 1, 334, "teal_dd")
+    for k in range(12):
+        fx = -60 + k * 34
+        for t in range(0, 70):
+            x = int(sx + (fx - sx) * (t / 70) ** 0.8)
+            y = 266 + t
+            if 0 <= x < W - 1:
+                px[x, y] = C("amber" if t < 20 else "rust" if t < 45 else "brown_d")
+                px[x + 1, y] = C("green_dd")
+    # The near hilltop: lit along its crest, darker away from the sun and toward the viewer.
+    crest = [318 - int(18 * math.sin((x + 20) / W * math.pi)) for x in range(W)]
+    for x in range(W):
+        top = crest[x]
+        warm = (x / W) ** 1.4
+        for y in range(top, H):
+            k = y - top
+            if k < 2:
+                c = "yellow" if warm > 0.5 else "amber"
+            elif k < 4:
+                c = "amber" if warm > 0.6 else "green"
+            elif k < 26:
+                c = "green_d" if bayer(x, y, int(min(1.0, warm * 1.8 + 0.25) * 16)) else "green_dd"
+            else:
+                c = "green_dd" if not bayer(x, y, max(0, 6 - (k - 26) // 14)) else "green_d"
+            px[x, y] = C(c)
+        for y in range(top, H):
+            tint(px, x, y, "teal_dd", min(0.5, max(0.0, (y - 380) / 200)) * (1 - warm * 0.5))
+    # Grass: tufts growing bigger toward the viewer, their tips catching the light.
+    for _ in range(420):
+        gx, gy = rng.randrange(W), rng.randrange(316, H)
+        if gy < crest[gx] + 3:
+            continue
+        near = (gy - 316) / (H - 316)
+        k = 2 + int(near * 9)
+        for blade in (-1, 0, 1):
+            lean = blade * 0.4
+            for j in range(k - abs(blade)):
+                x = int(gx + blade + lean * j)
+                if 0 <= x < W:
+                    px[x, gy - j] = C("amber" if j == k - abs(blade) - 1 and gx > 120 else "green" if j > k // 2 else "green_d")
+    for _ in range(40):
+        fx, fy = rng.randrange(4, W - 4), rng.randrange(330, H - 4)
+        near = (fy - 330) / (H - 330)
+        r = 1 + int(near * 2)
+        col = rng.choice((("pink", "magenta"), ("yellow", "amber"), ("white", "grey_l"), ("red", "red_d")))
+        for dx in range(-r, r + 1):
+            for dy in range(-r, r + 1):
+                if abs(dx) + abs(dy) <= r and 0 <= fx + dx < W:
+                    px[fx + dx, fy + dy] = C(col[0] if dx + dy >= 0 else col[1])
+        px[fx, fy] = C("amber")
+    # The oak's long shadow, stretching down-left toward the viewer.
+    shadow_poly(im, [(14, 326), (34, 326), (0, 480), (-60, 480)], a=0.45)
+    # The oak: trunk lit on its sun side, roots, branches, a canopy of rounded clumps rimmed in gold.
+    rect(px, 16, 150, 32, 332, "brown_d")
+    rect(px, 26, 150, 32, 332, "brown")
+    rect(px, 30, 150, 32, 332, "clay")
+    for y in range(160, 330, 9):
+        rect(px, 19, y, 23, y + 1, "ink")
+    poly(im, [(10, 334), (16, 312), (20, 334)], "brown_d")
+    poly(im, [(28, 334), (32, 312), (40, 334)], "brown")
+    line(im, [(28, 214), (62, 172)], "brown", 4)
+    line(im, [(30, 212), (64, 174)], "clay", 1)
+    line(im, [(22, 192), (2, 152)], "brown_d", 3)
+    canopy = [(6, 150, 30, 24), (30, 118, 42, 32), (66, 150, 30, 22), (54, 96, 30, 22), (98, 126, 22, 18),
+              (0, 104, 26, 24), (22, 80, 28, 20), (84, 98, 18, 14)]
+    for (cx, cy, rx, ry) in sorted(canopy, key=lambda c: c[1]):
+        blob(px, cx, cy, rx, ry, ["ink", "green_dd", "green_d", "green"], sun=(0.9, 0.0), rim="amber")
+    for _ in range(700):
+        lx, ly = rng.randrange(0, 126), rng.randrange(56, 182)
+        c = px[lx, ly][:3]
+        if c == C("green_d")[:3]:
+            px[lx, ly] = C("green" if rng.random() < 0.4 else "green_dd")
+        elif c == C("green")[:3] and rng.random() < 0.3:
+            px[lx, ly] = C("yellow")
+    # The blanket in perspective, its far edge lit, a fold and its shadow; the basket and its shadow.
+    bx0, by0, bw, bh = 66, 368, 156, 50
+    shadow_poly(im, [(bx0 + 4, by0 + bh), (bx0 + bw - 4, by0 + bh), (bx0 + bw - 40, by0 + bh + 14), (bx0 - 20, by0 + bh + 14)], a=0.4)
+    for y in range(by0, by0 + bh):
+        t = (y - by0) / bh
+        inset = int((1 - t) * 16)
+        for x in range(bx0 + inset, bx0 + bw - inset):
+            u = (x - bx0 - inset) / max(1, bw - 2 * inset)
+            cell_u = int(u * 10)
+            cell_v = int(t ** 0.85 * 6)
+            col = ("red", "red_d") if (cell_u + cell_v) % 2 else ("cream", "tan")
+            fold = 0.45 < u < 0.5
+            dark = u > 0.5 and t > 0.1 and t < 0.6 and u < 0.62
+            px[x, y] = C(col[1] if (fold or dark or y > by0 + bh - 3) else col[0])
+            if abs((u * 10) % 1) < 0.08 or abs((t ** 0.85 * 6) % 1) < 0.1:
+                px[x, y] = C(col[1])
+        if y < by0 + 2:
+            for x in range(bx0 + inset, bx0 + bw - inset):
+                tint(px, x, y, "yellow", 0.4)
+    bx, by = 200, 344
+    shadow_poly(im, [(bx, by + 26), (bx + 32, by + 26), (bx + 8, by + 44), (bx - 26, by + 44)], a=0.42)
+    for y in range(by, by + 26):
+        for x in range(bx, bx + 32):
+            weave = ((x - bx) // 3 + (y - by) // 3) % 2
+            side = x > bx + 24
+            px[x, y] = C(("brown", "brown_d")[weave] if side else ("tan_d", "brown_l")[weave])
+    rect(px, bx - 1, by - 2, bx + 33, by + 1, "brown_d")
+    rect(px, bx - 1, by - 2, bx + 26, by - 1, "tan")
+    line(im, [(bx + 2, by - 2), (bx + 16, by - 18), (bx + 30, by - 2)], "brown_d", 2)
+    line(im, [(bx + 17, by - 17), (bx + 29, by - 3)], "clay", 1)
+    rect(px, bx + 6, by - 6, bx + 18, by - 1, "red")
+    rect(px, bx + 6, by - 6, bx + 18, by - 5, "pink")
+    rect(px, bx + 20, by - 10, bx + 23, by - 1, "green_d")
+    # Foreground: tall dark grass framing the bottom corners, out of the light.
+    for side in (0, 1):
+        for _ in range(60):
+            gx = rng.randrange(0, 60)
+            gx = gx if side == 0 else W - 1 - gx
+            ht = int(rng.randrange(20, 70) * (1 - (gx if side == 0 else W - 1 - gx) / 70))
+            lean = rng.uniform(-0.3, 0.3)
+            for j in range(max(0, ht)):
+                x = int(gx + lean * j * j / max(1, ht))
+                if 0 <= x < W:
+                    px[x, H - 1 - j] = C("ink" if j < ht * 0.5 else "green_dd")
+                    if j < ht * 0.3 and 0 <= x + 1 < W:
+                        px[x + 1, H - 1 - j] = C("ink")
+    return im
+
+
+def facade(im, px, x0, x1, top, base, wall, roof, timber=False, side=0, side_dir=1):
+    """A house front, lit from the top-left: shaded wall, a receding side wall of [side] px, deep-set
+    windows with sills and flower boxes, a roof with tile rows lit on one slope."""
+    if side:
+        sx0, sx1 = (x1, x1 + side) if side_dir > 0 else (x0 - side, x0)
+        for x in range(sx0, sx1):
+            k = (x - sx0) if side_dir > 0 else (sx1 - 1 - x)
+            yt = top - int(k * 0.35)
+            rect(px, x, yt, x + 1, base, wall[0])
+        poly(im, [(sx0, top), (sx1, top - int(side * 0.35)), ((sx0 + sx1) // 2, top - 22)], "slate_d")
+    rect(px, x0, top, x1, base, wall[1])
+    rect(px, x0, top, x1, top + 1, wall[2])
+    rect(px, x0, top, x0 + 1, base, wall[2])
+    rect(px, x1 - 2, top, x1, base, wall[0])
+    if timber:
+        for xx in range(x0, x1, 12):
+            rect(px, xx, top, xx + 2, base, "brown_d")
+            rect(px, xx + 2, top, xx + 3, base, "brown")
+        rect(px, x0, top + 40, x1, top + 42, "brown_d")
+        for xx in range(x0, x1 - 12, 24):
+            line(im, [(xx + 2, top + 40), (xx + 12, top + 2)], "brown_d", 2)
+    else:
+        for yy in range(top + 2, base, 4):
+            for xx in range(x0 + (yy // 4 % 2) * 4, x1, 8):
+                rect(px, xx, yy, xx + 1, yy + 1, wall[0])
+    # Roof: tile rows; the left slope in light, the right in shade; the eave's shadow on the wall.
+    mid = (x0 + x1) // 2
+    poly(im, [(x0 - 4, top), (mid, top - 26), (mid, top)], roof[1])
+    poly(im, [(mid, top - 26), (x1 + 4, top), (mid, top)], roof[0])
+    for k in range(1, 6):
+        yy = top - 26 + k * 5
+        half = int((x1 - x0 + 8) / 2 * k / 5.2)
+        rect(px, mid - half, yy, mid + half, yy + 1, roof[0] if k % 2 else "ink")
+    rect(px, x0 - 4, top, x1 + 4, top + 2, "ink")
+    for x in range(x0, x1):
+        for y in range(top + 2, top + 6):
+            tint(px, x, y, "ink", 0.3 - (y - top - 2) * 0.07)
+    for wx in range(x0 + 8, x1 - 12, 20):
+        for wy in (top + 14, top + 56):
+            if wy + 20 > base:
+                continue
+            rect(px, wx - 1, wy - 1, wx + 13, wy + 17, "white")
+            rect(px, wx, wy, wx + 12, wy + 16, "blue_d")
+            rect(px, wx + 2, wy + 2, wx + 12, wy + 16, "blue")
+            rect(px, wx + 2, wy + 2, wx + 6, wy + 5, "cyan")
+            rect(px, wx + 5, wy, wx + 7, wy + 16, "white")
+            rect(px, wx, wy + 7, wx + 12, wy + 8, "white")
+            rect(px, wx - 2, wy + 16, wx + 14, wy + 18, "grey_l")
+            rect(px, wx - 2, wy + 18, wx + 14, wy + 20, "brown_d")
+            for fx in range(wx - 1, wx + 13, 2):
+                px[fx, wy + 15] = C(("pink", "red", "yellow")[(fx // 2) % 3])
+                px[fx + 1, wy + 15] = C("green_d")
+
+
+def square():
+    """The village square on the wedding day, in late-morning sun from the top-left: fronts with
+    receding side walls and deep windows, the church tower set back in a little haze, cobbles in
+    perspective toward the fountain, cast shadows from the houses, the arch, the lamps and the bench,
+    bunting and petals."""
+    rng = random.Random(41)
+    im = new(W, H)
+    px = im.load()
+    vgrad(px, 0, 0, W, 210, ["blue_d", "blue", "cyan", "cyan", "cream"])
+    for cy, cx0, cw in ((40, 18, 64), (72, 168, 74)):
+        ellipse(im, (cx0, cy, cx0 + cw, cy + 16), "grey_l")
+        ellipse(im, (cx0 - 2, cy - 2, cx0 + cw - 4, cy + 12), "white")
+        ellipse(im, (cx0 + 10, cy - 9, cx0 + cw - 16, cy + 8), "white")
+    # The tower, set back: lighter, a little blue with distance.
+    shade_rect(px, 104, 56, 166, 300, "grey", "grey_l", "grey_d")
+    rect(px, 156, 56, 166, 300, "slate")
+    poly(im, [(98, 56), (135, 12), (135, 56)], "slate")
+    poly(im, [(135, 12), (172, 56), (135, 56)], "slate_d")
+    ellipse(im, (123, 80, 147, 104), "grey_d")
+    ellipse(im, (124, 81, 146, 103), "cream")
+    line(im, [(135, 92), (135, 84)], "ink"); line(im, [(135, 92), (141, 92)], "ink")
+    rect(px, 128, 120, 142, 150, "slate_d")
+    poly(im, [(128, 120), (135, 112), (142, 120)], "slate_d")
+    for y in range(56, 300):
+        for x in range(104, 166):
+            tint(px, x, y, "cyan", 0.12)
+    shade_rect(px, 122, 252, 148, 300, "brown", "brown_l", "brown_d")
+    ellipse(im, (122, 240, 148, 264), "brown")
+    rect(px, 134, 252, 136, 300, "brown_d")
+    # The fronts, left and right, their side walls receding toward the tower.
+    facade(im, px, 0, 58, 118, 300, ("red_d", "red", "pink"), ("red_d", "red"), side=14, side_dir=1)
+    facade(im, px, 58 + 14, 104, 150, 300, ("brown", "clay", "tan_d"), ("slate_d", "slate"), timber=True)
+    facade(im, px, 166, 200, 140, 300, ("tan_d", "cream", "white"), ("red_d", "red"), timber=True)
+    facade(im, px, 214, 270, 108, 300, ("brown", "tan", "cream"), ("slate_d", "slate"), side=14, side_dir=-1)
+    # The square's floor: cobbles in perspective, rows getting bigger toward the viewer and
+    # converging on the fountain; the sun-side lighter.
+    vx, vy = 135, 250
+    for y in range(300, H):
+        t = (y - 300) / (H - 300)
+        size = 3 + int(t * 9)
+        row = int(((y - 300) ** 1.25) / 3.2)
+        rowsize = max(2, int(2 + t * 7))
+        for x in range(W):
+            u = (x - vx) / (y - vy)
+            cell = int(u * 14 + (row // rowsize % 2) * 0.5)
+            edge_u = abs((u * 14 + (row // rowsize % 2) * 0.5) % 1) < 0.06 + t * 0.04
+            edge_v = row % rowsize == 0
+            shade = (cell * 7 + row // rowsize * 3) % 5
+            c = "grey_l" if shade == 0 else "grey" if shade < 3 else "grey_d"
+            if edge_u or edge_v:
+                c = "slate"
+            elif row % rowsize == 1:
+                c = "white" if c == "grey_l" else "grey_l"
+            px[x, y] = C(c)
+        for x in range(W):
+            tint(px, x, y, "ink", max(0.0, (x / W - 0.55) * 0.25))
+    # Shadows: the left house falls across the cobbles, the eaves on the right.
+    shadow_poly(im, [(72, 300), (104, 300), (160, 360), (96, 360)], a=0.3)
+    shadow_poly(im, [(200, 300), (270, 300), (270, 340), (230, 330)], a=0.3)
+    # The fountain: a stone basin with a lit rim, water with a reflection, the jets.
+    shadow_poly(im, [(108, 332), (190, 332), (214, 352), (126, 352)], a=0.35)
+    ellipse(im, (84, 298, 186, 340), "slate")
+    ellipse(im, (84, 298, 186, 336), "grey")
+    ellipse(im, (86, 298, 184, 330), "grey_l")
+    ellipse(im, (92, 302, 178, 328), "blue_d")
+    ellipse(im, (96, 304, 174, 324), "blue")
+    ellipse(im, (100, 304, 150, 316), "cyan")
+    for x in range(104, 168, 9):
+        rect(px, x, 318, x + 5, 319, "white")
+    shade_rect(px, 129, 268, 141, 314, "grey", "grey_l", "slate")
+    ellipse(im, (116, 260, 154, 276), "slate")
+    ellipse(im, (116, 258, 154, 272), "grey_l")
+    for k in range(-3, 4):
+        line(im, [(135, 258), (135 + k * 6, 246), (135 + k * 9, 268)], "white" if k % 2 else "cyan")
+    # The flower arch: leaves dark behind, lit in front (top-left), flowers on the sunny side.
+    for t in range(0, 181, 2):
+        a = math.radians(t)
+        ax, ay = 135 - 68 * math.cos(a), 300 - 106 * math.sin(a)
+        ellipse(im, (ax - 7, ay - 6, ax + 7, ay + 7), "green_dd")
+    for t in range(0, 181, 2):
+        a = math.radians(t)
+        ax, ay = 135 - 68 * math.cos(a), 300 - 106 * math.sin(a)
+        ellipse(im, (ax - 6, ay - 7, ax + 4, ay + 3), "green_d")
+        ellipse(im, (ax - 5, ay - 6, ax + 1, ay), "green")
+    for t in range(0, 181, 9):
+        a = math.radians(t)
+        ax, ay = 135 - 68 * math.cos(a), 300 - 106 * math.sin(a)
+        col = ("pink", "white", "red", "yellow")[t // 9 % 4]
+        ellipse(im, (ax - 3, ay - 3, ax + 3, ay + 3), col)
+        px[int(ax) - 1, int(ay) - 1] = C("white")
+    shadow_poly(im, [(60, 300), (74, 300), (110, 340), (94, 340)], a=0.3)
+    shadow_poly(im, [(196, 300), (210, 300), (246, 340), (230, 340)], a=0.3)
+    # Bunting: strings sagging between the roofs, flags shaded on their far half; a big near string.
+    for (x0, y0, x1, y1, sag, size) in ((0, 120, 270, 110, 30, 8), (0, 168, 270, 150, 24, 9), (-10, 0, 280, 10, 40, 16)):
+        for x in range(max(0, x0), min(W, x1)):
+            t = (x - x0) / (x1 - x0)
+            y = int(y0 + (y1 - y0) * t + sag * math.sin(t * math.pi))
+            px[x, y] = C("ink")
+            if x % (size + 6) == 0:
+                col = (("red", "red_d"), ("yellow", "amber"), ("cyan", "blue"), ("pink", "magenta"), ("green", "green_d"), ("white", "grey_l"))[(x // (size + 6)) % 6]
+                poly(im, [(x, y + 1), (x + size // 2, y + 1), (x + size // 2, y + size)], col[0])
+                poly(im, [(x + size // 2, y + 1), (x + size, y + 1), (x + size // 2, y + size)], col[1])
+    # Lamp posts with ribbons and their shadows; Elias's bench, a posy on it, and its shadow.
+    for lx in (34, 236):
+        shadow_poly(im, [(lx, 380), (lx + 3, 380), (lx + 60, 420), (lx + 56, 422)], a=0.35)
+        rect(px, lx, 250, lx + 3, 380, "ink")
+        rect(px, lx, 250, lx + 1, 380, "slate")
+        rect(px, lx - 3, 374, lx + 6, 382, "ink")
+        shade_rect(px, lx - 5, 238, lx + 8, 252, "amber", "yellow", "rust")
+        rect(px, lx - 2, 241, lx + 2, 246, "white")
+        rect(px, lx - 6, 236, lx + 9, 239, "ink")
+        for k in range(4):
+            line(im, [(lx + 3, 256), (lx + 10 + k * 2, 276 + k * 6)], ("pink", "white", "red", "pink")[k])
+    shadow_poly(im, [(196, 380), (252, 380), (270, 396), (214, 396)], a=0.35)
+    for y, c in ((340, "brown_l"), (344, "brown"), (352, "brown_l"), (356, "brown"), (360, "brown_d"), (364, "ink")):
+        rect(px, 196, y, 252, y + 4, c)
+    rect(px, 196, 340, 252, 341, "tan")
+    rect(px, 196, 352, 252, 353, "tan")
+    rect(px, 200, 364, 204, 382, "ink"); rect(px, 244, 364, 248, 382, "ink")
+    for k, c in enumerate(("pink", "yellow", "white", "red")):
+        ellipse(im, (216 + k * 4, 346, 222 + k * 4, 352), c)
+    rect(px, 220, 352, 230, 354, "green_d")
+    # Petals: small far off, bigger near the viewer.
+    for _ in range(170):
+        x, y = rng.randrange(W), rng.randrange(330, H)
+        near = (y - 330) / (H - 330)
+        s = 1 + int(near * 2)
+        col = rng.choice((("pink", "magenta"), ("white", "grey_l"), ("red", "red_d")))
+        for dx in range(s):
+            if x + dx < W:
+                px[x + dx, y] = C(col[0])
+                if y + 1 < H and dx == s - 1:
+                    px[x + dx, y + 1] = C(col[1])
+    return im
+
+
 def main():
     art = sys.argv[1]
     pivots = {}
@@ -991,6 +1417,8 @@ def main():
     sc.save("bedroom", bedroom(), 0, 0)
     sc.save("porch", porch(), 0, 0)
     sc.save("bank_old", bank_old(), 0, 0)
+    sc.save("hill", hill(), 0, 0)
+    sc.save("square", square(), 0, 0)
     for name, word, ink, light, seed in (("stamp_refused", "REFUSED", "red_d", "red", 1), ("stamp_approved", "APPROVED", "green_d", "green", 2)):
         im = stamp(word, ink, light, seed)
         sc.save(name, im, im.size[0] // 2, im.size[1] // 2)

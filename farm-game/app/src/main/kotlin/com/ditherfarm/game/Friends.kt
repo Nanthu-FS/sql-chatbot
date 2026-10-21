@@ -23,8 +23,8 @@ fun World.villager(id: String) = data.villagers.firstOrNull { it.id == id }
 
 fun World.friendship(id: String) = state.friendship[id] ?: 0
 
-/** Points this villager's next heart needs, as (have, need), or null at ten hearts. */
-fun World.nextHeart(id: String): Pair<Int, Int>? = World.HEARTS.firstOrNull { friendship(id) < it }?.let { friendship(id) to it }
+/** Points this villager's next heart needs, as (have, need), or null at the most they can reach now. */
+fun World.nextHeart(id: String): Pair<Int, Int>? = (1..maxHearts(id)).map { heartPoints(it) }.firstOrNull { friendship(id) < it }?.let { friendship(id) to it }
 
 /** Adds friendship and announces any new heart. */
 fun World.befriend(id: String, points: Int) {
@@ -98,8 +98,10 @@ fun World.giveGift(id: String, key: String): Boolean {
     return true
 }
 
-/** The heart event (2, 5 or 8) this villager has waiting, or null. */
-fun World.pendingHeartEvent(id: String): Int? = HEART_EVENTS.firstOrNull { hearts(id) >= it && heartScene(id, it) !in state.storySeen && HEART_SCENES.containsKey(heartScene(id, it)) }
+/** The heart event (2, 5 or 8; 12 and 14 for a spouse) this villager has waiting, or null. */
+fun World.pendingHeartEvent(id: String): Int? = (HEART_EVENTS + if (isSpouse(id)) SPOUSE_EVENTS else emptyList()).firstOrNull {
+    hearts(id) >= it && heartScene(id, it) !in state.storySeen && sceneById(heartScene(id, it)) != null && (it != KID_ASK_HEARTS || kidAskOpen())
+}
 
 fun heartScene(id: String, hearts: Int) = "heart_${id}_$hearts"
 

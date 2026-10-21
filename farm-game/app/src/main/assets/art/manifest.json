@@ -121,6 +121,24 @@
   "ay": 39,
   "bh": 47
  },
+ "buildings/farmhouse_big": {
+  "ax": 25,
+  "ay": 38,
+  "bh": 50
+ },
+ "buildings/farmhouse_big_lit": {
+  "ax": 25,
+  "ay": 38
+ },
+ "buildings/farmhouse_old": {
+  "ax": 23,
+  "ay": 29,
+  "bh": 40
+ },
+ "buildings/farmhouse_old_lit": {
+  "ax": 23,
+  "ay": 29
+ },
  "buildings/fruit_press": {
   "ax": 8,
   "ay": 22,
@@ -3860,6 +3878,76 @@
   "ay": 22,
   "bh": 25
  },
+ "people/kid_baby_b_idle": {
+  "ax": 10,
+  "ay": 13,
+  "bh": 16
+ },
+ "people/kid_baby_g_idle": {
+  "ax": 10,
+  "ay": 13,
+  "bh": 16
+ },
+ "people/kid_child_b_idle": {
+  "ax": 8,
+  "ay": 19,
+  "bh": 22
+ },
+ "people/kid_child_b_walk0": {
+  "ax": 8,
+  "ay": 19,
+  "bh": 22
+ },
+ "people/kid_child_b_walk1": {
+  "ax": 8,
+  "ay": 19,
+  "bh": 22
+ },
+ "people/kid_child_g_idle": {
+  "ax": 8,
+  "ay": 19,
+  "bh": 22
+ },
+ "people/kid_child_g_walk0": {
+  "ax": 8,
+  "ay": 19,
+  "bh": 22
+ },
+ "people/kid_child_g_walk1": {
+  "ax": 8,
+  "ay": 19,
+  "bh": 22
+ },
+ "people/kid_toddler_b_idle": {
+  "ax": 7,
+  "ay": 14,
+  "bh": 17
+ },
+ "people/kid_toddler_b_walk0": {
+  "ax": 7,
+  "ay": 14,
+  "bh": 17
+ },
+ "people/kid_toddler_b_walk1": {
+  "ax": 7,
+  "ay": 14,
+  "bh": 17
+ },
+ "people/kid_toddler_g_idle": {
+  "ax": 7,
+  "ay": 14,
+  "bh": 17
+ },
+ "people/kid_toddler_g_walk0": {
+  "ax": 7,
+  "ay": 14,
+  "bh": 17
+ },
+ "people/kid_toddler_g_walk1": {
+  "ax": 7,
+  "ay": 14,
+  "bh": 17
+ },
  "people/milo_ne_carry0": {
   "ax": 8,
   "ay": 22,
@@ -6214,11 +6302,19 @@
   "ax": 36,
   "ay": 52
  },
+ "scenes/hill": {
+  "ax": 0,
+  "ay": 0
+ },
  "scenes/letter": {
   "ax": 118,
   "ay": 150
  },
  "scenes/porch": {
+  "ax": 0,
+  "ay": 0
+ },
+ "scenes/square": {
   "ax": 0,
   "ay": 0
  },

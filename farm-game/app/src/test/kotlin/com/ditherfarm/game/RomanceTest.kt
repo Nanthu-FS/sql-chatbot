@@ -76,4 +76,80 @@ class RomanceTest {
         assertEquals(1, back.romance.farmhouse)
         assertNull(back.romance.engaged)
     }
+
+    private fun marriedTo(id: String, look: Int = 0) = farmer(look).apply {
+        befriend(id, 2_500); add(BOUQUET, 1); giveBouquet(id)
+        befriend(id, 2_000); romance.farmhouse = 1; add(RING, 1); propose(id)
+        advance(Time.REAL_SECONDS_PER_DAY * WEDDING_DAYS)
+        finishScene(weddingScene(id))
+        for (n in HEART_EVENTS) state.storySeen += heartScene(id, n)
+        events.clear()
+    }
+
+    @Test fun theWeddingPlaysOnItsDay() {
+        val w = farmer(0)
+        w.befriend("ivy", 2_500); w.add(BOUQUET, 1); w.giveBouquet("ivy")
+        w.befriend("ivy", 2_000)
+        assertTrue(w.pendingDate("ivy"))
+        w.finishScene(dateScene("ivy"))
+        w.romance.farmhouse = 1; w.add(RING, 1); w.propose("ivy")
+        assertNull(w.pendingWedding())
+        w.advance(Time.REAL_SECONDS_PER_DAY * WEDDING_DAYS)
+        assertEquals(weddingScene("ivy"), w.pendingWedding()?.id)
+        w.finishScene(weddingScene("ivy"))
+        assertEquals("ivy", w.romance.spouse)
+        assertNull(w.pendingWedding())
+        assertEquals("WIFE", w.romanceLabel("ivy"))
+    }
+
+    @Test fun theSpouseBringsAGiftDoesAChoreAndSellsTheirTrade() {
+        val w = marriedTo("finn", look = 2)
+        val before = w.unitPrice("trout")
+        val price = w.data.item("trout").price
+        w.add("wheat", 2)
+        w.advance(Time.REAL_SECONDS_PER_DAY)
+        val morning = w.events.filterIsInstance<WorldEvent.SpouseMorning>().single()
+        assertEquals("finn", morning.villager)
+        assertTrue(morning.gift in SPOUSE_GIFTS.getValue("finn"))
+        assertTrue(w.count(morning.gift) >= 1)
+        assertEquals(1.15, w.spouseMult("trout"), 1e-9)
+        assertEquals(1.0, w.spouseMult("wheat"), 1e-9)
+        assertTrue(price > 0 && before > 0)
+    }
+
+    @Test fun twelveHeartsAsksForAFamilyAndTheKidGrows() {
+        val w = marriedTo("ivy")
+        assertNull("no married scene before 12 hearts", w.pendingHeartEvent("ivy"))
+        w.befriend("ivy", 4_500)
+        assertEquals(12, w.pendingHeartEvent("ivy"))
+        w.finishScene(heartScene("ivy", 12))
+        assertTrue(w.events.any { it is WorldEvent.KidOnTheWay })
+        assertFalse(w.kidNeedsName())
+        w.advance(Time.REAL_SECONDS_PER_DAY * KID_DAYS)
+        assertTrue(w.kidNeedsName())
+        w.nameKid("rosie")
+        assertEquals("rosie", w.romance.kidName)
+        assertEquals(0, w.kidStage())
+        w.advance(Time.REAL_SECONDS_PER_DAY * Time.DAYS_PER_SEASON)
+        assertEquals(1, w.kidStage())
+        w.advance(Time.REAL_SECONDS_PER_DAY * Time.DAYS_PER_SEASON * 3)
+        assertEquals(2, w.kidStage())
+        // No second ask while there's a kid; the 14-heart scene still comes.
+        w.befriend("ivy", 9_000)
+        assertEquals(14, w.pendingHeartEvent("ivy"))
+        val back = GameState.fromJson(JSONObject(w.state.toJson().toString()))
+        assertEquals("rosie", back.romance.kidName)
+    }
+
+    @Test fun divorceCostsTheBankFeeAndHearts() {
+        val w = marriedTo("ivy")
+        w.state.coins = DIVORCE_COST - 1
+        assertFalse(w.divorce())
+        w.state.coins = DIVORCE_COST + 5
+        assertTrue(w.divorce())
+        assertEquals(5, w.state.coins)
+        assertNull(w.romance.spouse)
+        assertEquals(DIVORCE_HEARTS, w.hearts("ivy"))
+        assertFalse(bouquetScene("ivy") in w.state.storySeen)
+    }
 }

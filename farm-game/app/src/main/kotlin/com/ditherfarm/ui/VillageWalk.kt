@@ -4,6 +4,7 @@ import com.ditherfarm.Game
 import com.ditherfarm.engine.Gfx
 import com.ditherfarm.engine.Iso
 import com.ditherfarm.game.pendingHeartEvent
+import com.ditherfarm.game.romance
 import com.ditherfarm.game.villageTier
 import kotlin.math.abs
 import kotlin.math.hypot
@@ -48,7 +49,9 @@ class VillageWalk(private val game: Game) {
 
     fun update(dt: Float) {
         time += dt
-        val ids = world.villagersUnlocked().map { it.id }
+        // A spouse keeps shop hours: in the village from nine to five, at home on the farm otherwise.
+        val spouse = world.romance.spouse
+        val ids = world.villagersUnlocked().map { it.id }.filter { it != spouse || world.time.hour in 9f..17f }
         walkers.removeAll { it.id !in ids }
         val stops by lazy { stops() }
         for (id in ids) if (walkers.none { it.id == id }) stops.random().let { (c, r) -> walkers += Walker(id, c, r) }

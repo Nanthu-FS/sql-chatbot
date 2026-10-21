@@ -17,6 +17,8 @@ class ScaleTest {
     }
 
     private val bands = listOf(
+        Band("people/kid_(baby|toddler)", 14, 20, "the baby and the toddler: well under a grown-up"),
+        Band("people/kid_child", 18, 24, "the child: a head shorter than a grown-up"),
         Band("people/", 22, 27, "a farmhand is a little over half a cottage"),
         Band("buildings/cottage_", 38, 48, "the reference house"),
         Band("buildings/(house_|shop_)", 34, 52, "village houses and shops: cottage-sized, two storeys a little taller"),

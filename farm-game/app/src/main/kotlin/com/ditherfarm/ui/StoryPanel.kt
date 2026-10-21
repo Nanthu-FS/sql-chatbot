@@ -15,6 +15,8 @@ import com.ditherfarm.game.Scene
 import com.ditherfarm.game.Who
 import com.ditherfarm.game.finishScene
 import com.ditherfarm.game.lookGender
+import com.ditherfarm.game.nameKid
+import com.ditherfarm.game.romance
 import com.ditherfarm.game.playerName
 import com.ditherfarm.game.setPlayer
 import com.ditherfarm.game.storyText
@@ -58,7 +60,10 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
     private val blinkAt = floatArrayOf(2f, 3.3f)
     private val rnd = Random(7)
 
-    val playing get() = scene != null || pickOnly
+    /** Naming the new baby (round 7, Part 5), no scene. */
+    private var kidNaming = false
+
+    val playing get() = scene != null || pickOnly || kidNaming
 
     /** The music the scene wants (the opening's sad theme until the bank today), or null for the usual. */
     val music: String? get() {
@@ -68,7 +73,10 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
     }
 
     /** Ends the scene without marking it played (a new farm starts over). */
-    fun stop() { scene = null; picking = false; pickOnly = false }
+    fun stop() { scene = null; picking = false; pickOnly = false; kidNaming = false }
+
+    /** The baby has arrived: asks for their name. */
+    fun startKidName() { scene = null; kidNaming = true; name.clear() }
 
     /** Jumps to line [i] fully typed, [t] seconds into it (screenshots). */
     internal fun showLine(i: Int, t: Float = 5f) { line = i; shown = 999f; picking = false; lineTime = t; leaving = -1f }
@@ -178,6 +186,10 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
             g.rect(0, 0, w, h, 0xE6181425.toInt())
             return pick(top)
         }
+        if (kidNaming) {
+            g.rect(0, 0, w, h, 0xE6181425.toInt())
+            return kidName()
+        }
         val s = scene ?: return false
         val cur = s.lines[line]
         val bg = bgAt(line)
@@ -211,12 +223,16 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
         val behindDesk = bg == "bank" || bg == "bank_old"
         val rightBase = if (behindDesk) top + DESK_TOP + 4 else boxTop + 4
         val sepia = if (film) SEPIA else null
-        drawBust(rightFace, 1, (w - 64).toFloat(), rightBase.toFloat(), rightLit, rightLit && typing, film)
+        // The kiss: both lit, leaning in toward each other.
+        val kiss = cur.cue == Cue.KISS
+        val lean = if (kiss) (lineTime / 0.9f).coerceIn(0f, 1f).let { 1f - (1f - it) * (1f - it) } * 30f else 0f
+        drawBust(rightFace, 1, w - 64f - lean, rightBase.toFloat(), rightLit || kiss, rightLit && typing, film)
         if (behindDesk) {
             if (film) g.spriteFiltered("scenes/bank_desk", 0f, top.toFloat(), sepia!!) else g.sprite("scenes/bank_desk", 0f, top.toFloat())
         }
-        drawBust(leftFace, 0, 62f, (boxTop + 8).toFloat(), leftLit, leftLit && typing, film)
+        drawBust(leftFace, 0, 62f + lean, (boxTop + 8).toFloat(), leftLit || kiss, leftLit && typing, film)
         drawLights(bg, w, h, top)
+        if (cur.cue == Cue.KISS) drawKiss(w, boxTop)
         if (stamping) drawStamp(cur, w, top)
         c.restore()
         if (film) filmOverlay(w, h, strong = false)
@@ -264,7 +280,7 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
         when (bg) {
             "village" -> g.rect(0, 0, w, h, 0x99181425.toInt())
             else -> {
-                g.rect(0, 0, w, h, when (bg) { "bedroom" -> 0xFF3E2731.toInt(); "porch" -> 0xFF181425.toInt(); "bank_old" -> 0xFF5E4E36.toInt(); else -> WALLPAPER })
+                g.rect(0, 0, w, h, when (bg) { "bedroom" -> 0xFF3E2731.toInt(); "porch" -> 0xFF181425.toInt(); "bank_old" -> 0xFF5E4E36.toInt(); "hill" -> 0xFF262B44.toInt(); "square" -> 0xFF124E89.toInt(); else -> WALLPAPER })
                 val name = "scenes/$bg"
                 if (film) g.spriteFiltered(name, 0f, top.toFloat(), SEPIA) else g.sprite(name, 0f, top.toFloat())
             }
@@ -320,6 +336,13 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
                 glow(124f, top + 298f, 34f * flick, 0xFEAE34, (130 * flick).toInt())
                 glow(124f, top + 298f, 14f * flick, 0xFEE761, (140 * flick).toInt())
             }
+            "hill" -> {
+                // The low sun's glow, and fireflies coming out over the grass.
+                val pulse = 0.9f + 0.1f * sin(time * 1.3f)
+                glow(176f, top + 232f, 60f * pulse, 0xFEE761, 70)
+                fireflies(top + 300f, 150f, 10)
+            }
+            "square" -> petals(w, top, 16)
             "porch" -> {
                 val flick = 0.85f + 0.15f * sin(time * 7f) * sin(time * 3.1f)
                 glow(40f, top + 64f, 46f * flick, 0xFEAE34, (120 * flick).toInt())
@@ -336,6 +359,49 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
                 }
             }
         }
+    }
+
+    private fun fireflies(y0: Float, span: Float, n: Int) {
+        for (k in 0 until n) {
+            val fx = 30f + ((k * 53) % 220) + sin(time * (0.4f + k * 0.07f) + k) * 18f
+            val fy = y0 + ((k * 37) % span.toInt()) + cos(time * (0.5f + k * 0.05f) + k * 2) * 12f
+            val on = sin(time * (1.3f + k * 0.17f) + k * 1.7f)
+            if (on > 0.2f) {
+                val a = ((on - 0.2f) / 0.8f * 255).toInt()
+                glow(fx, fy, 4f, 0xFEE761, a / 2)
+                g.rect(fx.toInt(), fy.toInt(), fx.toInt() + 1, fy.toInt() + 1, (a shl 24) or 0xFEE761)
+            }
+        }
+    }
+
+    /** Petals drifting down, swaying (the wedding square). */
+    private fun petals(w: Int, top: Int, n: Int, speed: Float = 1f) {
+        for (k in 0 until n) {
+            val life = (time * (0.05f + k % 5 * 0.012f) * speed + k * 0.173f) % 1f
+            val px = (k * 67 % w) + sin(time * 1.4f + k) * 14f + life * 30f
+            val py = top + life * 470f
+            val c = if (k % 3 == 0) 0xFFFFFFFF.toInt() else if (k % 3 == 1) 0xFFF6757A.toInt() else 0xFFE43B44.toInt()
+            val flip = sin(time * 4f + k) > 0
+            g.rect(px.toInt(), py.toInt(), px.toInt() + if (flip) 2 else 1, py.toInt() + if (flip) 1 else 2, c)
+        }
+    }
+
+    /** The kiss: a warm pink bloom, hearts rising between the two of them, a flurry of petals. */
+    private fun drawKiss(w: Int, boxTop: Int) {
+        val t = lineTime
+        val bloom = (t / 0.6f).coerceIn(0f, 1f) * (0.6f + 0.4f * sin(t * 2f).let { it * it })
+        g.rect(0, 0, w, game.engine.h, (((bloom * 70).toInt()) shl 24) or 0xF6757A)
+        glow(w / 2f, boxTop - 70f, 90f * bloom, 0xFEE761, (110 * bloom).toInt())
+        glow(w / 2f, boxTop - 70f, 40f * bloom, 0xFFFFFF, (140 * bloom).toInt())
+        for (k in 0 until 12) {
+            val life = ((t * 0.45f + k * 0.083f) % 1f)
+            if (t < k * 0.12f) continue
+            val hx = w / 2f + sin(t * 2f + k * 1.3f) * (10f + life * 40f) + (k % 3 - 1) * 16f
+            val hy = boxTop - 50f - life * 220f
+            val s = 1.2f + (k % 3) * 0.5f + life * 0.6f
+            g.spriteScaled("fx/heart", hx, hy, s, s, alpha = ((1f - life) * 255).toInt())
+        }
+        petals(w, 0, 30, speed = 2.2f)
     }
 
     private val glowPaint = Paint().apply { isAntiAlias = false }
@@ -522,17 +588,7 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
         ui.pill(w / 2 - 70, ny, 140, 16)
         val cursor = if ((time * 2).toInt() % 2 == 0 && name.length < NAME_MAX) "_" else " "
         g.text(if (name.isEmpty()) "TYPE YOUR NAME$cursor" else "$name$cursor", w / 2, ny + 4, if (name.isEmpty()) Gfx.GREY else Gfx.WHITE, align = 0)
-        val kw = 22
-        KEYS.forEachIndexed { r, row ->
-            val rowW = row.length * (kw + 2) + if (r == 2) 2 * (kw + 2) else 0
-            var kx = (w - rowW) / 2
-            val ky = ny + 24 + r * 22
-            for (ch in row) {
-                if (ui.button("key-$ch", kx, ky, kw, 20, ch.toString(), style = "wood") && name.length < NAME_MAX) name.append(ch)
-                kx += kw + 2
-            }
-            if (r == 2 && ui.button("key-del", kx, ky, kw * 2 + 2, 20, "DEL", style = "red") && name.isNotEmpty()) name.setLength(name.length - 1)
-        }
+        keyboard(ny + 24)
         val ok = name.isNotBlank()
         if (ui.button("story-start", w / 2 - 50, py + ph - 28, 100, 18, "START", style = if (ok) "gold" else "grey") && ok) {
             world.setPlayer(look, name.toString().lowercase().replaceFirstChar { it.uppercase() })
@@ -545,6 +601,52 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
             }
             if (skipAfterPick) return end(scene ?: return false)
             return advance()
+        }
+        return true
+    }
+
+    /** The letter grid under a name field. */
+    private fun keyboard(y: Int) {
+        val w = game.engine.w
+        val kw = 22
+        KEYS.forEachIndexed { r, row ->
+            val rowW = row.length * (kw + 2) + if (r == 2) 2 * (kw + 2) else 0
+            var kx = (w - rowW) / 2
+            val ky = y + r * 22
+            for (ch in row) {
+                if (ui.button("key-$ch", kx, ky, kw, 20, ch.toString(), style = "wood") && name.length < NAME_MAX) name.append(ch)
+                kx += kw + 2
+            }
+            if (r == 2 && ui.button("key-del", kx, ky, kw * 2 + 2, 20, "DEL", style = "red") && name.isNotEmpty()) name.setLength(name.length - 1)
+        }
+    }
+
+    /** The baby has arrived: a boy or a girl on their quilt, hearts drifting up, and a name to give. */
+    private fun kidName(): Boolean {
+        val w = game.engine.w
+        val ph = 262
+        val py = (game.engine.h - ph) / 2
+        ui.panel(8, py, w - 16, ph)
+        val girl = world.romance.kidFemale
+        g.text("A NEW LITTLE ONE!", w / 2, py + 8, Gfx.GOLD, align = 0)
+        g.text(if (girl) "IT'S A GIRL" else "IT'S A BOY", w / 2, py + 20, Gfx.RED, align = 0, outline = 0, shadow = false)
+        val cx = w / 2f; val cy = py + 82f
+        glow(cx, cy - 14f, 36f, 0xFEE761, 90)
+        g.spriteScaled("people/kid_baby_${if (girl) "g" else "b"}_idle", cx, cy + sin(time * 3f) * 1f, 3f, 3f)
+        for (k in 0 until 5) {
+            val life = (time * 0.4f + k * 0.2f) % 1f
+            g.spriteScaled("fx/heart", cx - 40f + k * 20f + sin(time + k) * 4f, cy - 20f - life * 50f, 0.8f, 0.8f, alpha = ((1f - life) * 200).toInt())
+        }
+        val ny = py + 104
+        ui.pill(w / 2 - 70, ny, 140, 16)
+        val cursor = if ((time * 2).toInt() % 2 == 0 && name.length < NAME_MAX) "_" else " "
+        g.text(if (name.isEmpty()) "NAME THE BABY$cursor" else "$name$cursor", w / 2, ny + 4, if (name.isEmpty()) Gfx.GREY else Gfx.WHITE, align = 0)
+        keyboard(ny + 24)
+        val ok = name.isNotBlank()
+        if (ui.button("kid-name", w / 2 - 50, py + ph - 28, 100, 18, "WELCOME!", style = if (ok) "gold" else "grey") && ok) {
+            world.nameKid(name.toString().lowercase().replaceFirstChar { it.uppercase() })
+            kidNaming = false
+            return false
         }
         return true
     }

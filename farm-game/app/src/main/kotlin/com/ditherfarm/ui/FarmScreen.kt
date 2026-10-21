@@ -12,6 +12,7 @@ import android.graphics.Path
 import com.ditherfarm.game.quest
 import com.ditherfarm.game.act2
 import com.ditherfarm.game.ranch
+import com.ditherfarm.game.romance
 import com.ditherfarm.game.collectProduct
 import com.ditherfarm.game.petAnimal
 import com.ditherfarm.game.pettedToday
@@ -141,6 +142,9 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
     private val herd = Herd(game)
     /** Villagers walking the village. */
     private val village = VillageWalk(game)
+    private val family = FamilyWalk(game)
+
+    private fun farmhouseSprite() = if (world.romance.farmhouse >= 1) "buildings/farmhouse_big" else "buildings/farmhouse_old"
     /** Fishing on the river. */
     private val fishing = Fishing(game) { hud.toast(it) }
     /** Plot of the farmhand job just announced: its result events stay quiet (the crew shows them). */
@@ -201,7 +205,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         props.clear()
         waterTiles.clear()
         val reserved = reservedTiles.also { it.clear() }
-        listOf(FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmMap.ORCHARD_SIGN, FarmMap.PASTURE_SIGN, FarmMap.STATUE, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
+        listOf(FarmMap.FARMHOUSE, FarmMap.BUNKHOUSE, FarmMap.TRUCK, FarmMap.MERCHANT, FarmMap.SIGN_FOREST, FarmMap.SIGN_MINE, FarmMap.ORCHARD_SIGN, FarmMap.PASTURE_SIGN, FarmMap.STATUE, FarmCrew.HARVESTER_PARK).forEach { reserved += key(it.first, it.second) }
         for (b in 0 until FieldLayout.BLOCKS) FarmCrew.crateTile(b).let { reserved += key(it.first, it.second) }
         for (dc in 0..1) for (dr in 0..1) reserved += key(FarmMap.TRUCK.first + dc, FarmMap.TRUCK.second + dr)
         (FarmMap.HOUSES + listOf(FarmMap.SHOP_SEED, FarmMap.SHOP_SMITH, FarmMap.SHOP_CARPENTER, FarmMap.SHOP_CAFE)).forEach { reserved += key(it.first, it.second) }
@@ -283,6 +287,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         crew.update(dt)
         herd.update(dt)
         village.update(dt)
+        family.update(this, dt)
         fishing.update(dt)
         if (infoTime > 0) infoTime -= dt
         if (decorBadTime > 0) decorBadTime -= dt
@@ -503,6 +508,14 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         drawPastureSign(list)
         herd.collect(list, this)
         village.collect(list, this)
+        family.collect(list, this)
+        // The farmer's home: Grandpa's cabin, or the family farmhouse once it's built.
+        run {
+            val (c, r) = FarmMap.FARMHOUSE
+            val x = Iso.x(c, r).toFloat(); val y = Iso.centerY(c, r).toFloat()
+            val art = farmhouseSprite()
+            if (inView(x, y, 64f) && game.assets.has(art)) { hitSprite(c, r, art, x, y); list.add(y) { game.gfx.sprite(art, x, y) } }
+        }
         fishing.collect(list)
         for (b in Building.entries) {
             val x = Iso.x(b.c, b.r).toFloat()
@@ -741,7 +754,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
             if (inView(x, y)) g.sprite("deco/lantern_lit", x, y, a)
         }
         // Lit windows in the village and the bunkhouse.
-        val houses = houses() + shops() + (FarmMap.BUNKHOUSE to "buildings/cottage_c")
+        val houses = houses() + shops() + (FarmMap.BUNKHOUSE to "buildings/cottage_c") + (FarmMap.FARMHOUSE to farmhouseSprite())
         for ((t, sprite) in houses) {
             val x = Iso.x(t.first, t.second).toFloat(); val y = Iso.centerY(t.first, t.second).toFloat()
             if (inView(x, y, 48f) && game.assets.has("${sprite}_lit")) g.sprite("${sprite}_lit", x, y, a)
@@ -859,6 +872,10 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         if (fishing.active) { fishing.tap(); return true }
         if (decorPlacing == null && placing == null) {
             herd.at(wx, wy).takeIf { it >= 0 }?.let { i -> tapAnimal(i); return true }
+            when (family.at(wx, wy)) {
+                "spouse" -> world.romance.spouse?.let { id -> chrome.panels.villagerSays = ""; chrome.open(Chrome.Panel.VILLAGER, id); return true }
+                "kid" -> { game.sfx.play("unlock"); hud.toast("${world.romance.kidName} giggles!"); return true }
+            }
             village.at(wx, wy)?.let { id -> chrome.panels.villagerSays = ""; chrome.open(Chrome.Panel.VILLAGER, id); return true }
         }
         decorPlacing?.let { id ->
@@ -964,6 +981,7 @@ class FarmScreen(game: Game) : IsoMapScreen(game, groundSeed = 31), WorldListene
         }
         if ((c to r) == MERCHANT_TILE && world.merchantHere()) { chrome.open(Chrome.Panel.MERCHANT); return }
         if ((c to r) == FarmMap.BUNKHOUSE) { chrome.open(Chrome.Panel.WORKERS); return }
+        if ((c to r) == FarmMap.FARMHOUSE) { chrome.open(Chrome.Panel.FARMHOUSE); return }
         if ((c to r) in FarmMap.HOUSES.take(FarmMap.houseCount(world.villageTier))) { chrome.open(Chrome.Panel.VILLAGE); return }
         when (c to r) {
             FarmMap.SHOP_SEED -> if (world.villageTier >= 1) { chrome.open(Chrome.Panel.SEEDS); return }

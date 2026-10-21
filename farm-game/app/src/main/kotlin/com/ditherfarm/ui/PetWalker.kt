@@ -48,6 +48,9 @@ class PetWalker(private val game: Game) {
     private var stickFly = 0f
     private var meter = 0f
 
+    /** Where the pet is now (world pixels) on [s], or null when it isn't there (the kid plays with it). */
+    fun position(s: IsoMapScreen): Pair<Float, Float>? = if (world.hasPet && s === screen) x to y else null
+
     fun update(s: IsoMapScreen, dt: Float) {
         time += dt
         hearts = (hearts - dt).coerceAtLeast(0f)

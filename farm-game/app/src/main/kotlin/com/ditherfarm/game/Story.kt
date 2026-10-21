@@ -191,6 +191,7 @@ fun World.finishScene(id: String) {
     s.villager?.let { befriend(it, 30); if (id in HEART_SCENES) events += WorldEvent.HeartEventDone(it) }
     // Round 7: the wedding scene marries the couple.
     if (id.startsWith("wedding_")) s.villager?.let { marry(it) }
+    familySceneDone(id)
     if (id in ACT2_SCENES) act2SceneDone(id)
     if (s.coins > 0) {
         state.coins += s.coins

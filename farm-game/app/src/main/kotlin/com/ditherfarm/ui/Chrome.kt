@@ -29,6 +29,9 @@ import com.ditherfarm.game.dailyClaimable
 import com.ditherfarm.game.donate
 import com.ditherfarm.game.quest
 import com.ditherfarm.game.pendingScene
+import com.ditherfarm.game.pendingWedding
+import com.ditherfarm.game.kidNeedsName
+import com.ditherfarm.game.divorce
 import com.ditherfarm.game.rollDaily
 import com.ditherfarm.game.sceneById
 import com.ditherfarm.game.togglePin
@@ -49,7 +52,7 @@ class Chrome(private val game: Game, private val here: Nav) {
     private val g get() = game.gfx
     private val world get() = game.world
 
-    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS, VILLAGER, CONTEST, LETTER, LETTERS }
+    enum class Panel { NONE, BARN, MARKET, ORDERS, SETTINGS, LEVEL_UP, MACHINE, BUILD, WORKBENCH, CONFIRM, GEODES, ELEVATOR, SHED, GOALS, GIFT, MERCHANT, CART, FIELD, WORKERS, SKILLS, VILLAGE, SEEDS, STORY, PET, DECOR, PET_INFO, ORCHARD, PASTURE, RELICS, VILLAGER, CONTEST, LETTER, LETTERS, FARMHOUSE }
 
     var panel = Panel.NONE
         private set
@@ -89,6 +92,12 @@ class Chrome(private val game: Game, private val here: Nav) {
         }
         // Scenes play on the farm, so a replay asked for in the Forest or Mine goes there first.
         panels.onLetters = { open(Panel.LETTERS) }
+        panels.onDivorce = { id ->
+            val name = world.villager(id)?.name ?: id
+            confirm("DIVORCE", "Mr. Sterling files the papers at the bank for ${com.ditherfarm.game.DIVORCE_COST} coins. $name moves back home, and your friendship drops to ${com.ditherfarm.game.DIVORCE_HEARTS} hearts.", "FILE") {
+                world.divorce()
+            }
+        }
         panels.onStory = {
             if (here == Nav.FARM) replayOpening()
             else { panel = Panel.NONE; game.goTo(Nav.FARM); game.farm.chrome.replayOpening() }
@@ -305,8 +314,10 @@ class Chrome(private val game: Game, private val here: Nav) {
         val keep = when (panel) {
             Panel.NONE -> {
                 // Story scenes play on the farm (the officer visits the village).
-                val scene = if (here == Nav.FARM) world.pendingScene() ?: world.pendingAct2Scene() else null
+                val scene = if (here == Nav.FARM) world.pendingScene() ?: world.pendingAct2Scene() ?: world.pendingWedding() else null
                 if (scene != null) { story.start(scene); open(Panel.STORY) }
+                // The baby has arrived: the farmer names them (round 7, Part 5).
+                else if (here == Nav.FARM && world.kidNeedsName()) { story.startKidName(); open(Panel.STORY) }
                 // A farm from before round 7 picks male or female once (it keeps its name and progress).
                 else if (world.state.playerGender == null && world.state.playerName.isNotBlank()) { story.startPick(); open(Panel.STORY) }
                 else if (levelUps.isNotEmpty()) panel = Panel.LEVEL_UP
@@ -342,6 +353,7 @@ class Chrome(private val game: Game, private val here: Nav) {
             Panel.PASTURE -> panels.pasture()
             Panel.RELICS -> panels.relics()
             Panel.VILLAGER -> panels.villager(target ?: return)
+            Panel.FARMHOUSE -> panels.farmhouse()
             Panel.CONTEST -> panels.contest()
             Panel.LETTER -> letter.draw()
             Panel.LETTERS -> letter.list { id -> openLetter(id, reread = true) }
@@ -455,6 +467,20 @@ class Chrome(private val game: Game, private val here: Nav) {
                 hud.toast("Best friends with ${world.villager(e.villager)?.name}! They gave you ${com.ditherfarm.game.DECOR[e.decor]?.name}. Place it from Decorate")
             }
             is WorldEvent.Talked -> { game.sfx.play("click"); panels.villagerSays = e.line }
+            // Romance and family (round 7).
+            is WorldEvent.Dating -> { game.sfx.play("levelup"); game.haptics.heavy() }
+            is WorldEvent.Jealous -> hud.toast("${world.villager(e.villager)?.name} saw that. They seem a little hurt")
+            is WorldEvent.Engaged -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Engaged! The wedding is in ${e.days} days") }
+            is WorldEvent.Married -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Married! ${world.villager(e.villager)?.name} moves into the farmhouse") }
+            is WorldEvent.FarmhouseBuilt -> { game.sfx.play("craft"); game.haptics.heavy(); hud.toast("The family farmhouse is built! Room for two") }
+            is WorldEvent.SpouseMorning -> {
+                val name = world.villager(e.villager)?.name ?: e.villager
+                hud.toast("$name brought you ${world.data.name(e.gift).lowercase()}" + (e.chore?.let { " and $it" } ?: ""))
+            }
+            is WorldEvent.Divorced -> { game.sfx.play("error"); hud.toast("${world.villager(e.villager)?.name} has moved back home") }
+            is WorldEvent.KidOnTheWay -> { game.sfx.play("levelup"); hud.toast("A little one will join the family in ${e.days} days!") }
+            is WorldEvent.KidArrived -> { game.sfx.play("levelup"); game.haptics.heavy() }
+            is WorldEvent.KidNamed -> { game.sfx.play("levelup"); game.haptics.heavy(); hud.toast("Welcome to the family, ${e.name}!") }
             is WorldEvent.GiftGiven -> {
                 game.sfx.play(if (e.reaction == com.ditherfarm.game.GiftReaction.LOVED) "levelup" else "coin"); game.haptics.tick()
                 val name = world.villager(e.villager)?.name ?: e.villager

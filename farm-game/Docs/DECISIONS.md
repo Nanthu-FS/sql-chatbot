@@ -133,3 +133,19 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
   by `Tools/ArtGen/pixel/faces.py` (shaded face, proper eyes, hair layers, hats, beards, glasses,
   clothes). Replaces the hand-typed 30 px maps (portraits.py and the farmhand faces in people.py).
   Story busts draw at 2x; panels scale the tiles down.
+
+- Parts 3 to 5 (romance, married life, the kid), as built:
+  - Villager panel: GIVE A BOUQUET at 8 hearts (made at the Workbench), GO ON A DATE at 10 hearts
+    (the hill at sunset), PROPOSE (needs the family farmhouse and a ring). The wedding plays on the
+    farm on its day, in the village square; the kiss lights both busts, hearts and petals.
+  - The farmhouse sits on the farm (tile 7,8): Grandpa's log cabin, tapped to build the family
+    farmhouse (level 12, 15,000 coins, 60 planks, 40 bricks, 10 glass). Once built it is the HOME
+    page: spouse, their trade bonus, this morning's gift and chore, the kid.
+  - Spouse: in the village 9 to 5 (shop hours), at home round the farmhouse mornings and evenings.
+    Each dawn a gift (3 per spouse) and one chore (water the crops, fill the trough, play with the
+    pet). Trade bonus: their kind of goods sells for 10-15% more. Scenes at 12 hearts (asks about a
+    family) and 14 (anniversary on the hill). Divorce from their panel: 20,000 coins at the bank,
+    hearts drop to 4, courting them again starts over.
+  - The kid arrives 3 days after the 12-heart scene; boy or girl by chance; the farmer names them.
+    Baby on a quilt by the door, a toddler next season, a child the one after; they chase the pet.
+  - Grandpa's last two letters open with the wedding and the kid.

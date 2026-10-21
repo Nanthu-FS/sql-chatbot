@@ -3,7 +3,7 @@ package com.ditherfarm.game
 /**
  * Grandpa Elias's letters (round 7): tucked into his notebook before he died, each one opens when the
  * farm reaches a milestone he knew it would. One waits at a time, as a sealed envelope on the farm;
- * opened letters can be read again from the menu. More come with the wedding and the kid.
+ * opened letters can be read again from the menu. The last two come with the wedding and the kid.
  */
 class LetterDef(val id: String, val title: String, val text: String, val ready: World.() -> Boolean)
 
@@ -34,6 +34,16 @@ val LETTERS = listOf(
             "Forty years I sat across that desk from a Sterling. I never stopped believing someone in this family would hear the right answer.\n\n" +
             "It was never about the money. It was about the people who stayed. Thank you for staying.\n\nAll my love, always.",
         { "finale" in state.storySeen }),
+    LetterDef("wedding", "TO THE TWO OF YOU",
+        "{name},\n\nI asked Juniper to slip this one in on your wedding day. Don't be cross with her.\n\n" +
+            "Your grandma and I married in that same square, under the old oak, with half the village singing off-key.\n\n" +
+            "Be kind to each other on the hard days. The easy days take care of themselves.\n\nWish I could have danced at it.",
+        { romance.spouse != null }),
+    LetterDef("kid", "A NEW NAME ON THE FARM",
+        "{name},\n\nA little one on the farm! The house will be loud again. Good.\n\n" +
+            "Teach them the names of the fields. Let them get muddy. Let them fall asleep in the hay.\n\n" +
+            "And when they ask about their great-grandpa, tell them he was a stubborn old farmer who knew this day would come.",
+        { romance.kidName != null }),
 )
 
 fun letterById(id: String) = LETTERS.firstOrNull { it.id == id }

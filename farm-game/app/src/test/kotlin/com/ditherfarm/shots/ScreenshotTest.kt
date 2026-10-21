@@ -54,6 +54,10 @@ import com.ditherfarm.game.placeFixture
 import com.ditherfarm.game.placeTorch
 import com.ditherfarm.game.repairMine
 import com.ditherfarm.game.setPlayer
+import com.ditherfarm.game.giveBouquet
+import com.ditherfarm.game.marry
+import com.ditherfarm.game.propose
+import com.ditherfarm.game.romance
 import com.ditherfarm.ui.Chrome
 import com.ditherfarm.ui.FarmScreen
 import com.ditherfarm.ui.MineScreen
@@ -734,6 +738,63 @@ class ScreenshotTest {
             g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
             g.farm.chrome.story.showLine(1)
         })
+    }
+
+    /** Round 7, Parts 3 to 5: courting, the farmhouse, the date, the wedding kiss, married life, the kid. */
+    @Test fun romance() {
+        fun married(g: Game, id: String = "ivy") {
+            val w = g.world
+            toLevel(g, 16)
+            w.setPlayer(0, "Sam")
+            w.befriend(id, 2_500); w.add(com.ditherfarm.game.BOUQUET, 1); w.giveBouquet(id)
+            w.befriend(id, 2_000); w.romance.farmhouse = 1; w.add(com.ditherfarm.game.RING, 1); w.propose(id)
+            w.romance.engaged = id; w.marry(id)
+            w.state.storySeen.addAll(listOf("bouquet", "date", "propose", "wedding").map { "romance_${id}_$it" } + "wedding_$id")
+        }
+        render("panel_villager_court", setup = { g ->
+            toLevel(g, 16); g.world.setPlayer(0, "Sam"); g.world.befriend("ivy", 2_500); g.world.add(com.ditherfarm.game.BOUQUET, 1)
+            g.world.events.clear(); g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.VILLAGER, "ivy")
+        })
+        render("panel_farmhouse_old", setup = { g -> toLevel(g, 16); g.world.events.clear(); g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.FARMHOUSE) })
+        render("story_date", setup = { g ->
+            toLevel(g, 16); g.world.setPlayer(0, "Sam")
+            g.farm.chrome.story.start(com.ditherfarm.game.sceneById("romance_ivy_date")!!)
+            g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
+            g.farm.chrome.story.showLine(3)
+        })
+        render("story_wedding_kiss", seconds = 1.2f, setup = { g ->
+            toLevel(g, 16); g.world.setPlayer(2, "Sam")
+            val sc = com.ditherfarm.game.sceneById("wedding_rook")!!
+            g.farm.chrome.story.start(sc)
+            g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
+            g.farm.chrome.story.showLine(sc.lines.indexOfFirst { it.cue == com.ditherfarm.game.Cue.KISS }, 1.2f)
+        })
+        render("story_wedding_square", setup = { g ->
+            toLevel(g, 16); g.world.setPlayer(0, "Sam")
+            g.farm.chrome.story.start(com.ditherfarm.game.sceneById("wedding_ivy")!!)
+            g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
+            g.farm.chrome.story.showLine(3)
+        })
+        render("panel_villager_spouse", setup = { g -> married(g); g.world.befriend("ivy", 5_000); g.world.events.clear(); g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.VILLAGER, "ivy") })
+        render("panel_farmhouse_home", setup = { g ->
+            married(g); g.world.advance(com.ditherfarm.game.Time.REAL_SECONDS_PER_DAY)
+            g.world.romance.kidName = "Rosie"; g.world.romance.kidFemale = true; g.world.romance.kidDue = g.world.time.dayIndex.toLong()
+            g.world.events.clear(); g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.FARMHOUSE)
+        })
+        render("story_kid_name", setup = { g ->
+            married(g); g.world.romance.kidDue = g.world.time.dayIndex.toLong(); g.world.romance.kidFemale = false
+            g.world.events.clear(); g.farm.chrome.story.startKidName(); g.farm.chrome.open(com.ditherfarm.ui.Chrome.Panel.STORY)
+        })
+        render("farm_family", seconds = 3f, setup = { g ->
+            married(g)
+            g.world.state.pet.offered = true
+            g.world.romance.kidName = "Rosie"; g.world.romance.kidFemale = true
+            g.world.romance.kidDue = g.world.time.dayIndex.toLong() - com.ditherfarm.game.Time.DAYS_PER_SEASON * 2
+            // Early morning: the spouse is home before the shops open.
+            g.world.state.minutes += 60.0
+            g.world.events.clear()
+            g.farm.centerOnTile(8, 9)
+        }, zoom = 2)
     }
 
     @Test fun act2() {
