@@ -271,15 +271,18 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
         }
     }
 
-    /** A bust at 3x: talking (mouth open on every other beat of the typing), blinking, breathing. */
+    /** A bust at 2x: talking (mouth open on every other beat of the typing), blinking, breathing. A face
+     *  "<id>:blush" is the romance candidate blushing. */
     private fun drawBust(face: String, side: Int, x: Float, base: Float, lit: Boolean, talking: Boolean, film: Boolean) {
         if (time > blinkAt[side] + BLINK) blinkAt[side] = time + 2.2f + rnd.nextFloat() * 3f
         val blink = time in blinkAt[side]..(blinkAt[side] + BLINK)
         val mouth = talking && ((shown * 0.55f).toInt() % 2 == 0)
-        // Villagers drawn elsewhere (Rook, Willa, Coco) have only their tile, which pivots on its middle.
-        val hasBust = game.assets.has("portraits/${face}_bust")
-        val baseName = if (hasBust) "portraits/${face}_bust" else "portraits/$face"
-        val lift = if (hasBust) 0f else 46f
+        val id = face.substringBefore(':')
+        val mood = if (face.endsWith(":blush") && game.assets.has("portraits/${id}_bust_blush")) "_blush" else ""
+        // A face without a bust falls back to its tile, which pivots on its middle.
+        val hasBust = game.assets.has("portraits/${id}_bust")
+        val baseName = if (hasBust) "portraits/${id}_bust$mood" else "portraits/$id"
+        val lift = if (hasBust) 0f else 50f
         val art = when {
             mouth && game.assets.has("${baseName}_talk") -> "${baseName}_talk"
             blink && game.assets.has("${baseName}_blink") -> "${baseName}_blink"
@@ -292,7 +295,7 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
             lit -> null
             else -> SHADE
         }
-        g.spriteScaled(art, x, base + breathe - lift, 3f, 3f, filter = filter)
+        g.spriteScaled(art, x, base + breathe - lift, 2f, 2f, filter = filter)
     }
 
     /** The lamp and the lantern: a warm flickering glow; the bedroom's window beam with its dust. */
@@ -502,7 +505,7 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
                 look = gd.looks[slot]
             }
         }
-        // The two looks at 2x, gently bobbing; the chosen one framed in gold.
+        // The two looks, gently bobbing; the chosen one framed in gold.
         gender.looks.forEachIndexed { k, i ->
             val cx = w / 2 + (if (k == 0) -46 else 46)
             val cy = py + 100
@@ -511,7 +514,7 @@ class StoryPanel(private val game: Game, private val hud: Hud) {
             val bob = if (on) sin(time * 3f) * 1.5f else 0f
             val blink = on && (time % 3.4f) < 0.12f
             val art = "portraits/farmer_$i" + if (blink && game.assets.has("portraits/farmer_${i}_blink")) "_blink" else ""
-            g.spriteScaled(art, cx.toFloat(), cy + bob, 2f, 2f, filter = if (on) null else SHADE)
+            g.spriteScaled(art, cx.toFloat(), cy + bob, 1.36f, 1.36f, filter = if (on) null else SHADE)
             if (ui.clickable("look-$i", cx - 36, cy - 36, 72, 72)) look = i
         }
         // Name field.

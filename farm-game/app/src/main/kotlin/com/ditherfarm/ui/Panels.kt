@@ -431,7 +431,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             }
             val v = world.data.villagers.firstOrNull { it.id == o.villager }
             val portrait = "portraits/${o.villager}"
-            if (game.assets.has(portrait)) g.sprite(portrait, (x + 27).toFloat(), (cy + cardH / 2).toFloat())
+            if (game.assets.has(portrait)) g.spriteScaled(portrait, (x + 28).toFloat(), (cy + cardH / 2).toFloat(), 0.76f, 0.76f)
             val tx = x + 48
             g.text((v?.name ?: o.villager).uppercase(), tx, cy + 5, Gfx.INK, outline = 0, shadow = false)
             val hearts = world.hearts(o.villager)
@@ -951,9 +951,11 @@ class Panels(private val game: Game, private val hud: Hud) {
             val sx = x + 10 + (i % per) * 22
             val sy = gy + (i / per) * 22
             val found = world.entryFound(e)
-            if (ui.slot("entry-$e", sx, sy, if (found) entryIcon(e) else null, -1, false, 20) && found) {
+            val face = found && e.startsWith("villager:")
+            if (ui.slot("entry-$e", sx, sy, if (found && !face) entryIcon(e) else null, -1, false, 20) && found) {
                 hud.toast(if (e.startsWith("villager:")) world.data.villagers.firstOrNull { "villager:${it.id}" == e }?.name ?: e else world.data.name(e))
             }
+            if (face) g.spriteScaled(entryIcon(e), sx + 10f, sy + 10f, 0.38f, 0.38f)
             if (!found) g.text("?", sx + 10, sy + 6, Gfx.MUTED, align = 0, outline = 0, shadow = false)
         }
         val by = top + h - 40
@@ -1322,7 +1324,7 @@ class Panels(private val game: Game, private val hud: Hud) {
         val (x, y, pw, ph) = frame(v.name.uppercase(), if (giftMode) 280 else 196).toList()
         if (closeButton(x, y, pw)) { giftMode = false; giftPick = null; villagerSays = ""; return false }
         g.slice9("ui/slot", x + 10, y + 22, x + 58, y + 70, 4)
-        g.spriteScaled("portraits/$id", (x + 34).toFloat(), (y + 46).toFloat(), 1.3f, 1.3f)
+        g.spriteScaled("portraits/$id", (x + 34).toFloat(), (y + 46).toFloat(), 0.92f, 0.92f)
         g.text(v.role.uppercase(), x + 66, y + 24, Gfx.MUTED, outline = 0, shadow = false)
         val h = world.hearts(id)
         for (k in 0 until FRIEND_HEARTS) miniHeart(x + 66 + k * 7, y + 36, k < h)
@@ -1736,7 +1738,7 @@ class Panels(private val game: Game, private val hud: Hud) {
             val ws = world.state.workers[d.id]
             val locked = ws == null && world.level < d.unlockLevel
             val portrait = "portraits/fh_${d.id}"
-            if (game.assets.has(portrait)) g.sprite(portrait, (x + 27).toFloat(), (ry + 20).toFloat(), if (locked) 90 else 255)
+            if (game.assets.has(portrait)) g.spriteScaled(portrait, (x + 28).toFloat(), (ry + 20).toFloat(), 0.74f, 0.74f, if (locked) 90 else 255)
             val tx = x + 48
             val bx = x + pw - 72
             if (ws == null) {

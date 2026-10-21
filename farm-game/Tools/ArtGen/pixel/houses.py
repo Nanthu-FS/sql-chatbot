@@ -91,38 +91,8 @@ def shop(kind):
     raise ValueError(kind)
 
 
-# Villagers who move in with the tiers: portraits recoloured from existing ones.
-NEWCOMERS = {
-    "rook": ("bram", {"red": "slate", "red_d": "slate_d", "pink": "grey", "brown": "ink", "brown_l": "brown_d"}),
-    "willa": ("juniper", {"green": "amber", "green_d": "clay", "green_dd": "rust", "blue": "green", "blue_d": "green_d"}),
-    "coco": ("sela", {"purple": "red_d", "magenta": "pink", "blue": "magenta", "blue_d": "purple", "cyan": "pink"}),
-}
-
-
-def recolour_spec(spec, swap):
-    """A portrait spec with its palette names swapped (background, ramps and key overrides), so
-    the newcomer is painted and polished like any other portrait."""
-    def sw(n):
-        return swap.get(n, n)
-    out = dict(spec)
-    out["bg"] = [sw(n) for n in spec["bg"]]
-    out["ramps"] = {g: [sw(n) for n in r] for g, r in spec["ramps"].items()}
-    out["key"] = {ch: (grp, sw(ov) if ov else ov) for ch, (grp, ov) in spec.get("key", {}).items()}
-    return out
-
-
-def recolour(pt):
-    """Adds the newcomer portraits (painted from the recoloured specs of their source)."""
-    import portraits as P
-    specs = dict(P.PORTRAITS)
-    for new_id, (src, swap) in NEWCOMERS.items():
-        im, pad = P.paint(recolour_spec(specs[src], swap))
-        pt.save(new_id, im, 15 + pad, 15 + pad)
-
-
 def main():
     sp = Sprites(sys.argv[1], "buildings")
-    # Round 7: Rook, Willa and Coco have their own faces in portraits.py now (no recolours).
     for t, tier in enumerate(TIERS):
         for i, (_, spec) in enumerate(T.STYLES[tier]):
             emit_with_night(sp, f"house_{t}_{'abc'[i]}", lambda spec=spec: T.house(spec))

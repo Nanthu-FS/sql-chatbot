@@ -42,6 +42,8 @@ object Cue {
     const val PICK = "pick"
     /** The bedroom lamp gutters out and the screen fades to black. */
     const val LAMP_OUT = "lamp_out"
+    /** The wedding kiss: hearts rise and petals fall. */
+    const val KISS = "kiss"
 }
 
 private fun p(text: String, mood: Int = 0, bg: String? = null, left: String? = null, right: String? = null) =
@@ -166,7 +168,7 @@ val SCENES: List<Scene> = listOf(
     ), coins = 50_000),
 )
 
-fun sceneById(id: String) = SCENES.firstOrNull { it.id == id } ?: HEART_SCENES[id] ?: ACT2_SCENES[id]
+fun sceneById(id: String) = SCENES.firstOrNull { it.id == id } ?: HEART_SCENES[id] ?: ACT2_SCENES[id] ?: ROMANCE_SCENES[id]
 
 /** The player's name as shown in the story ("Farmer" until one is picked). */
 val World.playerName get() = state.playerName.ifBlank { "Farmer" }
@@ -186,7 +188,9 @@ fun World.finishScene(id: String) {
     val s = sceneById(id) ?: return
     if (!state.storySeen.add(id)) return
     // A heart event deepens the friendship a little more (round 6).
-    s.villager?.let { befriend(it, 30); events += WorldEvent.HeartEventDone(it) }
+    s.villager?.let { befriend(it, 30); if (id in HEART_SCENES) events += WorldEvent.HeartEventDone(it) }
+    // Round 7: the wedding scene marries the couple.
+    if (id.startsWith("wedding_")) s.villager?.let { marry(it) }
     if (id in ACT2_SCENES) act2SceneDone(id)
     if (s.coins > 0) {
         state.coins += s.coins

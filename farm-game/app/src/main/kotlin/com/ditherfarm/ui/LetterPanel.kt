@@ -118,7 +118,7 @@ class LetterPanel(private val game: Game, private val hud: Hud) {
             val px = (cx - paper.w / 2f) + 30f
             val py = (cy + paper.h / 2f) - 26f
             g.rect(px.toInt() - 14, py.toInt() - 30, px.toInt() + 14, py.toInt() + 2, (a shl 24) or 0xFFFFFF)
-            g.spriteScaled("portraits/elias_old", px, py - 14f, 0.8f, 0.8f, alpha = a, filter = SEPIA)
+            g.spriteScaled("portraits/elias_old", px, py - 14f, 0.5f, 0.5f, alpha = a, filter = SEPIA)
             g.rect(px.toInt() - 6, py.toInt() - 33, px.toInt() + 6, py.toInt() - 28, (a / 2 shl 24) or 0xEAD4AA)
             if (a >= 255 && (t * 2).toInt() % 2 == 0) g.text("TAP TO FOLD IT AWAY", cx.toInt(), (cy + paper.h / 2f).toInt() + 8, Gfx.WHITE, align = 0)
         }

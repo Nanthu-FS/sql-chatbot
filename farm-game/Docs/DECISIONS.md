@@ -128,3 +128,8 @@ Answers the owner gave while scoping the game. `GAME_DESIGN.md` must follow thes
 ## Later (not v1)
 - New areas opened by the village: a lake with fishing, a ranch with animals, an orchard hill, a beach.
 - Farm animals.
+
+- Portraits redone (owner: "the portraits look bad"): every face is now a 48 px bust drawn from parts
+  by `Tools/ArtGen/pixel/faces.py` (shaded face, proper eyes, hair layers, hats, beards, glasses,
+  clothes). Replaces the hand-typed 30 px maps (portraits.py and the farmhand faces in people.py).
+  Story busts draw at 2x; panels scale the tiles down.
