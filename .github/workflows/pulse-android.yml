@@ -1,0 +1,39 @@
+name: Pulse Android APK
+
+on:
+  push:
+    paths:
+      - "pulse-android/**"
+      - ".github/workflows/pulse-android.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: pulse-android
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - name: Build debug and release APKs
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug assembleRelease --stacktrace
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: pulse-apk
+          path: |
+            pulse-android/app/build/outputs/apk/debug/*.apk
+            pulse-android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error

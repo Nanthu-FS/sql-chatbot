@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 108dp adaptive foreground: a segmented ring with a pulse line through it. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M54,30 A24,24 0 0,1 77.5,49"
+        android:strokeColor="#C6FF3D"
+        android:strokeWidth="7" />
+    <path
+        android:pathData="M77.2,58.5 A24,24 0 0,1 46,76.6"
+        android:strokeColor="#8B7CFF"
+        android:strokeWidth="7" />
+    <path
+        android:pathData="M38.5,72.4 A24,24 0 0,1 46.5,31.2"
+        android:strokeColor="#FF9E4A"
+        android:strokeWidth="7" />
+    <path
+        android:pathData="M36,54 L45,54 L49.5,44 L56,64 L60.5,54 L72,54"
+        android:strokeColor="#F4F4F6"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>
