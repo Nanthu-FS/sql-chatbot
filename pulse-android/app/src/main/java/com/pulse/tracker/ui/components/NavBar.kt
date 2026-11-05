@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
@@ -62,7 +63,7 @@ fun PulseNavBar(current: Tab, onSelect: (Tab) -> Unit, onAdd: () -> Unit, modifi
         NavStyle.FLOATING -> Row(
             modifier.navigationBarsPadding().padding(16.dp).fillMaxWidth().height(68.dp)
                 .shadow(24.dp, RoundedCornerShape(26.dp), ambientColor = Color.Black, spotColor = Color.Black)
-                .clip(RoundedCornerShape(26.dp)).background(c.surface.copy(alpha = 0.96f))
+                .clip(RoundedCornerShape(26.dp)).background(t.solidSurface.copy(alpha = 0.96f))
                 .border(1.dp, c.border, RoundedCornerShape(26.dp)).padding(horizontal = 6.dp),
             horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -73,12 +74,12 @@ fun PulseNavBar(current: Tab, onSelect: (Tab) -> Unit, onAdd: () -> Unit, modifi
 
         NavStyle.EDITORIAL -> Row(
             modifier.fillMaxWidth().background(c.bg).drawBehind {
-                drawLine(c.text, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx())
+                drawLine(c.accent, Offset(0f, 0f), Offset(size.width, 0f), 1.dp.toPx())
             }.navigationBarsPadding().height(72.dp).padding(horizontal = 14.dp),
             horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically,
         ) {
             left.forEach { TextItem(it, it.editorial.uppercase(), it == current, c.text, c.muted, underline = true) { onSelect(it) } }
-            Fab(onAdd, RoundedCornerShape(50), c.text, c.bg, size = 54)
+            Fab(onAdd, RoundedCornerShape(50), c.accent, c.onAccent, size = 54)
             right.forEach { TextItem(it, it.editorial.uppercase(), it == current, c.text, c.muted, underline = true) { onSelect(it) } }
         }
 
@@ -122,6 +123,42 @@ fun PulseNavBar(current: Tab, onSelect: (Tab) -> Unit, onAdd: () -> Unit, modifi
             left.forEach { PillItem(it, it == current) { onSelect(it) } }
             Fab(onAdd, RoundedCornerShape(50), c.accent, c.onAccent, size = 54)
             right.forEach { PillItem(it, it == current) { onSelect(it) } }
+        }
+
+        NavStyle.RETRO -> Row(
+            modifier.navigationBarsPadding().padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 21.dp).fillMaxWidth().height(70.dp)
+                .drawBehind { drawRoundRect(c.warm, Offset(0f, 5.dp.toPx()), size, CornerRadius(35.dp.toPx())) }
+                .clip(RoundedCornerShape(35.dp)).background(c.surface)
+                .border(2.dp, c.border, RoundedCornerShape(35.dp)).padding(horizontal = 6.dp),
+            horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically,
+        ) {
+            left.forEach { IconLabelItem(it, it == current, c.accentText, c.muted) { onSelect(it) } }
+            Box(
+                Modifier.size(56.dp).clip(RoundedCornerShape(50)).drawBehind {
+                    drawCircle(c.fat, size.minDimension / 2)
+                    drawCircle(c.carbs, size.minDimension / 2 - 5.dp.toPx())
+                    drawCircle(c.accent, size.minDimension / 2 - 10.dp.toPx())
+                }.border(2.dp, c.border, RoundedCornerShape(50)).clickable(onClick = onAdd)
+                    .semantics { contentDescription = "Log food" },
+                contentAlignment = Alignment.Center,
+            ) { Icon(PIcons.Plus, null, Modifier.size(24.dp), tint = c.onAccent) }
+            right.forEach { IconLabelItem(it, it == current, c.accentText, c.muted) { onSelect(it) } }
+        }
+
+        NavStyle.PIXEL -> Row(
+            modifier.navigationBarsPadding().padding(start = 16.dp, end = 20.dp, top = 16.dp, bottom = 20.dp).fillMaxWidth().height(64.dp)
+                .drawBehind { drawRect(c.carbs, Offset(4.dp.toPx(), 4.dp.toPx()), size) }
+                .clip(CutCornerShape(6.dp)).background(c.surface)
+                .border(3.dp, c.border, CutCornerShape(6.dp)).padding(horizontal = 4.dp),
+            horizontalArrangement = Arrangement.SpaceAround, verticalAlignment = Alignment.CenterVertically,
+        ) {
+            left.forEach { val on = it == current; TextItem(it, (if (on) "▶" else " ") + it.terminal, on, c.text, c.muted) { onSelect(it) } }
+            Box(
+                Modifier.size(46.dp).clip(CutCornerShape(5.dp)).background(c.text).clickable(onClick = onAdd)
+                    .semantics { contentDescription = "Log food" },
+                contentAlignment = Alignment.Center,
+            ) { PText("+", size = 26.sp, weight = FontWeight.Bold, color = c.bg) }
+            right.forEach { val on = it == current; TextItem(it, (if (on) "▶" else " ") + it.terminal, on, c.text, c.muted) { onSelect(it) } }
         }
 
         NavStyle.BLOCK -> Row(
@@ -195,8 +232,8 @@ private fun PillItem(tab: Tab, selected: Boolean, onClick: () -> Unit) {
                 .semantics { this.selected = true }.padding(horizontal = 12.dp),
             verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Icon(tab.icon, null, Modifier.size(20.dp), tint = Color(0xFF2F4A1E))
-            PText(tab.label, size = 13.sp, weight = FontWeight.ExtraBold, color = Color(0xFF2F4A1E))
+            Icon(tab.icon, null, Modifier.size(20.dp), tint = c.accentText)
+            PText(tab.label, size = 13.sp, weight = FontWeight.ExtraBold, color = c.accentText)
         }
     } else {
         Box(

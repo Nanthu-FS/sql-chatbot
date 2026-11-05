@@ -129,12 +129,13 @@ private fun ThemeCard(theme: PulseTheme, selected: Boolean, modifier: Modifier, 
             ) {
                 PText("Aa", size = 30.sp, display = true, color = c.text, modifier = Modifier.align(Alignment.BottomStart))
                 when (theme.heroStyle) {
-                    com.pulse.tracker.ui.theme.HeroStyle.SEGMENT_RING, com.pulse.tracker.ui.theme.HeroStyle.LED_RING, com.pulse.tracker.ui.theme.HeroStyle.SOFT_RING ->
+                    com.pulse.tracker.ui.theme.HeroStyle.SEGMENT_RING, com.pulse.tracker.ui.theme.HeroStyle.LED_RING, com.pulse.tracker.ui.theme.HeroStyle.SOFT_RING,
+                    com.pulse.tracker.ui.theme.HeroStyle.GRADIENT_RING, com.pulse.tracker.ui.theme.HeroStyle.DIAL, com.pulse.tracker.ui.theme.HeroStyle.JELLY ->
                         Ring(
                             listOf(Seg(0.18f, c.protein), Seg(0.27f, c.carbs), Seg(0.16f, c.fat)),
                             Modifier.size(52.dp).align(Alignment.TopEnd), stroke = 6.dp,
                             style = when (theme.heroStyle) {
-                                com.pulse.tracker.ui.theme.HeroStyle.SOFT_RING -> RingStyle.ROUND
+                                com.pulse.tracker.ui.theme.HeroStyle.SOFT_RING, com.pulse.tracker.ui.theme.HeroStyle.JELLY, com.pulse.tracker.ui.theme.HeroStyle.GRADIENT_RING -> RingStyle.ROUND
                                 com.pulse.tracker.ui.theme.HeroStyle.LED_RING -> RingStyle.LED
                                 else -> RingStyle.BUTT
                             },

@@ -66,6 +66,8 @@ data class HeroData(
     val segments: List<Seg>,
     val usedFraction: Float,
     val proteinFraction: Float,
+    val carbsFraction: Float = 0f,
+    val fatFraction: Float = 0f,
 ) {
     val over get() = left < 0
     val pct get() = (usedFraction * 100).roundToInt()
@@ -93,11 +95,17 @@ fun CalorieHero(h: HeroData) {
         HeroStyle.LED_RING -> NeonHero(h)
         HeroStyle.SOFT_RING -> MatchaHero(h)
         HeroStyle.SWISS -> SwissHero(h)
+        HeroStyle.GRADIENT_RING -> AuroraHero(h)
+        HeroStyle.DIAL -> NoirHero(h)
+        HeroStyle.RAINBOW -> RetroHero(h)
+        HeroStyle.PIXEL_BAR -> PixelHero(h)
+        HeroStyle.JELLY -> CandyHero(h)
+        HeroStyle.GAUGE -> BlueprintHero(h)
     }
 }
 
-private fun leftLabel(h: HeroData) = if (h.over) "kcal over" else "kcal left"
-private fun leftValue(h: HeroData) = formatInt(kotlin.math.abs(h.left))
+internal fun leftLabel(h: HeroData) = if (h.over) "kcal over" else "kcal left"
+internal fun leftValue(h: HeroData) = formatInt(kotlin.math.abs(h.left))
 
 @Composable
 private fun StatusChip(h: HeroData) {
@@ -364,6 +372,9 @@ private fun SwissHero(h: HeroData) {
 @Composable
 fun MacroSection(items: List<MacroItem>) {
     when (pulse.macroStyle) {
+        MacroStyle.ARCS -> MacroArcs(items)
+        MacroStyle.BLOCKS -> MacroBlocks(items)
+
         MacroStyle.CARDS -> Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             items.forEach { m ->
                 PulseCard(Modifier.weight(1f), padding = 13.dp) {
@@ -513,9 +524,9 @@ fun DayPill(
     val c = t.c
     val shape = RoundedCornerShape(
         when (t.id) {
-            com.pulse.tracker.ui.theme.ThemeId.MATCHA -> 22.dp
+            com.pulse.tracker.ui.theme.ThemeId.MATCHA, com.pulse.tracker.ui.theme.ThemeId.CANDY, com.pulse.tracker.ui.theme.ThemeId.RETRO -> 22.dp
             com.pulse.tracker.ui.theme.ThemeId.BRUTAL -> 12.dp
-            com.pulse.tracker.ui.theme.ThemeId.VOLT -> 16.dp
+            com.pulse.tracker.ui.theme.ThemeId.VOLT, com.pulse.tracker.ui.theme.ThemeId.AURORA -> 16.dp
             else -> 0.dp
         },
     )
@@ -531,7 +542,7 @@ fun DayPill(
     }
     Column(
         modifier.height(58.dp).clip(shape).background(bg)
-            .border(if (t.id == com.pulse.tracker.ui.theme.ThemeId.BRUTAL) 2.dp else 1.dp, bd, shape)
+            .border(if (t.id == com.pulse.tracker.ui.theme.ThemeId.BRUTAL || t.id == com.pulse.tracker.ui.theme.ThemeId.PIXEL) 2.dp else 1.dp, bd, shape)
             .then(if (enabled) Modifier.clickable(onClick = onClick) else Modifier),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,

@@ -22,6 +22,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -38,6 +39,7 @@ import com.pulse.tracker.ui.screens.SettingsScreen
 import com.pulse.tracker.ui.screens.TodayScreen
 import com.pulse.tracker.ui.screens.WaterScreen
 import com.pulse.tracker.ui.theme.PulseProvider
+import com.pulse.tracker.ui.theme.drawBackdrop
 import com.pulse.tracker.ui.theme.themeFor
 
 /** What fills the screen: a tab, or a full-screen flow on top of the tabs. */
@@ -92,7 +94,7 @@ fun PulseApp(vm: PulseViewModel) {
 
     Crossfade(targetState = theme, animationSpec = tween(450), label = "theme") { th ->
         PulseProvider(th) {
-            Box(Modifier.fillMaxSize().background(th.c.bg)) {
+            Box(Modifier.fillMaxSize().background(th.c.bg).drawBehind { drawBackdrop(th) }) {
                 AnimatedContent(
                     targetState = route,
                     transitionSpec = {

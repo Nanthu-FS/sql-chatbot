@@ -83,6 +83,8 @@ fun TodayScreen(
         left = kcalLeft(data, s), eaten = s.eaten.roundToInt(), burned = s.burned, goal = g.kcal,
         segments = segs, usedFraction = (s.eaten / budget).toFloat().coerceIn(0f, 1f),
         proteinFraction = (s.protein / g.protein).toFloat(),
+        carbsFraction = (s.carbs / g.carbs).toFloat(),
+        fatFraction = (s.fat / g.fat).toFloat(),
     )
     val macros = listOf(
         MacroItem("Protein", "P", s.protein, g.protein, t.c.protein, CardTint.PROTEIN),

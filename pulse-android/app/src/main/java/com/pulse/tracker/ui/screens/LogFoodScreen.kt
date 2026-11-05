@@ -182,7 +182,7 @@ fun LogFoodScreen(
         ModalBottomSheet(
             onDismissRequest = { selected = null },
             sheetState = sheetState,
-            containerColor = if (t.id == ThemeId.PAPER || t.id == ThemeId.SWISS) t.c.bg else t.c.surface,
+            containerColor = if (t.id == ThemeId.PAPER || t.id == ThemeId.SWISS) t.c.bg else t.solidSurface,
             contentColor = t.c.text,
             shape = RoundedCornerShape(topStart = if (t.radius > 0.dp) 32.dp else 0.dp, topEnd = if (t.radius > 0.dp) 32.dp else 0.dp),
         ) {

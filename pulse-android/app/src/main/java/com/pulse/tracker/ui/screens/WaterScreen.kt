@@ -237,14 +237,14 @@ private fun Bottle(fraction: Float, goalMl: Int, modifier: Modifier) {
             if (level > 0f) {
                 drawPath(wavePath(phase + 1.6f, amp * 1.3f), t.c.water.copy(alpha = 0.35f))
                 drawPath(wavePath(phase, amp), t.c.water)
-                if (t.id == ThemeId.NEON) {
+                if (t.id == ThemeId.NEON || t.id == ThemeId.PIXEL || t.id == ThemeId.BLUEPRINT) {
                     var y = size.height - 8.dp.toPx()
                     while (y > top) {
                         drawLine(t.c.bg, Offset(0f, y), Offset(size.width, y), 2.dp.toPx())
                         y -= 8.dp.toPx()
                     }
                 }
-                if (t.id == ThemeId.VOLT || t.id == ThemeId.MATCHA) {
+                if (t.id == ThemeId.VOLT || t.id == ThemeId.MATCHA || t.id == ThemeId.CANDY || t.id == ThemeId.AURORA) {
                     val bubble = Color.White.copy(alpha = 0.4f)
                     listOf(0.22f to 0.25f, 0.6f to 0.45f, 0.4f to 0.7f, 0.72f to 0.82f).forEach { (fx, fy) ->
                         val cy = top + (size.height - top) * fy

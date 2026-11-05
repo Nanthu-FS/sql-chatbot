@@ -21,6 +21,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
@@ -43,6 +44,7 @@ import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.SolidColor
@@ -123,14 +125,16 @@ fun SectionTitle(title: String, modifier: Modifier = Modifier, action: String? =
     val t = pulse
     Row(modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
         when (t.id) {
-            ThemeId.PAPER -> PText(title, size = 24.sp, display = true, italic = true, modifier = Modifier.weight(1f))
+            ThemeId.PAPER, ThemeId.NOIR -> PText(title, size = 24.sp, display = true, italic = true, modifier = Modifier.weight(1f))
             ThemeId.SWISS -> Row(Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically) {
                 Box(Modifier.size(8.dp).background(t.c.accent))
                 Spacer(Modifier.width(8.dp))
                 PText(title.uppercase(), size = 11.sp, weight = FontWeight.Bold, tracking = 0.12f)
             }
-            ThemeId.NEON -> PText("// " + title.uppercase(), size = 12.sp, color = t.c.muted, tracking = 0.1f, modifier = Modifier.weight(1f))
+            ThemeId.NEON, ThemeId.BLUEPRINT -> PText("// " + title.uppercase(), size = 12.sp, color = t.c.muted, tracking = 0.1f, modifier = Modifier.weight(1f))
             ThemeId.BRUTAL -> PText(title.uppercase(), size = 15.sp, weight = FontWeight.ExtraBold, tracking = 0.04f, modifier = Modifier.weight(1f))
+            ThemeId.PIXEL -> PText("▶ " + title.uppercase(), size = 15.sp, weight = FontWeight.Bold, tracking = 0.04f, modifier = Modifier.weight(1f))
+            ThemeId.RETRO -> PText(title, size = 22.sp, display = true, modifier = Modifier.weight(1f))
             else -> PText(title, size = 16.sp, weight = if (t.id == ThemeId.MATCHA) FontWeight.ExtraBold else FontWeight.SemiBold, modifier = Modifier.weight(1f))
         }
         if (action != null && onAction != null) {
@@ -182,6 +186,32 @@ fun PulseCard(
         CardStyle.SWISS -> modifier.drawBehind {
             drawLine(t.c.text, Offset(0f, 1.dp.toPx()), Offset(size.width, 1.dp.toPx()), 2.dp.toPx())
         }
+        CardStyle.GLASS -> modifier.clip(shape).background(bg).border(
+            1.dp, Brush.verticalGradient(listOf(Color.White.copy(alpha = 0.30f), Color.White.copy(alpha = 0.05f))), shape,
+        )
+        CardStyle.FRAME -> modifier.background(bg).border(1.dp, t.c.border).drawWithContent {
+            drawContent()
+            val i = 4.dp.toPx()
+            drawRect(t.c.accent.copy(alpha = 0.35f), Offset(i, i), Size(size.width - 2 * i, size.height - 2 * i), style = Stroke(0.7.dp.toPx()))
+        }
+        CardStyle.RETRO -> modifier
+            .drawBehind {
+                drawRoundRect(t.c.warm, Offset(0f, 5.dp.toPx()), size, CornerRadius(t.radius.toPx()))
+            }
+            .clip(shape).background(bg).border(2.dp, t.c.border, shape)
+        CardStyle.PIXEL -> {
+            val cut = CutCornerShape(6.dp)
+            modifier
+                .drawBehind { drawRect(t.c.carbs, Offset(4.dp.toPx(), 4.dp.toPx()), size) }
+                .clip(cut).background(bg).border(t.borderWidth, t.c.border, cut)
+        }
+        CardStyle.CANDY -> modifier
+            .shadow(12.dp, shape, ambientColor = t.c.accent.copy(alpha = 0.30f), spotColor = t.c.accent.copy(alpha = 0.40f))
+            .clip(shape).background(bg).border(t.borderWidth, t.c.border, shape)
+        CardStyle.BLUEPRINT -> modifier.drawWithContent {
+            drawContent()
+            drawBlueprintFrame(t.c.border)
+        }
     }
     val withClick = if (onClick != null) base.clickable(onClick = onClick) else base
     val pad = when (t.cardStyle) {
@@ -195,6 +225,20 @@ fun PulseCard(
     ) {
         Column(withClick.padding(pad), content = content)
     }
+}
+
+/** Dashed outline with corner lines that run past the edges, like a technical drawing. */
+fun DrawScope.drawBlueprintFrame(color: Color) {
+    val w = 1.dp.toPx()
+    val e = 7.dp.toPx()
+    drawRect(color.copy(alpha = 0.75f), style = Stroke(w, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6.dp.toPx(), 4.dp.toPx()))))
+    val W = size.width
+    val H = size.height
+    val c = color.copy(alpha = 0.9f)
+    drawLine(c, Offset(-e, 0f), Offset(0f, 0f), w); drawLine(c, Offset(0f, -e), Offset(0f, 0f), w)
+    drawLine(c, Offset(W, 0f), Offset(W + e, 0f), w); drawLine(c, Offset(W, -e), Offset(W, 0f), w)
+    drawLine(c, Offset(-e, H), Offset(0f, H), w); drawLine(c, Offset(0f, H), Offset(0f, H + e), w)
+    drawLine(c, Offset(W, H), Offset(W + e, H), w); drawLine(c, Offset(W, H), Offset(W, H + e), w)
 }
 
 fun DrawScope.drawBrackets(color: Color, len: Float = 14.dp.toPx(), w: Float = 2.dp.toPx()) {
@@ -215,13 +259,13 @@ fun DrawScope.drawBrackets(color: Color, len: Float = 14.dp.toPx(), w: Float = 2
 fun IconBadge(icon: ImageVector, color: Color, size: Dp = 30.dp) {
     val t = pulse
     val shape = when (t.id) {
-        ThemeId.MATCHA -> RoundedCornerShape(50)
-        ThemeId.NEON, ThemeId.SWISS, ThemeId.PAPER -> RoundedCornerShape(0.dp)
+        ThemeId.MATCHA, ThemeId.CANDY, ThemeId.RETRO -> RoundedCornerShape(50)
+        ThemeId.NEON, ThemeId.SWISS, ThemeId.PAPER, ThemeId.PIXEL, ThemeId.NOIR, ThemeId.BLUEPRINT -> RoundedCornerShape(0.dp)
         else -> RoundedCornerShape(10.dp)
     }
     val bg = when (t.id) {
         ThemeId.BRUTAL -> Color.White
-        ThemeId.PAPER, ThemeId.SWISS -> Color.Transparent
+        ThemeId.PAPER, ThemeId.SWISS, ThemeId.NOIR, ThemeId.BLUEPRINT -> Color.Transparent
         else -> color.copy(alpha = if (t.isDark) 0.16f else 0.22f)
     }
     Box(
@@ -284,9 +328,9 @@ fun PButton(
     val bg = container ?: c.accent
     val fg = content ?: c.onAccent
     val radius = when (t.id) {
-        ThemeId.MATCHA -> height / 2
+        ThemeId.MATCHA, ThemeId.CANDY, ThemeId.RETRO -> height / 2
         ThemeId.BRUTAL -> 14.dp
-        ThemeId.VOLT -> 18.dp
+        ThemeId.VOLT, ThemeId.AURORA -> 18.dp
         else -> 0.dp
     }
     val shape = RoundedCornerShape(radius)
@@ -294,13 +338,19 @@ fun PButton(
         modifier
             .height(height)
             .then(
-                if (t.id == ThemeId.BRUTAL) Modifier.drawBehind {
-                    drawRoundRect(c.border, Offset(4.dp.toPx(), 4.dp.toPx()), size, CornerRadius(radius.toPx()))
+                if (t.id == ThemeId.BRUTAL || t.id == ThemeId.PIXEL) Modifier.drawBehind {
+                    drawRoundRect(if (t.id == ThemeId.PIXEL) c.carbs else c.border, Offset(4.dp.toPx(), 4.dp.toPx()), size, CornerRadius(radius.toPx()))
                 } else if (t.id == ThemeId.NEON) Modifier.shadow(16.dp, shape, ambientColor = bg, spotColor = bg) else Modifier,
             )
             .clip(shape)
             .background(if (enabled) bg else bg.copy(alpha = 0.4f))
-            .then(if (t.id == ThemeId.BRUTAL) Modifier.border(2.5.dp, c.border, shape) else Modifier)
+            .then(
+                when (t.id) {
+                    ThemeId.BRUTAL, ThemeId.PIXEL -> Modifier.border(2.5.dp, c.border, shape)
+                    ThemeId.RETRO -> Modifier.border(2.dp, c.border, shape)
+                    else -> Modifier
+                },
+            )
             .clickable(enabled = enabled, onClick = onClick)
             .padding(horizontal = 18.dp),
         contentAlignment = Alignment.Center,
@@ -330,19 +380,21 @@ fun PIconButton(
     val t = pulse
     val c = t.c
     val shape = when (t.id) {
-        ThemeId.MATCHA -> RoundedCornerShape(50)
-        ThemeId.NEON, ThemeId.SWISS, ThemeId.PAPER -> RoundedCornerShape(0.dp)
+        ThemeId.MATCHA, ThemeId.CANDY, ThemeId.RETRO -> RoundedCornerShape(50)
+        ThemeId.NEON, ThemeId.SWISS, ThemeId.PAPER, ThemeId.NOIR, ThemeId.BLUEPRINT -> RoundedCornerShape(0.dp)
+        ThemeId.PIXEL -> CutCornerShape(4.dp)
         else -> RoundedCornerShape(14.dp)
     }
     val bg = when {
         filled -> c.accent
-        t.id == ThemeId.PAPER || t.id == ThemeId.SWISS || t.id == ThemeId.NEON -> Color.Transparent
+        t.id in setOf(ThemeId.PAPER, ThemeId.SWISS, ThemeId.NEON, ThemeId.NOIR, ThemeId.BLUEPRINT) -> Color.Transparent
         else -> c.surface
     }
     val border = when (t.id) {
-        ThemeId.BRUTAL -> Modifier.border(2.5.dp, c.border, shape)
-        ThemeId.VOLT, ThemeId.NEON, ThemeId.PAPER, ThemeId.SWISS -> Modifier.border(1.dp, if (filled) c.accent else c.border, shape)
-        else -> Modifier
+        ThemeId.BRUTAL, ThemeId.PIXEL -> Modifier.border(2.5.dp, c.border, shape)
+        ThemeId.RETRO, ThemeId.CANDY -> Modifier.border(2.dp, c.border, shape)
+        ThemeId.MATCHA -> Modifier
+        else -> Modifier.border(1.dp, if (filled) c.accent else c.border, shape)
     }
     Box(
         modifier.size(size)
@@ -365,16 +417,29 @@ fun PBar(
     val t = pulse
     val anim by animateFloatAsState(fraction.coerceIn(0f, 1f), tween(800, easing = FastOutSlowInEasing), label = "bar")
     val r = when (t.cardStyle) {
-        CardStyle.RULED, CardStyle.SWISS, CardStyle.BRACKETS -> 0.dp
+        CardStyle.RULED, CardStyle.SWISS, CardStyle.BRACKETS, CardStyle.FRAME, CardStyle.PIXEL, CardStyle.BLUEPRINT -> 0.dp
         CardStyle.BRUTAL -> 5.dp
         else -> height / 2
     }
     val shape = RoundedCornerShape(r)
     Box(
         modifier.height(height).clip(shape).background(track)
-            .then(if (t.id == ThemeId.BRUTAL) Modifier.border(2.dp, t.c.border, shape) else Modifier),
+            .then(if (t.id == ThemeId.BRUTAL || t.id == ThemeId.PIXEL) Modifier.border(2.dp, t.c.border, shape) else Modifier),
     ) {
         Box(Modifier.fillMaxHeight().fillMaxWidth(anim).clip(shape).background(color))
+        if (t.id == ThemeId.PIXEL) {
+            // Cut the fill into chunky blocks.
+            Box(
+                Modifier.matchParentSize().drawBehind {
+                    val step = 8.dp.toPx()
+                    var x = step
+                    while (x < size.width) {
+                        drawLine(track, Offset(x, 0f), Offset(x, size.height), 2.dp.toPx())
+                        x += step
+                    }
+                },
+            )
+        }
     }
 }
 
@@ -469,12 +534,21 @@ fun PTextField(
 ) {
     val t = pulse
     val c = t.c
-    val shape = RoundedCornerShape(when (t.id) { ThemeId.MATCHA -> 26.dp; ThemeId.VOLT -> 18.dp; ThemeId.BRUTAL -> 14.dp; else -> 0.dp })
-    val bg = when (t.id) { ThemeId.PAPER, ThemeId.SWISS -> Color.Transparent; else -> c.surface }
+    val shape = RoundedCornerShape(
+        when (t.id) {
+            ThemeId.MATCHA, ThemeId.CANDY, ThemeId.RETRO -> 26.dp
+            ThemeId.VOLT, ThemeId.AURORA -> 18.dp
+            ThemeId.BRUTAL -> 14.dp
+            else -> 0.dp
+        },
+    )
+    val underline = t.id in setOf(ThemeId.PAPER, ThemeId.SWISS, ThemeId.NOIR, ThemeId.BLUEPRINT)
+    val bg = if (underline) Color.Transparent else c.surface
     val border = when (t.id) {
-        ThemeId.BRUTAL -> Modifier.border(2.5.dp, c.border, shape)
+        ThemeId.BRUTAL, ThemeId.PIXEL -> Modifier.border(2.5.dp, c.border, shape)
+        ThemeId.RETRO, ThemeId.CANDY -> Modifier.border(2.dp, c.border, shape)
         ThemeId.MATCHA -> Modifier
-        ThemeId.PAPER, ThemeId.SWISS -> Modifier.drawBehind {
+        ThemeId.PAPER, ThemeId.SWISS, ThemeId.NOIR, ThemeId.BLUEPRINT -> Modifier.drawBehind {
             drawLine(c.text, Offset(0f, size.height - 1.dp.toPx()), Offset(size.width, size.height - 1.dp.toPx()), 1.5.dp.toPx())
         }
         else -> Modifier.border(1.dp, c.border, shape)
@@ -492,7 +566,7 @@ fun PTextField(
                 Modifier.fillMaxWidth().height(height)
                     .then(if (t.id == ThemeId.MATCHA) Modifier.shadow(8.dp, shape, ambientColor = c.text.copy(alpha = 0.08f), spotColor = c.text.copy(alpha = 0.1f)) else Modifier)
                     .clip(shape).background(bg).then(border)
-                    .padding(horizontal = if (t.id == ThemeId.PAPER || t.id == ThemeId.SWISS) 2.dp else 16.dp),
+                    .padding(horizontal = if (underline) 2.dp else 16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (leading != null) {
@@ -522,7 +596,7 @@ fun PDialog(
     val c = t.c
     AlertDialog(
         onDismissRequest = onDismiss,
-        containerColor = if (t.cardStyle == CardStyle.RULED || t.cardStyle == CardStyle.SWISS) c.bg else c.surface,
+        containerColor = if (t.cardStyle == CardStyle.RULED || t.cardStyle == CardStyle.SWISS) c.bg else t.solidSurface,
         shape = RoundedCornerShape(if (t.radius > 0.dp) 28.dp else 0.dp),
         title = { PText(title, size = 22.sp, display = true, color = c.text) },
         text = {

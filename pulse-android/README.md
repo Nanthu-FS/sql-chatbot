@@ -5,7 +5,7 @@ water, fasting, sleep, steps, weight and supplements. Data stays on the phone.
 
 ## Themes
 
-Six switchable themes, each with its own colours, fonts, shapes and layouts
+Twelve switchable themes, each with its own colours, fonts, shapes and layouts
 (change them in **Today → palette button → Theme**):
 
 | Theme  | Look |
@@ -16,6 +16,12 @@ Six switchable themes, each with its own colours, fonts, shapes and layouts
 | Neon   | Synth terminal, glowing LED ring, ASCII macro bars (JetBrains Mono) |
 | Matcha | Soft sage, rounded shapes, macro "jars" (Nunito) |
 | Swiss  | Stark white/black/red grid, giant numerals (Inter Tight) |
+| Aurora | Deep-night glass cards over a northern-lights glow, gradient ring (Outfit) |
+| Noir   | Black and gold, watch-dial ring with 60 ticks, framed cards (Cormorant Garamond) |
+| Retro  | 70s cream, rainbow-arc fuel gauge, striped sun, sunburst add button (Fraunces) |
+| Pixel  | Handheld 8-bit greens, blocky energy bar, notched cards, ▶ menu nav (Pixelify Sans) |
+| Candy  | Pastel pink, wobbling jelly bubble, polka dots, bubbly cards (Fredoka) |
+| Blueprint | Drafting blue grid, needle gauge with ticks and dimension lines (Barlow Condensed) |
 
 ## Features
 

@@ -20,17 +20,20 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.pulse.tracker.R
 
-enum class ThemeId { VOLT, PAPER, BRUTAL, NEON, MATCHA, SWISS }
+enum class ThemeId { VOLT, PAPER, BRUTAL, NEON, MATCHA, SWISS, AURORA, NOIR, RETRO, PIXEL, CANDY, BLUEPRINT }
 
 /** How the calorie summary on Today is drawn. */
-enum class HeroStyle { SEGMENT_RING, EDITORIAL, CHUNKY, LED_RING, SOFT_RING, SWISS }
+enum class HeroStyle { SEGMENT_RING, EDITORIAL, CHUNKY, LED_RING, SOFT_RING, SWISS, GRADIENT_RING, DIAL, RAINBOW, PIXEL_BAR, JELLY, GAUGE }
 
 /** How containers are drawn. */
-enum class CardStyle { OUTLINED, RULED, BRUTAL, BRACKETS, SOFT, SWISS }
+enum class CardStyle { OUTLINED, RULED, BRUTAL, BRACKETS, SOFT, SWISS, GLASS, FRAME, RETRO, PIXEL, CANDY, BLUEPRINT }
 
-enum class NavStyle { FLOATING, EDITORIAL, BRUTAL, TERMINAL, PILL, BLOCK }
+enum class NavStyle { FLOATING, EDITORIAL, BRUTAL, TERMINAL, PILL, BLOCK, RETRO, PIXEL }
 
-enum class MacroStyle { CARDS, TABLE, STICKERS, ASCII, JARS, LETTERS }
+enum class MacroStyle { CARDS, TABLE, STICKERS, ASCII, JARS, LETTERS, ARCS, BLOCKS }
+
+/** Decoration painted behind every screen. */
+enum class Backdrop { NONE, AURORA, SUNSET, GRID, DOTS }
 
 /** Semantic card colours. Only some themes (Brutal) give each one its own fill. */
 enum class CardTint { DEFAULT, HERO, PROTEIN, CARBS, FAT, WATER, STEPS, SLEEP }
@@ -77,7 +80,16 @@ data class PulseTheme(
     val upperLabels: Boolean,
     val labelTracking: Float,
     val tints: Map<CardTint, Pair<Color, Color>> = emptyMap(),
+    val backdrop: Backdrop = Backdrop.NONE,
 ) {
+    /** An opaque container colour for dialogs and sheets (glass and ruled themes have see-through cards). */
+    val solidSurface: Color
+        get() = when {
+            c.surface.alpha < 1f -> c.surfaceAlt
+            cardStyle == CardStyle.RULED || cardStyle == CardStyle.SWISS || cardStyle == CardStyle.FRAME || cardStyle == CardStyle.BLUEPRINT -> c.surfaceAlt
+            else -> c.surface
+        }
+
     /** Background and content colour for a card of the given tint. */
     fun tint(t: CardTint): Pair<Color, Color> = tints[t] ?: (c.surface to c.text)
 }
@@ -129,6 +141,44 @@ private val InterTight = FontFamily(
     Font(R.font.inter_tight, FontWeight.Bold),
     Font(R.font.inter_tight, FontWeight.ExtraBold),
     Font(R.font.inter_tight, FontWeight.Black),
+)
+
+private val Outfit = FontFamily(
+    Font(R.font.outfit, FontWeight.Normal),
+    Font(R.font.outfit, FontWeight.Medium),
+    Font(R.font.outfit, FontWeight.SemiBold),
+    Font(R.font.outfit, FontWeight.Bold),
+)
+private val Fraunces = FontFamily(
+    Font(R.font.fraunces, FontWeight.SemiBold),
+    Font(R.font.fraunces, FontWeight.Bold),
+    Font(R.font.fraunces, FontWeight.Black),
+)
+private val PixelifySans = FontFamily(
+    Font(R.font.pixelify_sans, FontWeight.Normal),
+    Font(R.font.pixelify_sans, FontWeight.Medium),
+    Font(R.font.pixelify_sans, FontWeight.SemiBold),
+    Font(R.font.pixelify_sans, FontWeight.Bold),
+)
+private val Cormorant = FontFamily(
+    Font(R.font.cormorant_garamond, FontWeight.Normal),
+    Font(R.font.cormorant_garamond, FontWeight.Medium),
+    Font(R.font.cormorant_garamond, FontWeight.SemiBold),
+    Font(R.font.cormorant_garamond, FontWeight.Bold),
+)
+private val Fredoka = FontFamily(
+    Font(R.font.fredoka, FontWeight.Normal),
+    Font(R.font.fredoka, FontWeight.Medium),
+    Font(R.font.fredoka, FontWeight.SemiBold),
+    Font(R.font.fredoka, FontWeight.Bold),
+)
+private val BarlowCondensed = FontFamily(
+    Font(R.font.barlow_condensed_semibold, FontWeight.Normal),
+    Font(R.font.barlow_condensed_semibold, FontWeight.Medium),
+    Font(R.font.barlow_condensed_semibold, FontWeight.SemiBold),
+    Font(R.font.barlow_condensed_bold, FontWeight.Bold),
+    Font(R.font.barlow_condensed_bold, FontWeight.ExtraBold),
+    Font(R.font.barlow_condensed_bold, FontWeight.Black),
 )
 
 // ---------------------------------------------------------------- themes
@@ -238,7 +288,106 @@ val SwissTheme = PulseTheme(
     macroStyle = MacroStyle.LETTERS, upperLabels = true, labelTracking = 0.1f,
 )
 
-val AllThemes = listOf(VoltTheme, PaperTheme, BrutalTheme, NeonTheme, MatchaTheme, SwissTheme)
+val AuroraTheme = PulseTheme(
+    id = ThemeId.AURORA, name = "Aurora", tagline = "Glass · northern lights", isDark = true,
+    c = PulseColors(
+        bg = Color(0xFF0B0A1F), surface = Color.White.copy(alpha = 0.07f), surfaceAlt = Color(0xFF1B1940),
+        border = Color.White.copy(alpha = 0.14f), text = Color(0xFFF3F1FF), muted = Color(0xFFA9A6CC),
+        accent = Color(0xFF7CF5D4), onAccent = Color(0xFF0B0A1F), accentText = Color(0xFF7CF5D4),
+        protein = Color(0xFF7CF5D4), carbs = Color(0xFFA78BFA), fat = Color(0xFFFF8FC7),
+        water = Color(0xFF67D3FF), waterText = Color(0xFF67D3FF), warm = Color(0xFFFFB86B),
+        calm = Color(0xFFA78BFA), track = Color.White.copy(alpha = 0.10f),
+    ),
+    display = Outfit, body = Outfit, displayWeight = FontWeight.Bold, displayTracking = -0.03f,
+    radius = 26.dp, chipRadius = 16.dp, borderWidth = 1.dp,
+    cardStyle = CardStyle.GLASS, heroStyle = HeroStyle.GRADIENT_RING, navStyle = NavStyle.FLOATING,
+    macroStyle = MacroStyle.CARDS, upperLabels = false, labelTracking = 0f, backdrop = Backdrop.AURORA,
+)
+
+val NoirTheme = PulseTheme(
+    id = ThemeId.NOIR, name = "Noir", tagline = "Black · gold · luxe", isDark = true,
+    c = PulseColors(
+        bg = Color(0xFF0C0B09), surface = Color(0xFF14120F), surfaceAlt = Color(0xFF1C1915),
+        border = Color(0xFF3A3226), text = Color(0xFFF2EBDD), muted = Color(0xFFA39A88),
+        accent = Color(0xFFD4AF6A), onAccent = Color(0xFF0C0B09), accentText = Color(0xFFD4AF6A),
+        protein = Color(0xFFD4AF6A), carbs = Color(0xFFE8E1D3), fat = Color(0xFF9A6B3F),
+        water = Color(0xFF8FB3C9), waterText = Color(0xFF8FB3C9), warm = Color(0xFFC98A5A),
+        calm = Color(0xFF8FB3C9), track = Color(0xFF26221C),
+    ),
+    display = Cormorant, body = DmSans, displayWeight = FontWeight.Medium, displayTracking = -0.01f,
+    radius = 0.dp, chipRadius = 0.dp, borderWidth = 1.dp,
+    cardStyle = CardStyle.FRAME, heroStyle = HeroStyle.DIAL, navStyle = NavStyle.EDITORIAL,
+    macroStyle = MacroStyle.TABLE, upperLabels = true, labelTracking = 0.22f,
+)
+
+val RetroTheme = PulseTheme(
+    id = ThemeId.RETRO, name = "Retro", tagline = "70s · groovy", isDark = false,
+    c = PulseColors(
+        bg = Color(0xFFF6EBD9), surface = Color(0xFFFFF6E8), surfaceAlt = Color(0xFFEFDCC0),
+        border = Color(0xFF3B2418), text = Color(0xFF3B2418), muted = Color(0xFF7A5A45),
+        accent = Color(0xFFE2582B), onAccent = Color(0xFFFFF6E8), accentText = Color(0xFFB8431D),
+        protein = Color(0xFFE2582B), carbs = Color(0xFFF2A93B), fat = Color(0xFF6E8B3D),
+        water = Color(0xFF3E8E9C), waterText = Color(0xFF2F6E79), warm = Color(0xFFF2A93B),
+        calm = Color(0xFF6E8B3D), track = Color(0xFFEBD9BC),
+    ),
+    display = Fraunces, body = DmSans, displayWeight = FontWeight.Black, displayTracking = -0.03f,
+    radius = 28.dp, chipRadius = 22.dp, borderWidth = 2.dp,
+    cardStyle = CardStyle.RETRO, heroStyle = HeroStyle.RAINBOW, navStyle = NavStyle.RETRO,
+    macroStyle = MacroStyle.ARCS, upperLabels = false, labelTracking = 0f, backdrop = Backdrop.SUNSET,
+)
+
+val PixelTheme = PulseTheme(
+    id = ThemeId.PIXEL, name = "Pixel", tagline = "8-bit · handheld", isDark = false,
+    c = PulseColors(
+        bg = Color(0xFF9BBC0F), surface = Color(0xFF8BAC0F), surfaceAlt = Color(0xFF85A50F),
+        border = Color(0xFF0F380F), text = Color(0xFF0F380F), muted = Color(0xFF24502A),
+        accent = Color(0xFF0F380F), onAccent = Color(0xFF9BBC0F), accentText = Color(0xFF0F380F),
+        protein = Color(0xFF0F380F), carbs = Color(0xFF306230), fat = Color(0xFF5E8418),
+        water = Color(0xFF306230), waterText = Color(0xFF0F380F), warm = Color(0xFF306230),
+        calm = Color(0xFF306230), track = Color(0xFF79970D),
+    ),
+    display = PixelifySans, body = PixelifySans, displayWeight = FontWeight.Bold, displayTracking = 0f,
+    radius = 0.dp, chipRadius = 0.dp, borderWidth = 3.dp,
+    cardStyle = CardStyle.PIXEL, heroStyle = HeroStyle.PIXEL_BAR, navStyle = NavStyle.PIXEL,
+    macroStyle = MacroStyle.BLOCKS, upperLabels = true, labelTracking = 0.06f,
+)
+
+val CandyTheme = PulseTheme(
+    id = ThemeId.CANDY, name = "Candy", tagline = "Pastel · bubbly", isDark = false,
+    c = PulseColors(
+        bg = Color(0xFFFFF0F6), surface = Color(0xFFFFFFFF), surfaceAlt = Color(0xFFFFE0EE),
+        border = Color(0xFFF7C6DC), text = Color(0xFF3D1F33), muted = Color(0xFF7E4E6C),
+        accent = Color(0xFFFF6FAE), onAccent = Color(0xFF3D1F33), accentText = Color(0xFFC2337A),
+        protein = Color(0xFFFF6FAE), carbs = Color(0xFF8FD3FF), fat = Color(0xFFFFD166),
+        water = Color(0xFF7CC8FF), waterText = Color(0xFF2B78B5), warm = Color(0xFFFFB37A),
+        calm = Color(0xFFB79CFF), track = Color(0xFFFBE3EE),
+    ),
+    display = Fredoka, body = Fredoka, displayWeight = FontWeight.SemiBold, displayTracking = -0.01f,
+    radius = 32.dp, chipRadius = 24.dp, borderWidth = 2.dp,
+    cardStyle = CardStyle.CANDY, heroStyle = HeroStyle.JELLY, navStyle = NavStyle.PILL,
+    macroStyle = MacroStyle.JARS, upperLabels = false, labelTracking = 0f, backdrop = Backdrop.DOTS,
+)
+
+val BlueprintTheme = PulseTheme(
+    id = ThemeId.BLUEPRINT, name = "Blueprint", tagline = "Technical · drafted", isDark = true,
+    c = PulseColors(
+        bg = Color(0xFF0E3A6E), surface = Color(0xFF11447F), surfaceAlt = Color(0xFF154A88),
+        border = Color(0xFFBFD7F5), text = Color(0xFFEAF3FF), muted = Color(0xFFA9C7EA),
+        accent = Color(0xFFFFFFFF), onAccent = Color(0xFF0E3A6E), accentText = Color(0xFFFFE27A),
+        protein = Color(0xFFFFE27A), carbs = Color(0xFFFFFFFF), fat = Color(0xFF7FD1FF),
+        water = Color(0xFF7FD1FF), waterText = Color(0xFF7FD1FF), warm = Color(0xFFFFB27A),
+        calm = Color(0xFF7FD1FF), track = Color.White.copy(alpha = 0.15f),
+    ),
+    display = BarlowCondensed, body = JetBrainsMono, displayWeight = FontWeight.Bold, displayTracking = 0f,
+    radius = 0.dp, chipRadius = 0.dp, borderWidth = 1.dp,
+    cardStyle = CardStyle.BLUEPRINT, heroStyle = HeroStyle.GAUGE, navStyle = NavStyle.TERMINAL,
+    macroStyle = MacroStyle.LETTERS, upperLabels = true, labelTracking = 0.08f, backdrop = Backdrop.GRID,
+)
+
+val AllThemes = listOf(
+    VoltTheme, PaperTheme, BrutalTheme, NeonTheme, MatchaTheme, SwissTheme,
+    AuroraTheme, NoirTheme, RetroTheme, PixelTheme, CandyTheme, BlueprintTheme,
+)
 
 fun themeFor(id: String): PulseTheme = AllThemes.firstOrNull { it.id.name == id } ?: VoltTheme
 
