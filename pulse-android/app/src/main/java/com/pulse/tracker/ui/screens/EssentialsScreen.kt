@@ -58,6 +58,10 @@ import com.pulse.tracker.ui.components.PTextField
 import com.pulse.tracker.ui.components.PulseCard
 import com.pulse.tracker.ui.components.SectionTitle
 import com.pulse.tracker.ui.components.formatInt
+import com.pulse.tracker.ui.components.HealthConnectPanel
+import com.pulse.tracker.ui.components.lastSyncedLabel
+import com.pulse.tracker.ui.components.stepsAreSynced
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.pulse.tracker.ui.theme.CardTint
 import com.pulse.tracker.ui.theme.LocalMuted
 import com.pulse.tracker.ui.theme.ThemeId
@@ -80,6 +84,8 @@ fun EssentialsScreen(vm: PulseViewModel, data: AppData, date: LocalDate) {
     val checks = data.supplementChecks[date] ?: emptySet()
     val done = data.supplements.count { it.id in checks }
     var dialog by remember { mutableStateOf(EssentialsDialog.NONE) }
+    val healthStatus by vm.healthStatus.collectAsStateWithLifecycle()
+    val stepsSynced = data.stepsAreSynced(healthStatus)
 
     Column(
         Modifier.fillMaxSize().verticalScroll(rememberScrollState()).statusBarsPadding()
@@ -112,7 +118,7 @@ fun EssentialsScreen(vm: PulseViewModel, data: AppData, date: LocalDate) {
                 sleep.toFloat() / g.sleepMinutes, CardTint.SLEEP, Modifier.weight(1f),
             ) { dialog = EssentialsDialog.SLEEP }
             MetricCard(
-                PIcons.Activity, t.c.text, "Steps", formatInt(s.metrics.steps),
+                PIcons.Activity, t.c.text, if (stepsSynced) "Steps · synced" else "Steps", formatInt(s.metrics.steps),
                 s.metrics.steps.toFloat() / g.steps, CardTint.STEPS, Modifier.weight(1f),
             ) { dialog = EssentialsDialog.STEPS }
         }
@@ -166,7 +172,7 @@ fun EssentialsScreen(vm: PulseViewModel, data: AppData, date: LocalDate) {
 
     when (dialog) {
         EssentialsDialog.SLEEP -> SleepDialog(s.metrics.sleepMinutes, { dialog = EssentialsDialog.NONE }) { vm.setSleep(it, date); dialog = EssentialsDialog.NONE }
-        EssentialsDialog.STEPS -> StepsDialog(s.metrics.steps, { dialog = EssentialsDialog.NONE }) { vm.setSteps(it, date); dialog = EssentialsDialog.NONE }
+        EssentialsDialog.STEPS -> StepsDialog(vm, data, stepsSynced, s.metrics.steps, { dialog = EssentialsDialog.NONE }) { vm.setSteps(it, date); dialog = EssentialsDialog.NONE }
         EssentialsDialog.WEIGHT -> WeightDialog(data.weights.maxByOrNull { it.date }?.kg, { dialog = EssentialsDialog.NONE }) { vm.logWeight(it, date); dialog = EssentialsDialog.NONE }
         EssentialsDialog.SUPPLEMENTS -> SupplementsDialog(vm, data) { dialog = EssentialsDialog.NONE }
         EssentialsDialog.NONE -> Unit
@@ -301,11 +307,27 @@ private fun SleepDialog(current: Int, onDismiss: () -> Unit, onSave: (Int) -> Un
 }
 
 @Composable
-private fun StepsDialog(current: Int, onDismiss: () -> Unit, onSave: (Int) -> Unit) {
+private fun StepsDialog(
+    vm: PulseViewModel,
+    data: AppData,
+    synced: Boolean,
+    current: Int,
+    onDismiss: () -> Unit,
+    onSave: (Int) -> Unit,
+) {
+    if (synced) {
+        PDialog("Steps", onDismiss, confirmText = "Done", onConfirm = onDismiss) {
+            PText(formatInt(current), size = 44.sp, display = true)
+            PText("From Health Connect · ${lastSyncedLabel(data.stepsSyncedAt).replaceFirstChar { it.lowercase() }}", size = 13.sp, color = pulse.c.muted)
+            HealthConnectPanel(vm, data)
+        }
+        return
+    }
     var text by remember { mutableStateOf(if (current > 0) current.toString() else "") }
     val value = text.filter { it.isDigit() }.toIntOrNull()
-    PDialog("Steps today", onDismiss, onConfirm = { value?.let(onSave) }, confirmEnabled = value != null) {
-        PText("Enter the count from your phone or watch.", size = 13.sp, color = pulse.c.muted)
+    PDialog("Steps", onDismiss, onConfirm = { value?.let(onSave) }, confirmEnabled = value != null) {
+        HealthConnectPanel(vm, data)
+        PText("Or enter the count from your phone or watch:", size = 13.sp, color = pulse.c.muted)
         PTextField(text, { text = it }, "e.g. 8500", Modifier.fillMaxWidth(), number = true)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf(1000, 2500, 5000).forEach { add ->

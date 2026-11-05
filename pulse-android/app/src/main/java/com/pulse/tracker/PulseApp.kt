@@ -23,7 +23,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.delay
 import com.pulse.tracker.data.Meal
 import com.pulse.tracker.ui.components.PulseNavBar
 import com.pulse.tracker.ui.components.Tab
@@ -58,6 +62,18 @@ fun PulseApp(vm: PulseViewModel) {
         val transparent = android.graphics.Color.TRANSPARENT
         val style = if (theme.isDark) SystemBarStyle.dark(transparent) else SystemBarStyle.light(transparent, transparent)
         activity?.enableEdgeToEdge(statusBarStyle = style, navigationBarStyle = style)
+    }
+
+    // Keep Health Connect status fresh and pull steps whenever Pulse is on screen.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(data.stepsFromHealthConnect) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            vm.refreshHealth()
+            while (true) {
+                vm.syncSteps()
+                delay(120_000)
+            }
+        }
     }
 
     BackHandler(enabled = settings || logMeal != null || tab != Tab.TODAY) {

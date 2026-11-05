@@ -38,6 +38,7 @@ object PIcons {
     val Cup by lazy { icon("M17 8h1a4 4 0 1 1 0 8h-1", "M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z") }
     val Glass by lazy { icon("M5 3h14l-1.5 17a1 1 0 0 1-1 1h-9a1 1 0 0 1-1-1z", "M6 9h12") }
     val Bottle by lazy { icon("M10 2h4v3l2 3v12a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2V8l2-3z", "M8 12h8") }
+    val Refresh by lazy { icon("M21 12a9 9 0 1 1-2.64-6.36L21 8", "M21 3v5h-5") }
     val Undo by lazy { icon("M3 7v6h6", "M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13") }
     val Calendar by lazy { icon(rect(3f, 4f, 18f, 18f, 3f), "M16 2v4M8 2v4M3 10h18") }
     val TrendDown by lazy { icon("m22 17-8.5-8.5-5 5L2 7", "M16 17h6v-6") }

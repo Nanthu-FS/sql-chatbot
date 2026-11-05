@@ -60,6 +60,8 @@ class Store(context: Context, scope: CoroutineScope) {
             put("name", d.name)
             put("addBurnedBack", d.addBurnedBack)
             put("followSystemDark", d.followSystemDark)
+            put("stepsFromHealthConnect", d.stepsFromHealthConnect)
+            put("stepsSyncedAt", d.stepsSyncedAt)
             put("goals", JSONObject().apply {
                 put("kcal", d.goals.kcal); put("protein", d.goals.protein); put("carbs", d.goals.carbs)
                 put("fat", d.goals.fat); put("waterMl", d.goals.waterMl); put("steps", d.goals.steps)
@@ -195,6 +197,8 @@ class Store(context: Context, scope: CoroutineScope) {
                 goals = goals,
                 addBurnedBack = o.optBoolean("addBurnedBack", true),
                 followSystemDark = o.optBoolean("followSystemDark", false),
+                stepsFromHealthConnect = o.optBoolean("stepsFromHealthConnect", false),
+                stepsSyncedAt = o.optLong("stepsSyncedAt", 0L),
                 foods = foods, customFoods = customFoods, water = water, weights = weights,
                 metrics = metrics, supplements = supplements, supplementChecks = checks, fasting = fasting,
             )

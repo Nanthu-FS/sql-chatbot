@@ -95,6 +95,10 @@ data class AppData(
     val goals: Goals = Goals(),
     val addBurnedBack: Boolean = true,
     val followSystemDark: Boolean = false,
+    /** Steps come from Health Connect instead of manual entry. */
+    val stepsFromHealthConnect: Boolean = false,
+    /** When steps were last read from Health Connect (epoch ms, 0 = never). */
+    val stepsSyncedAt: Long = 0L,
     val foods: List<FoodEntry> = emptyList(),
     val customFoods: List<Food> = emptyList(),
     val water: List<WaterEntry> = emptyList(),

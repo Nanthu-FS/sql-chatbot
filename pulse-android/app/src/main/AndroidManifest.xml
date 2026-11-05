@@ -4,6 +4,14 @@
     <!-- Used only to look up scanned barcodes on Open Food Facts. -->
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- Daily step totals from Health Connect (read only). -->
+    <uses-permission android:name="android.permission.health.READ_STEPS" />
+
+    <!-- Lets Pulse find the Health Connect app on Android 13 and older. -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
+
     <application
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -27,5 +35,26 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Explains Pulse's use of step data; Health Connect requires this before it will show the permission screen. -->
+        <activity
+            android:name=".HealthPrivacyActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
+        </activity>
+
+        <!-- Same screen, reached from Android 14+ system settings. -->
+        <activity-alias
+            android:name="ViewPermissionUsageActivity"
+            android:exported="true"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:targetActivity=".HealthPrivacyActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
+            </intent-filter>
+        </activity-alias>
     </application>
 </manifest>

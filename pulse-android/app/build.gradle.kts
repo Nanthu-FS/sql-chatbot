@@ -56,6 +56,9 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
 
+    // Daily steps from Health Connect (phone counter, Google Fit, Samsung Health, watches).
+    implementation("androidx.health.connect:connect-client:1.1.0-alpha07")
+
     // Barcode scanning through Google Play services (no camera permission needed).
     implementation("com.google.android.gms:play-services-code-scanner:16.1.0")
 }

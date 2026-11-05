@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.pulse.tracker.PulseViewModel
 import com.pulse.tracker.data.AppData
 import com.pulse.tracker.data.Goals
+import com.pulse.tracker.ui.components.HealthConnectPanel
 import com.pulse.tracker.ui.components.PIconButton
 import com.pulse.tracker.ui.components.PIcons
 import com.pulse.tracker.ui.components.PText
@@ -77,6 +78,9 @@ fun SettingsScreen(vm: PulseViewModel, data: AppData, onBack: () -> Unit) {
 
         SectionTitle("You")
         PTextField(name, { name = it; vm.setName(it) }, "Your first name (for greetings)", Modifier.fillMaxWidth())
+
+        SectionTitle("Health Connect")
+        HealthConnectPanel(vm, data, Modifier.padding(end = if (t.cardStyle == CardStyle.BRUTAL) 5.dp else 0.dp))
 
         SectionTitle("Daily goals")
         GoalsEditor(data.goals) { vm.setGoals(it) }

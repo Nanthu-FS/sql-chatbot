@@ -10,6 +10,8 @@ import com.pulse.tracker.data.Food
 import com.pulse.tracker.data.FoodCatalog
 import com.pulse.tracker.data.FoodEntry
 import com.pulse.tracker.data.Goals
+import com.pulse.tracker.data.HealthStatus
+import com.pulse.tracker.data.HealthSteps
 import com.pulse.tracker.data.Meal
 import com.pulse.tracker.data.OpenFoodFacts
 import com.pulse.tracker.data.Store
@@ -20,6 +22,9 @@ import com.pulse.tracker.data.burnedFromSteps
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.time.LocalDate
 import java.util.concurrent.atomic.AtomicLong
 
@@ -33,6 +38,71 @@ class PulseViewModel(app: Application) : AndroidViewModel(app) {
 
     private val ids = AtomicLong(System.currentTimeMillis() * 1000)
     private fun nextId() = ids.incrementAndGet()
+
+    // ------------------------------------------------------------ health connect
+
+    private val health = HealthSteps(app)
+    val healthPermissions: Set<String> get() = health.permissions
+
+    private val _health = MutableStateFlow(HealthStatus.UNKNOWN)
+    val healthStatus: StateFlow<HealthStatus> = _health.asStateFlow()
+
+    private val _syncing = MutableStateFlow(false)
+    val syncing: StateFlow<Boolean> = _syncing.asStateFlow()
+    private val syncLock = Mutex()
+
+    init {
+        refreshHealth()
+    }
+
+    fun refreshHealth() {
+        viewModelScope.launch { _health.value = runCatching { health.status() }.getOrDefault(HealthStatus.UNSUPPORTED) }
+    }
+
+    /** Called with whatever the person granted on Health Connect's permission screen. */
+    fun onHealthPermissionsResult(granted: Set<String>) {
+        if (granted.containsAll(health.permissions)) {
+            _health.value = HealthStatus.CONNECTED
+            store.update { it.copy(stepsFromHealthConnect = true) }
+            syncSteps(force = true)
+        } else {
+            refreshHealth()
+        }
+    }
+
+    fun disconnectHealth() = store.update { it.copy(stepsFromHealthConnect = false) }
+
+    fun openHealthInstall() = health.openInstall()
+    fun openHealthSettings() = health.openSettings()
+
+    /**
+     * Pulls the last five weeks of daily step totals so Today, Habits and the Insights
+     * averages all stay current. Skipped unless the person turned Health Connect on.
+     */
+    fun syncSteps(force: Boolean = false) {
+        if (!data.value.stepsFromHealthConnect) return
+        viewModelScope.launch {
+            if (syncLock.isLocked) return@launch
+            syncLock.withLock {
+                if (!force && System.currentTimeMillis() - data.value.stepsSyncedAt < 20_000) return@withLock
+                _syncing.value = true
+                try {
+                    val status = runCatching { health.status() }.getOrDefault(HealthStatus.UNSUPPORTED)
+                    _health.value = status
+                    if (status != HealthStatus.CONNECTED) return@withLock
+                    val today = LocalDate.now()
+                    val steps = runCatching { health.dailySteps(today.minusDays(34), today) }.getOrNull() ?: return@withLock
+                    store.update { d ->
+                        val merged = d.metrics.toMutableMap()
+                        steps.forEach { (day, count) -> merged[day] = (merged[day] ?: DayMetrics()).copy(steps = count) }
+                        d.copy(metrics = merged, stepsSyncedAt = System.currentTimeMillis())
+                    }
+                } finally {
+                    _syncing.value = false
+                }
+            }
+        }
+    }
 
     fun selectDate(date: LocalDate) {
         _date.value = if (date.isAfter(LocalDate.now())) LocalDate.now() else date

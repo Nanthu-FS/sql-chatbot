@@ -103,7 +103,7 @@ fun TodayScreen(
         MacroSection(macros)
         Row(Modifier.fillMaxWidth().padding(end = if (t.id == ThemeId.BRUTAL) 5.dp else 0.dp), horizontalArrangement = Arrangement.spacedBy(if (t.id == ThemeId.BRUTAL) 12.dp else 10.dp)) {
             WaterMini(s.waterMl, g.waterMl, onWater, Modifier.weight(1f))
-            StepsMini(s.metrics.steps, g.steps, onHabits, Modifier.weight(1f))
+            StepsMini(s.metrics.steps, g.steps, data.stepsFromHealthConnect, onHabits, Modifier.weight(1f))
         }
         MealsSection(data, s, onLog)
         Spacer(Modifier.height(130.dp))
@@ -279,13 +279,17 @@ private fun WaterMini(ml: Int, goal: Int, onClick: () -> Unit, modifier: Modifie
 }
 
 @Composable
-private fun StepsMini(steps: Int, goal: Int, onClick: () -> Unit, modifier: Modifier) {
+private fun StepsMini(steps: Int, goal: Int, synced: Boolean, onClick: () -> Unit, modifier: Modifier) {
     val t = pulse
     PulseCard(modifier, tint = CardTint.STEPS, onClick = onClick, padding = 15.dp) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
             IconBadge(PIcons.Activity, t.c.text, 28.dp)
             Spacer(Modifier.width(8.dp))
             PLabel("Steps", Modifier.weight(1f))
+            if (synced) {
+                Icon(PIcons.Refresh, "Synced from Health Connect", Modifier.size(12.dp), tint = LocalMuted.current)
+                Spacer(Modifier.width(4.dp))
+            }
             PText("${(steps * 100f / goal).roundToInt()}%", size = 12.sp, color = LocalMuted.current)
         }
         Spacer(Modifier.height(10.dp))

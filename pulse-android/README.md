@@ -29,6 +29,11 @@ Six switchable themes, each with its own colours, fonts, shapes and layouts
   7-day macro split, averages, 35-day consistency grid.
 - **Habits** – intermittent fasting timer (12–20 h), sleep, steps, mindful
   minutes, weight and a daily supplements checklist.
+- **Automatic steps** – connect Health Connect (Settings → Health Connect, or tap
+  Steps) and Pulse reads your daily step totals from the phone's counter, Google
+  Fit, Samsung Health, Fitbit or a watch. It syncs the last 5 weeks on open and
+  every 2 minutes while the app is on screen; read-only, nothing leaves the phone.
+  Without it, steps can still be entered by hand.
 - **Settings** – theme picker, name, all daily goals, add-burned-calories toggle.
 
 ## Build
